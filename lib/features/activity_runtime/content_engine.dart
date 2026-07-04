@@ -50,9 +50,9 @@ class ContentEngine implements ContentSource {
     Map<String, ContentGenerator>? generators,
     ContentMemory? memory,
     Random? random,
-  })  : _generators = generators ?? contentGenerators,
-        _memory = memory ?? contentMemory,
-        _rng = random ?? Random() {
+  }) : _generators = generators ?? contentGenerators,
+       _memory = memory ?? contentMemory,
+       _rng = random ?? Random() {
     for (final item in items) {
       if (_loaded.add('${item.kind}/${item.fingerprint}')) {
         (_byKind[item.kind] ??= <ContentItem>[]).add(item);

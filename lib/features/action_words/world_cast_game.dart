@@ -43,7 +43,8 @@ Map<String, dynamic> worldCastSeed(CurriculumWorld world) {
     'i': 0,
     'n': slides.length,
     'slides': slides,
-    'accent': '#${(world.color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}',
+    'accent':
+        '#${(world.color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}',
   };
 }
 
@@ -97,8 +98,7 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
   String get title => 'This week’s world';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.plum);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
 
   // Seeded explicitly (castStage), never from the content bank — so it stays
   // out of the standard launcher and is offered by the world tile instead.
@@ -106,8 +106,11 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
   bool get seedsFromContentBank => false;
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) =>
-      <String, dynamic>{'i': 0, 'n': 0, 'slides': <Map<String, dynamic>>[]};
+  Map<String, dynamic> initialState(ContentSource content) => <String, dynamic>{
+    'i': 0,
+    'n': 0,
+    'slides': <Map<String, dynamic>>[],
+  };
 
   @override
   WorldCastState decode(Map<String, dynamic> state) =>
@@ -142,10 +145,10 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
 
   @override
   Set<GameIntent> activeIntents(WorldCastState s) => {
-        if (s.index > 0) GameIntent.back,
-        if (s.index < s.total - 1) GameIntent.next,
-        GameIntent.reset,
-      };
+    if (s.index > 0) GameIntent.back,
+    if (s.index < s.total - 1) GameIntent.next,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, WorldCastState s) {
@@ -259,7 +262,10 @@ class _Big extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: const TextStyle(
-              color: Colors.white54, fontSize: 20, letterSpacing: 4),
+            color: Colors.white54,
+            fontSize: 20,
+            letterSpacing: 4,
+          ),
         ),
         const SizedBox(height: 24),
         Text(
@@ -295,13 +301,17 @@ class _Lines extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          big ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: big
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
         Text(
           label.toUpperCase(),
           style: const TextStyle(
-              color: Colors.white54, fontSize: 20, letterSpacing: 4),
+            color: Colors.white54,
+            fontSize: 20,
+            letterSpacing: 4,
+          ),
         ),
         const SizedBox(height: 20),
         for (final l in lines)

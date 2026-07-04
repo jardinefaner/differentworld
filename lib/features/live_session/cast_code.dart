@@ -39,5 +39,7 @@ String _castCode(String seed) {
 /// (which slide is up), but BEFORE casting kid-identifying content (names,
 /// drawings, the Reveal) we should add true channel auth (a member-scoped
 /// token / Realtime authorize callback). Tracked in docs/LIVE_SESSIONS.md.
-String castCodeForController({required String memberId, required String spaceId}) =>
-    _castCode('$spaceId:$memberId');
+String castCodeForController({
+  required String memberId,
+  required String spaceId,
+}) => _castCode('$spaceId:$memberId');

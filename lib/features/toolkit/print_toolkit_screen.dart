@@ -48,12 +48,12 @@ class _PrintToolkitScreenState extends ConsumerState<PrintToolkitScreen> {
             child: Text(
               kIsWeb
                   ? "Word-forward cards (printing can't draw emoji — sticker "
-                      'them on after). Each one downloads as a PDF.'
+                        'them on after). Each one downloads as a PDF.'
                   : "Word-forward cards (printing can't draw emoji — sticker "
-                      'them on after).',
+                        'them on after).',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           _CopiesStepper(copies: _copies, onChanged: _setCopies),
@@ -81,7 +81,8 @@ class _PrintToolkitScreenState extends ConsumerState<PrintToolkitScreen> {
             title: 'Verb → job reference',
             subtitle: 'Which job each verb pick becomes',
             onTap: () {
-              final roles = ref.read(verbRolesProvider).value ??
+              final roles =
+                  ref.read(verbRolesProvider).value ??
                   const <String, VerbRole>{};
               if (roles.isEmpty) {
                 _stillLoading('Still loading');

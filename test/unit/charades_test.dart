@@ -12,13 +12,20 @@ void main() {
   const game = CharadesGame();
 
   // A small explicit 5-prompt state so the rules read clearly.
-  Map<String, dynamic> stateAt({int i = 0, int f = 0, bool d = false, int n = 5}) {
+  Map<String, dynamic> stateAt({
+    int i = 0,
+    int f = 0,
+    bool d = false,
+    int n = 5,
+  }) {
     return {
       'i': i,
       'f': f,
       'd': d,
       'n': n,
-      'items': [for (var k = 0; k < n; k++) ['word$k', 'cat$k']],
+      'items': [
+        for (var k = 0; k < n; k++) ['word$k', 'cat$k'],
+      ],
     };
   }
 

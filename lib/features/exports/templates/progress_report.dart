@@ -46,8 +46,7 @@ class AttendanceSummary {
   final int earlyPickup;
   final int excused;
 
-  int get totalRecorded =>
-      present + absent + late + earlyPickup + excused;
+  int get totalRecorded => present + absent + late + earlyPickup + excused;
 }
 
 /// One survey, summarized for the report. The renderer shows the
@@ -275,42 +274,44 @@ pw.Widget _surveysSection(ProgressReportData data) {
 pw.Widget _surveyQA(SurveyQuestion q, SurveyAnswers a) {
   final answer = switch (q.kind) {
     SurveyQuestionKind.agree3 => switch (a.agree3(q.key)) {
-        0 => 'No',
-        1 => 'Maybe',
-        2 => 'Yes',
-        _ => '—',
-      },
+      0 => 'No',
+      1 => 'Maybe',
+      2 => 'Yes',
+      _ => '—',
+    },
     // Wave 167: 5-point scales — render as "score/5 · label" so the
     // PDF reader sees both the numeric value and the meaning. agree5
     // and likeMe5 share the same data shape but use different label
     // sets per the editorial intent.
     SurveyQuestionKind.agree5 => switch (a.scale5(q.key)) {
-        0 => '1/5 · Strongly disagree',
-        1 => '2/5 · Disagree',
-        2 => '3/5 · Kind of agree',
-        3 => '4/5 · Agree',
-        4 => '5/5 · Strongly agree',
-        _ => '—',
-      },
+      0 => '1/5 · Strongly disagree',
+      1 => '2/5 · Disagree',
+      2 => '3/5 · Kind of agree',
+      3 => '4/5 · Agree',
+      4 => '5/5 · Strongly agree',
+      _ => '—',
+    },
     SurveyQuestionKind.likeMe5 => switch (a.scale5(q.key)) {
-        0 => '1/5 · Not like me',
-        1 => '2/5 · A little like me',
-        2 => '3/5 · Somewhat like me',
-        3 => '4/5 · Mostly like me',
-        4 => '5/5 · Exactly like me',
-        _ => '—',
-      },
+      0 => '1/5 · Not like me',
+      1 => '2/5 · A little like me',
+      2 => '3/5 · Somewhat like me',
+      3 => '4/5 · Mostly like me',
+      4 => '5/5 · Exactly like me',
+      _ => '—',
+    },
     SurveyQuestionKind.multiselect => () {
-        final ks = a.multiselect(q.key);
-        if (ks.isEmpty) return '—';
-        return ks.map((k) {
-          final opt = q.options.firstWhere(
-            (o) => o.key == k,
-            orElse: () => SurveyOption(key: k, label: k, labelEs: k),
-          );
-          return opt.label;
-        }).join('; ');
-      }(),
+      final ks = a.multiselect(q.key);
+      if (ks.isEmpty) return '—';
+      return ks
+          .map((k) {
+            final opt = q.options.firstWhere(
+              (o) => o.key == k,
+              orElse: () => SurveyOption(key: k, label: k, labelEs: k),
+            );
+            return opt.label;
+          })
+          .join('; ');
+    }(),
     SurveyQuestionKind.text => a.text(q.key).isEmpty ? '—' : a.text(q.key),
   };
   return pw.Padding(

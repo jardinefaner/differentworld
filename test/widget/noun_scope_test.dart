@@ -11,8 +11,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NounScope / captureFrame', () {
-    testWidgets('captures each noun with rect, id, state, and actions',
-        (tester) async {
+    testWidgets('captures each noun with rect, id, state, and actions', (
+      tester,
+    ) async {
       final reg = NounRegistry();
       await tester.pumpWidget(
         MaterialApp(
@@ -66,27 +67,27 @@ void main() {
       final reg = NounRegistry();
 
       Widget build({required bool showSecond}) => MaterialApp(
-            home: NounRegistryScope(
-              registry: reg,
-              child: Scaffold(
-                body: Column(
-                  children: [
-                    const NounScope(
-                      noun: 'ScheduleBlock',
-                      id: 'b1',
-                      child: SizedBox(width: 80, height: 20),
-                    ),
-                    if (showSecond)
-                      const NounScope(
-                        noun: 'ScheduleBlock',
-                        id: 'b2',
-                        child: SizedBox(width: 80, height: 20),
-                      ),
-                  ],
+        home: NounRegistryScope(
+          registry: reg,
+          child: Scaffold(
+            body: Column(
+              children: [
+                const NounScope(
+                  noun: 'ScheduleBlock',
+                  id: 'b1',
+                  child: SizedBox(width: 80, height: 20),
                 ),
-              ),
+                if (showSecond)
+                  const NounScope(
+                    noun: 'ScheduleBlock',
+                    id: 'b2',
+                    child: SizedBox(width: 80, height: 20),
+                  ),
+              ],
             ),
-          );
+          ),
+        ),
+      );
 
       await tester.pumpWidget(build(showSecond: true));
       expect(reg.count, 2);
@@ -99,36 +100,42 @@ void main() {
       expect(reg.capture().byId('ScheduleBlock', 'b1'), isNotNull);
     });
 
-    testWidgets('state updates flow into the next frame (no re-register)',
-        (tester) async {
+    testWidgets('state updates flow into the next frame (no re-register)', (
+      tester,
+    ) async {
       final reg = NounRegistry();
 
       Widget build({required bool editing}) => MaterialApp(
-            home: NounRegistryScope(
-              registry: reg,
-              child: Scaffold(
-                body: NounScope(
-                  noun: 'ScheduleBlock',
-                  id: 'b1',
-                  state: {'editing': editing},
-                  child: const SizedBox(width: 50, height: 50),
-                ),
-              ),
+        home: NounRegistryScope(
+          registry: reg,
+          child: Scaffold(
+            body: NounScope(
+              noun: 'ScheduleBlock',
+              id: 'b1',
+              state: {'editing': editing},
+              child: const SizedBox(width: 50, height: 50),
             ),
-          );
+          ),
+        ),
+      );
 
       await tester.pumpWidget(build(editing: false));
-      expect(reg.capture().byId('ScheduleBlock', 'b1')!.state['editing'],
-          isFalse);
+      expect(
+        reg.capture().byId('ScheduleBlock', 'b1')!.state['editing'],
+        isFalse,
+      );
 
       await tester.pumpWidget(build(editing: true));
       expect(reg.count, 1, reason: 'updating state must not re-register');
-      expect(reg.capture().byId('ScheduleBlock', 'b1')!.state['editing'],
-          isTrue);
+      expect(
+        reg.capture().byId('ScheduleBlock', 'b1')!.state['editing'],
+        isTrue,
+      );
     });
 
-    testWidgets('no registry ancestor → NounScope is an inert passthrough',
-        (tester) async {
+    testWidgets('no registry ancestor → NounScope is an inert passthrough', (
+      tester,
+    ) async {
       // Degrades gracefully: the app works with no frame system mounted.
       await tester.pumpWidget(
         const MaterialApp(

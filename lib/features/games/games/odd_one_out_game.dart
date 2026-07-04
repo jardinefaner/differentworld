@@ -15,15 +15,15 @@ class OddRound {
   const OddRound({required this.cards, required this.answer});
 
   factory OddRound.fromMap(Map<String, dynamic> m) => OddRound(
-        cards: [
-          for (final c in (m['cards'] as List? ?? const <dynamic>[]))
-            (
-              image: (c as Map)['image'] as String? ?? '',
-              label: c['label'] as String? ?? '',
-            ),
-        ],
-        answer: (m['answer'] as num?)?.toInt() ?? 0,
-      );
+    cards: [
+      for (final c in (m['cards'] as List? ?? const <dynamic>[]))
+        (
+          image: (c as Map)['image'] as String? ?? '',
+          label: c['label'] as String? ?? '',
+        ),
+    ],
+    answer: (m['answer'] as num?)?.toInt() ?? 0,
+  );
 
   final List<({String image, String label})> cards;
   final int answer;
@@ -41,14 +41,14 @@ class OddOneOutState {
   });
 
   factory OddOneOutState.fromMap(Map<String, dynamic> m) => OddOneOutState(
-        rounds: [
-          for (final r in (m['rounds'] as List? ?? const <dynamic>[]))
-            OddRound.fromMap(Map<String, dynamic>.from(r as Map)),
-        ],
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        revealed: m['r'] as bool? ?? false,
-        done: m['d'] as bool? ?? false,
-      );
+    rounds: [
+      for (final r in (m['rounds'] as List? ?? const <dynamic>[]))
+        OddRound.fromMap(Map<String, dynamic>.from(r as Map)),
+    ],
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    revealed: m['r'] as bool? ?? false,
+    done: m['d'] as bool? ?? false,
+  );
 
   final List<OddRound> rounds;
   final int index;
@@ -74,19 +74,18 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
   String get title => 'Odd One Out';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.coral);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
   String? get liveRoute => '/live/odd-one-out';
 
   @override
   Map<String, dynamic> initialState(ContentSource content) => {
-        'rounds': const <Map<String, dynamic>>[],
-        'i': 0,
-        'r': false,
-        'd': false,
-      };
+    'rounds': const <Map<String, dynamic>>[],
+    'i': 0,
+    'r': false,
+    'd': false,
+  };
 
   @override
   OddOneOutState decode(Map<String, dynamic> state) =>
@@ -132,10 +131,10 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
 
   @override
   Set<GameIntent> activeIntents(OddOneOutState s) => {
-        if (s.index > 0) GameIntent.back,
-        if (!s.revealed) GameIntent.reveal,
-        if (s.index < s.rounds.length - 1) GameIntent.next,
-      };
+    if (s.index > 0) GameIntent.back,
+    if (!s.revealed) GameIntent.reveal,
+    if (s.index < s.rounds.length - 1) GameIntent.next,
+  };
 
   @override
   Widget buildStage(BuildContext context, OddOneOutState s) {
@@ -210,7 +209,9 @@ class _OddStage extends StatelessWidget {
             // The stranger's name lands when it's revealed — the teacher names
             // what the room spotted.
             AnimatedOpacity(
-              opacity: revealed && (round.odd?.label.isNotEmpty ?? false) ? 1 : 0,
+              opacity: revealed && (round.odd?.label.isNotEmpty ?? false)
+                  ? 1
+                  : 0,
               duration: const Duration(milliseconds: 220),
               child: Text(
                 round.odd?.label ?? '',

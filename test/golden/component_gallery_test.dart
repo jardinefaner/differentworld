@@ -93,9 +93,11 @@ import '_helpers.dart';
 /// both render for real instead of as tofu boxes (the default test env ships
 /// no font data).
 Future<void> _loadFonts() async {
-  final manifest = json.decode(
-    await rootBundle.loadString('FontManifest.json'),
-  ) as List<dynamic>;
+  final manifest =
+      json.decode(
+            await rootBundle.loadString('FontManifest.json'),
+          )
+          as List<dynamic>;
   for (final entry in manifest) {
     final family = (entry as Map<String, dynamic>)['family'] as String;
     final loader = FontLoader(family);
@@ -122,14 +124,14 @@ late final List<Subject> _guardianKids;
 /// A block "live right now" so the LiveBlockStrip + AppShell plates show
 /// the strip instead of its zero-height collapsed (nothing-live) state.
 LiveBlock _demoLiveBlock() => LiveBlock(
-      blockId: 'blk-demo',
-      groupId: 'g1',
-      title: 'Outdoor free play',
-      kind: 'on_site',
-      isOutdoor: true,
-      startAt: DateTime.now().subtract(const Duration(minutes: 12)),
-      endAt: DateTime.now().add(const Duration(minutes: 23)),
-    );
+  blockId: 'blk-demo',
+  groupId: 'g1',
+  title: 'Outdoor free play',
+  kind: 'on_site',
+  isOutdoor: true,
+  startAt: DateTime.now().subtract(const Duration(minutes: 12)),
+  endAt: DateTime.now().add(const Duration(minutes: 23)),
+);
 
 /// Empty-stream overrides so the nav-bearing organisms render against fixed
 /// data instead of spinning up real Drift `.watch()` streams. A live watch
@@ -141,16 +143,19 @@ LiveBlock _demoLiveBlock() => LiveBlock(
 // Riverpod's Override type isn't publicly exported (see _helpers.dart), so
 // these can't be annotated — same ignore the provider files use.
 // ignore: specify_nonobvious_property_types
-final _emptyCaptures = capturesProvider(CaptureFilter.open)
-    .overrideWith((_) => Stream<List<Capture>>.value(const <Capture>[]));
+final _emptyCaptures = capturesProvider(
+  CaptureFilter.open,
+).overrideWith((_) => Stream<List<Capture>>.value(const <Capture>[]));
 // Untyped — Override isn't exported (as above).
 // ignore: specify_nonobvious_property_types
-final _emptyTasks = tasksProvider(TaskFilter.open)
-    .overrideWith((_) => Stream<List<Task>>.value(const <Task>[]));
+final _emptyTasks = tasksProvider(
+  TaskFilter.open,
+).overrideWith((_) => Stream<List<Task>>.value(const <Task>[]));
 // Untyped — Override isn't exported (as above).
 // ignore: specify_nonobvious_property_types
-final _emptyMoments = momentsForBlockProvider('blk-demo')
-    .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[]));
+final _emptyMoments = momentsForBlockProvider(
+  'blk-demo',
+).overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[]));
 
 void main() {
   setUpAll(() async {
@@ -165,7 +170,9 @@ void main() {
     _organismDb = AppDatabase.forTesting(NativeDatabase.memory());
     await _organismDb.createMigrator().createAll();
     const now = '2026-06-17T08:00:00Z';
-    await _organismDb.into(_organismDb.spaces).insert(
+    await _organismDb
+        .into(_organismDb.spaces)
+        .insert(
           SpacesCompanion.insert(
             id: 'sp1',
             name: 'Sunny Days Program',
@@ -175,7 +182,9 @@ void main() {
             updatedAt: now,
           ),
         );
-    await _organismDb.into(_organismDb.members).insert(
+    await _organismDb
+        .into(_organismDb.members)
+        .insert(
           MembersCompanion.insert(
             id: 'm1',
             displayName: 'Maya Okonkwo',
@@ -186,16 +195,18 @@ void main() {
             spaceId: const Value('sp1'),
           ),
         );
-    final m = await (_organismDb.select(_organismDb.members)
-          ..where((t) => t.id.equals('m1')))
-        .getSingle();
-    final s = await (_organismDb.select(_organismDb.spaces)
-          ..where((t) => t.id.equals('sp1')))
-        .getSingle();
+    final m = await (_organismDb.select(
+      _organismDb.members,
+    )..where((t) => t.id.equals('m1'))).getSingle();
+    final s = await (_organismDb.select(
+      _organismDb.spaces,
+    )..where((t) => t.id.equals('sp1'))).getSingle();
     _seededViewer = Viewer(member: m, space: s);
 
     // A guardian + their two children, for the GuardianDrawer plate.
-    await _organismDb.into(_organismDb.guardians).insert(
+    await _organismDb
+        .into(_organismDb.guardians)
+        .insert(
           GuardiansCompanion.insert(
             id: 'gd1',
             spaceId: 'sp1',
@@ -208,7 +219,9 @@ void main() {
       ('s1', 'Sofia', 'Reyes'),
       ('s2', 'Mateo', 'Reyes'),
     ]) {
-      await _organismDb.into(_organismDb.subjects).insert(
+      await _organismDb
+          .into(_organismDb.subjects)
+          .insert(
             SubjectsCompanion.insert(
               id: id,
               spaceId: 'sp1',
@@ -220,12 +233,12 @@ void main() {
             ),
           );
     }
-    final gd = await (_organismDb.select(_organismDb.guardians)
-          ..where((t) => t.id.equals('gd1')))
-        .getSingle();
-    _guardianKids = await (_organismDb.select(_organismDb.subjects)
-          ..where((t) => t.spaceId.equals('sp1')))
-        .get();
+    final gd = await (_organismDb.select(
+      _organismDb.guardians,
+    )..where((t) => t.id.equals('gd1'))).getSingle();
+    _guardianKids = await (_organismDb.select(
+      _organismDb.subjects,
+    )..where((t) => t.spaceId.equals('sp1'))).get();
     _guardianViewer = GuardianViewer(
       guardian: gd,
       childSubjectIds: const ['s1', 's2'],
@@ -237,9 +250,10 @@ void main() {
     // With the watch streams overridden there are no lingering Drift
     // subscriptions, so close() returns at once; the timeout is
     // belt-and-suspenders against any residual hang.
-    await _organismDb
-        .close()
-        .timeout(const Duration(seconds: 5), onTimeout: () {});
+    await _organismDb.close().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {},
+    );
   });
 
   // ── ATOMS ──────────────────────────────────────────────────────────────
@@ -325,7 +339,11 @@ void main() {
     (_) => const Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ScaleBar(scale: Scale(value: 3, max: 5), label: 'Mood', trailing: '3 / 5'),
+        ScaleBar(
+          scale: Scale(value: 3, max: 5),
+          label: 'Mood',
+          trailing: '3 / 5',
+        ),
         SizedBox(height: Insets.xl),
         ScaleBar(
           scale: Scale(value: 23, max: 50, previous: 10),
@@ -510,7 +528,10 @@ void main() {
   _plate(
     'molecules/content_header',
     height: 150,
-    (_) => const ContentHeader(title: 'Today', subtitle: 'Sunny Room · 12 children'),
+    (_) => const ContentHeader(
+      title: 'Today',
+      subtitle: 'Sunny Room · 12 children',
+    ),
   );
 
   _plate(
@@ -688,7 +709,10 @@ void main() {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Glass sheet', style: Theme.of(ctx).textTheme.titleMedium),
+                  Text(
+                    'Glass sheet',
+                    style: Theme.of(ctx).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'A frosted surface over the page — the floating-glass chrome.',
@@ -725,7 +749,10 @@ void main() {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const GlassDragHandle(),
-                    Text('Edit room', style: Theme.of(ctx).textTheme.titleMedium),
+                    Text(
+                      'Edit room',
+                      style: Theme.of(ctx).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Drag the handle to dismiss — the pill shows only on a '
@@ -907,32 +934,32 @@ void main() {
     height: 520,
     tree: (theme) {
       Widget tile(String label, String span, Color bg, Color fg) => Material(
-            color: bg,
-            borderRadius: BorderRadius.circular(16),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    span,
-                    style: TextStyle(
-                      color: fg.withValues(alpha: 0.72),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          );
+              const SizedBox(height: 2),
+              Text(
+                span,
+                style: TextStyle(
+                  color: fg.withValues(alpha: 0.72),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
       final s = theme.colorScheme;
       return MaterialApp(
         theme: theme,
@@ -945,7 +972,8 @@ void main() {
               children: [
                 const ContentHeader(
                   title: 'Bento grid',
-                  subtitle: 'Modular tiles, sized by importance · 2 / 4 / 6 '
+                  subtitle:
+                      'Modular tiles, sized by importance · 2 / 4 / 6 '
                       'columns by width',
                 ),
                 BentoGrid(
@@ -953,32 +981,52 @@ void main() {
                     BentoTile(
                       id: 'hero',
                       span: const BentoSpan(tablet: 4, desktop: 4, rows: 2),
-                      child: tile('Hero', 'L · 4×2', s.primaryContainer,
-                          s.onPrimaryContainer),
+                      child: tile(
+                        'Hero',
+                        'L · 4×2',
+                        s.primaryContainer,
+                        s.onPrimaryContainer,
+                      ),
                     ),
                     BentoTile(
                       id: 'tall',
                       span: const BentoSpan(tablet: 4, rows: 2),
-                      child: tile('Tall', '2×2', s.secondaryContainer,
-                          s.onSecondaryContainer),
+                      child: tile(
+                        'Tall',
+                        '2×2',
+                        s.secondaryContainer,
+                        s.onSecondaryContainer,
+                      ),
                     ),
                     BentoTile(
                       id: 's1',
                       span: const BentoSpan(phone: 1),
-                      child: tile('S', '2×1', s.surfaceContainerHighest,
-                          s.onSurface),
+                      child: tile(
+                        'S',
+                        '2×1',
+                        s.surfaceContainerHighest,
+                        s.onSurface,
+                      ),
                     ),
                     BentoTile(
                       id: 's2',
                       span: const BentoSpan(phone: 1),
-                      child: tile('S', '2×1', s.surfaceContainerHighest,
-                          s.onSurface),
+                      child: tile(
+                        'S',
+                        '2×1',
+                        s.surfaceContainerHighest,
+                        s.onSurface,
+                      ),
                     ),
                     BentoTile(
                       id: 'm',
                       span: const BentoSpan(tablet: 4),
-                      child: tile('M', '2×1', s.tertiaryContainer,
-                          s.onTertiaryContainer),
+                      child: tile(
+                        'M',
+                        '2×1',
+                        s.tertiaryContainer,
+                        s.onTertiaryContainer,
+                      ),
                     ),
                   ],
                 ),
@@ -1292,12 +1340,12 @@ void main() {
 
 /// Wrap a full-bleed surface widget in the standard golden tree.
 Widget _surfaceApp(ThemeData theme, Widget body) => ProviderScope(
-      child: MaterialApp(
-        theme: theme,
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(body: body),
-      ),
-    );
+  child: MaterialApp(
+    theme: theme,
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(body: body),
+  ),
+);
 
 /// Themed modal scrim behind a surface.
 Color _scrim(BuildContext context, {double alpha = 0.45}) =>
@@ -1306,25 +1354,25 @@ Color _scrim(BuildContext context, {double alpha = 0.45}) =>
 /// A busy backdrop (colour stripes) so the frosted-glass blur has something to
 /// frost — glass over an empty surface only shows its tint.
 Widget _glassBackdrop() => Container(
-      color: const Color(0xFFEFEAE2),
-      alignment: Alignment.topLeft,
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final w in const [320.0, 240.0, 300.0, 180.0, 260.0])
-            Container(
-              height: 13,
-              width: w,
-              margin: const EdgeInsets.only(bottom: 9),
-              decoration: BoxDecoration(
-                color: const Color(0xFFCFC8BB),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-        ],
-      ),
-    );
+  color: const Color(0xFFEFEAE2),
+  alignment: Alignment.topLeft,
+  padding: const EdgeInsets.all(18),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      for (final w in const [320.0, 240.0, 300.0, 180.0, 260.0])
+        Container(
+          height: 13,
+          width: w,
+          margin: const EdgeInsets.only(bottom: 9),
+          decoration: BoxDecoration(
+            color: const Color(0xFFCFC8BB),
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+    ],
+  ),
+);
 
 /// Theme-aware busy backdrop — same shape as [_glassBackdrop] but its
 /// colours follow the scheme, so a surface plate's own themed text (e.g.
@@ -1361,38 +1409,38 @@ class _ShellHomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EdgeScaffold(
-        showBack: false,
-        actions: [
-          SecondaryActionButton(
-            tooltip: 'Sync',
-            icon: Icons.cloud_done_outlined,
-            onPressed: () {},
-          ),
-        ],
-        body: ListView(
-          children: const [
-            ContentHeader(
-              title: 'Today',
-              subtitle: 'Sunny Days Program · 18 children',
-            ),
-            FeatureCard(
-              leading: Icon(Icons.wb_sunny_outlined),
-              title: 'Morning circle',
-              subtitle: 'Now · Sunny Room',
-            ),
-            FeatureCard(
-              leading: Icon(Icons.inbox_outlined),
-              title: '3 captures to triage',
-              subtitle: 'From this morning',
-            ),
-            FeatureCard(
-              leading: Icon(Icons.check_circle_outline),
-              title: '2 open tasks',
-              subtitle: 'Permission slips due Friday',
-            ),
-          ],
+    showBack: false,
+    actions: [
+      SecondaryActionButton(
+        tooltip: 'Sync',
+        icon: Icons.cloud_done_outlined,
+        onPressed: () {},
+      ),
+    ],
+    body: ListView(
+      children: const [
+        ContentHeader(
+          title: 'Today',
+          subtitle: 'Sunny Days Program · 18 children',
         ),
-      );
+        FeatureCard(
+          leading: Icon(Icons.wb_sunny_outlined),
+          title: 'Morning circle',
+          subtitle: 'Now · Sunny Room',
+        ),
+        FeatureCard(
+          leading: Icon(Icons.inbox_outlined),
+          title: '3 captures to triage',
+          subtitle: 'From this morning',
+        ),
+        FeatureCard(
+          leading: Icon(Icons.check_circle_outline),
+          title: '2 open tasks',
+          subtitle: 'Permission slips due Friday',
+        ),
+      ],
+    ),
+  );
 }
 
 /// EdgeScaffold standalone — its own Scaffold + body, with the floating
@@ -1540,24 +1588,24 @@ class _BottomSheetSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Stack(
-        fit: StackFit.expand,
-        children: [
-          _glassBackdrop(),
-          ColoredBox(color: _scrim(context)),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: const GlassPanel(
-                child: GlassSheetScope(
-                  surface: GlassSheetSurface.bottomSheet,
-                  child: _SheetForm(),
-                ),
-              ),
+    fit: StackFit.expand,
+    children: [
+      _glassBackdrop(),
+      ColoredBox(color: _scrim(context)),
+      Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: const GlassPanel(
+            child: GlassSheetScope(
+              surface: GlassSheetSurface.bottomSheet,
+              child: _SheetForm(),
             ),
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 /// `showGlassSheet` 840–1200dp — a centered glass dialog (the drag handle
@@ -1567,23 +1615,23 @@ class _DialogSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Stack(
-        fit: StackFit.expand,
-        children: [
-          _glassBackdrop(),
-          ColoredBox(color: _scrim(context)),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: const GlassPanel(
-                child: GlassSheetScope(
-                  surface: GlassSheetSurface.dialog,
-                  child: _SheetForm(),
-                ),
-              ),
+    fit: StackFit.expand,
+    children: [
+      _glassBackdrop(),
+      ColoredBox(color: _scrim(context)),
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: const GlassPanel(
+            child: GlassSheetScope(
+              surface: GlassSheetSurface.dialog,
+              child: _SheetForm(),
             ),
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 /// `showGlassSheet` ≥ 1200dp — the right-docked third-column side panel,
@@ -1593,53 +1641,53 @@ class _SidePanelSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Stack(
-        fit: StackFit.expand,
-        children: [
-          _glassBackdrop(),
-          ColoredBox(color: _scrim(context, alpha: 0.3)),
-          Align(
-            alignment: Alignment.centerRight,
-            child: SizedBox(
-              width: 420,
-              height: double.infinity,
-              child: GlassPanel(
-                shape: GlassPanelShape.side,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: SafeArea(
-                    left: false,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 44,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: () {},
-                              ),
-                            ],
+    fit: StackFit.expand,
+    children: [
+      _glassBackdrop(),
+      ColoredBox(color: _scrim(context, alpha: 0.3)),
+      Align(
+        alignment: Alignment.centerRight,
+        child: SizedBox(
+          width: 420,
+          height: double.infinity,
+          child: GlassPanel(
+            shape: GlassPanelShape.side,
+            child: Material(
+              type: MaterialType.transparency,
+              child: SafeArea(
+                left: false,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 44,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {},
                           ),
-                        ),
-                        const Expanded(
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: GlassSheetScope(
-                              surface: GlassSheetSurface.sidePanel,
-                              child: _SheetForm(),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    const Expanded(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: GlassSheetScope(
+                          surface: GlassSheetSurface.sidePanel,
+                          child: _SheetForm(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 /// The `confirmDestructive` dialog — error-tinted confirm over a scrim.
@@ -1685,28 +1733,28 @@ class _SnackbarSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Stack(
-        fit: StackFit.expand,
-        children: [
-          _glassBackdrop(),
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.all(14),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _SnackbarShape(message: 'Saved as a capture.', action: 'Undo'),
-                  SizedBox(height: 10),
-                  _SnackbarShape(
-                    message: "Couldn't sync — we'll retry automatically.",
-                    action: 'Retry',
-                  ),
-                ],
+    fit: StackFit.expand,
+    children: [
+      _glassBackdrop(),
+      const Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: EdgeInsets.all(14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _SnackbarShape(message: 'Saved as a capture.', action: 'Undo'),
+              SizedBox(height: 10),
+              _SnackbarShape(
+                message: "Couldn't sync — we'll retry automatically.",
+                action: 'Retry',
               ),
-            ),
+            ],
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 }
 
 class _SnackbarShape extends StatelessWidget {
@@ -1762,23 +1810,23 @@ class _OmniboxBarSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Stack(
-        fit: StackFit.expand,
-        children: [
-          _themedBackdrop(context),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 76,
-                  child: BottomOmniboxBar(onTap: _noop),
-                ),
-              ],
+    fit: StackFit.expand,
+    children: [
+      _themedBackdrop(context),
+      const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            SizedBox(
+              height: 76,
+              child: BottomOmniboxBar(onTap: _noop),
             ),
-          ),
-        ],
-      );
+          ],
+        ),
+      ),
+    ],
+  );
 
   static void _noop() {}
 }
@@ -1793,14 +1841,14 @@ class _OmniboxOverlaySurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     Widget label(String text) => Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
-          child: Text(
-            text,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        );
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
+      child: Text(
+        text,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -1865,9 +1913,9 @@ class _OverlayComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox(
-        height: 76,
-        child: BottomOmniboxBar(onTap: _noop),
-      );
+    height: 76,
+    child: BottomOmniboxBar(onTap: _noop),
+  );
 
   static void _noop() {}
 }
@@ -1881,13 +1929,13 @@ class _Labeled extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          child,
-          const SizedBox(height: 6),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      child,
+      const SizedBox(height: 6),
+      Text(label, style: Theme.of(context).textTheme.labelSmall),
+    ],
+  );
 }
 
 /// Render one component's plate (its variants) under light + dark, each written

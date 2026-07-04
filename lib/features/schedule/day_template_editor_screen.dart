@@ -93,12 +93,14 @@ class DayTemplateEditorScreen extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                       itemCount: template.schedule.length,
                       onReorder: (oldIndex, newIndex) {
-                        unawaited(actions.reorderBlocks(
-                          spaceId: spaceId,
-                          templateId: template.id,
-                          oldIndex: oldIndex,
-                          newIndex: newIndex,
-                        ));
+                        unawaited(
+                          actions.reorderBlocks(
+                            spaceId: spaceId,
+                            templateId: template.id,
+                            oldIndex: oldIndex,
+                            newIndex: newIndex,
+                          ),
+                        );
                       },
                       itemBuilder: (context, i) {
                         final slot = template.schedule[i];
@@ -212,8 +214,7 @@ class DayTemplateEditorScreen extends ConsumerWidget {
     WidgetRef ref,
     DayTemplate template,
     String spaceId,
-  ) =>
-      showApplyDayTemplateSheet(context, template: template, spaceId: spaceId);
+  ) => showApplyDayTemplateSheet(context, template: template, spaceId: spaceId);
 }
 
 class _HeaderCard extends ConsumerWidget {
@@ -239,7 +240,9 @@ class _HeaderCard extends ConsumerWidget {
     );
     if (picked == null) return;
     final m = picked.hour * 60 + picked.minute;
-    await ref.read(dayTemplateActionsProvider).setBounds(
+    await ref
+        .read(dayTemplateActionsProvider)
+        .setBounds(
           spaceId: spaceId,
           id: template.id,
           startMinute: isStart ? m : template.startMinute,
@@ -256,8 +259,8 @@ class _HeaderCard extends ConsumerWidget {
     final fillText = template.isOverfilled
         ? '${durationLabel(-template.freeMinutes)} over the day'
         : template.freeMinutes == 0
-            ? 'Filled to the minute'
-            : '${durationLabel(template.freeMinutes)} free';
+        ? 'Filled to the minute'
+        : '${durationLabel(template.freeMinutes)} free';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -274,12 +277,16 @@ class _HeaderCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       template.name,
-                      style: theme.textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  Icon(Icons.edit_outlined,
-                      size: 18, color: theme.colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ],
               ),
             ),
@@ -423,7 +430,8 @@ class _NoBlocks extends StatelessWidget {
     return const EmptyState(
       icon: Icons.view_timeline_outlined,
       title: 'No blocks yet',
-      message: 'Add the pieces of your day — arrival, snack, activity, '
+      message:
+          'Add the pieces of your day — arrival, snack, activity, '
           'outdoor, pickup. Drag to reorder; the times re-pack themselves.',
     );
   }

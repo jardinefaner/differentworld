@@ -61,7 +61,8 @@ class ContentHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = titleStyle ?? theme.textTheme.headlineSmall;
-    final baseS = subtitleStyle ??
+    final baseS =
+        subtitleStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         );

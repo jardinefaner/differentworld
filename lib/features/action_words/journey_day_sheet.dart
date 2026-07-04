@@ -138,7 +138,9 @@ Future<void> showJourneyDaySheet(
                     for (final w in block.words)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
@@ -268,8 +270,10 @@ class JourneyDayRow extends StatelessWidget {
                 ),
                 if (isToday) ...[
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: accent,
                       borderRadius: BorderRadius.circular(20),
@@ -289,8 +293,11 @@ class JourneyDayRow extends StatelessWidget {
                 if (isFirstDay)
                   Tooltip(
                     message: 'Set up the room',
-                    child: Icon(Icons.meeting_room_outlined,
-                        size: 16, color: accent),
+                    child: Icon(
+                      Icons.meeting_room_outlined,
+                      size: 16,
+                      color: accent,
+                    ),
                   )
                 else if (isLastDay)
                   Tooltip(
@@ -369,10 +376,10 @@ class _FocusLabel extends StatelessWidget {
     return Text(
       text.toUpperCase(),
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: accent,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
+        color: accent,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.6,
+      ),
     );
   }
 }

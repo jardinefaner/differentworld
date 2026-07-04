@@ -133,17 +133,20 @@ class FeatureCard extends ConsumerWidget {
     // `!= boxed`) so the null/loading state falls to boxed — matching the
     // pre-existing behaviour every golden baseline was captured under.
     final style = ref.watch(displayStyleProvider).value;
-    final flat = (style == DisplayStyle.calm || style == DisplayStyle.clean) &&
+    final flat =
+        (style == DisplayStyle.calm || style == DisplayStyle.clean) &&
         tone == FeatureCardTone.neutral;
     final bg = flat
         ? Colors.transparent
         : switch (tone) {
             FeatureCardTone.neutral => scheme.surfaceContainerHighest,
             FeatureCardTone.selected => scheme.primaryContainer,
-            FeatureCardTone.danger =>
-              scheme.errorContainer.withValues(alpha: 0.45),
-            FeatureCardTone.success =>
-              scheme.tertiaryContainer.withValues(alpha: 0.5),
+            FeatureCardTone.danger => scheme.errorContainer.withValues(
+              alpha: 0.45,
+            ),
+            FeatureCardTone.success => scheme.tertiaryContainer.withValues(
+              alpha: 0.5,
+            ),
           };
     // Foreground paired to each tone. Default text color over
     // `surfaceContainerHighest` is `onSurface`, but over tinted

@@ -20,7 +20,8 @@ void main() {
         expect(
           table!.indexes,
           isNotEmpty,
-          reason: '$name is an unbounded-growth table and must keep its '
+          reason:
+              '$name is an unbounded-growth table and must keep its '
               'hot-query indexes (scale — see SCALE_PUNCH_LIST.md)',
         );
       }
@@ -36,7 +37,8 @@ void main() {
             expect(
               columnNames.contains(column.column),
               isTrue,
-              reason: 'index "${index.name}" on "${table.name}" references '
+              reason:
+                  'index "${index.name}" on "${table.name}" references '
                   'unknown column "${column.column}"',
             );
           }

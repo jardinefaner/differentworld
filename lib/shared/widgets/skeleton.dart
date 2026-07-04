@@ -54,8 +54,7 @@ class _ShimmerScope extends InheritedWidget {
   final AnimationController controller;
 
   static AnimationController? maybeOf(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<_ShimmerScope>();
+    final scope = context.dependOnInheritedWidgetOfExactType<_ShimmerScope>();
     return scope?.controller;
   }
 

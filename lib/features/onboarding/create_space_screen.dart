@@ -14,8 +14,7 @@ class CreateSpaceScreen extends ConsumerStatefulWidget {
   const CreateSpaceScreen({super.key});
 
   @override
-  ConsumerState<CreateSpaceScreen> createState() =>
-      _CreateSpaceScreenState();
+  ConsumerState<CreateSpaceScreen> createState() => _CreateSpaceScreenState();
 }
 
 class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
@@ -123,104 +122,104 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
                   // onboarding flow reads as one piece.
                   Center(
                     child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              theme.colorScheme.primary,
-                              theme.colorScheme.tertiary,
-                            ],
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.cottage_outlined,
-                          size: 36,
-                          color: theme.colorScheme.onPrimary,
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.tertiary,
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "What's your program called?",
-                      style: theme.textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This is the program your classrooms, students, and '
-                      'team will live under. You can edit it later in Settings.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 28),
-                    TextFormField(
-                      controller: _nameController,
-                      // Do NOT autofocus — the keyboard popping up
-                      // immediately covers the explanatory copy. The
-                      // user taps when they're ready.
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submit(),
-                      // Wave 115: closest semantic hint for "name of
-                      // an organization the user is associated with."
-                      // Browsers won't reliably autofill this, but
-                      // tagging it keeps form heuristics consistent.
-                      autofillHints: const [
-                        AutofillHints.organizationName,
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'Program name',
-                        hintText: 'e.g. Sunshine Preschool',
-                        prefixIcon: Icon(Icons.school_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        final v = value?.trim() ?? '';
-                        if (v.isEmpty) {
-                          return 'Your program needs a name — what do '
-                              'families call you?';
-                        }
-                        if (v.length < 2) return 'A little longer, please.';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _submitting ? null : _submit,
-                      icon: _submitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check),
-                      label: const Text('Create program'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Icon(
+                        Icons.cottage_outlined,
+                        size: 36,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        _error!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.error,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "What's your program called?",
+                    style: theme.textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This is the program your classrooms, students, and '
+                    'team will live under. You can edit it later in Settings.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  TextFormField(
+                    controller: _nameController,
+                    // Do NOT autofocus — the keyboard popping up
+                    // immediately covers the explanatory copy. The
+                    // user taps when they're ready.
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _submit(),
+                    // Wave 115: closest semantic hint for "name of
+                    // an organization the user is associated with."
+                    // Browsers won't reliably autofill this, but
+                    // tagging it keeps form heuristics consistent.
+                    autofillHints: const [
+                      AutofillHints.organizationName,
                     ],
+                    decoration: const InputDecoration(
+                      labelText: 'Program name',
+                      hintText: 'e.g. Sunshine Preschool',
+                      prefixIcon: Icon(Icons.school_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      final v = value?.trim() ?? '';
+                      if (v.isEmpty) {
+                        return 'Your program needs a name — what do '
+                            'families call you?';
+                      }
+                      if (v.length < 2) return 'A little longer, please.';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _submitting ? null : _submit,
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check),
+                    label: const Text('Create program'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _error!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
         ),
+      ),
     );
   }
 }

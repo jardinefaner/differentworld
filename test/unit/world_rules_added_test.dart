@@ -11,15 +11,15 @@ Entry _rule({
   required String worldId,
   String? body,
 }) => Entry(
-      id: id,
-      spaceId: 'space-1',
-      kind: 'world_rule',
-      details: '{"world_id":"$worldId"}',
-      recordedBy: 'm1',
-      recordedAt: '2026-06-06T16:00:00Z',
-      updatedAt: '2026-06-06T16:00:00Z',
-      body: body,
-    );
+  id: id,
+  spaceId: 'space-1',
+  kind: 'world_rule',
+  details: '{"world_id":"$worldId"}',
+  recordedBy: 'm1',
+  recordedAt: '2026-06-06T16:00:00Z',
+  updatedAt: '2026-06-06T16:00:00Z',
+  body: body,
+);
 
 void main() {
   group('addedWorldRulesFrom', () {

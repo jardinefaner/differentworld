@@ -114,8 +114,7 @@ class _VehicleInspectionScreenState
     if (form == null || !form.validate()) return;
 
     if (!_results.isComplete) {
-      setState(() => _error =
-          'Mark every item — OK, Needs repair, or Unsafe.');
+      setState(() => _error = 'Mark every item — OK, Needs repair, or Unsafe.');
       // Soft-scroll-friendly: also focus the first unset item visually
       // would be nice; for v1 the inline message is enough.
       return;
@@ -128,9 +127,11 @@ class _VehicleInspectionScreenState
         .where((s) => s.required && !_captures.any((c) => c.key == s.key))
         .toList();
     if (missing.isNotEmpty) {
-      setState(() => _error =
-          'Take the required photos first: '
-          '${missing.map((s) => s.label).join(', ')}.');
+      setState(
+        () => _error =
+            'Take the required photos first: '
+            '${missing.map((s) => s.label).join(', ')}.',
+      );
       return;
     }
 
@@ -139,8 +140,10 @@ class _VehicleInspectionScreenState
     if (!widget.isCheckout &&
         _boardedIds.isNotEmpty &&
         !headcountCleared(_boardedIds, _offIds)) {
-      setState(() => _error =
-          'Confirm every child is out — ${_stillOnBoard.length} still on board.');
+      setState(
+        () => _error =
+            'Confirm every child is out — ${_stillOnBoard.length} still on board.',
+      );
       return;
     }
 
@@ -232,8 +235,9 @@ class _VehicleInspectionScreenState
     final shots = shotsFor(capabilitiesJson, widget.kind);
     final requiredShots = shots.where((s) => s.required).toList();
     final capturedKeys = _captures.map((c) => c.key).toSet();
-    final missing =
-        requiredShots.where((s) => !capturedKeys.contains(s.key)).toList();
+    final missing = requiredShots
+        .where((s) => !capturedKeys.contains(s.key))
+        .toList();
     final taken = _captures.length;
     return Card(
       margin: EdgeInsets.zero,
@@ -336,7 +340,8 @@ class _VehicleInspectionScreenState
   /// photo — the actual hot-car prevention).
   Widget _rosterCard() {
     final theme = Theme.of(context);
-    final subjects = ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
+    final subjects =
+        ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
     final nameById = {for (final s in subjects) s.id: s.firstName};
 
     if (widget.isCheckout) {
@@ -354,7 +359,9 @@ class _VehicleInspectionScreenState
                   Text("Who's on board?", style: theme.textTheme.titleMedium),
                   const Spacer(),
                   Text(
-                    _boardedIds.isEmpty ? 'Optional' : '${_boardedIds.length} boarding',
+                    _boardedIds.isEmpty
+                        ? 'Optional'
+                        : '${_boardedIds.length} boarding',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -402,7 +409,10 @@ class _VehicleInspectionScreenState
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.info_outline, color: theme.colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.info_outline,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -540,8 +550,7 @@ class _VehicleInspectionScreenState
             // still complete (the incident gets logged with the row)
             // but the urgency is hard to miss.
             final hasUnsafe = InspectionChecklist.items.any(
-              (item) =>
-                  _results.statusFor(item) == InspectionStatus.unsafe,
+              (item) => _results.statusFor(item) == InspectionStatus.unsafe,
             );
             return Column(
               children: [
@@ -552,8 +561,7 @@ class _VehicleInspectionScreenState
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
                         ContentHeader(
-                          title:
-                              widget.isCheckout ? 'Check out' : 'Check in',
+                          title: widget.isCheckout ? 'Check out' : 'Check in',
                           subtitle: widget.isCheckout
                               ? '${v.name} · pre-trip safety check'
                               : '${v.name} · post-trip safety check',
@@ -636,9 +644,8 @@ class _VehicleInspectionScreenState
                           _SectionCard(
                             label:
                                 InspectionChecklist.sectionLabels[section] ??
-                                    section,
-                            items:
-                                InspectionChecklist.itemsForSection(section),
+                                section,
+                            items: InspectionChecklist.itemsForSection(section),
                             results: _results,
                             onChanged: (item, st) {
                               setState(() => _results.setStatus(item, st));
@@ -652,8 +659,7 @@ class _VehicleInspectionScreenState
                           textCapitalization: TextCapitalization.sentences,
                           decoration: const InputDecoration(
                             labelText: 'Body damage (optional)',
-                            hintText:
-                                'Describe any scratches, dents, etc.',
+                            hintText: 'Describe any scratches, dents, etc.',
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -719,7 +725,9 @@ class _VehicleInspectionScreenState
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: _saving ? null : () => _submit(v.capabilities),
+                        onPressed: _saving
+                            ? null
+                            : () => _submit(v.capabilities),
                         icon: _saving
                             ? const SizedBox(
                                 width: 16,
@@ -728,17 +736,18 @@ class _VehicleInspectionScreenState
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Icon(widget.isCheckout
-                                ? Icons.key_outlined
-                                : Icons.assignment_turned_in_outlined),
+                            : Icon(
+                                widget.isCheckout
+                                    ? Icons.key_outlined
+                                    : Icons.assignment_turned_in_outlined,
+                              ),
                         label: Text(
                           widget.isCheckout
                               ? 'Complete check-out'
                               : 'Complete check-in',
                         ),
                         style: FilledButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
                     ),
@@ -770,8 +779,7 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final marked =
-        items.where((i) => results.statusFor(i) != null).length;
+    final marked = items.where((i) => results.statusFor(i) != null).length;
     final total = items.length;
     final hasUnsafe = items.any(
       (i) => results.statusFor(i) == InspectionStatus.unsafe,

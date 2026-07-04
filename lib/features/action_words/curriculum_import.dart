@@ -72,17 +72,20 @@ class CurriculumImporter {
     final db = await _ref.read(appDatabaseProvider.future);
     final existing = await db.activitiesDao.watchAllInSpace(spaceId).first;
     final imported = existing
-        .where((a) =>
-            (Capabilities.fromJson(a.capabilities).getString(_keyMarker) ?? '')
-                .isNotEmpty)
+        .where(
+          (a) =>
+              (Capabilities.fromJson(a.capabilities).getString(_keyMarker) ??
+                      '')
+                  .isNotEmpty,
+        )
         .length;
     return (total - imported).clamp(0, total);
   }
-
 }
 
-final curriculumImporterProvider =
-    Provider<CurriculumImporter>(CurriculumImporter.new);
+final curriculumImporterProvider = Provider<CurriculumImporter>(
+  CurriculumImporter.new,
+);
 
 /// The activity title — the part before the first colon ("Body map"),
 /// trimmed to a sane length; the full prompt becomes the description.

@@ -59,8 +59,7 @@ class QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
-    final openCaptureCount =
-        ref.watch(openCapturesProvider).value?.length ?? 0;
+    final openCaptureCount = ref.watch(openCapturesProvider).value?.length ?? 0;
     final openTaskCount = ref.watch(openTasksProvider).value?.length ?? 0;
     // Widget list — most entries are plain _Tile, but the vehicle
     // entry is a _VehicleQuickTile ConsumerWidget so it can watch
@@ -125,7 +124,6 @@ class QuickActions extends ConsumerWidget {
       ],
     );
   }
-
 }
 
 /// State-aware Quick Action tile for vehicles. Lives in its own
@@ -145,8 +143,8 @@ class _VehicleQuickTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fleet = ref.watch(fleetStatusProvider).value ??
-        const <VehicleWithStatus>[];
+    final fleet =
+        ref.watch(fleetStatusProvider).value ?? const <VehicleWithStatus>[];
     final myOut = fleet
         .where((vws) => vws.isOutBy(viewer.memberId))
         .toList(growable: false);
@@ -154,9 +152,7 @@ class _VehicleQuickTile extends ConsumerWidget {
       final first = myOut.first.vehicle;
       return _Tile(
         icon: Icons.assignment_turned_in_outlined,
-        label: myOut.length == 1
-            ? 'Return ${first.name}'
-            : 'Return vehicle',
+        label: myOut.length == 1 ? 'Return ${first.name}' : 'Return vehicle',
         badge: myOut.length > 1 ? '${myOut.length}' : null,
         onTap: () => unawaited(
           context.push('/vehicles/${first.id}/checkin'),
@@ -189,6 +185,7 @@ class _Tile extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+
   /// Optional small count chip in the top-right corner (e.g. "3" for
   /// the capture inbox). Renders only when non-null.
   final String? badge;
@@ -210,8 +207,10 @@ class _Tile extends StatelessWidget {
               child: InkWell(
                 onTap: onTap,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -302,9 +301,7 @@ class _ClassroomPickerSheet extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.meeting_room_outlined),
                 title: Text(g.name),
-                subtitle: g.ageRange == null
-                    ? null
-                    : Text(g.ageRange!),
+                subtitle: g.ageRange == null ? null : Text(g.ageRange!),
                 onTap: () => Navigator.of(context).pop(g),
               ),
           ],

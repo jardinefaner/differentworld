@@ -22,17 +22,19 @@ class _FakePictureSource implements ContentSource {
 }
 
 ContentItem _pic(String image, String label) => ContentItem(
-      kind: ContentKind.picture,
-      fingerprint: image,
-      payload: {'image': image, 'label': label},
-    );
+  kind: ContentKind.picture,
+  fingerprint: image,
+  payload: {'image': image, 'label': label},
+);
 
 void main() {
   const game = GridRevealGame();
   const values = {'cols': 2, 'rows': 2};
 
   test('a custom photo with mix OFF is the only thing that can play', () {
-    final src = _FakePictureSource([_pic('sp1/custom_picture/p1/x.jpg', 'Dog')]);
+    final src = _FakePictureSource([
+      _pic('sp1/custom_picture/p1/x.jpg', 'Dog'),
+    ]);
     final s = game.initialStateFor(src, {...values, 'mixEmoji': false});
     expect(s['photo'], true);
     expect(s['pic'], 'sp1/custom_picture/p1/x.jpg');

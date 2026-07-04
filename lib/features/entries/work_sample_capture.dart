@@ -33,7 +33,9 @@ Future<void> snapWork(
   final service = ref.read(photoServiceProvider);
   // Camera on mobile; a file/gallery pick everywhere else (no in-app camera
   // off-mobile — docs/PLATFORM_RUBRIC.md P1).
-  final source = isMobileCapturePlatform ? ImageSource.camera : ImageSource.gallery;
+  final source = isMobileCapturePlatform
+      ? ImageSource.camera
+      : ImageSource.gallery;
   final picked = await service.pickPhoto(source);
   if (picked == null) return;
 
@@ -47,7 +49,9 @@ Future<void> snapWork(
     );
     final world = ref.read(currentWorldProvider);
     final day = ref.read(currentProgramDayProvider);
-    await ref.read(entryActionsProvider).createWorkSample(
+    await ref
+        .read(entryActionsProvider)
+        .createWorkSample(
           subjectId: subjectId,
           groupId: groupId,
           photoUrls: [url],

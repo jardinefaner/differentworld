@@ -1,4 +1,3 @@
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
@@ -7,7 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TodayStatusCard extends ConsumerWidget {
-  const TodayStatusCard({required this.subjectId, required this.groupId, super.key});
+  const TodayStatusCard({
+    required this.subjectId,
+    required this.groupId,
+    super.key,
+  });
 
   final String subjectId;
   final String groupId;

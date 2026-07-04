@@ -26,7 +26,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// The lobby / join-code / presence chrome is the only live-specific part;
 /// the stage and the control vocabulary come entirely from the game.
 class LiveGameScreen<S> extends ConsumerStatefulWidget {
-  const LiveGameScreen({required this.def, this.seed, this.autoJoin, super.key});
+  const LiveGameScreen({
+    required this.def,
+    this.seed,
+    this.autoJoin,
+    super.key,
+  });
 
   final GameDefinition<S> def;
 
@@ -102,15 +107,21 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       seed: widget.seed,
     );
     _subs
-      ..add(c.states.listen((v) {
-        if (mounted) setState(() => _wire = v);
-      }))
-      ..add(c.peers.listen((v) {
-        if (mounted) setState(() => _peers = v);
-      }))
-      ..add(c.status.listen((v) {
-        if (mounted) setState(() => _status = v);
-      }));
+      ..add(
+        c.states.listen((v) {
+          if (mounted) setState(() => _wire = v);
+        }),
+      )
+      ..add(
+        c.peers.listen((v) {
+          if (mounted) setState(() => _peers = v);
+        }),
+      )
+      ..add(
+        c.status.listen((v) {
+          if (mounted) setState(() => _status = v);
+        }),
+      );
     setState(() {
       _controller = c;
       _wire = c.state;
@@ -250,7 +261,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     final stage = isPresenter
         ? _def.buildStage(context, state)
         : (_def.buildSecretStage(context, state) ??
-            _def.buildStage(context, state));
+              _def.buildStage(context, state));
     return Column(
       children: [
         if (isPresenter)
@@ -287,7 +298,8 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       children: [
         _ControllerHeader(status: _status, onLeave: _leave),
         Expanded(
-          child: _def.buildSecretStage(context, state) ??
+          child:
+              _def.buildSecretStage(context, state) ??
               _def.buildStage(context, state),
         ),
       ],
@@ -639,7 +651,11 @@ class _PresenterHeader extends StatelessWidget {
           const Spacer(),
           _StatusPill(status: status),
           const SizedBox(width: 10),
-          const Icon(Icons.people_alt_outlined, color: Colors.white54, size: 18),
+          const Icon(
+            Icons.people_alt_outlined,
+            color: Colors.white54,
+            size: 18,
+          ),
           const SizedBox(width: 4),
           Text('$peers', style: const TextStyle(color: Colors.white70)),
           const SizedBox(width: 4),
@@ -698,7 +714,8 @@ class JoinUnavailableScreen extends StatelessWidget {
         child: EmptyState(
           icon: Icons.link_off,
           title: "Can't join this session",
-          message: 'The link looks off, or this session is running a newer '
+          message:
+              'The link looks off, or this session is running a newer '
               'version of the app. Ask the presenter for the join code.',
         ),
       ),

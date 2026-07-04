@@ -113,9 +113,7 @@ Future<void> _open(
     messenger: messenger,
     onError: 'Could not open that report.',
     action: () async {
-      final url = await ref
-          .read(exportActionsProvider)
-          .downloadUrl(export.id);
+      final url = await ref.read(exportActionsProvider).downloadUrl(export.id);
       if (url == null) {
         messenger?.showSnackBar(
           const SnackBar(
@@ -135,13 +133,13 @@ Future<void> _open(
 }
 
 String _templateLabel(String id) => switch (id) {
-      'progress_report' => 'Progress report',
-      _ => id,
-    };
+  'progress_report' => 'Progress report',
+  _ => id,
+};
 
 String _statusLabel(String status) => switch (status) {
-      'draft' => 'Draft',
-      'sent' => 'Sent',
-      'archived' => 'Archived',
-      _ => status,
-    };
+  'draft' => 'Draft',
+  'sent' => 'Sent',
+  'archived' => 'Archived',
+  _ => status,
+};

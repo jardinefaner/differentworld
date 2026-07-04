@@ -8,7 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('idle: renders the cast control with its tooltip', (tester) async {
+  testWidgets('idle: renders the cast control with its tooltip', (
+    tester,
+  ) async {
     // Default castSessionProvider state is inactive → the idle launcher button.
     await tester.pumpWidget(
       const ProviderScope(

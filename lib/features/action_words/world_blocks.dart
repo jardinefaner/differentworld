@@ -19,10 +19,10 @@ class JourneyDay {
   });
 
   factory JourneyDay.fromJson(Map<String, dynamic> j) => JourneyDay(
-        day: (j['day'] as num?)?.toInt() ?? 0,
-        title: (j['title'] as String?) ?? '',
-        focus: (j['focus'] as String?) ?? '',
-      );
+    day: (j['day'] as num?)?.toInt() ?? 0,
+    title: (j['title'] as String?) ?? '',
+    focus: (j['focus'] as String?) ?? '',
+  );
 
   final int day;
   final String title;
@@ -62,28 +62,27 @@ class WorldBlock {
   });
 
   factory WorldBlock.fromJson(Map<String, dynamic> j) => WorldBlock(
-        week: (j['week'] as num?)?.toInt() ?? 0,
-        id: (j['id'] as String?) ?? '',
-        name: (j['name'] as String?) ?? '',
-        emoji: (j['emoji'] as String?) ?? '🌍',
-        color: _parseHexColor(j['color'] as String?),
-        arrival: (j['arrival'] as String?) ?? '',
-        room: (j['room'] as String?) ?? '',
-        soundtrack: (j['soundtrack'] as String?) ?? '',
-        words: <String>[
-          for (final w in (j['words'] as List? ?? const [])) w.toString(),
-        ],
-        wallQuestions: <String>[
-          for (final q in (j['wallQuestions'] as List? ?? const []))
-            q.toString(),
-        ],
-        keyMoment: (j['keyMoment'] as String?) ?? '',
-        transition: (j['transition'] as String?) ?? '',
-        days: <JourneyDay>[
-          for (final d in (j['days'] as List? ?? const []))
-            if (d is Map<String, dynamic>) JourneyDay.fromJson(d),
-        ],
-      );
+    week: (j['week'] as num?)?.toInt() ?? 0,
+    id: (j['id'] as String?) ?? '',
+    name: (j['name'] as String?) ?? '',
+    emoji: (j['emoji'] as String?) ?? '🌍',
+    color: _parseHexColor(j['color'] as String?),
+    arrival: (j['arrival'] as String?) ?? '',
+    room: (j['room'] as String?) ?? '',
+    soundtrack: (j['soundtrack'] as String?) ?? '',
+    words: <String>[
+      for (final w in (j['words'] as List? ?? const [])) w.toString(),
+    ],
+    wallQuestions: <String>[
+      for (final q in (j['wallQuestions'] as List? ?? const [])) q.toString(),
+    ],
+    keyMoment: (j['keyMoment'] as String?) ?? '',
+    transition: (j['transition'] as String?) ?? '',
+    days: <JourneyDay>[
+      for (final d in (j['days'] as List? ?? const []))
+        if (d is Map<String, dynamic>) JourneyDay.fromJson(d),
+    ],
+  );
 
   /// The curriculum week (1–10) this world IS — matches the `CurriculumWorld`.
   final int week;
@@ -132,7 +131,9 @@ Color _parseHexColor(String? hex) {
 /// JSON. Offline-first: the asset ships in the app bundle, no network. Sorted
 /// by week so index == week − 1.
 final worldBlocksProvider = FutureProvider<List<WorldBlock>>((ref) async {
-  final raw = await rootBundle.loadString('assets/curriculum/world_blocks.json');
+  final raw = await rootBundle.loadString(
+    'assets/curriculum/world_blocks.json',
+  );
   final decoded = jsonDecode(raw);
   if (decoded is! Map<String, dynamic>) return const [];
   final worlds = decoded['worlds'];

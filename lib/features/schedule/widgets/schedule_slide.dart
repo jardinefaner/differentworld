@@ -313,7 +313,10 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
   @override
   Widget build(BuildContext context) {
     final blocksAsync = ref.watch(
-      scheduleDayForGroupProvider((groupId: widget.group.id, date: widget.date)),
+      scheduleDayForGroupProvider((
+        groupId: widget.group.id,
+        date: widget.date,
+      )),
     );
     final activities =
         ref.watch(allActivitiesProvider).value ?? const <Activity>[];
@@ -361,13 +364,15 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
         if (_controller == null || _lastCount != blocks.length) {
           final nowIdx = phases.indexOf(SlidePhase.now);
           final nextIdx = phases.indexOf(SlidePhase.next);
-          final initial = (nowIdx >= 0
-              ? nowIdx
-              : nextIdx >= 0
-              ? nextIdx
-              : isToday
-              ? blocks.length - 1
-              : 0).clamp(0, blocks.length - 1);
+          final initial =
+              (nowIdx >= 0
+                      ? nowIdx
+                      : nextIdx >= 0
+                      ? nextIdx
+                      : isToday
+                      ? blocks.length - 1
+                      : 0)
+                  .clamp(0, blocks.length - 1);
           _controller?.dispose();
           _controller = PageController(initialPage: initial);
           _index = initial;
@@ -454,7 +459,9 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
                       ? (activity?.defaultLocationId == null
                             ? null
                             : locations
-                                  .where((l) => l.id == activity!.defaultLocationId)
+                                  .where(
+                                    (l) => l.id == activity!.defaultLocationId,
+                                  )
                                   .firstOrNull)
                       : locations
                             .where((l) => l.id == b.locationOverrideId)

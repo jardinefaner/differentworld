@@ -27,8 +27,9 @@ class SuppliesDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<Supply?> watchById(String id) {
-    return (select(supplies)..where((s) => s.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      supplies,
+    )..where((s) => s.id.equals(id))).watchSingleOrNull();
   }
 
   Future<String> create({

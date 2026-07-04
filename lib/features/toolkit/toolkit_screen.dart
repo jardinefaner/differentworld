@@ -78,8 +78,9 @@ class _ToolkitScreenState extends ConsumerState<ToolkitScreen> {
   /// Defends against the rapid-double-tap-double-push scenario the
   /// Red Team flagged for mid-range Android devices.
   void _pushToolPhone(String slug) {
-    final current =
-        GoRouterState.of(context).uri.path; // e.g. /settings/toolkit
+    final current = GoRouterState.of(
+      context,
+    ).uri.path; // e.g. /settings/toolkit
     final target = '/settings/toolkit/$slug';
     if (current == target) return;
     unawaited(context.push(target));
@@ -195,7 +196,8 @@ class _MobileCatalog extends StatelessWidget {
             EmptyState(
               icon: Icons.search_off,
               title: 'No tools match',
-              message: "Try a different word — 'angry', 'parent', "
+              message:
+                  "Try a different word — 'angry', 'parent', "
                   "'morning', 'praise'.",
               action: TextButton(
                 onPressed: () => onQueryChanged(''),
@@ -279,8 +281,9 @@ class _MobileCatalog extends StatelessWidget {
                                     label: tool.name,
                                   ),
                                   padded: false,
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -645,8 +648,7 @@ class ToolkitToolDetailView extends ConsumerStatefulWidget {
       _ToolkitToolDetailViewState();
 }
 
-class _ToolkitToolDetailViewState
-    extends ConsumerState<ToolkitToolDetailView> {
+class _ToolkitToolDetailViewState extends ConsumerState<ToolkitToolDetailView> {
   bool _showAntiPattern = false;
   String? _touchedSlug;
 
@@ -663,9 +665,7 @@ class _ToolkitToolDetailViewState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         unawaited(
-          ref
-              .read(toolkitRecentsProvider.notifier)
-              .touch(widget.tool.slug),
+          ref.read(toolkitRecentsProvider.notifier).touch(widget.tool.slug),
         );
       });
     }
@@ -701,8 +701,7 @@ class _ToolkitToolDetailViewState
         Row(
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: category.color.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(20),
@@ -816,8 +815,7 @@ class _ToolkitToolDetailViewState
         _AntiPatternCard(
           tool: tool,
           expanded: _showAntiPattern,
-          onToggle: () =>
-              setState(() => _showAntiPattern = !_showAntiPattern),
+          onToggle: () => setState(() => _showAntiPattern = !_showAntiPattern),
         ),
       ],
     );
@@ -876,8 +874,9 @@ class _AntiPatternCard extends StatelessWidget {
                     "Tap to reveal the anti-pattern (hidden so it's "
                     'not visible to nearby kids).',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onErrorContainer
-                          .withValues(alpha: 0.8),
+                      color: theme.colorScheme.onErrorContainer.withValues(
+                        alpha: 0.8,
+                      ),
                       fontStyle: FontStyle.italic,
                     ),
                   ),

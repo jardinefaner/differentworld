@@ -30,9 +30,11 @@ import '_helpers.dart';
 /// so there's no light/dark pair — one render each). Regenerate:
 ///   RUN_GOLDENS=1 flutter test --update-goldens test/golden/game_gallery_test.dart
 Future<void> _loadFonts() async {
-  final manifest = json.decode(
-    await rootBundle.loadString('FontManifest.json'),
-  ) as List<dynamic>;
+  final manifest =
+      json.decode(
+            await rootBundle.loadString('FontManifest.json'),
+          )
+          as List<dynamic>;
   for (final entry in manifest) {
     final family = (entry as Map<String, dynamic>)['family'] as String;
     final loader = FontLoader(family);
@@ -52,159 +54,260 @@ void main() {
   // THE GAME ATOMS — one plate per atom, so each can be seen + tweaked on its
   // own (the shared vocabulary every game's stage composes from). teal stands
   // in for "the game's accent"; the vibe atom shows the full accent set.
-  _scene('games/atom_hero', width: 480, height: 150,
-      (c) => _gamePlate(GameStage.hero(c, 'A group of flamingos')));
-  _scene('games/atom_eyebrow', width: 420, height: 110,
-      (c) => _gamePlate(GameStage.eyebrow(c, 'True, or fib?')));
-  _scene('games/atom_option', width: 480, height: 240, (c) => _gamePlate(
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
-              children: [
-                GameStage.option(c, 'True', accent: GameAccents.teal),
-                GameStage.option(c, 'Fib', accent: GameAccents.teal, selected: true),
-                GameStage.option(c, 'Maybe', accent: GameAccents.teal, dimmed: true),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: 300,
-              child: GameStage.option(c, 'Outside', accent: GameAccents.teal, trailing: '7'),
-            ),
-          ],
-        ),
-      ));
-  _scene('games/atom_counter', width: 320, height: 170,
-      (c) => _gamePlate(GameStage.counter(c, value: '3', caption: 'found', accent: GameAccents.teal)));
-  _scene('games/atom_card_tile', width: 280, height: 300, (c) => _gamePlate(
-        SizedBox(
-          width: 150,
-          height: 190,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Padding(
-              padding: EdgeInsets.all(12),
-              child: CardTile(image: 'assets/card_games/everyday/04-banana.png'),
+  _scene(
+    'games/atom_hero',
+    width: 480,
+    height: 150,
+    (c) => _gamePlate(GameStage.hero(c, 'A group of flamingos')),
+  );
+  _scene(
+    'games/atom_eyebrow',
+    width: 420,
+    height: 110,
+    (c) => _gamePlate(GameStage.eyebrow(c, 'True, or fib?')),
+  );
+  _scene(
+    'games/atom_option',
+    width: 480,
+    height: 240,
+    (c) => _gamePlate(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              GameStage.option(c, 'True', accent: GameAccents.teal),
+              GameStage.option(
+                c,
+                'Fib',
+                accent: GameAccents.teal,
+                selected: true,
+              ),
+              GameStage.option(
+                c,
+                'Maybe',
+                accent: GameAccents.teal,
+                dimmed: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 300,
+            child: GameStage.option(
+              c,
+              'Outside',
+              accent: GameAccents.teal,
+              trailing: '7',
             ),
           ),
+        ],
+      ),
+    ),
+  );
+  _scene(
+    'games/atom_counter',
+    width: 320,
+    height: 170,
+    (c) => _gamePlate(
+      GameStage.counter(
+        c,
+        value: '3',
+        caption: 'found',
+        accent: GameAccents.teal,
+      ),
+    ),
+  );
+  _scene(
+    'games/atom_card_tile',
+    width: 280,
+    height: 300,
+    (c) => _gamePlate(
+      SizedBox(
+        width: 150,
+        height: 190,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.all(12),
+            child: CardTile(image: 'assets/card_games/everyday/04-banana.png'),
+          ),
         ),
-      ));
-  _scene('games/atom_vibe', width: 620, height: 150, (c) => _gamePlate(
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
-          children: [
-            for (final col in const [
-              GameAccents.teal,
-              GameAccents.deepTeal,
-              GameAccents.amber,
-              GameAccents.coral,
-              GameAccents.plum,
-              GameAccents.slate,
-              GameAccents.rose,
-              GameAccents.sage,
-            ])
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: col, borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+  );
+  _scene(
+    'games/atom_vibe',
+    width: 620,
+    height: 150,
+    (c) => _gamePlate(
+      Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        alignment: WrapAlignment.center,
+        children: [
+          for (final col in const [
+            GameAccents.teal,
+            GameAccents.deepTeal,
+            GameAccents.amber,
+            GameAccents.coral,
+            GameAccents.plum,
+            GameAccents.slate,
+            GameAccents.rose,
+            GameAccents.sage,
+          ])
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: col,
+                borderRadius: BorderRadius.circular(12),
               ),
-          ],
-        ),
-      ));
+            ),
+        ],
+      ),
+    ),
+  );
 
   // THE GAME MOLECULES — one plate per molecule (the stage shapes the atoms
   // compose into: a vote, a poll, a card board, a tally bar).
-  _scene('games/molecule_vote', width: 480, height: 320, (c) => _gamePlate(
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GameStage.eyebrow(c, 'True, or fib?'),
-            const SizedBox(height: 12),
-            GameStage.hero(c, 'A flock of crows is a “murder”', maxLines: 2),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GameStage.option(c, 'True', accent: GameAccents.teal, selected: true),
-                const SizedBox(width: 12),
-                GameStage.option(c, 'Fib', accent: GameAccents.teal),
-              ],
-            ),
-          ],
-        ),
-      ));
-  _scene('games/molecule_poll', width: 440, height: 260, (c) => _gamePlate(
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (l, n, s) in const [
-              ('Outside', '7', true),
-              ('Gym', '4', false),
-              ('Reading', '2', false),
-            ])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 9),
-                child: SizedBox(
-                  width: 300,
-                  child: GameStage.option(c, l, accent: GameAccents.deepTeal, selected: s, trailing: n),
+  _scene(
+    'games/molecule_vote',
+    width: 480,
+    height: 320,
+    (c) => _gamePlate(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GameStage.eyebrow(c, 'True, or fib?'),
+          const SizedBox(height: 12),
+          GameStage.hero(c, 'A flock of crows is a “murder”', maxLines: 2),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GameStage.option(
+                c,
+                'True',
+                accent: GameAccents.teal,
+                selected: true,
+              ),
+              const SizedBox(width: 12),
+              GameStage.option(c, 'Fib', accent: GameAccents.teal),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+  _scene(
+    'games/molecule_poll',
+    width: 440,
+    height: 260,
+    (c) => _gamePlate(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (l, n, s) in const [
+            ('Outside', '7', true),
+            ('Gym', '4', false),
+            ('Reading', '2', false),
+          ])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: SizedBox(
+                width: 300,
+                child: GameStage.option(
+                  c,
+                  l,
+                  accent: GameAccents.deepTeal,
+                  selected: s,
+                  trailing: n,
                 ),
               ),
-          ],
-        ),
-      ));
-  _scene('games/molecule_card_board', width: 360, height: 200, (c) => _gamePlate(
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (col, icon) in const [
-              (Color(0xFF22413C), Icons.music_note),
-              (Color(0xFF3A3320), Icons.bolt),
-              (Color(0xFF3A2630), Icons.sports_basketball),
-            ])
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: Container(
-                  width: 70,
-                  height: 90,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: col, borderRadius: BorderRadius.circular(12)),
-                  child: Icon(icon, color: Colors.white70, size: 26),
-                ),
-              ),
-          ],
-        ),
-      ));
-  _scene('games/molecule_tally', width: 420, height: 200, (c) => _gamePlate(
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GameStage.option(c, 'Someone said it', accent: GameAccents.teal, selected: true),
-            const SizedBox(height: 9),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GameStage.option(c, 'New word', accent: GameAccents.teal),
-                const SizedBox(width: 10),
-                GameStage.option(c, 'Reset', accent: GameAccents.teal, dimmed: true),
-              ],
             ),
-          ],
-        ),
-      ));
+        ],
+      ),
+    ),
+  );
+  _scene(
+    'games/molecule_card_board',
+    width: 360,
+    height: 200,
+    (c) => _gamePlate(
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (col, icon) in const [
+            (Color(0xFF22413C), Icons.music_note),
+            (Color(0xFF3A3320), Icons.bolt),
+            (Color(0xFF3A2630), Icons.sports_basketball),
+          ])
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Container(
+                width: 70,
+                height: 90,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: col,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white70, size: 26),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+  _scene(
+    'games/molecule_tally',
+    width: 420,
+    height: 200,
+    (c) => _gamePlate(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GameStage.option(
+            c,
+            'Someone said it',
+            accent: GameAccents.teal,
+            selected: true,
+          ),
+          const SizedBox(height: 9),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GameStage.option(c, 'New word', accent: GameAccents.teal),
+              const SizedBox(width: 10),
+              GameStage.option(
+                c,
+                'Reset',
+                accent: GameAccents.teal,
+                dimmed: true,
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 
   // The vibe palette — every game's signature colour DNA (accent on its own
   // dark surface). The most "atomic" view of the games: their identity at a
   // glance, sourced live from the `liveGames` registry.
-  _scene('games/vibe_palette', width: 760, height: 640, (_) => const _VibePalette());
+  _scene(
+    'games/vibe_palette',
+    width: 760,
+    height: 640,
+    (_) => const _VibePalette(),
+  );
 
   // One hero STAGE — Reveal the Picture, mid-reveal. Proves a game's stage
   // renders standalone from a seeded wire-state.
@@ -435,11 +538,11 @@ void _organismScene(
 
 /// Centres one atom or molecule on the dark game surface — one plate each.
 Widget _gamePlate(Widget child) => ColoredBox(
-      color: kGameSurface,
-      child: Center(
-        child: Padding(padding: const EdgeInsets.all(28), child: child),
-      ),
-    );
+  color: kGameSurface,
+  child: Center(
+    child: Padding(padding: const EdgeInsets.all(28), child: child),
+  ),
+);
 
 /// A grid of every registered game's vibe — surface tile + accent bar + title.
 class _VibePalette extends StatelessWidget {
@@ -456,7 +559,11 @@ class _VibePalette extends StatelessWidget {
           runSpacing: 12,
           children: [
             for (final g in liveGames)
-              _VibeChip(title: g.title, accent: g.vibe.accent, surface: g.vibe.surface),
+              _VibeChip(
+                title: g.title,
+                accent: g.vibe.accent,
+                surface: g.vibe.surface,
+              ),
           ],
         ),
       ),
@@ -479,7 +586,9 @@ class _VibeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     // If the game's surface is pure black (the default), show a near-black tile
     // so the chip reads as a card rather than blending into the canvas.
-    final tile = surface == const Color(0xFF000000) ? const Color(0xFF15151B) : surface;
+    final tile = surface == const Color(0xFF000000)
+        ? const Color(0xFF15151B)
+        : surface;
     return Container(
       width: 168,
       padding: const EdgeInsets.all(14),

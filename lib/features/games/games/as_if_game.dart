@@ -20,12 +20,12 @@ class AsIfState {
   });
 
   factory AsIfState.fromMap(Map<String, dynamic> m) => AsIfState(
-        li: (m['li'] as num?)?.toInt() ?? 0,
-        ai: (m['ai'] as num?)?.toInt() ?? 0,
-        performed: (m['p'] as num?)?.toInt() ?? 0,
-        lines: [for (final x in (m['lines'] as List? ?? const [])) x.toString()],
-        asifs: [for (final x in (m['asifs'] as List? ?? const [])) x.toString()],
-      );
+    li: (m['li'] as num?)?.toInt() ?? 0,
+    ai: (m['ai'] as num?)?.toInt() ?? 0,
+    performed: (m['p'] as num?)?.toInt() ?? 0,
+    lines: [for (final x in (m['lines'] as List? ?? const [])) x.toString()],
+    asifs: [for (final x in (m['asifs'] as List? ?? const [])) x.toString()],
+  );
 
   final int li;
   final int ai;
@@ -47,8 +47,7 @@ class AsIfGame extends GameDefinition<AsIfState> {
   String get title => 'As If';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.coral);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
   String? get liveRoute => '/live/as-if';
@@ -102,8 +101,11 @@ class AsIfGame extends GameDefinition<AsIfState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(AsIfState s) =>
-      {GameIntent.tally, GameIntent.next, GameIntent.reset};
+  Set<GameIntent> activeIntents(AsIfState s) => {
+    GameIntent.tally,
+    GameIntent.next,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, AsIfState s) {
@@ -151,10 +153,9 @@ class AsIfGame extends GameDefinition<AsIfState> {
     BuildContext context,
     AsIfState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) =>
-      tallyControls(
-        send: send,
-        tallyLabel: 'I did it!',
-        nextLabel: 'Another one',
-      );
+  ) => tallyControls(
+    send: send,
+    tallyLabel: 'I did it!',
+    nextLabel: 'Another one',
+  );
 }

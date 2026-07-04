@@ -14,8 +14,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// it tears the channel down on dispose.
 // Riverpod 3 provider types don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final activeSessionsProvider =
-    StreamProvider.autoDispose<List<LiveSessionAd>>((ref) {
+final activeSessionsProvider = StreamProvider.autoDispose<List<LiveSessionAd>>((
+  ref,
+) {
   final spaceId = ref.watch(viewerProvider).spaceId;
   // No space (guardian / not loaded) → nothing to discover.
   if (spaceId == null) return Stream.value(const <LiveSessionAd>[]);

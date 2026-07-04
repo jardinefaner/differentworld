@@ -56,9 +56,24 @@ const List<Spell> kSpells = [
     emoji: '❄️',
     durationSeconds: 300,
     words: [
-      SpellWord(word: 'Alto', language: 'Spanish', pronunciation: 'AHL-toh', meaning: 'stop'),
-      SpellWord(word: 'Arrête', language: 'French', pronunciation: 'ah-RET', meaning: 'stop'),
-      SpellWord(word: 'Simama', language: 'Swahili', pronunciation: 'see-MAH-mah', meaning: 'stand still'),
+      SpellWord(
+        word: 'Alto',
+        language: 'Spanish',
+        pronunciation: 'AHL-toh',
+        meaning: 'stop',
+      ),
+      SpellWord(
+        word: 'Arrête',
+        language: 'French',
+        pronunciation: 'ah-RET',
+        meaning: 'stop',
+      ),
+      SpellWord(
+        word: 'Simama',
+        language: 'Swahili',
+        pronunciation: 'see-MAH-mah',
+        meaning: 'stand still',
+      ),
     ],
   ),
   Spell(
@@ -67,9 +82,24 @@ const List<Spell> kSpells = [
     emoji: '🏃',
     durationSeconds: 180,
     words: [
-      SpellWord(word: 'Vamos', language: 'Spanish', pronunciation: 'VAH-mohs', meaning: "let's go"),
-      SpellWord(word: 'Allez', language: 'French', pronunciation: 'ah-LAY', meaning: 'go'),
-      SpellWord(word: 'Twende', language: 'Swahili', pronunciation: 'TWEN-deh', meaning: "let's go"),
+      SpellWord(
+        word: 'Vamos',
+        language: 'Spanish',
+        pronunciation: 'VAH-mohs',
+        meaning: "let's go",
+      ),
+      SpellWord(
+        word: 'Allez',
+        language: 'French',
+        pronunciation: 'ah-LAY',
+        meaning: 'go',
+      ),
+      SpellWord(
+        word: 'Twende',
+        language: 'Swahili',
+        pronunciation: 'TWEN-deh',
+        meaning: "let's go",
+      ),
     ],
   ),
   Spell(
@@ -78,9 +108,24 @@ const List<Spell> kSpells = [
     emoji: '🎨',
     durationSeconds: 300,
     words: [
-      SpellWord(word: 'Crea', language: 'Spanish', pronunciation: 'KREH-ah', meaning: 'create'),
-      SpellWord(word: 'Crée', language: 'French', pronunciation: 'kray', meaning: 'create'),
-      SpellWord(word: 'Tengeneza', language: 'Swahili', pronunciation: 'ten-geh-NEH-zah', meaning: 'make'),
+      SpellWord(
+        word: 'Crea',
+        language: 'Spanish',
+        pronunciation: 'KREH-ah',
+        meaning: 'create',
+      ),
+      SpellWord(
+        word: 'Crée',
+        language: 'French',
+        pronunciation: 'kray',
+        meaning: 'create',
+      ),
+      SpellWord(
+        word: 'Tengeneza',
+        language: 'Swahili',
+        pronunciation: 'ten-geh-NEH-zah',
+        meaning: 'make',
+      ),
     ],
   ),
   Spell(
@@ -89,9 +134,24 @@ const List<Spell> kSpells = [
     emoji: '🤝',
     durationSeconds: 180,
     words: [
-      SpellWord(word: 'Comparte', language: 'Spanish', pronunciation: 'kom-PAR-teh', meaning: 'share'),
-      SpellWord(word: 'Partage', language: 'French', pronunciation: 'par-TAHZH', meaning: 'share'),
-      SpellWord(word: 'Shiriki', language: 'Swahili', pronunciation: 'shee-REE-kee', meaning: 'take part'),
+      SpellWord(
+        word: 'Comparte',
+        language: 'Spanish',
+        pronunciation: 'kom-PAR-teh',
+        meaning: 'share',
+      ),
+      SpellWord(
+        word: 'Partage',
+        language: 'French',
+        pronunciation: 'par-TAHZH',
+        meaning: 'share',
+      ),
+      SpellWord(
+        word: 'Shiriki',
+        language: 'Swahili',
+        pronunciation: 'shee-REE-kee',
+        meaning: 'take part',
+      ),
     ],
   ),
   Spell(
@@ -100,9 +160,24 @@ const List<Spell> kSpells = [
     emoji: '🌌',
     durationSeconds: 180,
     words: [
-      SpellWord(word: 'Imagina', language: 'Spanish', pronunciation: 'ee-mah-HEE-nah', meaning: 'imagine'),
-      SpellWord(word: 'Imagine', language: 'French', pronunciation: 'ee-mah-ZHEEN', meaning: 'imagine'),
-      SpellWord(word: 'Fikiria', language: 'Swahili', pronunciation: 'fee-kee-REE-ah', meaning: 'imagine'),
+      SpellWord(
+        word: 'Imagina',
+        language: 'Spanish',
+        pronunciation: 'ee-mah-HEE-nah',
+        meaning: 'imagine',
+      ),
+      SpellWord(
+        word: 'Imagine',
+        language: 'French',
+        pronunciation: 'ee-mah-ZHEEN',
+        meaning: 'imagine',
+      ),
+      SpellWord(
+        word: 'Fikiria',
+        language: 'Swahili',
+        pronunciation: 'fee-kee-REE-ah',
+        meaning: 'imagine',
+      ),
     ],
   ),
 ];

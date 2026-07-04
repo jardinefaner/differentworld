@@ -180,8 +180,7 @@ const List<ToolkitCategory> toolkitCatalog = [
         slug: 'celebrate.parent-text',
         categoryId: ToolkitCategoryId.celebrate,
         name: 'The Parent Text',
-        when:
-            'You want a parent to hear something good (not just bad news)',
+        when: 'You want a parent to hear something good (not just bad news)',
         instead: "Only contacting parents when there's a problem",
         tryThis:
             'A quick text or note: "I wanted you to know that [name] '
@@ -267,8 +266,7 @@ const List<ToolkitCategory> toolkitCatalog = [
         categoryId: ToolkitCategoryId.toughMoments,
         name: 'The Cool Down',
         when: 'A kid is escalated — angry, crying, shut down',
-        instead:
-            '"Calm down" (which has never once worked in human history)',
+        instead: '"Calm down" (which has never once worked in human history)',
         tryThis:
             'Lower YOUR voice. Get physically lower (crouch, sit). Say: '
             "\"I can see this is really hard right now. I'm right here. "
@@ -340,8 +338,7 @@ const List<ToolkitCategory> toolkitCatalog = [
             'resentment. Resentment creates more disruption. The quiet '
             'redirect keeps dignity intact and works faster than any '
             'lecture.',
-        quick:
-            '[Walk close. Quiet voice.] Hey, I need you back with me.',
+        quick: '[Walk close. Quiet voice.] Hey, I need you back with me.',
       ),
       ToolkitTool(
         slug: 'tough.emergency-pause',

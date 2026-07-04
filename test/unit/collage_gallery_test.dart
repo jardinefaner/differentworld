@@ -20,11 +20,14 @@ void main() {
       }
     });
 
-    test('tail fits exactly: 1 -> heroBig, 2 -> halves, 3 -> heroLeftStack', () {
-      expect(planCollageBlocks(1), [CollageBlockKind.heroBig]);
-      expect(planCollageBlocks(2), [CollageBlockKind.halves]);
-      expect(planCollageBlocks(3), [CollageBlockKind.heroLeftStack]);
-    });
+    test(
+      'tail fits exactly: 1 -> heroBig, 2 -> halves, 3 -> heroLeftStack',
+      () {
+        expect(planCollageBlocks(1), [CollageBlockKind.heroBig]);
+        expect(planCollageBlocks(2), [CollageBlockKind.halves]);
+        expect(planCollageBlocks(3), [CollageBlockKind.heroLeftStack]);
+      },
+    );
 
     test('a real set varies the scale (not one repeated block)', () {
       expect(

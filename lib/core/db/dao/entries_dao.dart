@@ -7,8 +7,7 @@ part 'entries_dao.g.dart';
 /// 'observation', 'meal', 'nap', 'diaper', 'incident', etc.; `details`
 /// holds the kind-specific JSONB shape.
 @DriftAccessor(tables: [Entries])
-class EntriesDao extends DatabaseAccessor<AppDatabase>
-    with _$EntriesDaoMixin {
+class EntriesDao extends DatabaseAccessor<AppDatabase> with _$EntriesDaoMixin {
   EntriesDao(super.attachedDatabase);
 
   /// All entries for a classroom of a given kind, newest first. The
@@ -104,8 +103,7 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
         spaceId: spaceId,
         kind: kind,
         groupId: groupId == null ? const Value.absent() : Value(groupId),
-        subjectId:
-            subjectId == null ? const Value.absent() : Value(subjectId),
+        subjectId: subjectId == null ? const Value.absent() : Value(subjectId),
         scheduleBlockId: scheduleBlockId == null
             ? const Value.absent()
             : Value(scheduleBlockId),

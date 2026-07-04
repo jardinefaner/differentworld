@@ -33,17 +33,20 @@ void main() {
       expect(seq.choices, contains(seq.answer));
     });
 
-    test('isCorrect still resolves the answer (drives the Reveal highlight)', () {
-      final qs = generateMathRound(Random(9), count: 4);
-      final choose = qs[0];
-      expect(choose.isCorrect(choose.answer), isTrue);
-      expect(choose.isCorrect(choose.answer + 1), isFalse);
+    test(
+      'isCorrect still resolves the answer (drives the Reveal highlight)',
+      () {
+        final qs = generateMathRound(Random(9), count: 4);
+        final choose = qs[0];
+        expect(choose.isCorrect(choose.answer), isTrue);
+        expect(choose.isCorrect(choose.answer + 1), isFalse);
 
-      final tf = qs[2];
-      expect(tf.mechanic, MathMechanic.trueFalse);
-      expect(tf.isCorrect(tf.statementTrue!), isTrue);
-      expect(tf.isCorrect(!tf.statementTrue!), isFalse);
-    });
+        final tf = qs[2];
+        expect(tf.mechanic, MathMechanic.trueFalse);
+        expect(tf.isCorrect(tf.statementTrue!), isTrue);
+        expect(tf.isCorrect(!tf.statementTrue!), isFalse);
+      },
+    );
   });
 
   group('operations + range (the Settings contract)', () {

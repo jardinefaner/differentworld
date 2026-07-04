@@ -85,7 +85,9 @@ Future<void> nudgeTheDay(
   final anchor = remaining.first.start.isBefore(now)
       ? now
       : remaining.first.start;
-  final lastEnd = remaining.map((r) => r.end).reduce((a, b) => a.isAfter(b) ? a : b);
+  final lastEnd = remaining
+      .map((r) => r.end)
+      .reduce((a, b) => a.isAfter(b) ? a : b);
   final availableMin = lastEnd.difference(anchor).inMinutes;
   if (availableMin <= 0) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -170,7 +172,10 @@ Future<bool?> showNudgeDiffSheet(
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_intentTitle(intent), style: theme.textTheme.titleMedium),
+                  Text(
+                    _intentTitle(intent),
+                    style: theme.textTheme.titleMedium,
+                  ),
                   Text(
                     'nothing changed yet',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -193,7 +198,10 @@ Future<bool?> showNudgeDiffSheet(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       children: [
-                        Text(c.slot.emoji, style: const TextStyle(fontSize: 16)),
+                        Text(
+                          c.slot.emoji,
+                          style: const TextStyle(fontSize: 16),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -314,17 +322,23 @@ class _NudgeBarState extends ConsumerState<NudgeBar> {
               ActionChip(
                 avatar: const Text('🏃'),
                 label: const Text('Running behind'),
-                onPressed: _busy ? null : () => unawaited(_go(NudgeIntent.behind)),
+                onPressed: _busy
+                    ? null
+                    : () => unawaited(_go(NudgeIntent.behind)),
               ),
               ActionChip(
                 avatar: const Text('⚡'),
                 label: const Text('Kids are wired'),
-                onPressed: _busy ? null : () => unawaited(_go(NudgeIntent.wired)),
+                onPressed: _busy
+                    ? null
+                    : () => unawaited(_go(NudgeIntent.wired)),
               ),
               ActionChip(
                 avatar: const Text('🌤'),
                 label: const Text('Ahead of schedule'),
-                onPressed: _busy ? null : () => unawaited(_go(NudgeIntent.ahead)),
+                onPressed: _busy
+                    ? null
+                    : () => unawaited(_go(NudgeIntent.ahead)),
               ),
             ],
           ),

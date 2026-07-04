@@ -31,16 +31,16 @@ class GridRevealState {
   });
 
   factory GridRevealState.fromMap(Map<String, dynamic> m) => GridRevealState(
-        cols: (m['cols'] as num?)?.toInt() ?? 4,
-        rows: (m['rows'] as num?)?.toInt() ?? 4,
-        emoji: m['pic'] as String? ?? '',
-        answer: m['lbl'] as String? ?? '',
-        photo: m['photo'] == true,
-        revealed: [
-          for (final v in (m['rev'] as List? ?? const <dynamic>[])) v == true,
-        ],
-        done: m['d'] == true,
-      );
+    cols: (m['cols'] as num?)?.toInt() ?? 4,
+    rows: (m['rows'] as num?)?.toInt() ?? 4,
+    emoji: m['pic'] as String? ?? '',
+    answer: m['lbl'] as String? ?? '',
+    photo: m['photo'] == true,
+    revealed: [
+      for (final v in (m['rev'] as List? ?? const <dynamic>[])) v == true,
+    ],
+    done: m['d'] == true,
+  );
 
   final int cols;
   final int rows;
@@ -69,13 +69,34 @@ class GridRevealState {
 /// A curated, kid-legible picture set — common, guessable, render-everywhere
 /// glyphs. (Slice 2 will let staff bring their own photo.)
 const List<(String, String)> _pictures = <(String, String)>[
-  ('🦁', 'Lion'), ('🐘', 'Elephant'), ('🦒', 'Giraffe'), ('🐢', 'Turtle'),
-  ('🦋', 'Butterfly'), ('🐙', 'Octopus'), ('🐝', 'Bee'), ('🐧', 'Penguin'),
-  ('🦖', 'Dinosaur'), ('🐬', 'Dolphin'), ('🦉', 'Owl'), ('🐸', 'Frog'),
-  ('🚀', 'Rocket'), ('🚂', 'Train'), ('⛵', 'Sailboat'), ('🚒', 'Fire truck'),
-  ('🌈', 'Rainbow'), ('⭐', 'Star'), ('🌻', 'Sunflower'), ('🌳', 'Tree'),
-  ('🍕', 'Pizza'), ('🍎', 'Apple'), ('🍦', 'Ice cream'), ('🎂', 'Cake'),
-  ('🏰', 'Castle'), ('🎈', 'Balloon'), ('☂️', 'Umbrella'), ('🎸', 'Guitar'),
+  ('🦁', 'Lion'),
+  ('🐘', 'Elephant'),
+  ('🦒', 'Giraffe'),
+  ('🐢', 'Turtle'),
+  ('🦋', 'Butterfly'),
+  ('🐙', 'Octopus'),
+  ('🐝', 'Bee'),
+  ('🐧', 'Penguin'),
+  ('🦖', 'Dinosaur'),
+  ('🐬', 'Dolphin'),
+  ('🦉', 'Owl'),
+  ('🐸', 'Frog'),
+  ('🚀', 'Rocket'),
+  ('🚂', 'Train'),
+  ('⛵', 'Sailboat'),
+  ('🚒', 'Fire truck'),
+  ('🌈', 'Rainbow'),
+  ('⭐', 'Star'),
+  ('🌻', 'Sunflower'),
+  ('🌳', 'Tree'),
+  ('🍕', 'Pizza'),
+  ('🍎', 'Apple'),
+  ('🍦', 'Ice cream'),
+  ('🎂', 'Cake'),
+  ('🏰', 'Castle'),
+  ('🎈', 'Balloon'),
+  ('☂️', 'Umbrella'),
+  ('🎸', 'Guitar'),
 ];
 
 class GridRevealGame extends GameDefinition<GridRevealState> {
@@ -104,21 +125,21 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   // pre-cast config step (a follow-up).
   @override
   List<GameSetting> get settings => const [
-        IntSetting(
-          id: 'cols',
-          label: 'Columns (A, B, C…)',
-          min: 2,
-          max: 8,
-          initial: _cols,
-        ),
-        IntSetting(
-          id: 'rows',
-          label: 'Rows (1, 2, 3…)',
-          min: 2,
-          max: 8,
-          initial: _rows,
-        ),
-      ];
+    IntSetting(
+      id: 'cols',
+      label: 'Columns (A, B, C…)',
+      min: 2,
+      max: 8,
+      initial: _cols,
+    ),
+    IntSetting(
+      id: 'rows',
+      label: 'Rows (1, 2, 3…)',
+      min: 2,
+      max: 8,
+      initial: _rows,
+    ),
+  ];
 
   @override
   Map<String, dynamic> initialState(ContentSource content) =>
@@ -128,15 +149,14 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   Map<String, dynamic> initialStateFor(
     ContentSource content,
     Map<String, Object?> values,
-  ) =>
-      _build(
-        values.intSetting('cols', _cols),
-        values.intSetting('rows', _rows),
-        content,
-        // Threaded from the library "Mix with the built-in emoji" toggle via
-        // the runner's initialValues (see GridRevealScreen).
-        mixEmoji: values['mixEmoji'] as bool? ?? true,
-      );
+  ) => _build(
+    values.intSetting('cols', _cols),
+    values.intSetting('rows', _rows),
+    content,
+    // Threaded from the library "Mix with the built-in emoji" toggle via
+    // the runner's initialValues (see GridRevealScreen).
+    mixEmoji: values['mixEmoji'] as bool? ?? true,
+  );
 
   /// Pick a picture for the round from a pool of the built-in emoji plus the
   /// space's own uploaded photos (kind `picture`, from the content bank). When
@@ -160,8 +180,11 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
       if (mixEmoji || customs.isEmpty)
         for (final e in _pictures) (e.$1, e.$2, false),
       for (final c in customs)
-        (c.payload['image']! as String, (c.payload['label'] as String?) ?? '',
-            true),
+        (
+          c.payload['image']! as String,
+          (c.payload['label'] as String?) ?? '',
+          true,
+        ),
     ];
     final pick = pool[Random().nextInt(pool.length)];
     final n = cols * rows;
@@ -227,10 +250,10 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
 
   @override
   Set<GameIntent> activeIntents(GridRevealState s) => <GameIntent>{
-        if (!s.allRevealed) GameIntent.reveal,
-        if (s.anyRevealed) GameIntent.back,
-        GameIntent.reset,
-      };
+    if (!s.allRevealed) GameIntent.reveal,
+    if (s.anyRevealed) GameIntent.back,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, GridRevealState state) =>
@@ -243,8 +266,7 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
     BuildContext context,
     GridRevealState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) =>
-      _GridRevealControls(state: state, accent: vibe.accent, send: send);
+  ) => _GridRevealControls(state: state, accent: vibe.accent, send: send);
 }
 
 /// The big screen: the picture filling a centered grid-shaped box, with opaque
@@ -301,8 +323,9 @@ class _GridRevealStage extends StatelessWidget {
                                 for (int c = 0; c < state.cols; c++)
                                   Expanded(
                                     child: _CoverTile(
-                                      revealed:
-                                          state.isRevealed(r * state.cols + c),
+                                      revealed: state.isRevealed(
+                                        r * state.cols + c,
+                                      ),
                                       label: GridRevealState.label(r, c),
                                       accent: accent,
                                     ),
@@ -427,8 +450,9 @@ class _GridRevealControls extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: FilledButton.icon(
-                onPressed:
-                    state.allRevealed ? null : () => send(GameIntent.reveal),
+                onPressed: state.allRevealed
+                    ? null
+                    : () => send(GameIntent.reveal),
                 icon: const Icon(Icons.visibility),
                 label: const Text('Reveal all'),
               ),

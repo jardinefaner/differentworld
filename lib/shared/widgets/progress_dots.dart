@@ -35,9 +35,7 @@ class ProgressDots extends StatelessWidget {
             width: i == i0 ? 24 : 6,
             height: 6,
             decoration: BoxDecoration(
-              color: i <= i0
-                  ? scheme.primary
-                  : scheme.surfaceContainerHighest,
+              color: i <= i0 ? scheme.primary : scheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(3),
             ),
           ),

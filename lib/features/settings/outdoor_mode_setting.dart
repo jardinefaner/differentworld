@@ -36,24 +36,22 @@ enum OutdoorMode {
 
 extension OutdoorModeX on OutdoorMode {
   String get label => switch (this) {
-        OutdoorMode.systemDefault => 'System default',
-        OutdoorMode.on => 'High contrast (outdoor)',
-      };
+    OutdoorMode.systemDefault => 'System default',
+    OutdoorMode.on => 'High contrast (outdoor)',
+  };
 
   String get description => switch (this) {
-        OutdoorMode.systemDefault =>
-          'Light or dark per phone setting.',
-        OutdoorMode.on =>
-          'High-contrast colors for bright sunlight + outdoor use.',
-      };
+    OutdoorMode.systemDefault => 'Light or dark per phone setting.',
+    OutdoorMode.on => 'High-contrast colors for bright sunlight + outdoor use.',
+  };
 }
 
 /// Persisted choice. Watch to read the current mode; write through
 /// [OutdoorModeSettingNotifier.set].
 final outdoorModeProvider =
     AsyncNotifierProvider<OutdoorModeSettingNotifier, OutdoorMode>(
-  OutdoorModeSettingNotifier.new,
-);
+      OutdoorModeSettingNotifier.new,
+    );
 
 class OutdoorModeSettingNotifier extends AsyncNotifier<OutdoorMode> {
   static const _kKey = 'settings.outdoor_mode';
@@ -75,8 +73,7 @@ class OutdoorModeSettingNotifier extends AsyncNotifier<OutdoorMode> {
     return raw == 'on' ? OutdoorMode.on : OutdoorMode.systemDefault;
   }
 
-  static String _encode(OutdoorMode m) =>
-      m == OutdoorMode.on ? 'on' : 'system';
+  static String _encode(OutdoorMode m) => m == OutdoorMode.on ? 'on' : 'system';
 }
 
 /// The high-contrast ColorScheme. Pure-black background, white +

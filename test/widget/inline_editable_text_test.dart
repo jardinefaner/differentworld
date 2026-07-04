@@ -9,8 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// vsync-driven ticker forever.
 void main() {
   Widget host(Widget child) => MaterialApp(
-        home: Scaffold(body: Center(child: child)),
-      );
+    home: Scaffold(body: Center(child: child)),
+  );
 
   // Tap the read affordance, then pump the build frame + the post-frame
   // focus/IME callback so we land in a focused TextField.
@@ -26,13 +26,18 @@ void main() {
   }
 
   group('InlineEditableText', () {
-    testWidgets('editable:false → plain text, no affordance, tap is inert',
-        (tester) async {
-      await tester.pumpWidget(host(InlineEditableText(
-        value: 'Outdoor Play',
-        editable: false,
-        onCommit: (_) async {},
-      )));
+    testWidgets('editable:false → plain text, no affordance, tap is inert', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          InlineEditableText(
+            value: 'Outdoor Play',
+            editable: false,
+            onCommit: (_) async {},
+          ),
+        ),
+      );
 
       expect(find.text('Outdoor Play'), findsOneWidget);
       expect(find.byIcon(Icons.edit_outlined), findsNothing);
@@ -43,10 +48,14 @@ void main() {
     });
 
     testWidgets('tap → in-place TextField that holds focus', (tester) async {
-      await tester.pumpWidget(host(InlineEditableText(
-        value: 'Outdoor Play',
-        onCommit: (_) async {},
-      )));
+      await tester.pumpWidget(
+        host(
+          InlineEditableText(
+            value: 'Outdoor Play',
+            onCommit: (_) async {},
+          ),
+        ),
+      );
 
       await enterEdit(tester, find.text('Outdoor Play'));
 
@@ -59,11 +68,15 @@ void main() {
 
     testWidgets('done commits the trimmed text exactly once', (tester) async {
       final commits = <String>[];
-      await tester.pumpWidget(host(InlineEditableText(
-        value: '',
-        placeholder: 'Name this block',
-        onCommit: (t) async => commits.add(t),
-      )));
+      await tester.pumpWidget(
+        host(
+          InlineEditableText(
+            value: '',
+            placeholder: 'Name this block',
+            onCommit: (t) async => commits.add(t),
+          ),
+        ),
+      );
 
       await enterEdit(tester, find.text('Name this block'));
       await tester.enterText(find.byType(TextField), '  Swim  ');
@@ -72,14 +85,19 @@ void main() {
       expect(commits, ['Swim']);
     });
 
-    testWidgets('clearable:false → emptying a named field is a no-op',
-        (tester) async {
+    testWidgets('clearable:false → emptying a named field is a no-op', (
+      tester,
+    ) async {
       final commits = <String>[];
-      await tester.pumpWidget(host(InlineEditableText(
-        value: 'Outdoor Play',
-        clearable: false,
-        onCommit: (t) async => commits.add(t),
-      )));
+      await tester.pumpWidget(
+        host(
+          InlineEditableText(
+            value: 'Outdoor Play',
+            clearable: false,
+            onCommit: (t) async => commits.add(t),
+          ),
+        ),
+      );
 
       await enterEdit(tester, find.text('Outdoor Play'));
       await tester.enterText(find.byType(TextField), '');
@@ -89,13 +107,18 @@ void main() {
       expect(find.text('Outdoor Play'), findsOneWidget); // name retained
     });
 
-    testWidgets('clearable:true (default) → clear-to-empty still commits',
-        (tester) async {
+    testWidgets('clearable:true (default) → clear-to-empty still commits', (
+      tester,
+    ) async {
       final commits = <String>[];
-      await tester.pumpWidget(host(InlineEditableText(
-        value: 'a note',
-        onCommit: (t) async => commits.add(t),
-      )));
+      await tester.pumpWidget(
+        host(
+          InlineEditableText(
+            value: 'a note',
+            onCommit: (t) async => commits.add(t),
+          ),
+        ),
+      );
 
       await enterEdit(tester, find.text('a note'));
       await tester.enterText(find.byType(TextField), '');
@@ -104,13 +127,18 @@ void main() {
       expect(commits, ['']); // delete-the-note is preserved for Notes
     });
 
-    testWidgets('committing unchanged text does not fire onCommit',
-        (tester) async {
+    testWidgets('committing unchanged text does not fire onCommit', (
+      tester,
+    ) async {
       final commits = <String>[];
-      await tester.pumpWidget(host(InlineEditableText(
-        value: 'Outdoor Play',
-        onCommit: (t) async => commits.add(t),
-      )));
+      await tester.pumpWidget(
+        host(
+          InlineEditableText(
+            value: 'Outdoor Play',
+            onCommit: (t) async => commits.add(t),
+          ),
+        ),
+      );
 
       await enterEdit(tester, find.text('Outdoor Play'));
       await commitDone(tester); // no edit between enter and commit

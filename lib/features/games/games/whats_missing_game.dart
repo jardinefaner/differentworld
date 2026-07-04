@@ -14,15 +14,15 @@ class MissingRound {
   const MissingRound({required this.cards, required this.missingIndex});
 
   factory MissingRound.fromMap(Map<String, dynamic> m) => MissingRound(
-        cards: [
-          for (final c in (m['cards'] as List? ?? const <dynamic>[]))
-            (
-              image: (c as Map)['image'] as String? ?? '',
-              label: c['label'] as String? ?? '',
-            ),
-        ],
-        missingIndex: (m['missing'] as num?)?.toInt() ?? 0,
-      );
+    cards: [
+      for (final c in (m['cards'] as List? ?? const <dynamic>[]))
+        (
+          image: (c as Map)['image'] as String? ?? '',
+          label: c['label'] as String? ?? '',
+        ),
+    ],
+    missingIndex: (m['missing'] as num?)?.toInt() ?? 0,
+  );
 
   /// The full set, in stable positions (the missing one is hidden in place
   /// during the quiz so kids can track where it was).
@@ -31,8 +31,8 @@ class MissingRound {
 
   ({String image, String label})? get missing =>
       (missingIndex >= 0 && missingIndex < cards.length)
-          ? cards[missingIndex]
-          : null;
+      ? cards[missingIndex]
+      : null;
 }
 
 /// The three beats of a round.
@@ -46,7 +46,8 @@ class WhatsMissingState {
     required this.done,
   });
 
-  factory WhatsMissingState.fromMap(Map<String, dynamic> m) => WhatsMissingState(
+  factory WhatsMissingState.fromMap(Map<String, dynamic> m) =>
+      WhatsMissingState(
         rounds: [
           for (final r in (m['rounds'] as List? ?? const <dynamic>[]))
             MissingRound.fromMap(Map<String, dynamic>.from(r as Map)),
@@ -82,19 +83,18 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
   String get title => "What's Missing";
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.rose);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.rose);
 
   @override
   String? get liveRoute => '/live/whats-missing';
 
   @override
   Map<String, dynamic> initialState(ContentSource content) => {
-        'rounds': const <Map<String, dynamic>>[],
-        'i': 0,
-        'phase': 0,
-        'd': false,
-      };
+    'rounds': const <Map<String, dynamic>>[],
+    'i': 0,
+    'phase': 0,
+    'd': false,
+  };
 
   @override
   WhatsMissingState decode(Map<String, dynamic> state) =>
@@ -145,11 +145,11 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
 
   @override
   Set<GameIntent> activeIntents(WhatsMissingState s) => {
-        if (s.index > 0 || s.phase != MissingPhase.study) GameIntent.back,
-        if (s.phase != MissingPhase.revealed) GameIntent.reveal,
-        if (!s.isLast) GameIntent.next,
-        GameIntent.reset,
-      };
+    if (s.index > 0 || s.phase != MissingPhase.study) GameIntent.back,
+    if (s.phase != MissingPhase.revealed) GameIntent.reveal,
+    if (!s.isLast) GameIntent.next,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, WhatsMissingState s) {
@@ -176,8 +176,7 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
     BuildContext context,
     WhatsMissingState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) =>
-      _MissingControls(state: state, accent: vibe.accent, send: send);
+  ) => _MissingControls(state: state, accent: vibe.accent, send: send);
 }
 
 /// The board: the full set of cards in stable positions. During the quiz the
@@ -199,9 +198,10 @@ class _MissingStage extends StatelessWidget {
     final title = switch (phase) {
       MissingPhase.study => 'Remember these…',
       MissingPhase.quiz => "What's missing?",
-      MissingPhase.revealed => round.missing?.label.isNotEmpty ?? false
-          ? 'It was the ${round.missing!.label}!'
-          : 'There it is!',
+      MissingPhase.revealed =>
+        round.missing?.label.isNotEmpty ?? false
+            ? 'It was the ${round.missing!.label}!'
+            : 'There it is!',
     };
     final cols = round.cards.length <= 4 ? 2 : 3;
     return SafeArea(
@@ -337,51 +337,51 @@ class _MissingControls extends StatelessWidget {
     }
     return switch (state.phase) {
       MissingPhase.study => SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: () => send(GameIntent.reveal),
-            icon: const Icon(Icons.visibility_off_outlined),
-            label: const Text('Hide one'),
-          ),
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: () => send(GameIntent.reveal),
+          icon: const Icon(Icons.visibility_off_outlined),
+          label: const Text('Hide one'),
         ),
+      ),
       MissingPhase.quiz => Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => send(GameIntent.back),
-                icon: const Icon(Icons.visibility_outlined),
-                label: const Text('Peek again'),
-              ),
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => send(GameIntent.back),
+              icon: const Icon(Icons.visibility_outlined),
+              label: const Text('Peek again'),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () => send(GameIntent.reveal),
-                icon: const Icon(Icons.lightbulb_outline),
-                label: const Text('Reveal it'),
-              ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () => send(GameIntent.reveal),
+              icon: const Icon(Icons.lightbulb_outline),
+              label: const Text('Reveal it'),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
       MissingPhase.revealed => Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => send(GameIntent.reset),
-                icon: const Icon(Icons.replay),
-                label: const Text('Start over'),
-              ),
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => send(GameIntent.reset),
+              icon: const Icon(Icons.replay),
+              label: const Text('Start over'),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () => send(GameIntent.next),
-                icon: const Icon(Icons.arrow_forward),
-                label: Text(state.isLast ? 'Finish' : 'Next set'),
-              ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () => send(GameIntent.next),
+              icon: const Icon(Icons.arrow_forward),
+              label: Text(state.isLast ? 'Finish' : 'Next set'),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     };
   }
 }

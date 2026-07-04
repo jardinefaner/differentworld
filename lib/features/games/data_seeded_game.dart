@@ -46,12 +46,12 @@ class DataSeededGame<S, T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => data.when(
-        data: (d) => GameSurface<S>(def: def, live: live, seed: seed(d)),
-        loading: () => const EdgeScaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-        // Cold start / error: present the game empty rather than block — its
-        // own empty handling covers the no-content case.
-        error: (_, _) => GameSurface<S>(def: def, live: live),
-      );
+    data: (d) => GameSurface<S>(def: def, live: live, seed: seed(d)),
+    loading: () => const EdgeScaffold(
+      body: Center(child: CircularProgressIndicator()),
+    ),
+    // Cold start / error: present the game empty rather than block — its
+    // own empty handling covers the no-content case.
+    error: (_, _) => GameSurface<S>(def: def, live: live),
+  );
 }

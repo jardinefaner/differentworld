@@ -138,8 +138,7 @@ class WeeklyTemplateScreen extends ConsumerWidget {
   }
 }
 
-String _dateLabel(DateTime d) =>
-    '${d.month}/${d.day}/${d.year}';
+String _dateLabel(DateTime d) => '${d.month}/${d.day}/${d.year}';
 
 class _NoTemplate extends ConsumerWidget {
   const _NoTemplate({required this.spaceId});
@@ -155,7 +154,8 @@ class _NoTemplate extends ConsumerWidget {
           children: [
             const ContentHeader(
               title: 'No template yet',
-              subtitle: 'Set up your default week — '
+              subtitle:
+                  'Set up your default week — '
                   'activities at each time slot, per cohort.',
             ),
             const SizedBox(height: 24),
@@ -187,8 +187,8 @@ class _TemplateBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dbAsync = ref.watch(appDatabaseProvider);
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
-    final activities = ref.watch(allActivitiesProvider).value ??
-        const <Activity>[];
+    final activities =
+        ref.watch(allActivitiesProvider).value ?? const <Activity>[];
     if (dbAsync.value == null) return const LoadingSlot();
     final db = dbAsync.value!;
     return StreamBuilder<List<WeeklyTemplateBlock>>(
@@ -279,7 +279,7 @@ class _DayRow extends ConsumerWidget {
                       slots.isEmpty
                           ? 'No slots'
                           : '${slots.length} '
-                              '${slots.length == 1 ? "slot" : "slots"}',
+                                '${slots.length == 1 ? "slot" : "slots"}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

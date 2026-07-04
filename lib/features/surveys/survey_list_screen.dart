@@ -57,8 +57,7 @@ class SurveyIndexScreen extends ConsumerWidget {
                 primary: false,
                 padding: EdgeInsets.zero,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 240,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
@@ -349,8 +348,7 @@ class _TemplateLanding extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
-                onPressed: () =>
-                    context.push('/surveys/${template.id}/take'),
+                onPressed: () => context.push('/surveys/${template.id}/take'),
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Start a new survey'),
                 style: FilledButton.styleFrom(
@@ -403,8 +401,7 @@ class _HistoryStrip extends StatelessWidget {
         ? ''
         : ' · $completed complete';
     return TextButton.icon(
-      onPressed: () =>
-          GoRouter.of(context).push('/surveys/$templateId/table'),
+      onPressed: () => GoRouter.of(context).push('/surveys/$templateId/table'),
       icon: const Icon(Icons.table_chart_outlined),
       label: Text('$label$completedLabel · View table'),
     );

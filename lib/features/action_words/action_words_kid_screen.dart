@@ -63,17 +63,19 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
     // Defer through a microtask (not a sync write): initState runs during the
     // parent route's build phase and AppShell watches kidModeProvider, so a
     // sync write trips Riverpod's "modified during build" assertion.
-    unawaited(Future.microtask(() {
-      if (!mounted) return;
-      try {
-        ref.read(kidModeProvider.notifier).enter();
-        ref.read(kidModeLockedRouteProvider.notifier).pin(_lockedRoute);
-      } on Object catch (e, st) {
-        if (kDebugMode) {
-          debugPrint('[action-words-kid] enter failed: $e\n$st');
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        try {
+          ref.read(kidModeProvider.notifier).enter();
+          ref.read(kidModeLockedRouteProvider.notifier).pin(_lockedRoute);
+        } on Object catch (e, st) {
+          if (kDebugMode) {
+            debugPrint('[action-words-kid] enter failed: $e\n$st');
+          }
         }
-      }
-    }));
+      }),
+    );
   }
 
   @override
@@ -119,7 +121,9 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
     setState(() => _saving = true);
     unawaited(HapticFeedback.mediumImpact());
     try {
-      await ref.read(actionWordsActionsProvider).setPicks(
+      await ref
+          .read(actionWordsActionsProvider)
+          .setPicks(
             subjectId: subject.id,
             groupId: subject.groupId,
             date: todayKey(),
@@ -131,8 +135,9 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
         _saved = true;
       });
       // Read the three chosen words back so a pre-reader hears their pick.
-      final picked =
-          verbsByIds(_selected.toList()).map((v) => v.label).join(', ');
+      final picked = verbsByIds(
+        _selected.toList(),
+      ).map((v) => v.label).join(', ');
       unawaited(_voice.say('Your words today. $picked.'));
     } on Object catch (e, st) {
       // The write is optimistic local Drift, so this is rare — but if it
@@ -359,7 +364,12 @@ class _Celebration extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('✨', style: TextStyle(fontSize: theme.textTheme.displayLarge?.fontSize ?? 56)),
+          Text(
+            '✨',
+            style: TextStyle(
+              fontSize: theme.textTheme.displayLarge?.fontSize ?? 56,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             'Your words today!',

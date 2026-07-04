@@ -26,7 +26,8 @@ const List<TeachSkill> kSkills = [
     id: 'sign',
     emoji: '🤟',
     name: 'Sign language',
-    how: 'Teach one sign — the sign for this week’s world. Sign it together '
+    how:
+        'Teach one sign — the sign for this week’s world. Sign it together '
         'three times.',
   ),
   TeachSkill(
@@ -69,7 +70,8 @@ const List<TeachSkill> kSkills = [
     id: 'letters',
     emoji: '🔤',
     name: 'Letter of the day',
-    how: 'One letter — its sound, and a word from this week’s world that '
+    how:
+        'One letter — its sound, and a word from this week’s world that '
         'starts with it.',
   ),
   TeachSkill(
@@ -97,8 +99,10 @@ TeachSkill? skillById(String? id) {
 /// A SUGGESTED skill for [now] — rotates one per day so there's always one
 /// up, deterministically (the teacher can still pick a different one). Pure.
 TeachSkill skillForDay(DateTime now) {
-  final day = DateTime(now.year, now.month, now.day)
-      .difference(DateTime(2026))
-      .inDays;
+  final day = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).difference(DateTime(2026)).inDays;
   return kSkills[day.abs() % kSkills.length];
 }

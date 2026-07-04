@@ -33,17 +33,17 @@ enum TextScaleMode {
 extension TextScaleModeX on TextScaleMode {
   /// Human label for Settings UI.
   String get label => switch (this) {
-        TextScaleMode.systemDefault => 'System default',
-        TextScaleMode.large => 'Large',
-        TextScaleMode.extraLarge => 'Extra large',
-      };
+    TextScaleMode.systemDefault => 'System default',
+    TextScaleMode.large => 'Large',
+    TextScaleMode.extraLarge => 'Extra large',
+  };
 
   /// Storage scalar floor applied by `AppTextScaleApplier`.
   double get floor => switch (this) {
-        TextScaleMode.systemDefault => 1.0,
-        TextScaleMode.large => 1.3,
-        TextScaleMode.extraLarge => 1.5,
-      };
+    TextScaleMode.systemDefault => 1.0,
+    TextScaleMode.large => 1.3,
+    TextScaleMode.extraLarge => 1.5,
+  };
 }
 
 /// Persisted user choice. Watch this provider to render the current
@@ -51,8 +51,8 @@ extension TextScaleModeX on TextScaleMode {
 /// and persist.
 final textScaleSettingProvider =
     AsyncNotifierProvider<TextScaleSettingNotifier, TextScaleMode>(
-  TextScaleSettingNotifier.new,
-);
+      TextScaleSettingNotifier.new,
+    );
 
 class TextScaleSettingNotifier extends AsyncNotifier<TextScaleMode> {
   static const _kKey = 'settings.text_scale_mode';
@@ -85,10 +85,10 @@ class TextScaleSettingNotifier extends AsyncNotifier<TextScaleMode> {
   }
 
   static String _encode(TextScaleMode mode) => switch (mode) {
-        TextScaleMode.systemDefault => 'system_default',
-        TextScaleMode.large => 'large',
-        TextScaleMode.extraLarge => 'extra_large',
-      };
+    TextScaleMode.systemDefault => 'system_default',
+    TextScaleMode.large => 'large',
+    TextScaleMode.extraLarge => 'extra_large',
+  };
 }
 
 /// MediaQuery shim — wrap the MaterialApp's builder result in this to

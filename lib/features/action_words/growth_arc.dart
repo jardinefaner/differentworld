@@ -63,7 +63,8 @@ List<DayBeat> buildGrowthArc({
     });
   final topVerbLines = <String>[
     for (final e in verbEntries.take(4))
-      if (verbById(e.key) case final v?) '${v.emoji}  ${v.label}  ·  ${e.value}×',
+      if (verbById(e.key) case final v?)
+        '${v.emoji}  ${v.label}  ·  ${e.value}×',
   ];
 
   // Most-visited worlds, most first.
@@ -109,7 +110,8 @@ List<DayBeat> buildGrowthArc({
       kind: DayBeatKind.open,
       label: 'The story so far',
       big: name,
-      sub: '${collection.dayCount} '
+      sub:
+          '${collection.dayCount} '
           '${collection.dayCount == 1 ? 'day' : 'days'}. '
           'Three words each. Lived.',
       emoji: '✨',

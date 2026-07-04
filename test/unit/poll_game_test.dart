@@ -27,10 +27,16 @@ void main() {
     });
 
     test('tally ignores an out-of-range / missing choice', () {
-      expect(def.reduce(st(), GameIntent.tally, const {'choice': 9})['counts'],
-          [0, 0, 0, 0]);
-      expect(def.reduce(st(), GameIntent.tally, const {})['counts'],
-          [0, 0, 0, 0]);
+      expect(
+        def.reduce(st(), GameIntent.tally, const {'choice': 9})['counts'],
+        [0, 0, 0, 0],
+      );
+      expect(def.reduce(st(), GameIntent.tally, const {})['counts'], [
+        0,
+        0,
+        0,
+        0,
+      ]);
     });
 
     test('reveal toggles; reset zeroes the counts and hides', () {
@@ -54,7 +60,9 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: GameRunner(def: PollGame()))),
+      const ProviderScope(
+        child: MaterialApp(home: GameRunner(def: PollGame())),
+      ),
     );
     await tester.pump();
 

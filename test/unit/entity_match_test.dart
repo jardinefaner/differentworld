@@ -53,8 +53,16 @@ void main() {
 
     test('returns hits in reading order', () {
       final m = findEntityMatches('Mateo then Sofia', [
-        EntityMatchTerm(text: 'Sofia', ref: subj('sofia'), properNounOnly: true),
-        EntityMatchTerm(text: 'Mateo', ref: subj('mateo'), properNounOnly: true),
+        EntityMatchTerm(
+          text: 'Sofia',
+          ref: subj('sofia'),
+          properNounOnly: true,
+        ),
+        EntityMatchTerm(
+          text: 'Mateo',
+          ref: subj('mateo'),
+          properNounOnly: true,
+        ),
       ]);
       expect(m.map((x) => x.ref.id), ['mateo', 'sofia']);
     });

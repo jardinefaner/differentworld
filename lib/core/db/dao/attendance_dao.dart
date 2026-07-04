@@ -15,10 +15,9 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
     String groupId,
     String date,
   ) {
-    return (select(attendanceRecords)
-          ..where(
-            (a) => a.groupId.equals(groupId) & a.date.equals(date),
-          ))
+    return (select(attendanceRecords)..where(
+          (a) => a.groupId.equals(groupId) & a.date.equals(date),
+        ))
         .watch();
   }
 
@@ -30,9 +29,9 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
           ..where((a) => a.subjectId.equals(subjectId))
           ..orderBy([
             (a) => OrderingTerm(
-                  expression: a.date,
-                  mode: OrderingMode.desc,
-                ),
+              expression: a.date,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -50,19 +49,19 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await transaction(() async {
-      final existing = await (select(attendanceRecords)
-            ..where(
-              (a) => a.subjectId.equals(subjectId) & a.date.equals(date),
-            ))
-          .getSingleOrNull();
+      final existing =
+          await (select(attendanceRecords)..where(
+                (a) => a.subjectId.equals(subjectId) & a.date.equals(date),
+              ))
+              .getSingleOrNull();
 
       if (existing != null) {
         // Wave 105: track who flipped the row on every write so a
         // racing co-teacher can see who overwrote what. recordedBy
         // is preserved (original author); lastUpdatedBy is rewritten.
-        await (update(attendanceRecords)
-              ..where((a) => a.id.equals(existing.id)))
-            .write(
+        await (update(
+          attendanceRecords,
+        )..where((a) => a.id.equals(existing.id))).write(
           AttendanceRecordsCompanion(
             status: Value(status),
             notes: notes == null ? const Value.absent() : Value(notes),
@@ -116,11 +115,11 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
       // One query for the whole batch — find which subjects already
       // have a row today.
       final subjectIds = entries.map((e) => e.subjectId).toList();
-      final existingRows = await (select(attendanceRecords)
-            ..where(
-              (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
-            ))
-          .get();
+      final existingRows =
+          await (select(attendanceRecords)..where(
+                (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
+              ))
+              .get();
       final alreadyHave = existingRows.map((r) => r.subjectId).toSet();
 
       for (final entry in entries) {
@@ -154,10 +153,9 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
     required String date,
   }) async {
     if (subjectIds.isEmpty) return;
-    await (delete(attendanceRecords)
-          ..where(
-            (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
-          ))
+    await (delete(attendanceRecords)..where(
+          (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
+        ))
         .go();
   }
 }

@@ -6,8 +6,10 @@ import 'package:differentworld/features/action_words/verbs.dart';
 /// The Action Words verbs tagged on an activity (stored in the activity's
 /// `capabilities.action_verbs` — no migration). Unknown ids are dropped.
 List<String> activityVerbs(Activity a) {
-  final raw = Capabilities.fromJson(a.capabilities)
-          .get<List<dynamic>>('action_verbs') ??
+  final raw =
+      Capabilities.fromJson(
+        a.capabilities,
+      ).get<List<dynamic>>('action_verbs') ??
       const <dynamic>[];
   return [
     for (final e in raw)
@@ -20,7 +22,7 @@ List<String> activityVerbs(Activity a) {
 List<Sense> activitySenses(Activity a) {
   final raw =
       Capabilities.fromJson(a.capabilities).get<List<dynamic>>('senses') ??
-          const <dynamic>[];
+      const <dynamic>[];
   final out = <Sense>[];
   for (final e in raw) {
     for (final s in Sense.values) {
@@ -58,7 +60,9 @@ List<ActivityMatch> matchActivities(
     final byOverlap = y.overlap.compareTo(x.overlap);
     return byOverlap != 0
         ? byOverlap
-        : x.activity.name.toLowerCase().compareTo(y.activity.name.toLowerCase());
+        : x.activity.name.toLowerCase().compareTo(
+            y.activity.name.toLowerCase(),
+          );
   });
   return out;
 }

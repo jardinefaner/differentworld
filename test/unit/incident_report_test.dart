@@ -12,31 +12,34 @@ Incident _inc(
   bool notified, {
   String? action,
   String narrative = '',
-}) =>
-    Incident.fromEntry(
-      Entry(
-        id: 'e-$type',
-        spaceId: 's1',
-        kind: 'incident',
-        details: incidentDetailsJson(
-          incidentType: type,
-          parentNotified: notified,
-          actionTaken: action,
-        ),
-        recordedBy: 'm1',
-        recordedAt: '2026-06-06T17:00:00Z',
-        updatedAt: '2026-06-06T17:00:00Z',
-        body: narrative,
-      ),
-    );
+}) => Incident.fromEntry(
+  Entry(
+    id: 'e-$type',
+    spaceId: 's1',
+    kind: 'incident',
+    details: incidentDetailsJson(
+      incidentType: type,
+      parentNotified: notified,
+      actionTaken: action,
+    ),
+    recordedBy: 'm1',
+    recordedAt: '2026-06-06T17:00:00Z',
+    updatedAt: '2026-06-06T17:00:00Z',
+    body: narrative,
+  ),
+);
 
 void main() {
   test('renders a valid non-empty PDF with the notified count', () async {
     final data = IncidentReportData(
       entries: [
         IncidentReportEntry(
-          incident: _inc('injury', true,
-              action: 'Ice applied', narrative: 'Scraped a knee.'),
+          incident: _inc(
+            'injury',
+            true,
+            action: 'Ice applied',
+            narrative: 'Scraped a knee.',
+          ),
           childName: 'Amy Apple',
         ),
         IncidentReportEntry(

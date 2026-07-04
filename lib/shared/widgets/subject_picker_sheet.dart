@@ -51,8 +51,7 @@ class _SubjectPickerSheet extends ConsumerStatefulWidget {
       _SubjectPickerSheetState();
 }
 
-class _SubjectPickerSheetState
-    extends ConsumerState<_SubjectPickerSheet> {
+class _SubjectPickerSheetState extends ConsumerState<_SubjectPickerSheet> {
   String _filter = '';
 
   @override
@@ -127,8 +126,7 @@ class _SubjectPickerSheetState
                       )
                     : ListView.separated(
                         itemCount: filtered.length,
-                        separatorBuilder: (_, _) =>
-                            const Divider(height: 1),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (_, i) {
                           final s = filtered[i];
                           final fullName = [

@@ -295,7 +295,7 @@ class _Controls<S> extends StatelessWidget {
             done
                 ? 'Done'
                 : '${((wire['i'] as num?)?.toInt() ?? 0) + 1} / '
-                    '${(wire['n'] as num?)?.toInt() ?? 1}',
+                      '${(wire['n'] as num?)?.toInt() ?? 1}',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -312,7 +312,9 @@ class _Controls<S> extends StatelessWidget {
           const SizedBox(width: 8),
           FilledButton.tonalIcon(
             onPressed: () => send(GameIntent.reveal),
-            icon: Icon(revealed ? Icons.visibility_off : Icons.lightbulb_outline),
+            icon: Icon(
+              revealed ? Icons.visibility_off : Icons.lightbulb_outline,
+            ),
             label: Text(def.revealLabel(revealed: revealed)),
           ),
         ],

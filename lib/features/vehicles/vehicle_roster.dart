@@ -11,9 +11,7 @@ List<String> parseRoster(String? json) {
   if (json == null || json.isEmpty) return const [];
   try {
     final decoded = jsonDecode(json);
-    return decoded is List
-        ? [for (final e in decoded) e.toString()]
-        : const [];
+    return decoded is List ? [for (final e in decoded) e.toString()] : const [];
   } on Object {
     return const [];
   }

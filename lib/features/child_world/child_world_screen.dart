@@ -145,7 +145,8 @@ class _TrailTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref
+    final count =
+        ref
             .watch(
               entriesForSubjectProvider(
                 (subjectId: subjectId, kind: EntryKind.workSample),
@@ -283,9 +284,7 @@ class _Tile extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(left: BorderSide(color: accent, width: 4)),
         ),
-        child: onTap == null
-            ? body
-            : InkWell(onTap: onTap, child: body),
+        child: onTap == null ? body : InkWell(onTap: onTap, child: body),
       ),
     );
   }
@@ -305,7 +304,8 @@ class _IntentionTile extends ConsumerWidget {
     return _Tile(
       accent: ActivityPalette.indigo,
       eyebrow: 'their intention',
-      onTap: () => unawaited(_editIntention(context, ref, subjectKey, intention)),
+      onTap: () =>
+          unawaited(_editIntention(context, ref, subjectKey, intention)),
       child: intention == null
           ? Text(
               'Tap to set $childName’s intention for the week.',
@@ -458,7 +458,9 @@ class _GrowthTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final collection = ref.watch(actionWordsCollectionProvider(subjectId)).value;
+    final collection = ref
+        .watch(actionWordsCollectionProvider(subjectId))
+        .value;
     final title = collection?.emergingTitle;
     final days = collection?.dayCount ?? 0;
     return _Tile(
@@ -721,7 +723,9 @@ class _ProjectSheetState extends State<_ProjectSheet> {
                           tooltip: 'Remove step',
                           onPressed: _steps.length == 1
                               ? null
-                              : () => setState(() => _steps.removeAt(i).dispose()),
+                              : () => setState(
+                                  () => _steps.removeAt(i).dispose(),
+                                ),
                           icon: const Icon(Icons.close),
                         ),
                       ],

@@ -786,8 +786,10 @@ class _Allies extends StatelessWidget {
                       children: [
                         const Text('🤝  ', style: TextStyle(fontSize: 14)),
                         Expanded(
-                          child: LinkifiedText(a,
-                              style: theme.textTheme.bodyMedium),
+                          child: LinkifiedText(
+                            a,
+                            style: theme.textTheme.bodyMedium,
+                          ),
                         ),
                       ],
                     ),

@@ -16,8 +16,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Precedence: the cockpit (`cockpitAsHomeProvider`) wins if both are on — it's
 /// the established promotion path. Bento is the alternate when the cockpit is
 /// off. See `_SignedInHome` in router.dart.
-final bentoHomeProvider =
-    AsyncNotifierProvider<BentoHomeNotifier, bool>(BentoHomeNotifier.new);
+final bentoHomeProvider = AsyncNotifierProvider<BentoHomeNotifier, bool>(
+  BentoHomeNotifier.new,
+);
 
 class BentoHomeNotifier extends AsyncNotifier<bool> {
   static const _kKey = 'settings.bento_home';

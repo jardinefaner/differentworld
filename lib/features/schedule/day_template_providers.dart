@@ -14,8 +14,9 @@ final dayTemplatesProvider = Provider<List<DayTemplate>>((ref) {
   // emits on every space-row write (any cap), and we only re-decode when
   // the day_templates string itself changes.
   final raw = ref.watch(
-    currentSpaceProvider
-        .select((s) => s.value?.caps.getString(SpaceCaps.dayTemplates)),
+    currentSpaceProvider.select(
+      (s) => s.value?.caps.getString(SpaceCaps.dayTemplates),
+    ),
   );
   return decodeDayTemplates(raw);
 });
@@ -23,8 +24,10 @@ final dayTemplatesProvider = Provider<List<DayTemplate>>((ref) {
 /// One template by id (null if it's been deleted).
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final dayTemplateByIdProvider =
-    Provider.family<DayTemplate?, String>((ref, id) {
+final dayTemplateByIdProvider = Provider.family<DayTemplate?, String>((
+  ref,
+  id,
+) {
   for (final t in ref.watch(dayTemplatesProvider)) {
     if (t.id == id) return t;
   }
@@ -47,7 +50,9 @@ class DayTemplateActions {
   }
 
   Future<void> _save(String spaceId, List<DayTemplate> list) {
-    return _ref.read(spaceCapActionsProvider).setStringCap(
+    return _ref
+        .read(spaceCapActionsProvider)
+        .setStringCap(
           spaceId,
           SpaceCaps.dayTemplates,
           encodeDayTemplates(list),
@@ -80,8 +85,10 @@ class DayTemplateActions {
     List<DayTemplate> list,
     String id,
     DayTemplate Function(DayTemplate t) update,
-  ) =>
-      [for (final t in list) if (t.id == id) update(t) else t];
+  ) => [
+    for (final t in list)
+      if (t.id == id) update(t) else t,
+  ];
 
   /// Create a starter template and return its id (so the caller can open
   /// the editor on it).
@@ -98,23 +105,21 @@ class DayTemplateActions {
     required String spaceId,
     required String id,
     required String name,
-  }) =>
-      _mutate(spaceId, (l) => _replace(l, id, (t) => t.copyWith(name: name)));
+  }) => _mutate(spaceId, (l) => _replace(l, id, (t) => t.copyWith(name: name)));
 
   Future<void> setBounds({
     required String spaceId,
     required String id,
     required int startMinute,
     required int endMinute,
-  }) =>
-      _mutate(
-        spaceId,
-        (l) => _replace(
-          l,
-          id,
-          (t) => t.copyWith(startMinute: startMinute, endMinute: endMinute),
-        ),
-      );
+  }) => _mutate(
+    spaceId,
+    (l) => _replace(
+      l,
+      id,
+      (t) => t.copyWith(startMinute: startMinute, endMinute: endMinute),
+    ),
+  );
 
   Future<void> addBlock({
     required String spaceId,
@@ -147,71 +152,76 @@ class DayTemplateActions {
     int? minutes,
     DayBlockKind? kind,
     double? energy,
-  }) =>
-      _mutate(
-        spaceId,
-        (l) => _replace(
-          l,
-          templateId,
-          (t) => t.copyWith(
-            blocks: [
-              for (final b in t.blocks)
-                if (b.id == blockId)
-                  b.copyWith(
-                    label: label,
-                    minutes: minutes,
-                    kind: kind,
-                    energy: energy,
-                  )
-                else
-                  b,
-            ],
-          ),
-        ),
-      );
+  }) => _mutate(
+    spaceId,
+    (l) => _replace(
+      l,
+      templateId,
+      (t) => t.copyWith(
+        blocks: [
+          for (final b in t.blocks)
+            if (b.id == blockId)
+              b.copyWith(
+                label: label,
+                minutes: minutes,
+                kind: kind,
+                energy: energy,
+              )
+            else
+              b,
+        ],
+      ),
+    ),
+  );
 
   Future<void> removeBlock({
     required String spaceId,
     required String templateId,
     required String blockId,
-  }) =>
-      _mutate(
-        spaceId,
-        (l) => _replace(
-          l,
-          templateId,
-          (t) => t.copyWith(
-            blocks: [for (final b in t.blocks) if (b.id != blockId) b],
-          ),
-        ),
-      );
+  }) => _mutate(
+    spaceId,
+    (l) => _replace(
+      l,
+      templateId,
+      (t) => t.copyWith(
+        blocks: [
+          for (final b in t.blocks)
+            if (b.id != blockId) b,
+        ],
+      ),
+    ),
+  );
 
   Future<void> reorderBlocks({
     required String spaceId,
     required String templateId,
     required int oldIndex,
     required int newIndex,
-  }) =>
-      _mutate(
-        spaceId,
-        (l) => _replace(l, templateId, (t) {
-          final blocks = List<DayBlock>.of(t.blocks);
-          if (oldIndex < 0 || oldIndex >= blocks.length) return t;
-          // ReorderableListView's newIndex is post-removal-adjusted.
-          var target = newIndex;
-          if (target > oldIndex) target -= 1;
-          target = target.clamp(0, blocks.length - 1);
-          final moved = blocks.removeAt(oldIndex);
-          blocks.insert(target, moved);
-          return t.copyWith(blocks: blocks);
-        }),
-      );
+  }) => _mutate(
+    spaceId,
+    (l) => _replace(l, templateId, (t) {
+      final blocks = List<DayBlock>.of(t.blocks);
+      if (oldIndex < 0 || oldIndex >= blocks.length) return t;
+      // ReorderableListView's newIndex is post-removal-adjusted.
+      var target = newIndex;
+      if (target > oldIndex) target -= 1;
+      target = target.clamp(0, blocks.length - 1);
+      final moved = blocks.removeAt(oldIndex);
+      blocks.insert(target, moved);
+      return t.copyWith(blocks: blocks);
+    }),
+  );
 
   Future<void> deleteTemplate({
     required String spaceId,
     required String id,
-  }) =>
-      _mutate(spaceId, (l) => [for (final t in l) if (t.id != id) t]);
+  }) => _mutate(
+    spaceId,
+    (l) => [
+      for (final t in l)
+        if (t.id != id) t,
+    ],
+  );
 
   /// Re-add a deleted template verbatim — the `deleteWithUndo` undo path.
   /// The library lives in the caps JSON (no Drift row), so restore re-inserts
@@ -221,11 +231,14 @@ class DayTemplateActions {
   Future<void> restoreTemplate({
     required String spaceId,
     required DayTemplate template,
-  }) =>
-      _mutate(
-        spaceId,
-        (l) => [for (final t in l) if (t.id != template.id) t, template],
-      );
+  }) => _mutate(
+    spaceId,
+    (l) => [
+      for (final t in l)
+        if (t.id != template.id) t,
+      template,
+    ],
+  );
 
   /// Materialize a template onto a specific date for one or more groups —
   /// packs the duration-blocks into clock windows on [date] and writes real
@@ -265,7 +278,8 @@ class DayTemplateActions {
   }) async {
     if (template.blocks.isEmpty || groupIds.isEmpty) return 0;
     final day = DateTime(date.year, date.month, date.day);
-    final dateKey = '${day.year.toString().padLeft(4, '0')}-'
+    final dateKey =
+        '${day.year.toString().padLeft(4, '0')}-'
         '${day.month.toString().padLeft(2, '0')}-'
         '${day.day.toString().padLeft(2, '0')}';
     final specs = [
@@ -292,5 +306,6 @@ class DayTemplateActions {
   }
 }
 
-final dayTemplateActionsProvider =
-    Provider<DayTemplateActions>(DayTemplateActions.new);
+final dayTemplateActionsProvider = Provider<DayTemplateActions>(
+  DayTemplateActions.new,
+);

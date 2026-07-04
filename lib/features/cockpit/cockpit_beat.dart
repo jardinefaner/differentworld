@@ -64,8 +64,7 @@ CockpitBeat computeCockpitBeat({
     // the clock surfaces the dark glowing stage near day's end. The provider
     // only sets closingReveal when a world is actually running (else /play-today
     // is a dead end), so reaching `reveal` here always has something to show.
-    DayPhase.program =>
-      closingReveal ? CockpitBeat.reveal : CockpitBeat.now,
+    DayPhase.program => closingReveal ? CockpitBeat.reveal : CockpitBeat.now,
     DayPhase.pickup => CockpitBeat.pickup,
     DayPhase.closed => sendable ? CockpitBeat.send : CockpitBeat.closed,
   };
@@ -108,8 +107,9 @@ class RevealDismissed extends Notifier<bool> {
   void dismiss() => state = true;
 }
 
-final revealDismissedProvider =
-    NotifierProvider<RevealDismissed, bool>(RevealDismissed.new);
+final revealDismissedProvider = NotifierProvider<RevealDismissed, bool>(
+  RevealDismissed.new,
+);
 
 /// Reads the live providers and resolves the current beat. Honors the context
 /// room override (the same pin the context pill sets) so a teacher who floats

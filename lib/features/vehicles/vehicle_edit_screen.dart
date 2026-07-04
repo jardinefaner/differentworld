@@ -28,8 +28,7 @@ class VehicleEditScreen extends ConsumerStatefulWidget {
   bool get isEdit => vehicleId != null;
 
   @override
-  ConsumerState<VehicleEditScreen> createState() =>
-      _VehicleEditScreenState();
+  ConsumerState<VehicleEditScreen> createState() => _VehicleEditScreenState();
 }
 
 class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
@@ -204,8 +203,7 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
     final vehicleAsync = widget.isEdit
         ? ref.watch(vehicleByIdProvider(widget.vehicleId!))
         : const AsyncValue<Vehicle?>.data(null);
-    final vehicleForDirty =
-        (vehicleAsync..whenData(_seedFromVehicle)).value;
+    final vehicleForDirty = (vehicleAsync..whenData(_seedFromVehicle)).value;
 
     return DismissGuard(
       isDirty: () => _isDirty(vehicleForDirty),
@@ -228,198 +226,198 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
                 FormBody(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   children: [
-                ContentHeader(
-                  title: widget.isEdit ? 'Edit vehicle' : 'New vehicle',
-                  subtitle: widget.isEdit
-                      ? null
-                      : 'Add a vehicle for drivers to check out',
-                ),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _name,
-                        autofocus: !widget.isEdit,
-                        textCapitalization: TextCapitalization.words,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Vehicle name',
-                          hintText: 'e.g. Big Green Van',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          final t = value?.trim() ?? '';
-                          if (t.isEmpty) return 'Required';
-                          if (t.length < 2) return 'Too short';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
+                    ContentHeader(
+                      title: widget.isEdit ? 'Edit vehicle' : 'New vehicle',
+                      subtitle: widget.isEdit
+                          ? null
+                          : 'Add a vehicle for drivers to check out',
+                    ),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _make,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Make',
-                                hintText: 'Ford',
-                                border: OutlineInputBorder(),
+                          TextFormField(
+                            controller: _name,
+                            autofocus: !widget.isEdit,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'Vehicle name',
+                              hintText: 'e.g. Big Green Van',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              final t = value?.trim() ?? '';
+                              if (t.isEmpty) return 'Required';
+                              if (t.length < 2) return 'Too short';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  controller: _make,
+                                  textCapitalization: TextCapitalization.words,
+                                  textInputAction: TextInputAction.next,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Make',
+                                    hintText: 'Ford',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
                               ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  controller: _model,
+                                  textCapitalization: TextCapitalization.words,
+                                  textInputAction: TextInputAction.next,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Model',
+                                    hintText: 'Transit 350',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _year,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(4),
+                                  ],
+                                  textInputAction: TextInputAction.next,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Year',
+                                    hintText: '2023',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  validator: (value) {
+                                    final t = value?.trim() ?? '';
+                                    if (t.isEmpty) return null;
+                                    final n = int.tryParse(t);
+                                    if (n == null) return 'Numbers only';
+                                    if (n < 1990 || n > 2100) {
+                                      return 'Out of range';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  controller: _color,
+                                  textCapitalization: TextCapitalization.words,
+                                  textInputAction: TextInputAction.next,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Color',
+                                    hintText: 'Green',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _plate,
+                            textCapitalization: TextCapitalization.characters,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'License plate',
+                              hintText: '03234E4',
+                              border: OutlineInputBorder(),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 3,
-                            child: TextFormField(
-                              controller: _model,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Model',
-                                hintText: 'Transit 350',
-                                border: OutlineInputBorder(),
-                              ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _notes,
+                            minLines: 2,
+                            maxLines: 4,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: const InputDecoration(
+                              labelText: 'Notes (optional)',
+                              hintText:
+                                  'Insurance contact, fuel card #, quirks…',
+                              border: OutlineInputBorder(),
                             ),
                           ),
                         ],
                       ),
+                    ),
+                    if (_error != null) ...[
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _year,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(4),
-                              ],
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Year',
-                                hintText: '2023',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                final t = value?.trim() ?? '';
-                                if (t.isEmpty) return null;
-                                final n = int.tryParse(t);
-                                if (n == null) return 'Numbers only';
-                                if (n < 1990 || n > 2100) {
-                                  return 'Out of range';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _color,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Color',
-                                hintText: 'Green',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _plate,
-                        textCapitalization: TextCapitalization.characters,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'License plate',
-                          hintText: '03234E4',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _notes,
-                        minLines: 2,
-                        maxLines: 4,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Notes (optional)',
-                          hintText:
-                              'Insurance contact, fuel card #, quirks…',
-                          border: OutlineInputBorder(),
+                      Text(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
                         ),
                       ),
                     ],
+                    if (widget.isEdit) ...[
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: DestructiveButton(
+                          label: 'Delete vehicle',
+                          onPressed: _saving ? null : _delete,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 88), // clearance for sticky bar
+                  ],
+                ),
+                // Bottom-sticky save bar: always reachable on long forms.
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: SafeArea(
+                    top: false,
+                    child: Container(
+                      color: theme.colorScheme.surface,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _saving ? null : _save,
+                          icon: _saving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.check),
+                          label: Text(
+                            widget.isEdit ? 'Save changes' : 'Create vehicle',
+                          ),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                ],
-                if (widget.isEdit) ...[
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: DestructiveButton(
-                      label: 'Delete vehicle',
-                      onPressed: _saving ? null : _delete,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 88), // clearance for sticky bar
               ],
-            ),
-            // Bottom-sticky save bar: always reachable on long forms.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SafeArea(
-                top: false,
-                child: Container(
-                  color: theme.colorScheme.surface,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _saving ? null : _save,
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.check),
-                      label: Text(
-                        widget.isEdit ? 'Save changes' : 'Create vehicle',
-                      ),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
+            );
           },
         ),
       ),

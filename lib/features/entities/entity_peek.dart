@@ -78,13 +78,17 @@ class _EntityPeekBody extends ConsumerWidget {
         );
         final name = s == null
             ? entity.label
-            : [s.firstName, s.lastName]
-                .where((p) => p.trim().isNotEmpty)
-                .join(' ');
+            : [
+                s.firstName,
+                s.lastName,
+              ].where((p) => p.trim().isNotEmpty).join(' ');
         final group = s?.groupId == null
             ? null
-            : _byId(ref.watch(groupsProvider).value ?? const <Group>[],
-                s!.groupId!, (g) => g.id);
+            : _byId(
+                ref.watch(groupsProvider).value ?? const <Group>[],
+                s!.groupId!,
+                (g) => g.id,
+              );
         // One source of truth for the route, so the button's label + handler
         // can never drift apart into a dead tap.
         final subjectRoute = (s == null || s.groupId == null)
@@ -150,8 +154,11 @@ class _EntityPeekBody extends ConsumerWidget {
         );
         final aLoc = a?.defaultLocationId == null
             ? null
-            : _byId(ref.watch(locationsProvider).value ?? const <Location>[],
-                a!.defaultLocationId!, (x) => x.id);
+            : _byId(
+                ref.watch(locationsProvider).value ?? const <Location>[],
+                a!.defaultLocationId!,
+                (x) => x.id,
+              );
         final aVerbs = a == null
             ? const <String>[]
             : verbsByIds(activityVerbs(a)).map((v) => v.label).toList();
@@ -216,7 +223,8 @@ class _EntityPeekBody extends ConsumerWidget {
 
       case EntityKind.world:
         final w = _byId(
-          ref.watch(curriculumWorldsProvider).value ?? const <CurriculumWorld>[],
+          ref.watch(curriculumWorldsProvider).value ??
+              const <CurriculumWorld>[],
           entity.id,
           (x) => x.id,
         );
@@ -239,8 +247,8 @@ class _EntityPeekBody extends ConsumerWidget {
         final practisedBy = v == null
             ? 0
             : (ref.watch(activitiesProvider).value ?? const <Activity>[])
-                .where((a) => activityVerbs(a).contains(v.id))
-                .length;
+                  .where((a) => activityVerbs(a).contains(v.id))
+                  .length;
         return _PeekScaffold(
           entity: entity,
           title: v?.label ?? entity.label,
@@ -262,8 +270,9 @@ class _EntityPeekBody extends ConsumerWidget {
             if (t != null && t.why.trim().isNotEmpty) t.why.trim(),
           ],
           openLabel: t == null ? null : 'Open tool',
-          onOpen:
-              t == null ? null : () => onOpen('/settings/toolkit/${t.slug}'),
+          onOpen: t == null
+              ? null
+              : () => onOpen('/settings/toolkit/${t.slug}'),
         );
     }
   }
@@ -298,7 +307,8 @@ class _PeekScaffold extends StatelessWidget {
     final tint = readableEntityTint(accent, theme.brightness);
     final fill = entityChipFill(accent, theme.brightness);
 
-    final lead = avatar ??
+    final lead =
+        avatar ??
         Container(
           width: 52,
           height: 52,

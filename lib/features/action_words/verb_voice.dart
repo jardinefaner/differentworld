@@ -18,12 +18,12 @@ class VerbVoice {
   Future<void>? _ready;
 
   Future<void> _ensureReady() => _ready ??= () async {
-        await _tts.setLanguage('en-US');
-        // Slower + slightly brighter than default so a young child can follow
-        // a single word.
-        await _tts.setSpeechRate(0.42);
-        await _tts.setPitch(1.1);
-      }();
+    await _tts.setLanguage('en-US');
+    // Slower + slightly brighter than default so a young child can follow
+    // a single word.
+    await _tts.setSpeechRate(0.42);
+    await _tts.setPitch(1.1);
+  }();
 
   /// Speak a verb as "{label}. {lens}." — e.g. "Help. Do it together."
   Future<void> speakVerb(Verb verb) => _say('${verb.label}. ${verb.lens}.');

@@ -37,34 +37,45 @@ void main() {
     }
   });
 
-  test('every beat is well-formed (nothing the presenter would render blank)',
-      () {
-    for (final s in allSessionScripts) {
-      for (final b in s.beats) {
-        final where = '${s.slug} · "${b.title}"';
-        expect(b.title.trim(), isNotEmpty, reason: '$where: empty beat title');
-
-        // A vocab beat must carry the words to tape up.
-        if (b.kind == BeatKind.vocab) {
-          expect(b.vocabCards, isNotEmpty, reason: '$where: vocab beat, no cards');
-        }
-        // A game beat that carries a BeatGame must name it.
-        if (b.game != null) {
+  test(
+    'every beat is well-formed (nothing the presenter would render blank)',
+    () {
+      for (final s in allSessionScripts) {
+        for (final b in s.beats) {
+          final where = '${s.slug} · "${b.title}"';
           expect(
-            b.game!.name.trim(),
+            b.title.trim(),
             isNotEmpty,
-            reason: '$where: BeatGame with no name',
+            reason: '$where: empty beat title',
           );
+
+          // A vocab beat must carry the words to tape up.
+          if (b.kind == BeatKind.vocab) {
+            expect(
+              b.vocabCards,
+              isNotEmpty,
+              reason: '$where: vocab beat, no cards',
+            );
+          }
+          // A game beat that carries a BeatGame must name it.
+          if (b.game != null) {
+            expect(
+              b.game!.name.trim(),
+              isNotEmpty,
+              reason: '$where: BeatGame with no name',
+            );
+          }
+          // Every beat must have SOMETHING for the slide — key lines, the full
+          // script, a game, vocab cards, or a call-and-response.
+          final hasContent =
+              b.keyLines.isNotEmpty ||
+              b.script.isNotEmpty ||
+              b.game != null ||
+              b.vocabCards.isNotEmpty ||
+              (b.callResponse?.trim().isNotEmpty ?? false);
+          expect(hasContent, isTrue, reason: '$where: beat has no content');
         }
-        // Every beat must have SOMETHING for the slide — key lines, the full
-        // script, a game, vocab cards, or a call-and-response.
-        final hasContent = b.keyLines.isNotEmpty ||
-            b.script.isNotEmpty ||
-            b.game != null ||
-            b.vocabCards.isNotEmpty ||
-            (b.callResponse?.trim().isNotEmpty ?? false);
-        expect(hasContent, isTrue, reason: '$where: beat has no content');
       }
-    }
-  });
+    },
+  );
 }

@@ -24,7 +24,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(supabaseProvider).auth.signInWithOAuth(
+      await ref
+          .read(supabaseProvider)
+          .auth
+          .signInWithOAuth(
             OAuthProvider.google,
             // Web: bounce back to the CURRENT page (without any query
             // string / fragment). `redirectTo: null` would make

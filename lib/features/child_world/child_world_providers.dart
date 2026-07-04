@@ -59,25 +59,27 @@ final childProjectProvider = StreamProvider.autoDispose
 /// A child's **answer to today's daily prompt** (null until they answer). The
 /// per-child half of the shared daily — "her own daily" is her response.
 // ignore: specify_nonobvious_property_types
-final todaysAnswerProvider = StreamProvider.autoDispose.family<String?, String>((
-  ref,
-  subjectId,
-) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  final today = todayKey();
-  yield* db.entriesDao
-      .watchForSubject(subjectId: subjectId, kind: EntryKind.dailyResponse)
-      .map((rows) {
-        for (final e in rows) {
-          final created = DateTime.tryParse(e.recordedAt)?.toLocal();
-          final body = e.body?.trim();
-          if (created != null &&
-              dateKey(created) == today &&
-              body != null &&
-              body.isNotEmpty) {
-            return body;
+final todaysAnswerProvider = StreamProvider.autoDispose.family<String?, String>(
+  (
+    ref,
+    subjectId,
+  ) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    final today = todayKey();
+    yield* db.entriesDao
+        .watchForSubject(subjectId: subjectId, kind: EntryKind.dailyResponse)
+        .map((rows) {
+          for (final e in rows) {
+            final created = DateTime.tryParse(e.recordedAt)?.toLocal();
+            final body = e.body?.trim();
+            if (created != null &&
+                dateKey(created) == today &&
+                body != null &&
+                body.isNotEmpty) {
+              return body;
+            }
           }
-        }
-        return null;
-      });
-});
+          return null;
+        });
+  },
+);

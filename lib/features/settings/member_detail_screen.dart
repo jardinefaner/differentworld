@@ -140,437 +140,453 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     return RouteTitle(
       title: memberName,
       child: EdgeScaffold(
-      backFallbackRoute: '/settings/team',
-      body: memberAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (e, _) => const ErrorState(title: 'Could not load member'),
-        data: (member) {
-          if (member == null) {
-            return const EmptyState(
-              icon: Icons.person_search_outlined,
-              title: 'Member not found',
+        backFallbackRoute: '/settings/team',
+        body: memberAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (e, _) => const ErrorState(title: 'Could not load member'),
+          data: (member) {
+            if (member == null) {
+              return const EmptyState(
+                icon: Icons.person_search_outlined,
+                title: 'Member not found',
+              );
+            }
+            final currentRole = member.role;
+            final caps = member.caps;
+            // Wave 102 (Red Team #5): the role-selector chip guards
+            // against the last director changing their own role, but
+            // the `canActAsDirector` CapSwitch had no equivalent
+            // protection. A member acting AS director (role: teacher,
+            // cap: canActAsDirector = true) who was the only admin
+            // could toggle off the cap on their own profile and brick
+            // the space — no recovery without DB access. Mirror the
+            // role-selector's "admin count" check here.
+            final directorRole = RoleBundles.directorRoleFor(vertical);
+            final allMembers =
+                ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+            final admins = allMembers
+                .where((m) {
+                  if (m.role == directorRole) return true;
+                  return m.caps.getBool(CoreCaps.canActAsDirector);
+                })
+                .toList(growable: false);
+            final isCurrentAdmin =
+                currentRole == directorRole ||
+                caps.getBool(CoreCaps.canActAsDirector);
+            final iAmLastAdmin =
+                isCurrentAdmin &&
+                admins.length == 1 &&
+                admins.first.id == widget.memberId;
+            // Certs are now their own table; the cap-gating UI reads
+            // from that stream so an expired MAT immediately disables
+            // "Administer medication" without manual refresh.
+            final certsAsync = ref.watch(
+              certsForMemberProvider(widget.memberId),
             );
-          }
-          final currentRole = member.role;
-          final caps = member.caps;
-          // Wave 102 (Red Team #5): the role-selector chip guards
-          // against the last director changing their own role, but
-          // the `canActAsDirector` CapSwitch had no equivalent
-          // protection. A member acting AS director (role: teacher,
-          // cap: canActAsDirector = true) who was the only admin
-          // could toggle off the cap on their own profile and brick
-          // the space — no recovery without DB access. Mirror the
-          // role-selector's "admin count" check here.
-          final directorRole = RoleBundles.directorRoleFor(vertical);
-          final allMembers = ref.watch(membersInSpaceProvider).value ??
-              const <Member>[];
-          final admins = allMembers.where((m) {
-            if (m.role == directorRole) return true;
-            return m.caps.getBool(CoreCaps.canActAsDirector);
-          }).toList(growable: false);
-          final isCurrentAdmin = currentRole == directorRole ||
-              caps.getBool(CoreCaps.canActAsDirector);
-          final iAmLastAdmin = isCurrentAdmin &&
-              admins.length == 1 &&
-              admins.first.id == widget.memberId;
-          // Certs are now their own table; the cap-gating UI reads
-          // from that stream so an expired MAT immediately disables
-          // "Administer medication" without manual refresh.
-          final certsAsync = ref.watch(certsForMemberProvider(widget.memberId));
-          final activeCerts = certsAsync.value ?? const <MemberCertification>[];
-          final hasMatCert = activeCerts.isValid(Certifications.mat.key);
-          final hasDriverCert = activeCerts.isValid(Certifications.driver.key);
+            final activeCerts =
+                certsAsync.value ?? const <MemberCertification>[];
+            final hasMatCert = activeCerts.isValid(Certifications.mat.key);
+            final hasDriverCert = activeCerts.isValid(
+              Certifications.driver.key,
+            );
 
-          return DefaultTabController(
-            length: 3,
-            child: Column(
-              children: [
-                // ContentHeader reserves chrome height + status bar
-                // inset so the avatar/identity row below sits clear
-                // of the floating chrome pills (Wave 53 layout law,
-                // wave 59 conformance).
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: member.displayName,
-                    bottomGap: 4,
-                  ),
-                ),
-                Center(
-                  child: PersonAvatar(
-                    name: member.displayName,
-                    photoUrl: member.avatarUrl,
-                    radius: 40,
-                    // Director can change anyone's photo; everyone else
-                    // can change their own.
-                    onTap: (canManage || me?.id == member.id)
-                        ? () => PhotoSourceSheet.show(
-                            context,
-                            entity: PhotoEntity.member,
-                            entityId: member.id,
-                            hasExisting: member.avatarUrl != null,
-                            displayName: member.displayName,
-                          )
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    member.displayName,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Center(
-                  child: Text(
-                    RoleLabels.of(currentRole, vertical: vertical),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+            return DefaultTabController(
+              length: 3,
+              child: Column(
+                children: [
+                  // ContentHeader reserves chrome height + status bar
+                  // inset so the avatar/identity row below sits clear
+                  // of the floating chrome pills (Wave 53 layout law,
+                  // wave 59 conformance).
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ContentHeader(
+                      title: member.displayName,
+                      bottomGap: 4,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                // "How you show up" — the self-authored archetype (decorates,
-                // never gates). Editable only on your OWN profile.
-                ArchetypeCard(
-                  memberId: member.id,
-                  archetypeId: caps.getString(MemberCaps.archetype),
-                  editable: me?.id == member.id,
-                ),
-                const SizedBox(height: 12),
-                const TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.center,
-                  tabs: [
-                    Tab(text: 'Profile'),
-                    // "Certs & access" rather than "Permissions" — the
-                    // primary reason most directors open this screen
-                    // is adding/renewing a certification (Wave 64 UX
-                    // rerank); the tab label leads with that.
-                    Tab(text: 'Certs & access'),
-                    Tab(text: 'Assignments'),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      // -- Tab 1: Profile ----------------------------
-                      ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                        children: [
-                          const MemberSectionLabel(label: 'Role'),
-                          if (canManage)
-                            MemberRoleSelector(
-                              memberId: member.id,
-                              vertical: vertical,
-                              selected: currentRole,
-                              onChanged: _setRole,
+                  Center(
+                    child: PersonAvatar(
+                      name: member.displayName,
+                      photoUrl: member.avatarUrl,
+                      radius: 40,
+                      // Director can change anyone's photo; everyone else
+                      // can change their own.
+                      onTap: (canManage || me?.id == member.id)
+                          ? () => PhotoSourceSheet.show(
+                              context,
+                              entity: PhotoEntity.member,
+                              entityId: member.id,
+                              hasExisting: member.avatarUrl != null,
+                              displayName: member.displayName,
                             )
-                          else
-                            ListTile(
-                              leading: const Icon(Icons.shield_outlined),
-                              title: Text(
-                                RoleLabels.of(currentRole, vertical: vertical),
-                              ),
-                              subtitle: const Text(
-                                'Only a director can change roles.',
-                              ),
-                            ),
-                          // Specialty picker — only relevant for
-                          // `role: specialist`. Directors edit it;
-                          // others see it as a read-only label inline
-                          // with the role above.
-                          if (currentRole == 'specialist') ...[
-                            const SizedBox(height: 16),
-                            const MemberSectionLabel(label: 'Specialty'),
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      member.displayName,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      RoleLabels.of(currentRole, vertical: vertical),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // "How you show up" — the self-authored archetype (decorates,
+                  // never gates). Editable only on your OWN profile.
+                  ArchetypeCard(
+                    memberId: member.id,
+                    archetypeId: caps.getString(MemberCaps.archetype),
+                    editable: me?.id == member.id,
+                  ),
+                  const SizedBox(height: 12),
+                  const TabBar(
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.center,
+                    tabs: [
+                      Tab(text: 'Profile'),
+                      // "Certs & access" rather than "Permissions" — the
+                      // primary reason most directors open this screen
+                      // is adding/renewing a certification (Wave 64 UX
+                      // rerank); the tab label leads with that.
+                      Tab(text: 'Certs & access'),
+                      Tab(text: 'Assignments'),
+                    ],
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        // -- Tab 1: Profile ----------------------------
+                        ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                          children: [
+                            const MemberSectionLabel(label: 'Role'),
                             if (canManage)
-                              MemberSpecialtySelector(
-                                selected: member.caps.getString(
-                                  ChildcareCaps.specialty,
-                                ),
-                                onChanged: _setSpecialty,
+                              MemberRoleSelector(
+                                memberId: member.id,
+                                vertical: vertical,
+                                selected: currentRole,
+                                onChanged: _setRole,
                               )
                             else
                               ListTile(
-                                leading: const Icon(Icons.school_outlined),
+                                leading: const Icon(Icons.shield_outlined),
                                 title: Text(
-                                  SpecialtyKeys.labelOf(
-                                    member.caps.getString(
-                                      ChildcareCaps.specialty,
-                                    ),
+                                  RoleLabels.of(
+                                    currentRole,
+                                    vertical: vertical,
                                   ),
                                 ),
                                 subtitle: const Text(
-                                  'Only a director can change specialty.',
+                                  'Only a director can change roles.',
+                                ),
+                              ),
+                            // Specialty picker — only relevant for
+                            // `role: specialist`. Directors edit it;
+                            // others see it as a read-only label inline
+                            // with the role above.
+                            if (currentRole == 'specialist') ...[
+                              const SizedBox(height: 16),
+                              const MemberSectionLabel(label: 'Specialty'),
+                              if (canManage)
+                                MemberSpecialtySelector(
+                                  selected: member.caps.getString(
+                                    ChildcareCaps.specialty,
+                                  ),
+                                  onChanged: _setSpecialty,
+                                )
+                              else
+                                ListTile(
+                                  leading: const Icon(Icons.school_outlined),
+                                  title: Text(
+                                    SpecialtyKeys.labelOf(
+                                      member.caps.getString(
+                                        ChildcareCaps.specialty,
+                                      ),
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'Only a director can change specialty.',
+                                  ),
+                                ),
+                            ],
+                            if (_error != null)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  16,
+                                  16,
+                                  0,
+                                ),
+                                child: Text(
+                                  _error!,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
                                 ),
                               ),
                           ],
-                          if (_error != null)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                16,
-                                16,
-                                0,
-                              ),
-                              child: Text(
-                                _error!,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
-                                    ),
-                              ),
-                            ),
-                        ],
-                      ),
+                        ),
 
-                      // -- Tab 2: Certs & access ---------------------
-                      // Certifications first (primary reason directors
-                      // open Member Detail per Wave 64 UX rerank),
-                      // then the per-cap toggles below: vertical-
-                      // agnostic core verbs and vertical-specific
-                      // extras.
-                      ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                        children: [
-                          const MemberSectionLabel(label: 'Certifications'),
-                          MemberCertificationsSection(
-                            active: activeCerts,
-                            onToggle: canManage ? _toggleCert : null,
-                            onSetExpiry: canManage ? _setCertExpiry : null,
-                          ),
-                          const SizedBox(height: 24),
-                          const MemberSectionLabel(label: 'Core abilities'),
-                          CapSwitch(
-                            label: 'Observe',
-                            subtitle: 'Record developmental observations',
-                            enabled: canManage,
-                            value: caps.getBool(CoreCaps.canObserve),
-                            onChanged: (v) => _setCap(CoreCaps.canObserve, v),
-                          ),
-                          CapSwitch(
-                            label: 'Take attendance',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              CoreCaps.canTakeAttendance,
+                        // -- Tab 2: Certs & access ---------------------
+                        // Certifications first (primary reason directors
+                        // open Member Detail per Wave 64 UX rerank),
+                        // then the per-cap toggles below: vertical-
+                        // agnostic core verbs and vertical-specific
+                        // extras.
+                        ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                          children: [
+                            const MemberSectionLabel(label: 'Certifications'),
+                            MemberCertificationsSection(
+                              active: activeCerts,
+                              onToggle: canManage ? _toggleCert : null,
+                              onSetExpiry: canManage ? _setCertExpiry : null,
                             ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canTakeAttendance,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Drive',
-                            subtitle: hasDriverCert
-                                ? 'Driver record on file'
-                                : (activeCerts.holds(Certifications.driver.key)
-                                      ? 'Driver certification has expired'
-                                      : 'Add the Driver certification below to enable'),
-                            enabled: canManage && hasDriverCert,
-                            value: caps.getBool(CoreCaps.canDrive),
-                            onChanged: (v) => _setCap(CoreCaps.canDrive, v),
-                          ),
-                          CapSwitch(
-                            label: 'Open the building',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              CoreCaps.canOpenBuilding,
-                            ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canOpenBuilding,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Close the building',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              CoreCaps.canCloseBuilding,
-                            ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canCloseBuilding,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Manage schedule',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              CoreCaps.canManageSchedule,
-                            ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canManageSchedule,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Invite staff',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              CoreCaps.canInviteStaff,
-                            ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canInviteStaff,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'View billing',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              CoreCaps.canViewBilling,
-                            ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canViewBilling,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Act as director',
-                            // Wave 102: if this is the only admin in
-                            // the space, surface why it's locked.
-                            subtitle: iAmLastAdmin
-                                ? "Can't turn off — you're the only "
-                                    'admin in this program. Promote '
-                                    'a teammate first.'
-                                : 'Full admin when the director is offsite',
-                            enabled: canManage && !iAmLastAdmin,
-                            value: caps.getBool(
-                              CoreCaps.canActAsDirector,
-                            ),
-                            onChanged: (v) => _setCap(
-                              CoreCaps.canActAsDirector,
-                              v,
-                            ),
-                          ),
-                          // Vertical-specific extras. Today only
-                          // childcare has a hand-written set; future
-                          // verticals add their own block here.
-                          if (vertical == 'childcare') ...[
-                            const SizedBox(height: 16),
-                            const MemberSectionLabel(label: 'Childcare verbs'),
+                            const SizedBox(height: 24),
+                            const MemberSectionLabel(label: 'Core abilities'),
                             CapSwitch(
-                              label: 'Record meals',
+                              label: 'Observe',
+                              subtitle: 'Record developmental observations',
+                              enabled: canManage,
+                              value: caps.getBool(CoreCaps.canObserve),
+                              onChanged: (v) => _setCap(CoreCaps.canObserve, v),
+                            ),
+                            CapSwitch(
+                              label: 'Take attendance',
                               enabled: canManage,
                               value: caps.getBool(
-                                ChildcareCaps.canRecordMeal,
+                                CoreCaps.canTakeAttendance,
                               ),
                               onChanged: (v) => _setCap(
-                                ChildcareCaps.canRecordMeal,
+                                CoreCaps.canTakeAttendance,
                                 v,
                               ),
                             ),
                             CapSwitch(
-                              label: 'Record naps',
-                              enabled: canManage,
-                              value: caps.getBool(
-                                ChildcareCaps.canRecordNap,
-                              ),
-                              onChanged: (v) =>
-                                  _setCap(ChildcareCaps.canRecordNap, v),
+                              label: 'Drive',
+                              subtitle: hasDriverCert
+                                  ? 'Driver record on file'
+                                  : (activeCerts.holds(
+                                          Certifications.driver.key,
+                                        )
+                                        ? 'Driver certification has expired'
+                                        : 'Add the Driver certification below to enable'),
+                              enabled: canManage && hasDriverCert,
+                              value: caps.getBool(CoreCaps.canDrive),
+                              onChanged: (v) => _setCap(CoreCaps.canDrive, v),
                             ),
                             CapSwitch(
-                              label: 'Record diaper changes',
+                              label: 'Open the building',
                               enabled: canManage,
                               value: caps.getBool(
-                                ChildcareCaps.canRecordDiaper,
+                                CoreCaps.canOpenBuilding,
                               ),
                               onChanged: (v) => _setCap(
-                                ChildcareCaps.canRecordDiaper,
+                                CoreCaps.canOpenBuilding,
                                 v,
                               ),
                             ),
                             CapSwitch(
-                              label: 'Administer medication',
-                              subtitle: hasMatCert
-                                  ? 'MAT certification on file'
-                                  : (activeCerts.holds(Certifications.mat.key)
-                                        ? 'MAT certification has expired'
-                                        : 'Add the MAT certification below to enable'),
-                              enabled: canManage && hasMatCert,
+                              label: 'Close the building',
+                              enabled: canManage,
                               value: caps.getBool(
-                                ChildcareCaps.canAdministerMedication,
+                                CoreCaps.canCloseBuilding,
                               ),
                               onChanged: (v) => _setCap(
-                                ChildcareCaps.canAdministerMedication,
+                                CoreCaps.canCloseBuilding,
                                 v,
                               ),
                             ),
                             CapSwitch(
-                              label: 'Authorize pickup changes',
-                              subtitle: 'Add or remove guardians for a child',
+                              label: 'Manage schedule',
                               enabled: canManage,
                               value: caps.getBool(
-                                ChildcareCaps.canAuthorizePickup,
+                                CoreCaps.canManageSchedule,
                               ),
                               onChanged: (v) => _setCap(
-                                ChildcareCaps.canAuthorizePickup,
+                                CoreCaps.canManageSchedule,
                                 v,
                               ),
                             ),
+                            CapSwitch(
+                              label: 'Invite staff',
+                              enabled: canManage,
+                              value: caps.getBool(
+                                CoreCaps.canInviteStaff,
+                              ),
+                              onChanged: (v) => _setCap(
+                                CoreCaps.canInviteStaff,
+                                v,
+                              ),
+                            ),
+                            CapSwitch(
+                              label: 'View billing',
+                              enabled: canManage,
+                              value: caps.getBool(
+                                CoreCaps.canViewBilling,
+                              ),
+                              onChanged: (v) => _setCap(
+                                CoreCaps.canViewBilling,
+                                v,
+                              ),
+                            ),
+                            CapSwitch(
+                              label: 'Act as director',
+                              // Wave 102: if this is the only admin in
+                              // the space, surface why it's locked.
+                              subtitle: iAmLastAdmin
+                                  ? "Can't turn off — you're the only "
+                                        'admin in this program. Promote '
+                                        'a teammate first.'
+                                  : 'Full admin when the director is offsite',
+                              enabled: canManage && !iAmLastAdmin,
+                              value: caps.getBool(
+                                CoreCaps.canActAsDirector,
+                              ),
+                              onChanged: (v) => _setCap(
+                                CoreCaps.canActAsDirector,
+                                v,
+                              ),
+                            ),
+                            // Vertical-specific extras. Today only
+                            // childcare has a hand-written set; future
+                            // verticals add their own block here.
+                            if (vertical == 'childcare') ...[
+                              const SizedBox(height: 16),
+                              const MemberSectionLabel(
+                                label: 'Childcare verbs',
+                              ),
+                              CapSwitch(
+                                label: 'Record meals',
+                                enabled: canManage,
+                                value: caps.getBool(
+                                  ChildcareCaps.canRecordMeal,
+                                ),
+                                onChanged: (v) => _setCap(
+                                  ChildcareCaps.canRecordMeal,
+                                  v,
+                                ),
+                              ),
+                              CapSwitch(
+                                label: 'Record naps',
+                                enabled: canManage,
+                                value: caps.getBool(
+                                  ChildcareCaps.canRecordNap,
+                                ),
+                                onChanged: (v) =>
+                                    _setCap(ChildcareCaps.canRecordNap, v),
+                              ),
+                              CapSwitch(
+                                label: 'Record diaper changes',
+                                enabled: canManage,
+                                value: caps.getBool(
+                                  ChildcareCaps.canRecordDiaper,
+                                ),
+                                onChanged: (v) => _setCap(
+                                  ChildcareCaps.canRecordDiaper,
+                                  v,
+                                ),
+                              ),
+                              CapSwitch(
+                                label: 'Administer medication',
+                                subtitle: hasMatCert
+                                    ? 'MAT certification on file'
+                                    : (activeCerts.holds(Certifications.mat.key)
+                                          ? 'MAT certification has expired'
+                                          : 'Add the MAT certification below to enable'),
+                                enabled: canManage && hasMatCert,
+                                value: caps.getBool(
+                                  ChildcareCaps.canAdministerMedication,
+                                ),
+                                onChanged: (v) => _setCap(
+                                  ChildcareCaps.canAdministerMedication,
+                                  v,
+                                ),
+                              ),
+                              CapSwitch(
+                                label: 'Authorize pickup changes',
+                                subtitle: 'Add or remove guardians for a child',
+                                enabled: canManage,
+                                value: caps.getBool(
+                                  ChildcareCaps.canAuthorizePickup,
+                                ),
+                                onChanged: (v) => _setCap(
+                                  ChildcareCaps.canAuthorizePickup,
+                                  v,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
+                        ),
 
-                      // -- Tab 3: Assignments ------------------------
-                      ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                        children: [
-                          if (member.role != RoleKey.director) ...[
-                            MemberSectionLabel(
-                              label:
-                                  'Assigned ${labels.groupPlural.toLowerCase()}',
-                            ),
-                            MemberAssignmentsList(
-                              member: member,
-                              canEdit: canManage,
-                            ),
-                          ] else
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'Directors see every '
-                                '${labels.group.toLowerCase()} — no '
-                                'specific assignments needed.',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
+                        // -- Tab 3: Assignments ------------------------
+                        ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                          children: [
+                            if (member.role != RoleKey.director) ...[
+                              MemberSectionLabel(
+                                label:
+                                    'Assigned ${labels.groupPlural.toLowerCase()}',
                               ),
-                            ),
-                          if (canManage && me?.id != member.id) ...[
-                            const SizedBox(height: 32),
-                            const Divider(),
-                            const MemberSectionLabel(label: 'Danger zone'),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                              MemberAssignmentsList(
+                                member: member,
+                                canEdit: canManage,
                               ),
-                              child: DestructiveButton(
-                                label: 'Remove from team',
-                                icon: Icons.person_remove_alt_1_outlined,
-                                onPressed: _removing
-                                    ? null
-                                    : () => _removeFromTeam(member),
+                            ] else
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  'Directors see every '
+                                  '${labels.group.toLowerCase()} — no '
+                                  'specific assignments needed.',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
                               ),
-                            ),
+                            if (canManage && me?.id != member.id) ...[
+                              const SizedBox(height: 32),
+                              const Divider(),
+                              const MemberSectionLabel(label: 'Danger zone'),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: DestructiveButton(
+                                  label: 'Remove from team',
+                                  icon: Icons.person_remove_alt_1_outlined,
+                                  onPressed: _removing
+                                      ? null
+                                      : () => _removeFromTeam(member),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 

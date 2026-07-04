@@ -212,7 +212,8 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
               labelText: 'IEP / 504 notes',
-              hintText: 'What staff should know day-to-day. Adds an '
+              hintText:
+                  'What staff should know day-to-day. Adds an '
                   'alert badge automatically.',
               border: OutlineInputBorder(),
             ),

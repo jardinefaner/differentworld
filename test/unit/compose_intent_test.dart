@@ -18,7 +18,10 @@ void main() {
     });
 
     test('field trip with weekday + time resolves both', () {
-      final i = parseComposeIntent('field trip to the pond friday at 2', now: now)!;
+      final i = parseComposeIntent(
+        'field trip to the pond friday at 2',
+        now: now,
+      )!;
       expect(i.kind, BlockKind.fieldTrip);
       expect(i.title, 'Pond');
       expect(i.start.weekday, DateTime.friday);
@@ -38,7 +41,10 @@ void main() {
     });
 
     test('reading circle after lunch → onSite at 1pm', () {
-      final i = parseComposeIntent('reading circle after lunch monday', now: now)!;
+      final i = parseComposeIntent(
+        'reading circle after lunch monday',
+        now: now,
+      )!;
       expect(i.kind, BlockKind.onSite);
       expect(i.title, 'Reading circle');
       expect(i.start.hour, 13);
@@ -68,7 +74,10 @@ void main() {
     });
 
     test('24h time is respected as-is', () {
-      final i = parseComposeIntent('outdoor time at 16:00 wednesday', now: now)!;
+      final i = parseComposeIntent(
+        'outdoor time at 16:00 wednesday',
+        now: now,
+      )!;
       expect(i.kind, BlockKind.onSite);
       expect(i.start.hour, 16);
       expect(i.start.minute, 0);
@@ -77,11 +86,17 @@ void main() {
 
   group('parseComposeIntent — stays null for non-intents', () {
     test('a plain note-to-self does not fire', () {
-      expect(parseComposeIntent("remember to call Devon's mom", now: now), isNull);
+      expect(
+        parseComposeIntent("remember to call Devon's mom", now: now),
+        isNull,
+      );
     });
 
     test('note starter wins even with a schedule-ish tail', () {
-      expect(parseComposeIntent('remind me about art on friday', now: now), isNull);
+      expect(
+        parseComposeIntent('remind me about art on friday', now: now),
+        isNull,
+      );
     });
 
     test('a bare activity noun with no when does not fire', () {

@@ -8,26 +8,27 @@ import 'dart:convert';
 enum InspectionStatus {
   ok,
   needsRepair,
-  unsafe;
+  unsafe
+  ;
 
   String get wire => switch (this) {
-        InspectionStatus.ok => 'ok',
-        InspectionStatus.needsRepair => 'needs_repair',
-        InspectionStatus.unsafe => 'unsafe',
-      };
+    InspectionStatus.ok => 'ok',
+    InspectionStatus.needsRepair => 'needs_repair',
+    InspectionStatus.unsafe => 'unsafe',
+  };
 
   static InspectionStatus? fromWire(String? raw) => switch (raw) {
-        'ok' => InspectionStatus.ok,
-        'needs_repair' => InspectionStatus.needsRepair,
-        'unsafe' => InspectionStatus.unsafe,
-        _ => null,
-      };
+    'ok' => InspectionStatus.ok,
+    'needs_repair' => InspectionStatus.needsRepair,
+    'unsafe' => InspectionStatus.unsafe,
+    _ => null,
+  };
 
   String get label => switch (this) {
-        InspectionStatus.ok => 'OK',
-        InspectionStatus.needsRepair => 'Needs repair',
-        InspectionStatus.unsafe => 'Unsafe — do not drive',
-      };
+    InspectionStatus.ok => 'OK',
+    InspectionStatus.needsRepair => 'Needs repair',
+    InspectionStatus.unsafe => 'Unsafe — do not drive',
+  };
 }
 
 /// One row on the FACES checklist. Section + item key + display label.
@@ -57,7 +58,11 @@ abstract final class InspectionChecklist {
     InspectionItem(section: 'lights', key: 'hazard', label: 'Hazard lights'),
 
     // Tires
-    InspectionItem(section: 'tires', key: 'inflated', label: 'Properly inflated'),
+    InspectionItem(
+      section: 'tires',
+      key: 'inflated',
+      label: 'Properly inflated',
+    ),
 
     // Gauges
     InspectionItem(section: 'gauges', key: 'fuel', label: 'Fuel'),
@@ -78,9 +83,17 @@ abstract final class InspectionChecklist {
     InspectionItem(section: 'leaks', key: 'other', label: 'Other leaks'),
 
     // Other
-    InspectionItem(section: 'other', key: 'windows_mirrors', label: 'Windows & mirrors'),
+    InspectionItem(
+      section: 'other',
+      key: 'windows_mirrors',
+      label: 'Windows & mirrors',
+    ),
     InspectionItem(section: 'other', key: 'wipers', label: 'Windshield wipers'),
-    InspectionItem(section: 'other', key: 'fans_defroster', label: 'Fans & defroster'),
+    InspectionItem(
+      section: 'other',
+      key: 'fans_defroster',
+      label: 'Fans & defroster',
+    ),
     InspectionItem(
       section: 'other',
       key: 'brakes',
@@ -136,7 +149,7 @@ abstract final class InspectionChecklist {
 /// {"lights": {"headlights": "ok", "brake": "ok", ...}, ...}
 class InspectionResults {
   InspectionResults({Map<String, Map<String, String>>? raw})
-      : _raw = raw == null ? {} : _deepCopy(raw);
+    : _raw = raw == null ? {} : _deepCopy(raw);
 
   factory InspectionResults.fromJson(String? json) {
     if (json == null || json.isEmpty) return InspectionResults();
@@ -199,6 +212,5 @@ class InspectionResults {
 
   static Map<String, Map<String, String>> _deepCopy(
     Map<String, Map<String, String>> src,
-  ) =>
-      {for (final e in src.entries) e.key: Map<String, String>.from(e.value)};
+  ) => {for (final e in src.entries) e.key: Map<String, String>.from(e.value)};
 }

@@ -66,7 +66,10 @@ class ScriptedActivity {
 /// the start so independent pacing isn't a later rewrite.
 class ActivityRun {
   ActivityRun(this.activity)
-    : assert(activity.phases.isNotEmpty, 'an activity needs at least one phase');
+    : assert(
+        activity.phases.isNotEmpty,
+        'an activity needs at least one phase',
+      );
 
   final ScriptedActivity activity;
   int _index = 0;

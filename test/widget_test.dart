@@ -14,9 +14,9 @@ void main() {
     // resolve the launch URL channel during tests.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/url_launcher'),
-      (call) async => null,
-    );
+          const MethodChannel('plugins.flutter.io/url_launcher'),
+          (call) async => null,
+        );
 
     await Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -30,8 +30,7 @@ void main() {
     );
   });
 
-  testWidgets('unauthenticated boot lands on the login screen',
-      (tester) async {
+  testWidgets('unauthenticated boot lands on the login screen', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: DifferentWorldApp()));
     // Bounded pump, NOT pumpAndSettle: the full app shell carries a
     // perpetual ticker (the sync-status indicator / IME cursor) that never

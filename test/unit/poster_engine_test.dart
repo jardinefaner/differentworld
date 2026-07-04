@@ -49,11 +49,23 @@ void main() {
       const rows = 2;
       const cw = 99.0;
       const ch = 90.0;
-      final (lastL, _, lastW, _) =
-          posterPageRect(cols, rows, 0, cols - 1, cw, ch);
+      final (lastL, _, lastW, _) = posterPageRect(
+        cols,
+        rows,
+        0,
+        cols - 1,
+        cw,
+        ch,
+      );
       expect(lastL + lastW, closeTo(cw, 1e-9));
-      final (_, lastT, _, lastH) =
-          posterPageRect(cols, rows, rows - 1, 0, cw, ch);
+      final (_, lastT, _, lastH) = posterPageRect(
+        cols,
+        rows,
+        rows - 1,
+        0,
+        cw,
+        ch,
+      );
       expect(lastT + lastH, closeTo(ch, 1e-9));
     });
   });
@@ -116,25 +128,32 @@ void main() {
       expect(const PosterOptions().orientation, PosterOrientation.auto);
     });
 
-    test('forced portrait keeps every page portrait, even for a wide image',
-        () {
-      final l = computePosterLayout(
-        const PosterOptions(size: 3, orientation: PosterOrientation.portrait),
-        2.5, // very wide image that auto would tile on landscape pages
-      );
-      expect(l.landscape, isFalse);
-      expect(math.max(l.cols, l.rows), 3); // grid still honors size
-    });
+    test(
+      'forced portrait keeps every page portrait, even for a wide image',
+      () {
+        final l = computePosterLayout(
+          const PosterOptions(size: 3, orientation: PosterOrientation.portrait),
+          2.5, // very wide image that auto would tile on landscape pages
+        );
+        expect(l.landscape, isFalse);
+        expect(math.max(l.cols, l.rows), 3); // grid still honors size
+      },
+    );
 
-    test('forced landscape keeps every page landscape, even for a tall image',
-        () {
-      final l = computePosterLayout(
-        const PosterOptions(size: 3, orientation: PosterOrientation.landscape),
-        0.4, // very tall image
-      );
-      expect(l.landscape, isTrue);
-      expect(math.max(l.cols, l.rows), 3);
-    });
+    test(
+      'forced landscape keeps every page landscape, even for a tall image',
+      () {
+        final l = computePosterLayout(
+          const PosterOptions(
+            size: 3,
+            orientation: PosterOrientation.landscape,
+          ),
+          0.4, // very tall image
+        );
+        expect(l.landscape, isTrue);
+        expect(math.max(l.cols, l.rows), 3);
+      },
+    );
 
     test('forced orientation applies to the plain square grid too', () {
       final l = computePosterLayout(
@@ -171,9 +190,16 @@ void main() {
     });
 
     test('the crop region always matches the canvas aspect', () {
-      for (final dims in const [[800, 800], [1600, 900], [600, 2000]]) {
-        final (_, _, w, h) =
-            posterCoverCrop(dims[0].toDouble(), dims[1].toDouble(), letterAspect);
+      for (final dims in const [
+        [800, 800],
+        [1600, 900],
+        [600, 2000],
+      ]) {
+        final (_, _, w, h) = posterCoverCrop(
+          dims[0].toDouble(),
+          dims[1].toDouble(),
+          letterAspect,
+        );
         expect(w / h, closeTo(letterAspect, 1e-9));
       }
     });
@@ -231,7 +257,14 @@ void main() {
     test('the view stays within the image at any focus / zoom', () {
       for (final f in const [0.0, 0.5, 1.0]) {
         for (final z in const [1.0, 2.0, 4.0]) {
-          final (l, t, w, h) = posterViewRect(1500, 1200, letterAspect, z, f, f);
+          final (l, t, w, h) = posterViewRect(
+            1500,
+            1200,
+            letterAspect,
+            z,
+            f,
+            f,
+          );
           expect(l, greaterThanOrEqualTo(-1e-6));
           expect(t, greaterThanOrEqualTo(-1e-6));
           expect(l + w, lessThanOrEqualTo(1500 + 1e-6));
@@ -329,7 +362,10 @@ void main() {
 
     test('Lossless emits PNG tiles; the others emit JPEG', () {
       final bytes = solid(800, 800);
-      final layout = computePosterLayout(const PosterOptions(fitShape: false), 1);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        1,
+      );
       final jpg = renderPosterTilesForTest(bytes, layout, PosterFit.fill).first;
       final png = renderPosterTilesForTest(
         bytes,
@@ -353,7 +389,10 @@ void main() {
 
     test('emits one valid PNG sized to the assembled canvas', () {
       final bytes = solidPng(800, 800);
-      final layout = computePosterLayout(const PosterOptions(fitShape: false), 1);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        1,
+      );
       final out = renderPosterImagePngForTest(bytes, layout, PosterFit.fill);
       expect(out, isNotEmpty);
       expect(out[0], 0x89); // PNG signature
@@ -370,8 +409,7 @@ void main() {
     test('whole-fit also produces a valid PNG', () {
       final bytes = solidPng(1200, 600);
       final layout = computePosterLayout(const PosterOptions(size: 3), 2);
-      final out =
-          renderPosterImagePngForTest(bytes, layout, PosterFit.whole);
+      final out = renderPosterImagePngForTest(bytes, layout, PosterFit.whole);
       expect(out, isNotEmpty);
       expect(out[0], 0x89);
       expect(out[1], 0x50);

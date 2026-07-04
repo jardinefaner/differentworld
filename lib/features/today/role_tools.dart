@@ -128,7 +128,14 @@ List<RoleTool> toolsForRole(String roleKey) {
     case RoleKey.director:
       return const [_insights, _program, _team, _schedule, _present, _capture];
     case RoleKey.leadTeacher:
-      return const [_present, _observe, _liveBoard, _schedule, _breaks, _capture];
+      return const [
+        _present,
+        _observe,
+        _liveBoard,
+        _schedule,
+        _breaks,
+        _capture,
+      ];
     case RoleKey.teacher:
       return const [_capture, _observe, _breaks, _liveBoard, _present];
     case RoleKey.specialist:

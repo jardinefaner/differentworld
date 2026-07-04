@@ -54,39 +54,42 @@ class GroupDayState {
 /// this provider re-evaluates. Returns `AsyncValue<GroupDayState>` so
 /// the consumer can render loading / error / data states.
 // ignore: specify_nonobvious_property_types
-final groupDayStateProvider =
-    Provider.family<AsyncValue<GroupDayState>, Group>((ref, group) {
-  final date = todayIso();
-  final subjectsAsync = ref.watch(subjectsInGroupProvider(group.id));
-  final recordsAsync = ref.watch(
-    attendanceForDayProvider((groupId: group.id, date: date)),
-  );
+final groupDayStateProvider = Provider.family<AsyncValue<GroupDayState>, Group>(
+  (ref, group) {
+    final date = todayIso();
+    final subjectsAsync = ref.watch(subjectsInGroupProvider(group.id));
+    final recordsAsync = ref.watch(
+      attendanceForDayProvider((groupId: group.id, date: date)),
+    );
 
-  if (subjectsAsync.hasError) {
-    return AsyncError(subjectsAsync.error!, subjectsAsync.stackTrace!);
-  }
-  if (recordsAsync.hasError) {
-    return AsyncError(recordsAsync.error!, recordsAsync.stackTrace!);
-  }
-  if (!subjectsAsync.hasValue || !recordsAsync.hasValue) {
-    return const AsyncLoading();
-  }
+    if (subjectsAsync.hasError) {
+      return AsyncError(subjectsAsync.error!, subjectsAsync.stackTrace!);
+    }
+    if (recordsAsync.hasError) {
+      return AsyncError(recordsAsync.error!, recordsAsync.stackTrace!);
+    }
+    if (!subjectsAsync.hasValue || !recordsAsync.hasValue) {
+      return const AsyncLoading();
+    }
 
-  final subjects = subjectsAsync.value!;
-  final records = recordsAsync.value!;
+    final subjects = subjectsAsync.value!;
+    final records = recordsAsync.value!;
 
-  final counts = <AttendanceStatus, int>{};
-  for (final r in records) {
-    final s = AttendanceStatus.fromDb(r.status);
-    if (s != null) counts[s] = (counts[s] ?? 0) + 1;
-  }
+    final counts = <AttendanceStatus, int>{};
+    for (final r in records) {
+      final s = AttendanceStatus.fromDb(r.status);
+      if (s != null) counts[s] = (counts[s] ?? 0) + 1;
+    }
 
-  return AsyncData(GroupDayState(
-    group: group,
-    totalSubjects: subjects.length,
-    counts: counts,
-  ));
-});
+    return AsyncData(
+      GroupDayState(
+        group: group,
+        totalSubjects: subjects.length,
+        counts: counts,
+      ),
+    );
+  },
+);
 
 /// Human label for today's "good morning" / "good afternoon" / etc.
 String greetingForTime(DateTime now) {
@@ -118,7 +121,8 @@ enum DayPhase {
   pickup,
 
   /// After hours — the program day is over.
-  closed;
+  closed
+  ;
 
   /// The coarse phase for [now] using the afterschool default windows. This is
   /// the fallback used while the program's configured windows are still

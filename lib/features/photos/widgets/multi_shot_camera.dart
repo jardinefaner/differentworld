@@ -177,7 +177,9 @@ class _MultiShotCameraState extends State<MultiShotCamera>
   Future<void> _deleteFile(String path) async {
     try {
       await File(path).delete();
-    } on Exception {/* ignore */}
+    } on Exception {
+      /* ignore */
+    }
   }
 
   @override

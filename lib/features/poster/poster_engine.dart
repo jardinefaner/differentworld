@@ -121,9 +121,11 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
         final score = mismatch(cand.canvasAspect, aspect);
         // Primary: closest aspect. Tie-break: fewer pages, then the page
         // orientation that matches the image's orientation.
-        final orientationMatch =
-            (aspect >= 1) == landscape ? 0 : 1; // 0 = matches
-        final better = score < bestScore - 1e-9 ||
+        final orientationMatch = (aspect >= 1) == landscape
+            ? 0
+            : 1; // 0 = matches
+        final better =
+            score < bestScore - 1e-9 ||
             (score < bestScore + 1e-9 &&
                 (cand.pageCount < best!.pageCount ||
                     (cand.pageCount == best.pageCount &&
@@ -271,8 +273,9 @@ Uint8List _encodeTile(img.Image tile, PosterQuality quality) {
 ) {
   final longIn = math.max(layout.assembledWidthIn, layout.assembledHeightIn);
   final desiredLongPx = longIn * _targetDpi;
-  final dpi =
-      desiredLongPx > maxLongPx ? maxLongPx / longIn : _targetDpi.toDouble();
+  final dpi = desiredLongPx > maxLongPx
+      ? maxLongPx / longIn
+      : _targetDpi.toDouble();
   return (
     pageW: (layout.pageWidthIn * dpi).round(),
     pageH: (layout.pageHeightIn * dpi).round(),
@@ -340,7 +343,15 @@ Future<List<Uint8List>> renderPosterTiles(
     // Fast path: a one-shot worker, no progress channel.
     return Isolate.run(
       () => _renderPosterTilesSync(
-          bytes, layout, fit, guides, zoom, focusX, focusY, quality),
+        bytes,
+        layout,
+        fit,
+        guides,
+        zoom,
+        focusX,
+        focusY,
+        quality,
+      ),
     );
   }
   // Progress path: a worker that streams the running page count back.
@@ -455,7 +466,9 @@ Future<List<Uint8List>> _renderTilesWithProgress(
     if (message is _PosterRenderResult) {
       // Reconstruct a strongly-typed list defensively — the reified generic
       // can be erased crossing the isolate boundary.
-      completer.complete(message.tiles.cast<Uint8List>().toList(growable: false));
+      completer.complete(
+        message.tiles.cast<Uint8List>().toList(growable: false),
+      );
     } else if (message is _PosterRenderError) {
       completer.completeError(Exception(message.message));
     } else {
@@ -512,9 +525,16 @@ List<Uint8List> renderPosterTilesForTest(
   double focusX = 0.5,
   double focusY = 0.5,
   PosterQuality quality = PosterQuality.standard,
-}) =>
-    _renderPosterTilesSync(
-        bytes, layout, fit, guides, zoom, focusX, focusY, quality);
+}) => _renderPosterTilesSync(
+  bytes,
+  layout,
+  fit,
+  guides,
+  zoom,
+  focusX,
+  focusY,
+  quality,
+);
 
 /// Top-level (isolate-safe — no closure over instance state). [onTile] (when
 /// given) is called with the running tile count after each page is encoded,
@@ -565,8 +585,9 @@ List<Uint8List> _renderPosterTilesSync(
         for (var col = 0; col < cols; col++) {
           final sx = (cl + col * cw / cols).round();
           final sy = (ct + row * ch / rows).round();
-          final sw =
-              math.min((cw / cols).round(), src.width - sx).clamp(1, src.width);
+          final sw = math
+              .min((cw / cols).round(), src.width - sx)
+              .clamp(1, src.width);
           final sh = math
               .min((ch / rows).round(), src.height - sy)
               .clamp(1, src.height);
@@ -734,16 +755,16 @@ void _drawTrimGuides(PdfGraphics canvas, PdfPoint size, double m) {
 }
 
 pw.Widget _labelChip(pw.Font font, String text) => pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: pw.BoxDecoration(
-        color: const PdfColor(1, 1, 1, 0.72),
-        borderRadius: pw.BorderRadius.circular(4),
-      ),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey800),
-      ),
-    );
+  padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+  decoration: pw.BoxDecoration(
+    color: const PdfColor(1, 1, 1, 0.72),
+    borderRadius: pw.BorderRadius.circular(4),
+  ),
+  child: pw.Text(
+    text,
+    style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey800),
+  ),
+);
 
 /// A final index page: a labeled cols×rows grid so you can see, at a glance,
 /// which numbered page goes where.
@@ -872,7 +893,14 @@ Future<Uint8List> renderPosterImagePng(
   }
   return Isolate.run(
     () => _renderPosterImageSync(
-        bytes, layout, fit, zoom, focusX, focusY, quality),
+      bytes,
+      layout,
+      fit,
+      zoom,
+      focusX,
+      focusY,
+      quality,
+    ),
   );
 }
 
@@ -887,8 +915,7 @@ Uint8List renderPosterImagePngForTest(
   double focusX = 0.5,
   double focusY = 0.5,
   PosterQuality quality = PosterQuality.standard,
-}) =>
-    _renderPosterImageSync(bytes, layout, fit, zoom, focusX, focusY, quality);
+}) => _renderPosterImageSync(bytes, layout, fit, zoom, focusX, focusY, quality);
 
 /// Top-level (isolate-safe). Builds the assembled canvas (cols·pageW ×
 /// rows·pageH) at the print-density cap, places the source per [fit], and

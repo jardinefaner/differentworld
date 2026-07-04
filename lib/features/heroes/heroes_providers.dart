@@ -21,19 +21,19 @@ final heroesInSpaceProvider = StreamProvider<List<DeckCard>>((ref) async* {
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.entriesDao
-      .watchInSpace(spaceId: spaceId, kind: EntryKind.hero)
-      .map((rows) {
-        final out = <DeckCard>[];
-        for (final e in rows) {
-          final sid = e.subjectId;
-          final data = HeroCardData.tryParse(e.details);
-          if (sid != null && data != null) {
-            out.add((subjectId: sid, entryId: e.id, data: data));
-          }
+  yield* db.entriesDao.watchInSpace(spaceId: spaceId, kind: EntryKind.hero).map(
+    (rows) {
+      final out = <DeckCard>[];
+      for (final e in rows) {
+        final sid = e.subjectId;
+        final data = HeroCardData.tryParse(e.details);
+        if (sid != null && data != null) {
+          out.add((subjectId: sid, entryId: e.id, data: data));
         }
-        return out;
-      });
+      }
+      return out;
+    },
+  );
 });
 
 /// The child's current Hero (docs/VISION.md 2026-06-19), parsed from their

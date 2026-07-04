@@ -52,66 +52,212 @@ class ComposeIntent {
 /// Words that, at the START of the phrase, mark it as a note-to-self rather than
 /// a schedule intent — so "remember art show friday" stays a capture.
 const Set<String> _noteStarters = {
-  'remember', 'call', 'email', 'text', 'ask', 'tell', 'remind', 'note',
-  'todo', 'buy', 'send', 'check', 'follow', 'dont', "don't", 'forgot',
+  'remember',
+  'call',
+  'email',
+  'text',
+  'ask',
+  'tell',
+  'remind',
+  'note',
+  'todo',
+  'buy',
+  'send',
+  'check',
+  'follow',
+  'dont',
+  "don't",
+  'forgot',
 };
 
 const Map<String, int> _weekdays = {
-  'monday': 1, 'mon': 1,
-  'tuesday': 2, 'tue': 2, 'tues': 2,
-  'wednesday': 3, 'wed': 3, 'weds': 3,
-  'thursday': 4, 'thu': 4, 'thur': 4, 'thurs': 4,
-  'friday': 5, 'fri': 5,
-  'saturday': 6, 'sat': 6,
-  'sunday': 7, 'sun': 7,
+  'monday': 1,
+  'mon': 1,
+  'tuesday': 2,
+  'tue': 2,
+  'tues': 2,
+  'wednesday': 3,
+  'wed': 3,
+  'weds': 3,
+  'thursday': 4,
+  'thu': 4,
+  'thur': 4,
+  'thurs': 4,
+  'friday': 5,
+  'fri': 5,
+  'saturday': 6,
+  'sat': 6,
+  'sunday': 7,
+  'sun': 7,
 };
 
 /// Kind trigger words to STRIP from the title (they name the structure, not the
 /// subject). On-site activity nouns and break nouns are deliberately NOT here —
 /// "art" / "snack" ARE the title.
 const Set<String> _kindDropWords = {
-  'field', 'trip', 'fieldtrip', 'excursion', 'outing', 'visit',
-  'closed', 'holiday', 'program', 'offsite', 'off-site',
+  'field',
+  'trip',
+  'fieldtrip',
+  'excursion',
+  'outing',
+  'visit',
+  'closed',
+  'holiday',
+  'program',
+  'offsite',
+  'off-site',
 };
 
 /// Generic filler stripped from the title.
 const Set<String> _fillers = {
-  'to', 'the', 'a', 'an', 'on', 'at', 'for', 'block', 'time', 'of', 'this',
-  'next', 'let', 'lets', "let's", 'do', 'have', 'our', 'we', 'will', 'go',
-  'going', 'and', 'my', 'their', 'some', 'please', 'pm', 'am', 'no', 'school',
+  'to',
+  'the',
+  'a',
+  'an',
+  'on',
+  'at',
+  'for',
+  'block',
+  'time',
+  'of',
+  'this',
+  'next',
+  'let',
+  'lets',
+  "let's",
+  'do',
+  'have',
+  'our',
+  'we',
+  'will',
+  'go',
+  'going',
+  'and',
+  'my',
+  'their',
+  'some',
+  'please',
+  'pm',
+  'am',
+  'no',
+  'school',
 };
 
 /// Relative-time words that resolve to a clock time AND drop from the title.
 /// "lunch"/"after" only ever appear here as part of a time phrase ("after
 /// lunch") — neither triggers a kind — so dropping them is safe.
 const Set<String> _relTimeWords = {
-  'morning', 'afternoon', 'evening', 'tonight', 'noon', 'midday',
-  'after', 'lunch',
+  'morning',
+  'afternoon',
+  'evening',
+  'tonight',
+  'noon',
+  'midday',
+  'after',
+  'lunch',
 };
 
 /// A light emoji per on-site activity noun; falls back to a generic sparkle.
 const Map<String, String> _activityEmoji = {
-  'art': '🎨', 'craft': '🎨', 'paint': '🎨', 'draw': '🎨', 'drawing': '🎨',
-  'read': '📖', 'reading': '📖', 'story': '📖', 'stories': '📖', 'book': '📖',
-  'music': '🎵', 'sing': '🎵', 'song': '🎵', 'dance': '💃',
-  'science': '🔬', 'stem': '🔬', 'experiment': '🔬',
-  'game': '🎲', 'games': '🎲', 'play': '🎲', 'lego': '🧱', 'build': '🧱',
-  'outdoor': '🌳', 'outside': '🌳', 'nature': '🌳', 'garden': '🌱',
-  'gym': '⚽', 'sports': '⚽', 'sport': '⚽', 'soccer': '⚽',
-  'movie': '🎬', 'film': '🎬', 'cooking': '🍳', 'bake': '🍳', 'baking': '🍳',
-  'math': '🔢', 'writing': '✏️', 'yoga': '🧘', 'circle': '⭕',
+  'art': '🎨',
+  'craft': '🎨',
+  'paint': '🎨',
+  'draw': '🎨',
+  'drawing': '🎨',
+  'read': '📖',
+  'reading': '📖',
+  'story': '📖',
+  'stories': '📖',
+  'book': '📖',
+  'music': '🎵',
+  'sing': '🎵',
+  'song': '🎵',
+  'dance': '💃',
+  'science': '🔬',
+  'stem': '🔬',
+  'experiment': '🔬',
+  'game': '🎲',
+  'games': '🎲',
+  'play': '🎲',
+  'lego': '🧱',
+  'build': '🧱',
+  'outdoor': '🌳',
+  'outside': '🌳',
+  'nature': '🌳',
+  'garden': '🌱',
+  'gym': '⚽',
+  'sports': '⚽',
+  'sport': '⚽',
+  'soccer': '⚽',
+  'movie': '🎬',
+  'film': '🎬',
+  'cooking': '🍳',
+  'bake': '🍳',
+  'baking': '🍳',
+  'math': '🔢',
+  'writing': '✏️',
+  'yoga': '🧘',
+  'circle': '⭕',
 };
 
 /// On-site activity nouns — presence of one is a schedulable signal.
 const Set<String> _activityNouns = {
-  'art', 'craft', 'crafts', 'paint', 'painting', 'draw', 'drawing', 'read',
-  'reading', 'story', 'stories', 'storytime', 'book', 'music', 'sing',
-  'singing', 'song', 'dance', 'dancing', 'science', 'stem', 'experiment',
-  'game', 'games', 'play', 'playtime', 'lego', 'legos', 'build', 'building',
-  'blocks', 'outdoor', 'outside', 'nature', 'garden', 'gardening', 'gym',
-  'sports', 'sport', 'soccer', 'movie', 'film', 'cooking', 'cook', 'bake',
-  'baking', 'math', 'writing', 'yoga', 'circle', 'workshop', 'project',
-  'activity', 'session', 'centers', 'stations',
+  'art',
+  'craft',
+  'crafts',
+  'paint',
+  'painting',
+  'draw',
+  'drawing',
+  'read',
+  'reading',
+  'story',
+  'stories',
+  'storytime',
+  'book',
+  'music',
+  'sing',
+  'singing',
+  'song',
+  'dance',
+  'dancing',
+  'science',
+  'stem',
+  'experiment',
+  'game',
+  'games',
+  'play',
+  'playtime',
+  'lego',
+  'legos',
+  'build',
+  'building',
+  'blocks',
+  'outdoor',
+  'outside',
+  'nature',
+  'garden',
+  'gardening',
+  'gym',
+  'sports',
+  'sport',
+  'soccer',
+  'movie',
+  'film',
+  'cooking',
+  'cook',
+  'bake',
+  'baking',
+  'math',
+  'writing',
+  'yoga',
+  'circle',
+  'workshop',
+  'project',
+  'activity',
+  'session',
+  'centers',
+  'stations',
 };
 
 /// Parse a free-text composer phrase into a schedule intent, or null.
@@ -270,7 +416,9 @@ ComposeIntent? parseComposeIntent(String raw, {required DateTime now}) {
 /// none — deliberately NOT treating a bare number ("3 kids") as a time.
 ({int hour, int minute})? _parseTime(String lower) {
   // "at 2", "at 2:30", "at 2pm", "at 2:30 pm"
-  final at = RegExp(r'\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b').firstMatch(lower);
+  final at = RegExp(
+    r'\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b',
+  ).firstMatch(lower);
   if (at != null) {
     return _resolveTime(at.group(1)!, at.group(2), at.group(3));
   }
@@ -285,7 +433,9 @@ ComposeIntent? parseComposeIntent(String raw, {required DateTime now}) {
     return _resolveTime(colon.group(1)!, colon.group(2), null);
   }
   // Relative words → typical afterschool clock times.
-  if (RegExp(r'\bnoon\b|\bmidday\b').hasMatch(lower)) return (hour: 12, minute: 0);
+  if (RegExp(r'\bnoon\b|\bmidday\b').hasMatch(lower)) {
+    return (hour: 12, minute: 0);
+  }
   if (RegExp(r'\bmorning\b').hasMatch(lower)) return (hour: 9, minute: 0);
   if (RegExp(r'after lunch|\bafternoon\b').hasMatch(lower)) {
     return (hour: 13, minute: 0);
@@ -305,8 +455,13 @@ DateTime _defaultStart(DateTime day, DateTime today, DateTime now) {
   final add = now.minute == 0
       ? 0
       : (now.minute <= 30 ? 30 - now.minute : 60 - now.minute);
-  return DateTime(now.year, now.month, now.day, now.hour, now.minute)
-      .add(Duration(minutes: add));
+  return DateTime(
+    now.year,
+    now.month,
+    now.day,
+    now.hour,
+    now.minute,
+  ).add(Duration(minutes: add));
 }
 
 ({int hour, int minute})? _resolveTime(String h, String? m, String? ampm) {

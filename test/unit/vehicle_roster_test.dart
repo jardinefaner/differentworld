@@ -29,7 +29,11 @@ void main() {
 
     test('cleared only when every boarded child is off', () {
       expect(headcountCleared({'a', 'b'}, {'a', 'b'}), isTrue);
-      expect(headcountCleared({'a', 'b'}, {'a'}), isFalse, reason: 'b still on');
+      expect(
+        headcountCleared({'a', 'b'}, {'a'}),
+        isFalse,
+        reason: 'b still on',
+      );
       expect(headcountCleared({'a', 'b'}, {}), isFalse);
     });
 

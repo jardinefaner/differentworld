@@ -36,11 +36,18 @@ void main() {
   test('back steps back and clears reveal; stops at 0; un-dones from done', () {
     expect(def.reduce(st(i: 3, r: true), GameIntent.back, const {})['i'], 2);
     expect(def.reduce(st(), GameIntent.back, const {})['i'], 0);
-    expect(def.reduce(st(i: 9, d: true), GameIntent.back, const {})['d'], isFalse);
+    expect(
+      def.reduce(st(i: 9, d: true), GameIntent.back, const {})['d'],
+      isFalse,
+    );
   });
 
   test('reset returns to the start', () {
-    final r = def.reduce(st(i: 5, r: true, d: true), GameIntent.reset, const {});
+    final r = def.reduce(
+      st(i: 5, r: true, d: true),
+      GameIntent.reset,
+      const {},
+    );
     expect(r['i'], 0);
     expect(r['r'], isFalse);
     expect(r['d'], isFalse);

@@ -11,7 +11,8 @@ enum Sense {
   sound('👂', 'Sound'),
   touch('✋', 'Touch'),
   look('👀', 'Look'),
-  smell('👃', 'Smell');
+  smell('👃', 'Smell')
+  ;
 
   const Sense(this.emoji, this.label);
   final String emoji;

@@ -17,7 +17,8 @@ enum IncidentType {
   behavior('behavior', 'Behavior', Icons.report_gmailerrorred_outlined),
   illness('illness', 'Illness', Icons.sick_outlined),
   medical('medical', 'Allergy / medical', Icons.medical_services_outlined),
-  other('other', 'Other', Icons.more_horiz);
+  other('other', 'Other', Icons.more_horiz)
+  ;
 
   const IncidentType(this.id, this.label, this.icon);
 
@@ -26,9 +27,9 @@ enum IncidentType {
   final IconData icon;
 
   static IncidentType fromId(String? id) => values.firstWhere(
-        (t) => t.id == id,
-        orElse: () => IncidentType.other,
-      );
+    (t) => t.id == id,
+    orElse: () => IncidentType.other,
+  );
 }
 
 /// A structured incident — a typed, parsed view over an `entries` row of
@@ -128,15 +129,15 @@ List<Incident> _toIncidents(List<Entry> entries) =>
 /// Incidents for a single child, newest first — drives the per-subject
 /// safety history.
 // ignore: specify_nonobvious_property_types
-final incidentsForSubjectProvider =
-    StreamProvider.autoDispose.family<List<Incident>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.entriesDao
-        .watchForSubject(subjectId: subjectId, kind: EntryKind.incident)
-        .map(_toIncidents);
-  },
-);
+final incidentsForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Incident>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.entriesDao
+            .watchForSubject(subjectId: subjectId, kind: EntryKind.incident)
+            .map(_toIncidents);
+      },
+    );
 
 /// The canonical incident `details` JSON shape — `{incident_type,
 /// action_taken?, parent_notified}`. Used by the "mark notified" amend;
@@ -184,5 +185,4 @@ class IncidentActions {
   }
 }
 
-final incidentActionsProvider =
-    Provider<IncidentActions>(IncidentActions.new);
+final incidentActionsProvider = Provider<IncidentActions>(IncidentActions.new);

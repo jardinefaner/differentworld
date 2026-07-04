@@ -2,8 +2,11 @@ import 'package:differentworld/features/schedule/day_template.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  DayBlock block(String id, int minutes, [DayBlockKind k = DayBlockKind.activity]) =>
-      DayBlock(id: id, label: 'b$id', minutes: minutes, kind: k);
+  DayBlock block(
+    String id,
+    int minutes, [
+    DayBlockKind k = DayBlockKind.activity,
+  ]) => DayBlock(id: id, label: 'b$id', minutes: minutes, kind: k);
 
   group('clockLabel', () {
     test('formats minutes-from-midnight as 12-hour', () {

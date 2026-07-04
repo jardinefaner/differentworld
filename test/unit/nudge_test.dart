@@ -44,7 +44,11 @@ void main() {
     });
 
     test('wired brings the next calm block forward, durations unchanged', () {
-      final r = [_s('active', 30, .9), _s('snack', 15, .3), _s('outdoor', 30, .9)];
+      final r = [
+        _s('active', 30, .9),
+        _s('snack', 15, .3),
+        _s('outdoor', 30, .9),
+      ];
       final p = recomposeNudge(r, 90, NudgeIntent.wired);
       expect(p.ordered.first.id, 'snack');
       expect(p.isNoop, isFalse);

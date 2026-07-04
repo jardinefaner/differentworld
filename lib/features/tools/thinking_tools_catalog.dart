@@ -33,7 +33,8 @@ const List<ThinkingTool> universalThinkingTools = <ThinkingTool>[
     why:
         'The first answer is usually a symptom. Each "why" peels a layer until '
         'you reach a cause you can change once instead of patching forever.',
-    script: 'Ask "why did that happen?" — then ask it again of the answer, '
+    script:
+        'Ask "why did that happen?" — then ask it again of the answer, '
         'about five times, until it stops being a person and starts being a '
         'system.',
     tags: ['root cause', 'problem solving', 'systems'],
@@ -67,7 +68,8 @@ const List<ThinkingTool> universalThinkingTools = <ThinkingTool>[
         'First-order effects are visible and immediate; the costs usually hide '
         'one step downstream. Most bad decisions are good first-order ideas '
         'nobody followed forward.',
-    script: 'After "this will do X," ask "…and then what?" two or three more '
+    script:
+        'After "this will do X," ask "…and then what?" two or three more '
         'times.',
     tags: ['decisions', 'consequences', 'planning'],
   ),
@@ -83,7 +85,8 @@ const List<ThinkingTool> universalThinkingTools = <ThinkingTool>[
         'Beating a weak version of an argument (a straw man) teaches you '
         'nothing. Building the best version of it either changes your mind or '
         'makes your own case unbreakable.',
-    script: "Before you respond, say their point back so well they'd agree "
+    script:
+        "Before you respond, say their point back so well they'd agree "
         '"yes, that\'s what I mean" — then answer THAT.',
     tags: ['communication', 'conflict', 'reasoning'],
   ),
@@ -150,7 +153,8 @@ const List<ThinkingTool> universalThinkingTools = <ThinkingTool>[
         'Each added assumption is another thing that has to be true. The '
         'explanation with the fewest moving parts is usually right — and '
         'always the cheapest to test first.',
-    script: "Ask: what's the plainest thing that would explain all of this? "
+    script:
+        "Ask: what's the plainest thing that would explain all of this? "
         'Rule that out before inventing anything fancier.',
     tags: ['reasoning', 'problem solving'],
   ),

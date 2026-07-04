@@ -92,7 +92,9 @@ class _RoleCardsScreenState extends State<RoleCardsScreen> {
                   crossAxisSpacing: 12,
                   // Cell grows with text scale (smaller cells than the other
                   // decks) so name + "builds …" never clip.
-                  mainAxisExtent: 120 + 64 * (MediaQuery.textScalerOf(context).scale(14) / 14),
+                  mainAxisExtent:
+                      120 +
+                      64 * (MediaQuery.textScalerOf(context).scale(14) / 14),
                 ),
                 children: [
                   for (var i = 0; i < deck.cards.length; i++)
@@ -150,7 +152,6 @@ class _DeckSwitcher extends StatelessWidget {
     );
   }
 }
-
 
 /// The full face of one role card — reused by the browse sheet now, and
 /// (next slices) the immersive "Today I am ___" pick + the printable PDF.

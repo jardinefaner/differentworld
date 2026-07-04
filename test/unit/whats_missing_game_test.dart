@@ -8,27 +8,27 @@ import 'package:flutter_test/flutter_test.dart';
 const _game = WhatsMissingGame();
 
 Map<String, dynamic> _seed() => {
-      'rounds': [
-        {
-          'cards': [
-            {'image': 'a.png', 'label': 'apple'},
-            {'image': 'b.png', 'label': 'banana'},
-            {'image': 'c.png', 'label': 'cat'},
-          ],
-          'missing': 1,
-        },
-        {
-          'cards': [
-            {'image': 'd.png', 'label': 'dog'},
-            {'image': 'e.png', 'label': 'egg'},
-          ],
-          'missing': 0,
-        },
+  'rounds': [
+    {
+      'cards': [
+        {'image': 'a.png', 'label': 'apple'},
+        {'image': 'b.png', 'label': 'banana'},
+        {'image': 'c.png', 'label': 'cat'},
       ],
-      'i': 0,
-      'phase': 0,
-      'd': false,
-    };
+      'missing': 1,
+    },
+    {
+      'cards': [
+        {'image': 'd.png', 'label': 'dog'},
+        {'image': 'e.png', 'label': 'egg'},
+      ],
+      'missing': 0,
+    },
+  ],
+  'i': 0,
+  'phase': 0,
+  'd': false,
+};
 
 Map<String, dynamic> _do(Map<String, dynamic> s, GameIntent i) =>
     _game.reduce(s, i, const {});

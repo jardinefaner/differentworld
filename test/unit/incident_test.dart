@@ -7,17 +7,17 @@ import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Entry _entry({required String details, String? body}) => Entry(
-      id: 'e1',
-      spaceId: 'space-1',
-      kind: 'incident',
-      details: details,
-      recordedBy: 'm1',
-      recordedAt: '2026-06-06T16:00:00Z',
-      updatedAt: '2026-06-06T16:00:00Z',
-      subjectId: 's1',
-      groupId: 'g1',
-      body: body,
-    );
+  id: 'e1',
+  spaceId: 'space-1',
+  kind: 'incident',
+  details: details,
+  recordedBy: 'm1',
+  recordedAt: '2026-06-06T16:00:00Z',
+  updatedAt: '2026-06-06T16:00:00Z',
+  subjectId: 's1',
+  groupId: 'g1',
+  body: body,
+);
 
 void main() {
   group('IncidentType.fromId', () {
@@ -48,7 +48,10 @@ void main() {
 
     test('missing parent_notified is false; missing action is null', () {
       final incident = Incident.fromEntry(
-        _entry(body: 'Pushed during a game.', details: '{"incident_type":"conflict"}'),
+        _entry(
+          body: 'Pushed during a game.',
+          details: '{"incident_type":"conflict"}',
+        ),
       );
       expect(incident.type, IncidentType.conflict);
       expect(incident.parentNotified, isFalse);
@@ -122,28 +125,31 @@ void main() {
       required bool notified,
       String? familyNote,
       String narrative = 'Internal: pushed by another child.',
-    }) =>
-        Incident.fromEntry(
-          _entry(
-            body: narrative,
-            details: incidentDetailsJson(
-              incidentType: 'conflict',
-              parentNotified: notified,
-              familyNote: familyNote,
-            ),
-          ),
-        );
+    }) => Incident.fromEntry(
+      _entry(
+        body: narrative,
+        details: incidentDetailsJson(
+          incidentType: 'conflict',
+          parentNotified: notified,
+          familyNote: familyNote,
+        ),
+      ),
+    );
 
     test('a surfaced incident (notified OR family note) is family-visible', () {
       expect(incidentWith(notified: true).familyVisible, isTrue);
       expect(
-        incidentWith(notified: false, familyNote: 'We spoke with you today.')
-            .familyVisible,
+        incidentWith(
+          notified: false,
+          familyNote: 'We spoke with you today.',
+        ).familyVisible,
         isTrue,
       );
       expect(
-        incidentWith(notified: true, familyNote: 'Details shared.')
-            .familyVisible,
+        incidentWith(
+          notified: true,
+          familyNote: 'Details shared.',
+        ).familyVisible,
         isTrue,
       );
     });

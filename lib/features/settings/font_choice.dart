@@ -59,21 +59,24 @@ class FontChoice {
   final String body;
 
   /// The bundled, offline-safe default = the show_widget look.
-  static const fallback = FontChoice(display: 'Fraunces', body: 'Space Grotesk');
+  static const fallback = FontChoice(
+    display: 'Fraunces',
+    body: 'Space Grotesk',
+  );
 
   FontChoice copyWith({String? display, String? body}) =>
       FontChoice(display: display ?? this.display, body: body ?? this.body);
 }
 
 FontOption _displayOpt(String family) => kDisplayFonts.firstWhere(
-      (o) => o.family == family,
-      orElse: () => kDisplayFonts.first,
-    );
+  (o) => o.family == family,
+  orElse: () => kDisplayFonts.first,
+);
 
 FontOption _bodyOpt(String family) => kBodyFonts.firstWhere(
-      (o) => o.family == family,
-      orElse: () => kBodyFonts.first,
-    );
+  (o) => o.family == family,
+  orElse: () => kBodyFonts.first,
+);
 
 /// Render a single [TextStyle] in [opt]'s font — bundled via `fontFamily`,
 /// else via `google_fonts` (fetch + cache, system fallback meanwhile).
@@ -111,7 +114,9 @@ TextTheme applyFontChoice(TextTheme base, FontChoice c) {
 /// Persisted font choice. Defaults to the bundled [FontChoice.fallback] so the
 /// first frame is offline-safe.
 final fontChoiceProvider =
-    AsyncNotifierProvider<FontChoiceNotifier, FontChoice>(FontChoiceNotifier.new);
+    AsyncNotifierProvider<FontChoiceNotifier, FontChoice>(
+      FontChoiceNotifier.new,
+    );
 
 class FontChoiceNotifier extends AsyncNotifier<FontChoice> {
   static const _displayKey = 'font.display';
@@ -129,12 +134,16 @@ class FontChoiceNotifier extends AsyncNotifier<FontChoice> {
   Future<void> setDisplay(String family) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_displayKey, family);
-    state = AsyncData((state.value ?? FontChoice.fallback).copyWith(display: family));
+    state = AsyncData(
+      (state.value ?? FontChoice.fallback).copyWith(display: family),
+    );
   }
 
   Future<void> setBody(String family) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_bodyKey, family);
-    state = AsyncData((state.value ?? FontChoice.fallback).copyWith(body: family));
+    state = AsyncData(
+      (state.value ?? FontChoice.fallback).copyWith(body: family),
+    );
   }
 }

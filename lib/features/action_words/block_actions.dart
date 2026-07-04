@@ -149,93 +149,119 @@ List<BeatAction> blockActionsFor(
     switch (k) {
       case BlockActionKind.checkIn:
         if (groupId == null) break;
-        out.add(BeatAction(
-          icon: Icons.how_to_reg_outlined,
-          label: 'Check-in',
-          onTap: () => go('/groups/$groupId/attendance'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.how_to_reg_outlined,
+            label: 'Check-in',
+            onTap: () => go('/groups/$groupId/attendance'),
+          ),
+        );
       case BlockActionKind.headcount:
         if (groupId == null) break;
-        out.add(BeatAction(
-          icon: Icons.groups_outlined,
-          label: 'Headcount',
-          onTap: () => go('/groups/$groupId/attendance'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.groups_outlined,
+            label: 'Headcount',
+            onTap: () => go('/groups/$groupId/attendance'),
+          ),
+        );
       case BlockActionKind.capture:
-        out.add(BeatAction(
-          icon: Icons.photo_camera_outlined,
-          label: 'Capture',
-          onTap: () => go('/captures/new'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.photo_camera_outlined,
+            label: 'Capture',
+            onTap: () => go('/captures/new'),
+          ),
+        );
       case BlockActionKind.observe:
-        out.add(BeatAction(
-          icon: Icons.visibility_outlined,
-          label: 'Observe',
-          onTap: () => go('/observations/new'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.visibility_outlined,
+            label: 'Observe',
+            onTap: () => go('/observations/new'),
+          ),
+        );
       case BlockActionKind.incident:
-        out.add(BeatAction(
-          icon: Icons.report_outlined,
-          label: 'Incident',
-          onTap: () => go('/incidents/new'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.report_outlined,
+            label: 'Incident',
+            onTap: () => go('/incidents/new'),
+          ),
+        );
       case BlockActionKind.message:
-        out.add(BeatAction(
-          icon: Icons.mail_outline,
-          label: 'Message',
-          onTap: () => go('/messages'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.mail_outline,
+            label: 'Message',
+            onTap: () => go('/messages'),
+          ),
+        );
       case BlockActionKind.pickup:
-        out.add(BeatAction(
-          icon: Icons.directions_walk_outlined,
-          label: 'Pickup',
-          onTap: () => go('/pickup'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.directions_walk_outlined,
+            label: 'Pickup',
+            onTap: () => go('/pickup'),
+          ),
+        );
       case BlockActionKind.wordsPick:
-        out.add(BeatAction(
-          icon: Icons.bolt_outlined,
-          label: 'Words',
-          onTap: () => go('/action-words'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.bolt_outlined,
+            label: 'Words',
+            onTap: () => go('/action-words'),
+          ),
+        );
       case BlockActionKind.runDeck:
         if (!hasSession) break;
         final slug = Uri.encodeQueryComponent(sessionSlug!.trim());
         final blk = Uri.encodeQueryComponent(blockId);
-        out.add(BeatAction(
-          icon: Icons.menu_book_outlined,
-          label: 'Run deck',
-          onTap: () => go('/session/run?slug=$slug&block=$blk'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.menu_book_outlined,
+            label: 'Run deck',
+            onTap: () => go('/session/run?slug=$slug&block=$blk'),
+          ),
+        );
       case BlockActionKind.runActivity:
-        out.add(BeatAction(
-          icon: Icons.play_arrow_rounded,
-          label: 'Run',
-          onTap: () => unawaited(context.push('/arc', extra: title)),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.play_arrow_rounded,
+            label: 'Run',
+            onTap: () => unawaited(context.push('/arc', extra: title)),
+          ),
+        );
       case BlockActionKind.cast:
         final mirror = hasSession
             ? '/session/run?slug=${Uri.encodeQueryComponent(sessionSlug!.trim())}'
                   '&block=${Uri.encodeQueryComponent(blockId)}'
             : '/run-day';
-        out.add(BeatAction(
-          icon: Icons.cast,
-          label: 'Cast',
-          onTap: () =>
-              unawaited(showCastToRoom(context, mirrorRoute: mirror)),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.cast,
+            label: 'Cast',
+            onTap: () =>
+                unawaited(showCastToRoom(context, mirrorRoute: mirror)),
+          ),
+        );
       case BlockActionKind.tripBoard:
-        out.add(BeatAction(
-          icon: Icons.map_outlined,
-          label: 'Trip board',
-          onTap: () => go('/trips/$blockId'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.map_outlined,
+            label: 'Trip board',
+            onTap: () => go('/trips/$blockId'),
+          ),
+        );
       case BlockActionKind.notify:
         if (groupId == null) break;
-        out.add(BeatAction(
-          icon: Icons.campaign_outlined,
-          label: 'Notify',
-          onTap: () => go('/recap?group=$groupId'),
-        ));
+        out.add(
+          BeatAction(
+            icon: Icons.campaign_outlined,
+            label: 'Notify',
+            onTap: () => go('/recap?group=$groupId'),
+          ),
+        );
     }
   }
   return out;

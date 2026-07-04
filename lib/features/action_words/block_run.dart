@@ -50,13 +50,14 @@ List<DayBeat> buildBlockRun(List<BlockRunInput> blocks) =>
 /// sorted by start time then `blockId`. The blockId tiebreaker makes it a
 /// total order, so the sequence is deterministic across rebuilds (equal-start
 /// blocks never reshuffle) and any two passes agree.
-List<BlockRunInput> liveBlockOrder(List<BlockRunInput> blocks) => [
-  for (final b in blocks)
-    if (b.status != 'skipped' && b.status != 'cancelled') b,
-]..sort((a, b) {
-  final byStart = a.startAt.compareTo(b.startAt);
-  return byStart != 0 ? byStart : a.blockId.compareTo(b.blockId);
-});
+List<BlockRunInput> liveBlockOrder(List<BlockRunInput> blocks) =>
+    [
+      for (final b in blocks)
+        if (b.status != 'skipped' && b.status != 'cancelled') b,
+    ]..sort((a, b) {
+      final byStart = a.startAt.compareTo(b.startAt);
+      return byStart != 0 ? byStart : a.blockId.compareTo(b.blockId);
+    });
 
 DayBeat _beatForBlock(BlockRunInput b) {
   final start = DateTime.tryParse(b.startAt)?.toLocal();
@@ -68,7 +69,9 @@ DayBeat _beatForBlock(BlockRunInput b) {
       ? end.difference(start).inSeconds
       : 0;
   // Cap at 6h so a malformed/overnight range can't seed an absurd timer.
-  final seconds = rawSeconds < 0 ? 0 : (rawSeconds > 21600 ? 21600 : rawSeconds);
+  final seconds = rawSeconds < 0
+      ? 0
+      : (rawSeconds > 21600 ? 21600 : rawSeconds);
   final hasSession = (b.sessionSlug ?? '').trim().isNotEmpty;
   final sessionTitle = (b.sessionTitle ?? '').trim();
   final notes = (b.notes ?? '').trim();
@@ -118,13 +121,32 @@ typedef BlockRunScript = ({List<String> steps, List<String> tools});
 /// default recipe a program can override per space. Declaration order IS the
 /// match precedence (arrival before meal before …).
 enum RoutineKind {
-  arrival('Arrival', ['arrival', 'check-in', 'check in', 'drop-off', 'drop off']),
+  arrival('Arrival', [
+    'arrival',
+    'check-in',
+    'check in',
+    'drop-off',
+    'drop off',
+  ]),
   meal('Meals', ['breakfast', 'lunch', 'snack', 'meal']),
   rest('Rest', ['rest', 'nap', 'quiet time']),
   pickup('Pickup', ['pickup', 'goodbye', 'dismissal']),
   transition('Transition', ['transition']),
-  welcome('Welcome / circle', ['icebreaker', 'welcome', 'circle', 'morning meeting']),
-  freePlay('Free play', ['free play', 'free', 'outdoor', 'outside', 'recess', 'play']);
+  welcome('Welcome / circle', [
+    'icebreaker',
+    'welcome',
+    'circle',
+    'morning meeting',
+  ]),
+  freePlay('Free play', [
+    'free play',
+    'free',
+    'outdoor',
+    'outside',
+    'recess',
+    'play',
+  ])
+  ;
 
   const RoutineKind(this.label, this.keywords);
 

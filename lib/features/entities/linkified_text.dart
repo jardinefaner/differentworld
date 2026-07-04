@@ -58,11 +58,11 @@ class _LinkifiedTextState extends ConsumerState<LinkifiedText> {
   }
 
   Widget _plain() => Text(
-        widget.text,
-        style: widget.style,
-        maxLines: widget.maxLines,
-        overflow: widget.overflow,
-      );
+    widget.text,
+    style: widget.style,
+    maxLines: widget.maxLines,
+    overflow: widget.overflow,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -94,12 +94,14 @@ class _LinkifiedTextState extends ConsumerState<LinkifiedText> {
       spans.add(
         TextSpan(
           text: widget.text.substring(m.start, m.end),
-          style: entityInlineTextStyle(context, m.ref.kind, base: base).copyWith(
-            background: Paint()
-              ..color = entityChipFill(m.ref.kind.accent, brightness),
-          ),
+          style: entityInlineTextStyle(context, m.ref.kind, base: base)
+              .copyWith(
+                background: Paint()
+                  ..color = entityChipFill(m.ref.kind.accent, brightness),
+              ),
           recognizer: rec,
-          semanticsLabel: '${widget.text.substring(m.start, m.end)}, '
+          semanticsLabel:
+              '${widget.text.substring(m.start, m.end)}, '
               '${m.ref.kind.noun}',
         ),
       );

@@ -46,10 +46,14 @@ class _VehiclePhotoShotsEditScreenState
     if (_saving) return;
     setState(() => _saving = true);
     try {
-      var caps = ref.read(vehicleByIdProvider(widget.vehicleId)).value?.capabilities ?? '{}';
+      var caps =
+          ref.read(vehicleByIdProvider(widget.vehicleId)).value?.capabilities ??
+          '{}';
       caps = withPhotoShots(caps, 'checkout', _checkout ?? const []);
       caps = withPhotoShots(caps, 'checkin', _checkin ?? const []);
-      await ref.read(vehicleActionsProvider).setCapabilities(widget.vehicleId, caps);
+      await ref
+          .read(vehicleActionsProvider)
+          .setCapabilities(widget.vehicleId, caps);
       if (!mounted) return;
       context.pop();
     } on Object {

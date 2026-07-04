@@ -27,8 +27,7 @@ class FloatingActions extends StatelessWidget {
         children: [
           for (var i = 0; i < children.length; i++) ...[
             children[i],
-            if (i < children.length - 1)
-              const SizedBox(width: 2),
+            if (i < children.length - 1) const SizedBox(width: 2),
           ],
         ],
       ),

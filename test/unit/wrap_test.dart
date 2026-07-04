@@ -11,29 +11,34 @@ Entry _e(
   String? body,
   Map<String, dynamic> details = const {},
   String recordedAt = '2026-06-05T15:00:00Z',
-}) =>
-    Entry(
-      id: 'e-$kind-$recordedAt',
-      spaceId: 's1',
-      kind: kind,
-      details: jsonEncode(details),
-      recordedBy: 'm1',
-      recordedAt: recordedAt,
-      updatedAt: recordedAt,
-      subjectId: 'kid1',
-      body: body,
-    );
+}) => Entry(
+  id: 'e-$kind-$recordedAt',
+  spaceId: 's1',
+  kind: kind,
+  details: jsonEncode(details),
+  recordedBy: 'm1',
+  recordedAt: recordedAt,
+  updatedAt: recordedAt,
+  subjectId: 'kid1',
+  body: body,
+);
 
 void main() {
   test('buildWrap rolls worlds, top verbs, missions, notes + prose', () {
     final entries = [
-      _e('action_words', details: {
-        'verb_picks': ['play', 'echo', 'flow'],
-        'done': ['play', 'echo', 'flow'],
-      }), // Dolphin
-      _e('action_words', details: {
-        'verb_picks': ['play', 'help', 'shine'],
-      }), // Dog
+      _e(
+        'action_words',
+        details: {
+          'verb_picks': ['play', 'echo', 'flow'],
+          'done': ['play', 'echo', 'flow'],
+        },
+      ), // Dolphin
+      _e(
+        'action_words',
+        details: {
+          'verb_picks': ['play', 'help', 'shine'],
+        },
+      ), // Dog
       _e('mission', details: {'missionName': 'Plant Helper'}),
       _e('observation', body: 'Built a tall tower.'),
       _e('departure'), // dropped from momentCount
@@ -61,8 +66,11 @@ void main() {
       subjectName: 'Ben',
       periodLabel: 'Today',
       entries: [
-        _e('observation',
-            body: 'Old note.', recordedAt: '2026-05-01T15:00:00Z'),
+        _e(
+          'observation',
+          body: 'Old note.',
+          recordedAt: '2026-05-01T15:00:00Z',
+        ),
       ],
       cutoff: DateTime(2026, 6),
     );

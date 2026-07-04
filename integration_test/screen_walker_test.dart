@@ -42,9 +42,9 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/url_launcher'),
-      (call) async => null,
-    );
+          const MethodChannel('plugins.flutter.io/url_launcher'),
+          (call) async => null,
+        );
     try {
       await Supabase.initialize(
         url: 'https://example.supabase.co',
@@ -58,8 +58,9 @@ void main() {
     }
   });
 
-  testWidgets('boot lands on the login screen and bar is present',
-      (tester) async {
+  testWidgets('boot lands on the login screen and bar is present', (
+    tester,
+  ) async {
     await tester.pumpWidget(const ProviderScope(child: DifferentWorldApp()));
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
@@ -76,8 +77,9 @@ void main() {
   // seed Drift fixtures) — sketched here as TODOs so a future
   // session can fill them in.
 
-  testWidgets('TODO: signed-in walk through every top-level route',
-      (tester) async {
+  testWidgets('TODO: signed-in walk through every top-level route', (
+    tester,
+  ) async {
     // 1. Inject a fake viewer that reports signed-in + a space.
     //    Either override viewerProvider with a fake, or seed
     //    Supabase's auth client with a test session token.

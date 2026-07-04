@@ -92,7 +92,11 @@ class VerbJobsScreen extends ConsumerWidget {
 }
 
 class _VerbCard extends StatelessWidget {
-  const _VerbCard({required this.verb, required this.role, this.inGrid = false});
+  const _VerbCard({
+    required this.verb,
+    required this.role,
+    this.inGrid = false,
+  });
   final Verb verb;
   final VerbRole role;
 

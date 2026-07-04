@@ -48,8 +48,9 @@ class StoryTimeline extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                 child: ContentHeader(
                   title: title,
-                  subtitle:
-                      moments.length == 1 ? '1 moment' : '${moments.length} moments',
+                  subtitle: moments.length == 1
+                      ? '1 moment'
+                      : '${moments.length} moments',
                 ),
               );
             }

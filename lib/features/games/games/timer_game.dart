@@ -23,11 +23,11 @@ class TimerState {
   });
 
   factory TimerState.fromMap(Map<String, dynamic> m) => TimerState(
-        initSecs: (m['init'] as num?)?.toInt() ?? 300,
-        remainingSecs: (m['rem'] as num?)?.toInt() ?? 300,
-        endAtMs: (m['end'] as num?)?.toInt(),
-        running: m['run'] == true,
-      );
+    initSecs: (m['init'] as num?)?.toInt() ?? 300,
+    remainingSecs: (m['rem'] as num?)?.toInt() ?? 300,
+    endAtMs: (m['end'] as num?)?.toInt(),
+    running: m['run'] == true,
+  );
 
   final int initSecs;
 
@@ -59,8 +59,12 @@ class TimerGame extends GameDefinition<TimerState> {
 
   /// Default 5:00, paused.
   @override
-  Map<String, dynamic> initialState(ContentSource content) =>
-      const {'init': 300, 'rem': 300, 'end': null, 'run': false};
+  Map<String, dynamic> initialState(ContentSource content) => const {
+    'init': 300,
+    'rem': 300,
+    'end': null,
+    'run': false,
+  };
 
   @override
   TimerState decode(Map<String, dynamic> state) => TimerState.fromMap(state);
@@ -108,8 +112,11 @@ class TimerGame extends GameDefinition<TimerState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(TimerState s) =>
-      {GameIntent.reveal, GameIntent.tally, GameIntent.reset};
+  Set<GameIntent> activeIntents(TimerState s) => {
+    GameIntent.reveal,
+    GameIntent.tally,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, TimerState s) =>

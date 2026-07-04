@@ -69,8 +69,7 @@ class SubstituteLeadSheet extends ConsumerWidget {
     final blocksAsync = ref.watch(
       scheduleDayForGroupProvider((groupId: groupId, date: date)),
     );
-    final members =
-        ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+    final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
     final memberById = <String, Member>{
       for (final m in members) m.id: m,
     };
@@ -148,10 +147,8 @@ class SubstituteLeadSheet extends ConsumerWidget {
                       final aCov = a.value.first.leadSubstituteMemberId != null;
                       final bCov = b.value.first.leadSubstituteMemberId != null;
                       if (aCov != bCov) return aCov ? 1 : -1;
-                      final aName =
-                          memberById[a.key]?.displayName ?? '';
-                      final bName =
-                          memberById[b.key]?.displayName ?? '';
+                      final aName = memberById[a.key]?.displayName ?? '';
+                      final bName = memberById[b.key]?.displayName ?? '';
                       return aName.compareTo(bName);
                     });
 
@@ -166,30 +163,33 @@ class SubstituteLeadSheet extends ConsumerWidget {
                       // All blocks for a single planned lead share the
                       // same substitute value (the DAO updates them in
                       // bulk), but read defensively from the first row.
-                      final subId =
-                          blocksForLead.first.leadSubstituteMemberId;
+                      final subId = blocksForLead.first.leadSubstituteMemberId;
                       final sub = subId == null ? null : memberById[subId];
                       return _LeadRow(
                         leadName: lead?.displayName ?? 'Unknown',
                         blockCount: blocksForLead.length,
                         substituteName: sub?.displayName,
-                        onCover: () => unawaited(_coverLead(
-                          context: context,
-                          ref: ref,
-                          leadId: e.key,
-                          leadName: lead?.displayName ?? 'Unknown',
-                          blockCount: blocksForLead.length,
-                          allMembers: members,
-                          excludeIds: {e.key},
-                        )),
+                        onCover: () => unawaited(
+                          _coverLead(
+                            context: context,
+                            ref: ref,
+                            leadId: e.key,
+                            leadName: lead?.displayName ?? 'Unknown',
+                            blockCount: blocksForLead.length,
+                            allMembers: members,
+                            excludeIds: {e.key},
+                          ),
+                        ),
                         onRestore: subId == null
                             ? null
-                            : () => unawaited(_restoreLead(
+                            : () => unawaited(
+                                _restoreLead(
                                   context: context,
                                   ref: ref,
                                   leadId: e.key,
                                   leadName: lead?.displayName ?? 'Unknown',
-                                )),
+                                ),
+                              ),
                       );
                     },
                   );
@@ -335,13 +335,12 @@ class _LeadRow extends StatelessWidget {
                   Text(
                     covered
                         ? 'Covered by $substituteName · '
-                            '${_plural(blockCount, "block", "blocks")}'
+                              '${_plural(blockCount, "block", "blocks")}'
                         : '${_plural(blockCount, "block", "blocks")} '
-                            'today',
+                              'today',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: covered
-                          ? scheme.onTertiaryContainer
-                              .withValues(alpha: 0.85)
+                          ? scheme.onTertiaryContainer.withValues(alpha: 0.85)
                           : scheme.onSurfaceVariant,
                     ),
                   ),

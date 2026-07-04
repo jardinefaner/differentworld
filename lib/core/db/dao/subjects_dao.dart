@@ -37,8 +37,7 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
   /// widget prop — when a write needs the latest `capabilities` to
   /// avoid clobbering concurrent edits to other cap keys.
   Future<Subject?> findById(String id) {
-    return (select(subjects)..where((s) => s.id.equals(id)))
-        .getSingleOrNull();
+    return (select(subjects)..where((s) => s.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> create({
@@ -84,8 +83,7 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
         firstName: firstName == null ? const Value.absent() : Value(firstName),
         lastName: lastName == null ? const Value.absent() : Value(lastName),
         dob: dob == null ? const Value.absent() : Value(dob),
-        allergies:
-            allergies == null ? const Value.absent() : Value(allergies),
+        allergies: allergies == null ? const Value.absent() : Value(allergies),
         notes: notes == null ? const Value.absent() : Value(notes),
         groupId: groupId == null ? const Value.absent() : Value(groupId),
         updatedAt: Value(now),

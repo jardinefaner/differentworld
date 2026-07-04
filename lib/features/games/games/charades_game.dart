@@ -19,14 +19,14 @@ class CharadesState {
   });
 
   factory CharadesState.fromMap(Map<String, dynamic> m) => CharadesState(
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        found: (m['f'] as num?)?.toInt() ?? 0,
-        done: m['d'] == true,
-        items: [
-          for (final it in (m['items'] as List? ?? const []))
-            [for (final x in (it as List)) x.toString()],
-        ],
-      );
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    found: (m['f'] as num?)?.toInt() ?? 0,
+    done: m['d'] == true,
+    items: [
+      for (final it in (m['items'] as List? ?? const []))
+        [for (final x in (it as List)) x.toString()],
+    ],
+  );
 
   final int index;
   final int found;
@@ -50,8 +50,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
   String get title => 'Charades';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.plum);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
 
   @override
   String? get liveRoute => '/live/charades';

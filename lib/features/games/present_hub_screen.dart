@@ -177,9 +177,7 @@ class PresentHubScreen extends ConsumerWidget {
             // The remote leads as a full-width banner; every presentable is an
             // equal-weight tile — phone: 1 so they pack 2-up on a phone (the
             // grid read), 3-up on desktop, instead of full-width stacking.
-            span: i == 0
-                ? const BentoSpan.wide()
-                : const BentoSpan(phone: 1),
+            span: i == 0 ? const BentoSpan.wide() : const BentoSpan(phone: 1),
             child: SizedBox(
               height: tileHeight,
               child: AccentCardTile(

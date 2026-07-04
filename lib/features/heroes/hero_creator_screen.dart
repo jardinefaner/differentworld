@@ -233,8 +233,7 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final twoCol =
-                  bento && constraints.maxWidth >= _twoColMinWidth;
+              final twoCol = bento && constraints.maxWidth >= _twoColMinWidth;
 
               final header = ContentHeader(
                 title: title,
@@ -283,7 +282,11 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
                       flex: 3,
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(16, 0, 12, 96),
-                        children: [header, const SizedBox(height: 16), ...sections],
+                        children: [
+                          header,
+                          const SizedBox(height: 16),
+                          ...sections,
+                        ],
                       ),
                     ),
                     Expanded(

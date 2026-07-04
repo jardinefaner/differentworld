@@ -47,7 +47,8 @@ class SendScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.outgoing_mail,
               title: 'No children yet',
-              message: 'Pick each child’s words for the day, then send '
+              message:
+                  'Pick each child’s words for the day, then send '
                   'families a note from here.',
             );
           }
@@ -137,9 +138,11 @@ class _SendCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final day = ref
-        .watch(actionWordsForDayProvider(
-          (subjectId: subject.id, date: todayKey()),
-        ))
+        .watch(
+          actionWordsForDayProvider(
+            (subjectId: subject.id, date: todayKey()),
+          ),
+        )
         .value;
     // Only children with picks today have a message to send.
     if (day == null || !day.hasPicks) return const SizedBox.shrink();

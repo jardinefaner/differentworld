@@ -38,10 +38,10 @@ final bool runGoldens = Platform.environment['RUN_GOLDENS'] == '1';
 /// Sizes match the persona / device targets in CLAUDE.md's
 /// "Responsive layout" section.
 const Map<String, Size> goldenBreakpoints = <String, Size>{
-  'phone-portrait': Size(390, 844),     // iPhone 15
-  'phone-landscape': Size(844, 390),    // same, rotated
-  'tablet-portrait': Size(1024, 1366),  // 12.9" iPad
-  'desktop': Size(1440, 900),           // 13" laptop
+  'phone-portrait': Size(390, 844), // iPhone 15
+  'phone-landscape': Size(844, 390), // same, rotated
+  'tablet-portrait': Size(1024, 1366), // 12.9" iPad
+  'desktop': Size(1440, 900), // 13" laptop
 };
 
 /// One-time per-suite init. Mirrors the bootstrap in widget_test.dart
@@ -53,9 +53,9 @@ Future<void> ensureGoldenBootstrap() async {
 
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(
-    const MethodChannel('plugins.flutter.io/url_launcher'),
-    (call) async => null,
-  );
+        const MethodChannel('plugins.flutter.io/url_launcher'),
+        (call) async => null,
+      );
 
   try {
     await Supabase.initialize(

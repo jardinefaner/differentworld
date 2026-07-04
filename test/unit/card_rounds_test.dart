@@ -9,9 +9,14 @@ PictureCard _c(String id, String cat) =>
     PictureCard(id: id, label: id, image: '$id.png', category: cat, deck: 'd');
 
 final _deck = <PictureCard>[
-  _c('banana', 'food'), _c('apple', 'food'), _c('cake', 'food'), _c('pear', 'food'),
-  _c('violin', 'music'), _c('drum', 'music'),
-  _c('ball', 'sport'), _c('bat', 'sport'),
+  _c('banana', 'food'),
+  _c('apple', 'food'),
+  _c('cake', 'food'),
+  _c('pear', 'food'),
+  _c('violin', 'music'),
+  _c('drum', 'music'),
+  _c('ball', 'sport'),
+  _c('bat', 'sport'),
 ];
 
 void main() {
@@ -22,7 +27,10 @@ void main() {
         { "id": "banana", "label": "banana", "category": "food", "image": "04-banana.png" },
         { "id": "violin", "image": "01-violin.png" }
       ] }''';
-      final cards = parseDeckManifest(json, assetDir: 'assets/card_games/everyday');
+      final cards = parseDeckManifest(
+        json,
+        assetDir: 'assets/card_games/everyday',
+      );
       expect(cards.length, 2);
       expect(cards[0].image, 'assets/card_games/everyday/04-banana.png');
       expect(cards[0].letter, 'b');
@@ -35,7 +43,10 @@ void main() {
     test('malformed JSON / bad cards degrade to empty, never throw', () {
       expect(parseDeckManifest('not json', assetDir: 'x'), isEmpty);
       expect(
-        parseDeckManifest('{"cards":[{"label":"no id or image"}]}', assetDir: 'x'),
+        parseDeckManifest(
+          '{"cards":[{"label":"no id or image"}]}',
+          assetDir: 'x',
+        ),
         isEmpty,
       );
     });
@@ -67,16 +78,25 @@ void main() {
       }
     });
 
-    test('oddOneOut: the answer is a different category from the other three', () {
-      final round = CardRounds.oddOneOut(_deck, 2);
-      expect(round, isNotNull);
-      final opts = round!.options;
-      expect(opts.length, 4);
-      final oddCat = opts[round.answer].category;
-      final rest = [for (var i = 0; i < 4; i++) if (i != round.answer) opts[i]];
-      expect(rest.map((c) => c.category).toSet().length, 1); // the 3 share one
-      expect(rest.first.category, isNot(oddCat)); // odd differs
-    });
+    test(
+      'oddOneOut: the answer is a different category from the other three',
+      () {
+        final round = CardRounds.oddOneOut(_deck, 2);
+        expect(round, isNotNull);
+        final opts = round!.options;
+        expect(opts.length, 4);
+        final oddCat = opts[round.answer].category;
+        final rest = [
+          for (var i = 0; i < 4; i++)
+            if (i != round.answer) opts[i],
+        ];
+        expect(
+          rest.map((c) => c.category).toSet().length,
+          1,
+        ); // the 3 share one
+        expect(rest.first.category, isNot(oddCat)); // odd differs
+      },
+    );
 
     test('oddOneOut returns null when no category has 3', () {
       final flat = [_c('a', 'x'), _c('b', 'y'), _c('c', 'z')];
@@ -97,7 +117,10 @@ void main() {
 
     test('byLetter / byCategory group correctly', () {
       expect(CardRounds.byCategory(_deck)['food']!.length, 4);
-      expect(CardRounds.byLetter(_deck)['b']!.map((c) => c.id), containsAll(['banana', 'ball', 'bat']));
+      expect(
+        CardRounds.byLetter(_deck)['b']!.map((c) => c.id),
+        containsAll(['banana', 'ball', 'bat']),
+      );
     });
   });
 }

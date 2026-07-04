@@ -26,8 +26,8 @@ const _kLanguageKey = 'surveys.language';
 /// that level.
 final surveyVolumeProvider =
     AsyncNotifierProvider<SurveyVolumeNotifier, double>(
-  SurveyVolumeNotifier.new,
-);
+      SurveyVolumeNotifier.new,
+    );
 
 class SurveyVolumeNotifier extends AsyncNotifier<double> {
   @override
@@ -50,8 +50,8 @@ class SurveyVolumeNotifier extends AsyncNotifier<double> {
 /// monolingual program never has to think about it.
 final surveyLanguageProvider =
     AsyncNotifierProvider<SurveyLanguageNotifier, SurveyLanguage>(
-  SurveyLanguageNotifier.new,
-);
+      SurveyLanguageNotifier.new,
+    );
 
 class SurveyLanguageNotifier extends AsyncNotifier<SurveyLanguage> {
   @override

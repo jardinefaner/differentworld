@@ -22,8 +22,8 @@ typedef CardSeed = Map<String, dynamic> Function(List<PictureCard> cards);
 /// launcher's content-bank loop; this list is how they reach the cockpit.
 final List<(GameDefinition<dynamic>, CardSeed)> castableCardGames =
     <(GameDefinition<dynamic>, CardSeed)>[
-  (const NameItGame(), nameItSeed),
-  (const OddOneOutGame(), oddOneOutSeed),
-  (const WhatsMissingGame(), whatsMissingSeed),
-  (const MemoryMatchGame(), memoryMatchSeed),
-];
+      (const NameItGame(), nameItSeed),
+      (const OddOneOutGame(), oddOneOutSeed),
+      (const WhatsMissingGame(), whatsMissingSeed),
+      (const MemoryMatchGame(), memoryMatchSeed),
+    ];

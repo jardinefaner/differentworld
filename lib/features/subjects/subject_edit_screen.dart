@@ -251,8 +251,8 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
             // wrapping the TabBarView in a single Form means validation
             // runs across every tab on save (no "field on another tab
             // missing required value" surprises).
-            final canRemove = widget.isEdit &&
-                ref.watch(viewerProvider).canManageSpace;
+            final canRemove =
+                widget.isEdit && ref.watch(viewerProvider).canManageSpace;
             return Form(
               key: _formKey,
               child: DefaultTabController(
@@ -287,13 +287,13 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                         children: [
                           // -- Tab 1: Basics ---------------------------
                           ListView(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                             children: [
                               if (widget.isEdit && subject != null) ...[
                                 Center(
                                   child: PersonAvatar(
-                                    name: '${_firstName.text} '
+                                    name:
+                                        '${_firstName.text} '
                                         '${_lastName.text}',
                                     photoUrl: subject.photoUrl,
                                     radius: 48,
@@ -301,8 +301,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                       context,
                                       entity: PhotoEntity.subject,
                                       entityId: subject.id,
-                                      hasExisting:
-                                          subject.photoUrl != null,
+                                      hasExisting: subject.photoUrl != null,
                                       displayName:
                                           '${subject.firstName} '
                                           '${subject.lastName}',
@@ -319,8 +318,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                       autofocus: !widget.isEdit,
                                       textCapitalization:
                                           TextCapitalization.words,
-                                      textInputAction:
-                                          TextInputAction.next,
+                                      textInputAction: TextInputAction.next,
                                       // Wave 115: browser / 1Password
                                       // autofill hint. `givenName` is
                                       // the cross-platform W3C identity
@@ -334,8 +332,8 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Required'
-                                              : null,
+                                          ? 'Required'
+                                          : null,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -344,8 +342,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                       controller: _lastName,
                                       textCapitalization:
                                           TextCapitalization.words,
-                                      textInputAction:
-                                          TextInputAction.next,
+                                      textInputAction: TextInputAction.next,
                                       autofillHints: const [
                                         AutofillHints.familyName,
                                       ],
@@ -355,8 +352,8 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Required'
-                                              : null,
+                                          ? 'Required'
+                                          : null,
                                     ),
                                   ),
                                 ],
@@ -385,8 +382,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                 const SizedBox(height: 12),
                                 Text(
                                   _error!,
-                                  style: theme.textTheme.bodySmall
-                                      ?.copyWith(
+                                  style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.error,
                                   ),
                                 ),
@@ -395,8 +391,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                           ),
                           // -- Tab 2: Family ---------------------------
                           ListView(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                             children: [
                               if (widget.isEdit && subject != null)
                                 _GuardiansSection(subjectId: subject.id)
@@ -406,10 +401,8 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                   child: Text(
                                     'Save the basics first, then add '
                                     'guardians here.',
-                                    style: theme.textTheme.bodyMedium
-                                        ?.copyWith(
-                                      color: theme
-                                          .colorScheme.onSurfaceVariant,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
@@ -417,8 +410,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                           ),
                           // -- Tab 3: Alerts & notes -------------------
                           ListView(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                             children: [
                               TextFormField(
                                 controller: _allergies,
@@ -451,10 +443,8 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                   ),
                                   child: DestructiveButton(
                                     label: 'Remove student',
-                                    icon: Icons
-                                        .person_remove_alt_1_outlined,
-                                    onPressed:
-                                        _saving ? null : _delete,
+                                    icon: Icons.person_remove_alt_1_outlined,
+                                    onPressed: _saving ? null : _delete,
                                   ),
                                 ),
                               ],
@@ -488,10 +478,11 @@ Future<void> _sendGuardianInvite(
   // for reading context-derived state after async gaps otherwise.
   final messenger = ScaffoldMessenger.maybeOf(context);
   final db = await ref.read(appDatabaseProvider.future);
-  final sg = await (db.select(db.subjectGuardians)
-        ..where((row) => row.guardianId.equals(g.id))
-        ..limit(1))
-      .getSingleOrNull();
+  final sg =
+      await (db.select(db.subjectGuardians)
+            ..where((row) => row.guardianId.equals(g.id))
+            ..limit(1))
+          .getSingleOrNull();
   if (sg == null) return;
 
   Invite? created;
@@ -500,7 +491,9 @@ Future<void> _sendGuardianInvite(
     messenger: messenger,
     onError: 'Could not create invite. Try again.',
     action: () async {
-      created = await ref.read(inviteActionsProvider).createGuardianInvite(
+      created = await ref
+          .read(inviteActionsProvider)
+          .createGuardianInvite(
             spaceId: spaceId,
             subjectId: sg.subjectId,
             expiry: InviteExpiry.thirtyDays,
@@ -526,8 +519,7 @@ class _GuardiansSection extends ConsumerStatefulWidget {
   final String subjectId;
 
   @override
-  ConsumerState<_GuardiansSection> createState() =>
-      _GuardiansSectionState();
+  ConsumerState<_GuardiansSection> createState() => _GuardiansSectionState();
 }
 
 class _GuardiansSectionState extends ConsumerState<_GuardiansSection> {
@@ -536,8 +528,9 @@ class _GuardiansSectionState extends ConsumerState<_GuardiansSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final guardiansAsync =
-        ref.watch(guardiansForSubjectProvider(widget.subjectId));
+    final guardiansAsync = ref.watch(
+      guardiansForSubjectProvider(widget.subjectId),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -620,7 +613,9 @@ class _GuardiansSectionState extends ConsumerState<_GuardiansSection> {
                           tooltip: 'Unlink',
                           icon: const Icon(Icons.link_off, size: 20),
                           onPressed: () async {
-                            await ref.read(guardianActionsProvider).unlink(
+                            await ref
+                                .read(guardianActionsProvider)
+                                .unlink(
                                   guardianId: g.id,
                                   subjectId: widget.subjectId,
                                 );
@@ -660,8 +655,7 @@ class _InlineAddGuardian extends ConsumerStatefulWidget {
   final VoidCallback onSaved;
 
   @override
-  ConsumerState<_InlineAddGuardian> createState() =>
-      _InlineAddGuardianState();
+  ConsumerState<_InlineAddGuardian> createState() => _InlineAddGuardianState();
 }
 
 class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
@@ -695,7 +689,9 @@ class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
     });
     final ok = await runReported(
       library: 'guardians',
-      action: () => ref.read(guardianActionsProvider).addToSubject(
+      action: () => ref
+          .read(guardianActionsProvider)
+          .addToSubject(
             subjectId: widget.subjectId,
             name: name,
             relationship: _relationship.text.trim().isEmpty

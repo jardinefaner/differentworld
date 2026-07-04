@@ -37,13 +37,12 @@ class CastSnapshot {
     Map<String, dynamic>? meta,
     LiveStatus? status,
     int? peers,
-  }) =>
-      CastSnapshot(
-        session: session,
-        meta: meta ?? this.meta,
-        status: status ?? this.status,
-        peers: peers ?? this.peers,
-      );
+  }) => CastSnapshot(
+    session: session,
+    meta: meta ?? this.meta,
+    status: status ?? this.status,
+    peers: peers ?? this.peers,
+  );
 }
 
 /// Owns the **Caster** session ABOVE the screen, so casting persists across
@@ -119,5 +118,5 @@ class CastSessionController extends Notifier<CastSnapshot> {
 
 final castSessionProvider =
     NotifierProvider<CastSessionController, CastSnapshot>(
-  CastSessionController.new,
-);
+      CastSessionController.new,
+    );

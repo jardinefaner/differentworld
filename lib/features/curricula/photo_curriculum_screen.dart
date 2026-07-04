@@ -43,8 +43,7 @@ class PhotoCurriculumScreen extends ConsumerStatefulWidget {
 
 enum _CurriculumView { sessions, vocabulary }
 
-class _PhotoCurriculumScreenState
-    extends ConsumerState<PhotoCurriculumScreen> {
+class _PhotoCurriculumScreenState extends ConsumerState<PhotoCurriculumScreen> {
   /// Currently shown session index (0..5). Persisted only in widget
   /// state — opening the screen always starts at session 1.
   int _sessionIndex = 0;

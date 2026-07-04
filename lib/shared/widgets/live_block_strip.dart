@@ -115,8 +115,9 @@ class _Strip extends ConsumerWidget {
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.growthOf(theme)
-                              .withValues(alpha: alpha.value),
+                          color: AppColors.growthOf(
+                            theme,
+                          ).withValues(alpha: alpha.value),
                         ),
                       ),
                     ),

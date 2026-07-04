@@ -30,7 +30,9 @@ class CollectionScreen extends ConsumerWidget {
     final gold = WorldBadge.goldFor(theme);
     final subject = ref.watch(subjectByIdProvider(subjectId)).value;
     final firstName = subject?.firstName ?? 'This child';
-    final collection = ref.watch(actionWordsCollectionProvider(subjectId)).value;
+    final collection = ref
+        .watch(actionWordsCollectionProvider(subjectId))
+        .value;
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
     // (no per-screen toggle). When on, the worlds + most-practiced sections
     // re-lay as bento tiles over the SAME collection data; off keeps the
@@ -42,44 +44,45 @@ class CollectionScreen extends ConsumerWidget {
       body: collection == null
           ? const LoadingSlot()
           : collection.dayCount == 0
-              ? EmptyState(
-                  icon: Icons.auto_awesome_outlined,
-                  title: 'No worlds yet',
-                  message: 'Pick $firstName’s three words each day — the '
-                      'worlds they reveal collect here.',
-                )
-              : ResponsivePage(
-                  children: [
-                    ContentHeader(
-                      title: '$firstName’s worlds',
-                      subtitle: collection.dayCount == 1
-                          ? '1 day'
-                          : '${collection.dayCount} days',
-                    ),
-                    if (collection.emergingTitle != null) ...[
-                      _TitleBanner(title: collection.emergingTitle!, gold: gold),
-                      const SizedBox(height: 16),
-                    ],
-                    if (bento)
-                      _CollectionBento(collection: collection, gold: gold)
-                    else ...[
-                      Text(
-                        '${collection.collectedWorlds} of '
-                        '${kNamedWorlds.length} worlds',
-                        style: theme.textTheme.labelLarge?.copyWith(color: gold),
-                      ),
-                      const SizedBox(height: 8),
-                      _WorldsGrid(counts: collection.worldCounts, gold: gold),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Most practiced',
-                        style: theme.textTheme.labelLarge?.copyWith(color: gold),
-                      ),
-                      const SizedBox(height: 8),
-                      _VerbBars(totals: collection.verbTotals, gold: gold),
-                    ],
-                  ],
+          ? EmptyState(
+              icon: Icons.auto_awesome_outlined,
+              title: 'No worlds yet',
+              message:
+                  'Pick $firstName’s three words each day — the '
+                  'worlds they reveal collect here.',
+            )
+          : ResponsivePage(
+              children: [
+                ContentHeader(
+                  title: '$firstName’s worlds',
+                  subtitle: collection.dayCount == 1
+                      ? '1 day'
+                      : '${collection.dayCount} days',
                 ),
+                if (collection.emergingTitle != null) ...[
+                  _TitleBanner(title: collection.emergingTitle!, gold: gold),
+                  const SizedBox(height: 16),
+                ],
+                if (bento)
+                  _CollectionBento(collection: collection, gold: gold)
+                else ...[
+                  Text(
+                    '${collection.collectedWorlds} of '
+                    '${kNamedWorlds.length} worlds',
+                    style: theme.textTheme.labelLarge?.copyWith(color: gold),
+                  ),
+                  const SizedBox(height: 8),
+                  _WorldsGrid(counts: collection.worldCounts, gold: gold),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Most practiced',
+                    style: theme.textTheme.labelLarge?.copyWith(color: gold),
+                  ),
+                  const SizedBox(height: 8),
+                  _VerbBars(totals: collection.verbTotals, gold: gold),
+                ],
+              ],
+            ),
     );
   }
 }
@@ -108,7 +111,8 @@ class _CollectionBento extends StatelessWidget {
           // need the room. Two rows tall — the world grid is the taller block.
           span: const BentoSpan(desktop: 3, rows: 2),
           child: _SectionTile(
-            label: '${collection.collectedWorlds} of ${kNamedWorlds.length} '
+            label:
+                '${collection.collectedWorlds} of ${kNamedWorlds.length} '
                 'worlds',
             gold: gold,
             child: _WorldsGrid(counts: collection.worldCounts, gold: gold),
@@ -249,7 +253,8 @@ class _WorldCell extends StatelessWidget {
     final theme = Theme.of(context);
     final collected = count > 0;
     return Tooltip(
-      message: '${world.name} · ${world.title}'
+      message:
+          '${world.name} · ${world.title}'
           '${collected ? ' ×$count' : ' (not yet)'}',
       child: Opacity(
         opacity: collected ? 1 : 0.32,
@@ -266,8 +271,10 @@ class _WorldCell extends StatelessWidget {
                     right: -10,
                     top: -6,
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: gold,
                         borderRadius: BorderRadius.circular(10),

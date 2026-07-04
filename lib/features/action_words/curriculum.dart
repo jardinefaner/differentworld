@@ -17,10 +17,10 @@ class WorldVideo {
   });
 
   factory WorldVideo.fromJson(Map<String, dynamic> j) => WorldVideo(
-        title: (j['title'] as String?) ?? '',
-        minutes: (j['minutes'] as num?)?.toInt() ?? 3,
-        after: (j['after'] as String?) ?? '',
-      );
+    title: (j['title'] as String?) ?? '',
+    minutes: (j['minutes'] as num?)?.toInt() ?? 3,
+    after: (j['after'] as String?) ?? '',
+  );
 
   final String title;
   final int minutes;
@@ -49,30 +49,29 @@ class CurriculumWorld {
   });
 
   factory CurriculumWorld.fromJson(Map<String, dynamic> j) => CurriculumWorld(
-        week: (j['week'] as num?)?.toInt() ?? 0,
-        id: (j['id'] as String?) ?? '',
-        name: (j['name'] as String?) ?? '',
-        emoji: (j['emoji'] as String?) ?? '🌍',
-        color: _parseHexColor(j['color'] as String?),
-        tagline: (j['tagline'] as String?) ?? '',
-        question: (j['question'] as String?) ?? '',
-        facets: <String, String>{
-          for (final e in (j['facets'] as Map? ?? const {}).entries)
-            e.key.toString(): e.value.toString(),
-        },
-        featuredVerbs: <String>[
-          for (final v in (j['featuredVerbs'] as List? ?? const []))
-            v.toString(),
-        ],
-        verbsNote: (j['verbsNote'] as String?) ?? '',
-        activities: <String>[
-          for (final a in (j['activities'] as List? ?? const [])) a.toString(),
-        ],
-        videos: <WorldVideo>[
-          for (final v in (j['videos'] as List? ?? const []))
-            if (v is Map<String, dynamic>) WorldVideo.fromJson(v),
-        ],
-      );
+    week: (j['week'] as num?)?.toInt() ?? 0,
+    id: (j['id'] as String?) ?? '',
+    name: (j['name'] as String?) ?? '',
+    emoji: (j['emoji'] as String?) ?? '🌍',
+    color: _parseHexColor(j['color'] as String?),
+    tagline: (j['tagline'] as String?) ?? '',
+    question: (j['question'] as String?) ?? '',
+    facets: <String, String>{
+      for (final e in (j['facets'] as Map? ?? const {}).entries)
+        e.key.toString(): e.value.toString(),
+    },
+    featuredVerbs: <String>[
+      for (final v in (j['featuredVerbs'] as List? ?? const [])) v.toString(),
+    ],
+    verbsNote: (j['verbsNote'] as String?) ?? '',
+    activities: <String>[
+      for (final a in (j['activities'] as List? ?? const [])) a.toString(),
+    ],
+    videos: <WorldVideo>[
+      for (final v in (j['videos'] as List? ?? const []))
+        if (v is Map<String, dynamic>) WorldVideo.fromJson(v),
+    ],
+  );
 
   final int week;
   final String id;

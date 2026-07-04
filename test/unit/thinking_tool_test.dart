@@ -71,13 +71,13 @@ void main() {
   group('buildToolLibrary', () {
     test('unifies all three sources into one shelf, both kinds present', () {
       final lib = buildToolLibrary();
-      final refCount =
-          toolkitCatalog.fold<int>(0, (n, c) => n + c.tools.length);
+      final refCount = toolkitCatalog.fold<int>(
+        0,
+        (n, c) => n + c.tools.length,
+      );
       expect(
         lib.length,
-        runnableThinkingTools.length +
-            universalThinkingTools.length +
-            refCount,
+        runnableThinkingTools.length + universalThinkingTools.length + refCount,
       );
       expect(lib.any((t) => t.kind == ToolKind.runnable), isTrue);
       expect(lib.any((t) => t.kind == ToolKind.reference), isTrue);

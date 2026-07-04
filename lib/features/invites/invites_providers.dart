@@ -11,13 +11,13 @@ import 'package:uuid/uuid.dart';
 /// signed-in user's space matches.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final pendingInvitesProvider =
-    StreamProvider.autoDispose.family<List<Invite>, String>(
-  (ref, spaceId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.invitesDao.watchPendingInSpace(spaceId);
-  },
-);
+final pendingInvitesProvider = StreamProvider.autoDispose
+    .family<List<Invite>, String>(
+      (ref, spaceId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.invitesDao.watchPendingInSpace(spaceId);
+      },
+    );
 
 /// Stable expiration presets, surfaced in the create-invite sheet.
 enum InviteExpiry {
@@ -29,11 +29,11 @@ enum InviteExpiry {
 
 extension InviteExpiryX on InviteExpiry {
   String get label => switch (this) {
-        InviteExpiry.oneDay => '1 day',
-        InviteExpiry.sevenDays => '7 days',
-        InviteExpiry.thirtyDays => '30 days',
-        InviteExpiry.never => 'Never',
-      };
+    InviteExpiry.oneDay => '1 day',
+    InviteExpiry.sevenDays => '7 days',
+    InviteExpiry.thirtyDays => '30 days',
+    InviteExpiry.never => 'Never',
+  };
 
   /// Returns the ISO-8601 timestamp to store, or null for "Never".
   String? expiresAtFromNow() {
@@ -89,8 +89,7 @@ class InviteActions {
       capabilitiesJson: capabilitiesJson,
     );
 
-    return (db.select(db.invites)..where((i) => i.id.equals(id)))
-        .getSingle();
+    return (db.select(db.invites)..where((i) => i.id.equals(id))).getSingle();
   }
 
   /// Convenience for the family-side invite: a director attaches a

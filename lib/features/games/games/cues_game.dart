@@ -85,7 +85,10 @@ class CuesGame extends GameDefinition<CueState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(CueState s) => {GameIntent.pick, GameIntent.next};
+  Set<GameIntent> activeIntents(CueState s) => {
+    GameIntent.pick,
+    GameIntent.next,
+  };
 
   @override
   Widget buildStage(BuildContext context, CueState s) {

@@ -21,8 +21,7 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
     return (select(messages)
           ..where(
             (m) =>
-                m.subjectId.equals(subjectId) &
-                m.guardianId.equals(guardianId),
+                m.subjectId.equals(subjectId) & m.guardianId.equals(guardianId),
           )
           ..orderBy([(m) => OrderingTerm(expression: m.createdAt)]))
         .watch();
@@ -36,9 +35,9 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
           ..where((m) => m.subjectId.equals(subjectId))
           ..orderBy([
             (m) => OrderingTerm(
-                  expression: m.createdAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: m.createdAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -50,18 +49,16 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
           ..where((m) => m.guardianId.equals(guardianId))
           ..orderBy([
             (m) => OrderingTerm(
-                  expression: m.createdAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: m.createdAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
 
   /// All messages in a space — used to compute per-kid unread badges.
   Stream<List<Message>> watchInSpace(String spaceId) {
-    return (select(messages)
-          ..where((m) => m.spaceId.equals(spaceId)))
-        .watch();
+    return (select(messages)..where((m) => m.spaceId.equals(spaceId))).watch();
   }
 
   Future<void> insert({
@@ -102,14 +99,13 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final otherKind = recipientKind == 'staff' ? 'guardian' : 'staff';
-    await (update(messages)
-          ..where(
-            (m) =>
-                m.subjectId.equals(subjectId) &
-                m.guardianId.equals(guardianId) &
-                m.senderKind.equals(otherKind) &
-                m.readAt.isNull(),
-          ))
+    await (update(messages)..where(
+          (m) =>
+              m.subjectId.equals(subjectId) &
+              m.guardianId.equals(guardianId) &
+              m.senderKind.equals(otherKind) &
+              m.readAt.isNull(),
+        ))
         .write(MessagesCompanion(readAt: Value(now)));
   }
 
@@ -128,14 +124,14 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
     required String subjectId,
     required String guardianId,
   }) async {
-    final rows = await (select(messages)
-          ..where(
-            (m) =>
-                m.subjectId.equals(subjectId) &
-                m.guardianId.equals(guardianId) &
-                m.senderKind.equals('staff'),
-          ))
-        .get();
+    final rows =
+        await (select(messages)..where(
+              (m) =>
+                  m.subjectId.equals(subjectId) &
+                  m.guardianId.equals(guardianId) &
+                  m.senderKind.equals('staff'),
+            ))
+            .get();
     final now = DateTime.now().toUtc().toIso8601String();
     for (final row in rows) {
       // Parse existing list, append if missing, write back. raw may be

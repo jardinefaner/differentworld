@@ -10,8 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// survives app restarts.
 final recentOmniboxIdsProvider =
     AsyncNotifierProvider<RecentOmniboxIds, List<String>>(
-  RecentOmniboxIds.new,
-);
+      RecentOmniboxIds.new,
+    );
 
 class RecentOmniboxIds extends AsyncNotifier<List<String>> {
   static const _kKey = 'omnibox.recent.ids';
@@ -54,8 +54,7 @@ class RecentOmniboxIds extends AsyncNotifier<List<String>> {
     if (_isExcluded(id)) return;
     final current = state.value ?? const <String>[];
     final next = [id, ...current.where((x) => x != id)];
-    final trimmed =
-        next.length > _maxItems ? next.sublist(0, _maxItems) : next;
+    final trimmed = next.length > _maxItems ? next.sublist(0, _maxItems) : next;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_kKey, trimmed);
     state = AsyncData(trimmed);
@@ -72,8 +71,8 @@ class RecentOmniboxIds extends AsyncNotifier<List<String>> {
 /// is preserved (first-pinned shows first).
 final pinnedOmniboxIdsProvider =
     AsyncNotifierProvider<PinnedOmniboxIds, List<String>>(
-  PinnedOmniboxIds.new,
-);
+      PinnedOmniboxIds.new,
+    );
 
 class PinnedOmniboxIds extends AsyncNotifier<List<String>> {
   static const _kKey = 'omnibox.pinned.ids';
@@ -94,8 +93,7 @@ class PinnedOmniboxIds extends AsyncNotifier<List<String>> {
     state = AsyncData(next);
   }
 
-  bool isPinned(String id) =>
-      (state.value ?? const <String>[]).contains(id);
+  bool isPinned(String id) => (state.value ?? const <String>[]).contains(id);
 }
 
 /// Context tag for "for you now" boosting. Time-of-day driven for

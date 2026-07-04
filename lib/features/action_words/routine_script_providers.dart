@@ -51,24 +51,27 @@ String encodeRoutineScripts(Map<RoutineKind, BlockRunScript> scripts) =>
 /// The program's routine-script overrides, live off the Space's caps. Gated on
 /// the cap STRING (not the whole Space) so it only re-decodes when the
 /// `routine_scripts` value itself changes.
-final customRoutineScriptsProvider = Provider<Map<RoutineKind, BlockRunScript>>((
-  ref,
-) {
-  final raw = ref.watch(
-    currentSpaceProvider.select(
-      (s) => s.value?.caps.getString(SpaceCaps.routineScripts),
-    ),
-  );
-  return decodeRoutineScripts(raw);
-});
+final customRoutineScriptsProvider = Provider<Map<RoutineKind, BlockRunScript>>(
+  (
+    ref,
+  ) {
+    final raw = ref.watch(
+      currentSpaceProvider.select(
+        (s) => s.value?.caps.getString(SpaceCaps.routineScripts),
+      ),
+    );
+    return decodeRoutineScripts(raw);
+  },
+);
 
 /// One routine's override, or null when the program hasn't customized it (the
 /// caller falls back to [defaultRoutineScript]).
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final customRoutineScriptProvider = Provider.family<BlockRunScript?, RoutineKind>(
-  (ref, r) => ref.watch(customRoutineScriptsProvider)[r],
-);
+final customRoutineScriptProvider =
+    Provider.family<BlockRunScript?, RoutineKind>(
+      (ref, r) => ref.watch(customRoutineScriptsProvider)[r],
+    );
 
 /// The EFFECTIVE script for a routine — the override if set, else the baked-in
 /// default. What the editor seeds its fields from and what the run uses.

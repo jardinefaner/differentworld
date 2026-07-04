@@ -21,28 +21,29 @@ final vehiclesProvider = StreamProvider<List<Vehicle>>((ref) async* {
 /// Live stream of one vehicle by ID. Auto-disposes; family-keyed.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final vehicleByIdProvider =
-    StreamProvider.autoDispose.family<Vehicle?, String>((ref, id) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.vehiclesDao.watchById(id);
-});
+final vehicleByIdProvider = StreamProvider.autoDispose.family<Vehicle?, String>(
+  (ref, id) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* db.vehiclesDao.watchById(id);
+  },
+);
 
 /// Full log history for a vehicle, newest first.
 // ignore: specify_nonobvious_property_types
 final vehicleLogsProvider = StreamProvider.autoDispose
     .family<List<VehicleLog>, String>((ref, vehicleId) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.vehiclesDao.watchLogsFor(vehicleId);
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.vehiclesDao.watchLogsFor(vehicleId);
+    });
 
 /// The most recent log row for a vehicle. Drives the "currently out
 /// with X driver" banner on the detail screen.
 // ignore: specify_nonobvious_property_types
 final latestVehicleLogProvider = StreamProvider.autoDispose
     .family<VehicleLog?, String>((ref, vehicleId) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.vehiclesDao.watchLatestLogFor(vehicleId);
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.vehiclesDao.watchLatestLogFor(vehicleId);
+    });
 
 /// Kind discriminator for `vehicle_logs` rows.
 class VehicleLogKind {
@@ -85,59 +86,64 @@ class VehicleWithStatus {
 /// alive after every watcher has unmounted.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final fleetStatusProvider =
-    StreamProvider.autoDispose<List<VehicleWithStatus>>((ref) {
-  return ref.watch(vehiclesProvider).when(
-    loading: () => const Stream<List<VehicleWithStatus>>.empty(),
-    error: (_, _) => const Stream<List<VehicleWithStatus>>.empty(),
-    data: (vehicles) async* {
-      if (vehicles.isEmpty) {
-        yield const <VehicleWithStatus>[];
-        return;
-      }
-      final db = await ref.watch(appDatabaseProvider.future);
-      // Combine each vehicle's latest-log stream into one snapshot
-      // emission. Drift's `watchLatestLogFor(...)` emits whenever
-      // that vehicle's log table changes; we re-snapshot the whole
-      // fleet on any change. Cheap — typical fleet is 1-5 vehicles.
-      final perVehicleStreams = vehicles.map((v) {
-        return db.vehiclesDao
-            .watchLatestLogFor(v.id)
-            .map((log) => VehicleWithStatus(vehicle: v, latestLog: log));
-      }).toList();
-      // Manually combine: emit the latest of every per-vehicle
-      // stream. rxdart's combineLatest would also work — open-coded
-      // here to avoid a transitive dep in this file.
-      final latestPerVehicle = <String, VehicleWithStatus>{
-        for (final v in vehicles) v.id: VehicleWithStatus(vehicle: v),
-      };
-      final controller = StreamController<List<VehicleWithStatus>>();
-      final subs = <StreamSubscription<VehicleWithStatus>>[];
-      for (var i = 0; i < perVehicleStreams.length; i++) {
-        final id = vehicles[i].id;
-        subs.add(
-          perVehicleStreams[i].listen((vws) {
-            latestPerVehicle[id] = vws;
-            controller.add(
-              vehicles
-                  .map((v) =>
-                      latestPerVehicle[v.id] ??
-                      VehicleWithStatus(vehicle: v))
-                  .toList(growable: false),
-            );
-          }),
+final fleetStatusProvider = StreamProvider.autoDispose<List<VehicleWithStatus>>(
+  (ref) {
+    return ref
+        .watch(vehiclesProvider)
+        .when(
+          loading: () => const Stream<List<VehicleWithStatus>>.empty(),
+          error: (_, _) => const Stream<List<VehicleWithStatus>>.empty(),
+          data: (vehicles) async* {
+            if (vehicles.isEmpty) {
+              yield const <VehicleWithStatus>[];
+              return;
+            }
+            final db = await ref.watch(appDatabaseProvider.future);
+            // Combine each vehicle's latest-log stream into one snapshot
+            // emission. Drift's `watchLatestLogFor(...)` emits whenever
+            // that vehicle's log table changes; we re-snapshot the whole
+            // fleet on any change. Cheap — typical fleet is 1-5 vehicles.
+            final perVehicleStreams = vehicles.map((v) {
+              return db.vehiclesDao
+                  .watchLatestLogFor(v.id)
+                  .map((log) => VehicleWithStatus(vehicle: v, latestLog: log));
+            }).toList();
+            // Manually combine: emit the latest of every per-vehicle
+            // stream. rxdart's combineLatest would also work — open-coded
+            // here to avoid a transitive dep in this file.
+            final latestPerVehicle = <String, VehicleWithStatus>{
+              for (final v in vehicles) v.id: VehicleWithStatus(vehicle: v),
+            };
+            final controller = StreamController<List<VehicleWithStatus>>();
+            final subs = <StreamSubscription<VehicleWithStatus>>[];
+            for (var i = 0; i < perVehicleStreams.length; i++) {
+              final id = vehicles[i].id;
+              subs.add(
+                perVehicleStreams[i].listen((vws) {
+                  latestPerVehicle[id] = vws;
+                  controller.add(
+                    vehicles
+                        .map(
+                          (v) =>
+                              latestPerVehicle[v.id] ??
+                              VehicleWithStatus(vehicle: v),
+                        )
+                        .toList(growable: false),
+                  );
+                }),
+              );
+            }
+            ref.onDispose(() async {
+              for (final s in subs) {
+                await s.cancel();
+              }
+              await controller.close();
+            });
+            yield* controller.stream;
+          },
         );
-      }
-      ref.onDispose(() async {
-        for (final s in subs) {
-          await s.cancel();
-        }
-        await controller.close();
-      });
-      yield* controller.stream;
-    },
-  );
-});
+  },
+);
 
 class VehicleActions {
   VehicleActions(this._ref);
@@ -259,5 +265,6 @@ class VehicleLogActions {
   }
 }
 
-final vehicleLogActionsProvider =
-    Provider<VehicleLogActions>(VehicleLogActions.new);
+final vehicleLogActionsProvider = Provider<VehicleLogActions>(
+  VehicleLogActions.new,
+);

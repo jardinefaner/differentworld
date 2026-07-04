@@ -25,14 +25,19 @@ void main() {
 
   group('curriculumActivityIsOutdoor', () {
     test('detects outdoor prompts', () {
-      expect(curriculumActivityIsOutdoor('Bug safari: go outside, find a bug'),
-          isTrue);
+      expect(
+        curriculumActivityIsOutdoor('Bug safari: go outside, find a bug'),
+        isTrue,
+      );
       expect(curriculumActivityIsOutdoor('Planet walk in the yard'), isTrue);
     });
 
     test('indoor prompts are not flagged', () {
       expect(curriculumActivityIsOutdoor('Body map: trace your body'), isFalse);
-      expect(curriculumActivityIsOutdoor('Water xylophone: 5 glasses'), isFalse);
+      expect(
+        curriculumActivityIsOutdoor('Water xylophone: 5 glasses'),
+        isFalse,
+      );
     });
   });
 }

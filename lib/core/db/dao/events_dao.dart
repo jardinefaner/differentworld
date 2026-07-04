@@ -10,8 +10,7 @@ part 'events_dao.g.dart';
 /// every cohort in the space. The renderer parses this on read; we
 /// don't bother with a typed companion since the array is short.
 @DriftAccessor(tables: [Events])
-class EventsDao extends DatabaseAccessor<AppDatabase>
-    with _$EventsDaoMixin {
+class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
   EventsDao(super.attachedDatabase);
 
   /// Stream every event for a single date in the space.
@@ -33,10 +32,12 @@ class EventsDao extends DatabaseAccessor<AppDatabase>
     required String toIsoDate,
   }) {
     return (select(events)
-          ..where((e) =>
-              e.spaceId.equals(spaceId) &
-              e.date.isBiggerOrEqualValue(fromIsoDate) &
-              e.date.isSmallerOrEqualValue(toIsoDate))
+          ..where(
+            (e) =>
+                e.spaceId.equals(spaceId) &
+                e.date.isBiggerOrEqualValue(fromIsoDate) &
+                e.date.isSmallerOrEqualValue(toIsoDate),
+          )
           ..orderBy([(e) => OrderingTerm(expression: e.date)]))
         .watch();
   }

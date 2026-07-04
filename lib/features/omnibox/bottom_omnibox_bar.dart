@@ -81,7 +81,8 @@ class BottomOmniboxBar extends StatelessWidget {
                       child: Semantics(
                         button: true,
                         label: 'Search',
-                        hint: 'Opens search to find pages, actions, '
+                        hint:
+                            'Opens search to find pages, actions, '
                             'and children',
                         child: Container(
                           height: 56,

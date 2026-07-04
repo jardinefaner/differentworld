@@ -65,11 +65,13 @@ class TemplateGenerator implements ContentGenerator {
       final picks = [for (final s in slots) s[rng.nextInt(s.length)]];
       final fp = picks.join('|').toLowerCase();
       if (used.add('$kind/$fp')) {
-        out.add(ContentItem(
-          kind: kind,
-          fingerprint: fp,
-          payload: {payloadKey: format(picks)},
-        ));
+        out.add(
+          ContentItem(
+            kind: kind,
+            fingerprint: fp,
+            payload: {payloadKey: format(picks)},
+          ),
+        );
       }
     }
     return out;
@@ -89,7 +91,8 @@ class PairGenerator implements ContentGenerator {
   final List<List<String>> themes;
 
   @override
-  int get space => themes.fold(0, (sum, t) => sum + (t.length * (t.length - 1)) ~/ 2);
+  int get space =>
+      themes.fold(0, (sum, t) => sum + (t.length * (t.length - 1)) ~/ 2);
 
   @override
   List<ContentItem> generate(
@@ -116,11 +119,13 @@ class PairGenerator implements ContentGenerator {
       final hi = identical(lo, a) ? b : a;
       final fp = '${lo.toLowerCase()}|${hi.toLowerCase()}';
       if (used.add('$kind/$fp')) {
-        out.add(ContentItem(
-          kind: kind,
-          fingerprint: fp,
-          payload: {'a': a, 'b': b},
-        ));
+        out.add(
+          ContentItem(
+            kind: kind,
+            fingerprint: fp,
+            payload: {'a': a, 'b': b},
+          ),
+        );
       }
     }
     return out;

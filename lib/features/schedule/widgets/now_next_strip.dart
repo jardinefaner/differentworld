@@ -55,8 +55,7 @@ class NowNextStrip extends ConsumerWidget {
     }
     final activities =
         ref.watch(allActivitiesProvider).value ?? const <Activity>[];
-    final locations =
-        ref.watch(locationsProvider).value ?? const <Location>[];
+    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
 
     return blocksAsync.maybeWhen(
       data: (blocks) {
@@ -163,26 +162,25 @@ class _BlockRow extends StatelessWidget {
         : activities.where((a) => a.id == block.activityId).firstOrNull;
     final loc = block.locationOverrideId == null
         ? activity?.defaultLocationId == null
-            ? null
-            : locations
-                .where((l) => l.id == activity!.defaultLocationId)
-                .firstOrNull
-        : locations
-            .where((l) => l.id == block.locationOverrideId)
-            .firstOrNull;
+              ? null
+              : locations
+                    .where((l) => l.id == activity!.defaultLocationId)
+                    .firstOrNull
+        : locations.where((l) => l.id == block.locationOverrideId).firstOrNull;
     final start = DateTime.parse(block.startAt).toLocal();
     final end = DateTime.parse(block.endAt).toLocal();
     final timeLabel = '${_fmt(start)}–${_fmt(end)}';
-    final title = activity?.name ??
+    final title =
+        activity?.name ??
         (block.kind == BlockKind.breakBlock ? 'Break' : block.notes ?? '—');
 
     final (container, onContainer) = switch (tone) {
       _Tone.now => (scheme.primaryContainer, scheme.onPrimaryContainer),
       _Tone.next => (scheme.surfaceContainerHighest, scheme.onSurface),
       _Tone.past => (
-          scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          scheme.onSurfaceVariant,
-        ),
+        scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        scheme.onSurfaceVariant,
+      ),
     };
 
     final labelChip = Container(

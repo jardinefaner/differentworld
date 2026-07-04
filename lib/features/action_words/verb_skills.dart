@@ -31,7 +31,8 @@ enum SkillMeasureKind {
 
   /// A 1–5 judgement of quality / accuracy / smoothness, for skills with no
   /// clean number (Locate, Plan, Pace, Diagnose, Receive…).
-  rating;
+  rating
+  ;
 
   /// The unit label shown next to the number.
   String get unit => switch (this) {
@@ -272,7 +273,8 @@ const List<VerbSkill> kVerbSkills = [
     name: 'Transition',
     measure: SkillMeasureKind.seconds,
     higherIsBetter: false,
-    how: "Move to the next activity — seconds from 'circle up' to in the circle.",
+    how:
+        "Move to the next activity — seconds from 'circle up' to in the circle.",
     week1: '45 seconds',
     week10: '5 seconds',
   ),
@@ -365,7 +367,8 @@ const List<VerbSkill> kVerbSkills = [
     verbId: 'watch',
     name: 'Track',
     measure: SkillMeasureKind.seconds,
-    how: 'Follow something moving with only your eyes — how long without losing it?',
+    how:
+        'Follow something moving with only your eyes — how long without losing it?',
     week1: 'loses it fast',
     week10: 'a long track',
   ),
@@ -433,7 +436,8 @@ const List<VerbSkill> kVerbSkills = [
     verbId: 'solve',
     name: 'Try',
     measure: SkillMeasureKind.count,
-    how: 'Attempt it before asking how. How many tries before you ask for help?',
+    how:
+        'Attempt it before asking how. How many tries before you ask for help?',
     week1: 'asks first',
     week10: 'tries 3 times',
   ),
@@ -457,7 +461,8 @@ const List<VerbSkill> kVerbSkills = [
     verbId: 'solve',
     name: 'Transfer',
     measure: SkillMeasureKind.rating,
-    how: "Yesterday's solution fits today's different problem — can you see it?",
+    how:
+        "Yesterday's solution fits today's different problem — can you see it?",
     week1: "can't",
     week10: 'transfers across',
   ),
@@ -491,7 +496,8 @@ const List<VerbSkill> kVerbSkills = [
     verbId: 'help',
     name: 'Hold',
     measure: SkillMeasureKind.seconds,
-    how: "Someone's upset — don't fix it, just sit there. 'I'm here.' How long?",
+    how:
+        "Someone's upset — don't fix it, just sit there. 'I'm here.' How long?",
     week1: 'rushes to fix',
     week10: 'holds the pain',
   ),
@@ -541,7 +547,8 @@ const List<VerbSkill> kVerbSkills = [
     verbId: 'echo',
     name: 'Interpret',
     measure: SkillMeasureKind.rating,
-    how: 'Describe what you SEE in their drawing — not what you think they meant.',
+    how:
+        'Describe what you SEE in their drawing — not what you think they meant.',
     week1: 'projects',
     week10: 'describes what is there',
   ),
@@ -575,7 +582,8 @@ const List<VerbSkill> kVerbSkills = [
     verbId: 'shine',
     name: 'Show',
     measure: SkillMeasureKind.seconds,
-    how: "Hold up something you made — don't explain, don't apologize. How long?",
+    how:
+        "Hold up something you made — don't explain, don't apologize. How long?",
     week1: 'hides it fast',
     week10: 'holds + lets it be seen',
   ),
@@ -598,8 +606,10 @@ const List<VerbSkill> kVerbSkills = [
 ];
 
 /// The five skills under a verb, in catalog order. Empty for an unknown id.
-List<VerbSkill> skillsForVerb(String verbId) =>
-    [for (final s in kVerbSkills) if (s.verbId == verbId) s];
+List<VerbSkill> skillsForVerb(String verbId) => [
+  for (final s in kVerbSkills)
+    if (s.verbId == verbId) s,
+];
 
 /// Fast id → VerbSkill lookup (id is `<verbId>.<name lowercased>`).
 final Map<String, VerbSkill> _byId = {for (final s in kVerbSkills) s.id: s};

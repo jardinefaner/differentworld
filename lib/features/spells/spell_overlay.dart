@@ -101,11 +101,12 @@ class _SpellPageState extends State<_SpellPage>
                 children: [
                   const Spacer(),
                   ScaleTransition(
-                    scale: Tween<double>(begin: 0.92, end: 1.08)
-                        .animate(CurvedAnimation(
-                      parent: _breath,
-                      curve: Curves.easeInOut,
-                    )),
+                    scale: Tween<double>(begin: 0.92, end: 1.08).animate(
+                      CurvedAnimation(
+                        parent: _breath,
+                        curve: Curves.easeInOut,
+                      ),
+                    ),
                     child: Text(
                       widget.spell.emoji,
                       style: const TextStyle(fontSize: 120),

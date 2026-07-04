@@ -45,11 +45,11 @@ class TasksScreen extends ConsumerWidget {
   }
 
   String _filterName(_TaskFilter f) => switch (f) {
-        _TaskFilter.today => 'today',
-        _TaskFilter.week => 'week',
-        _TaskFilter.overdue => 'overdue',
-        _TaskFilter.all => 'all',
-      };
+    _TaskFilter.today => 'today',
+    _TaskFilter.week => 'week',
+    _TaskFilter.overdue => 'overdue',
+    _TaskFilter.all => 'all',
+  };
 
   void _setFilter(BuildContext context, _TaskFilter next) {
     // Use `replace` (not `go`) so the back button doesn't accumulate
@@ -469,87 +469,87 @@ class _TaskCard extends ConsumerWidget {
           // know to swipe right for snooze).
           onTap: () => _showTaskActions(context, ref, task),
           child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 14, 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tap the radio button to complete — the row body opens a
-              // quick-action sheet (Wave 100). Separating completes vs.
-              // opens avoids accidental closes when users tap to read.
-              Tooltip(
-                message: 'Mark done',
-                // Wave 97: bumped padding 10 → 12 so the radius
-                // grows from 44 to 48 (matches Material's tap target
-                // minimum). The icon stays 24dp so the visual is the
-                // same; just more forgiving for the next 50,000
-                // taps a teacher does in their career.
-                child: InkResponse(
-                  radius: 24,
-                  onTap: () async {
-                    unawaited(HapticFeedback.mediumImpact());
-                    await ref.read(taskActionsProvider).markDone(task.id);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Icon(
-                      Icons.radio_button_unchecked,
-                      color: overdue
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.primary,
+            padding: const EdgeInsets.fromLTRB(8, 8, 14, 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tap the radio button to complete — the row body opens a
+                // quick-action sheet (Wave 100). Separating completes vs.
+                // opens avoids accidental closes when users tap to read.
+                Tooltip(
+                  message: 'Mark done',
+                  // Wave 97: bumped padding 10 → 12 so the radius
+                  // grows from 44 to 48 (matches Material's tap target
+                  // minimum). The icon stays 24dp so the visual is the
+                  // same; just more forgiving for the next 50,000
+                  // taps a teacher does in their career.
+                  child: InkResponse(
+                    radius: 24,
+                    onTap: () async {
+                      unawaited(HapticFeedback.mediumImpact());
+                      await ref.read(taskActionsProvider).markDone(task.id);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.radio_button_unchecked,
+                        color: overdue
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.primary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.body,
-                        style: theme.textTheme.bodyMedium,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (due != null) ...[
-                            Icon(
-                              Icons.schedule,
-                              size: 14,
-                              color: overdue
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _dueLabel(due, overdue: overdue),
-                              style: theme.textTheme.bodySmall?.copyWith(
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.body,
+                          style: theme.textTheme.bodyMedium,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (due != null) ...[
+                              Icon(
+                                Icons.schedule,
+                                size: 14,
                                 color: overdue
                                     ? theme.colorScheme.error
                                     : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: overdue ? FontWeight.w700 : null,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _dueLabel(due, overdue: overdue),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: overdue
+                                      ? theme.colorScheme.error
+                                      : theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: overdue ? FontWeight.w700 : null,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                            Text(
+                              'Added ${relativeTimeAgo(created)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            const SizedBox(width: 12),
                           ],
-                          Text(
-                            'Added ${relativeTimeAgo(created)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

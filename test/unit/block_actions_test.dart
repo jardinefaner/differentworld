@@ -3,12 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('blockActionKindsFor', () {
-    List<BlockActionKind> k(String kind, String title, {bool session = false}) =>
-        blockActionKindsFor(
-          scheduleKind: kind,
-          title: title,
-          hasSession: session,
-        );
+    List<BlockActionKind> k(
+      String kind,
+      String title, {
+      bool session = false,
+    }) => blockActionKindsFor(
+      scheduleKind: kind,
+      title: title,
+      hasSession: session,
+    );
 
     test('a session block gets the photo-class tray', () {
       expect(k('on_site', 'Rotation 1', session: true), const [

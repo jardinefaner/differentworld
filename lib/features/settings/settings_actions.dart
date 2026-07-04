@@ -82,8 +82,9 @@ class MemberCapActions {
   // certifications are a first-class entity (UX_DECISIONS §8).
 }
 
-final memberCapActionsProvider =
-    Provider<MemberCapActions>(MemberCapActions.new);
+final memberCapActionsProvider = Provider<MemberCapActions>(
+  MemberCapActions.new,
+);
 
 /// Auto-saving mutator for the program-settings screen.
 /// Same model as [MemberCapActions]: each toggle is one read-merge-write
@@ -131,8 +132,7 @@ class SpaceCapActions {
   }
 }
 
-final spaceCapActionsProvider =
-    Provider<SpaceCapActions>(SpaceCapActions.new);
+final spaceCapActionsProvider = Provider<SpaceCapActions>(SpaceCapActions.new);
 
 /// String caps on a Group (a room) — e.g. the room's theme skin
 /// (docs/VISION.md "two layers of skin"). Groups have no findById/
@@ -151,5 +151,4 @@ class GroupCapActions {
   }
 }
 
-final groupCapActionsProvider =
-    Provider<GroupCapActions>(GroupCapActions.new);
+final groupCapActionsProvider = Provider<GroupCapActions>(GroupCapActions.new);

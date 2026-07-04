@@ -31,17 +31,16 @@ class HealthProfileCard extends StatelessWidget {
 
     final allergies = subject.allergies?.trim();
     final medications = caps.getString(SubjectCaps.medications)?.trim();
-    final conditions =
-        caps.getString(SubjectCaps.medicalConditions)?.trim();
+    final conditions = caps.getString(SubjectCaps.medicalConditions)?.trim();
     final hasIep = caps.getBool(SubjectCaps.hasIep);
     final iepNotes = caps.getString(SubjectCaps.iepNotes)?.trim();
     final needsOneOnOne = caps.getBool(SubjectCaps.requiresOneOnOne);
     final docName = caps.getString(SubjectCaps.physicianName)?.trim();
     final docPhone = caps.getString(SubjectCaps.physicianPhone)?.trim();
-    final emergency =
-        caps.getString(SubjectCaps.emergencyInstructions)?.trim();
+    final emergency = caps.getString(SubjectCaps.emergencyInstructions)?.trim();
 
-    final empty = (allergies == null || allergies.isEmpty) &&
+    final empty =
+        (allergies == null || allergies.isEmpty) &&
         (medications == null || medications.isEmpty) &&
         (conditions == null || conditions.isEmpty) &&
         !hasIep &&

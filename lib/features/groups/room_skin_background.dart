@@ -266,7 +266,11 @@ final Map<String, _Sig> _signatures = {
           ..color = skin.color.withValues(alpha: 0.12)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
       )
-      ..drawCircle(sun, rad, Paint()..color = skin.color.withValues(alpha: 0.32));
+      ..drawCircle(
+        sun,
+        rad,
+        Paint()..color = skin.color.withValues(alpha: 0.32),
+      );
     final hy = s.height * 0.66;
     canvas.drawRect(
       Rect.fromLTWH(0, hy, s.width, s.height - hy),
@@ -279,10 +283,12 @@ final Map<String, _Sig> _signatures = {
     final cloud = Paint()..color = Colors.white.withValues(alpha: 0.11);
     for (var i = 0; i < 5; i++) {
       final drift = 0.3 + r.nextDouble() * 0.5;
-      final cx = _wrap(
-        r.nextDouble() * s.width + t * s.width * drift,
-        s.width * 1.3,
-      ) - s.width * 0.15;
+      final cx =
+          _wrap(
+            r.nextDouble() * s.width + t * s.width * drift,
+            s.width * 1.3,
+          ) -
+          s.width * 0.15;
       final cy = s.height * (0.12 + r.nextDouble() * 0.4);
       final base = s.shortestSide * (0.1 + r.nextDouble() * 0.08);
       for (var j = 0; j < 4; j++) {
@@ -329,7 +335,8 @@ final Map<String, _Sig> _signatures = {
       );
     }
     // Fireflies — a few glowing motes tracing slow little orbits.
-    final fly = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+    final fly = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
     for (var i = 0; i < 5; i++) {
       final ph = r.nextDouble();
       final ox = sin((t + ph) * 2 * pi) * s.width * 0.04;
@@ -440,7 +447,8 @@ final Map<String, _Sig> _decalSignatures = {
     for (var i = 0; i < 10; i++) {
       final y0 = s.height * (0.6 + r.nextDouble() * 0.4);
       final speed = 0.25 + r.nextDouble() * 0.4;
-      final y = _wrap(y0 - t * s.height * speed, s.height * 0.5) + s.height * 0.5;
+      final y =
+          _wrap(y0 - t * s.height * speed, s.height * 0.5) + s.height * 0.5;
       bubble.color = skin.color.withValues(alpha: 0.12 + r.nextDouble() * 0.12);
       canvas.drawCircle(
         Offset(s.width * r.nextDouble(), y),
@@ -473,7 +481,11 @@ final Map<String, _Sig> _decalSignatures = {
           ..color = skin.color.withValues(alpha: 0.08)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
       )
-      ..drawCircle(sun, rad, Paint()..color = skin.color.withValues(alpha: 0.2));
+      ..drawCircle(
+        sun,
+        rad,
+        Paint()..color = skin.color.withValues(alpha: 0.2),
+      );
   },
   // A couple of clouds drifting slowly near the top.
   'travel': (canvas, s, skin, t) {
@@ -481,10 +493,12 @@ final Map<String, _Sig> _decalSignatures = {
     final cloud = Paint()..color = skin.color.withValues(alpha: 0.07);
     for (var i = 0; i < 3; i++) {
       final drift = 0.2 + r.nextDouble() * 0.3;
-      final cx = _wrap(
-        s.width * (0.3 + r.nextDouble() * 0.6) + t * s.width * drift,
-        s.width * 1.2,
-      ) - s.width * 0.1;
+      final cx =
+          _wrap(
+            s.width * (0.3 + r.nextDouble() * 0.6) + t * s.width * drift,
+            s.width * 1.2,
+          ) -
+          s.width * 0.1;
       final cy = s.height * (0.06 + r.nextDouble() * 0.16);
       final base = s.shortestSide * 0.07;
       for (var j = 0; j < 4; j++) {
@@ -517,7 +531,8 @@ final Map<String, _Sig> _decalSignatures = {
       );
       x += w * 0.85;
     }
-    final fly = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+    final fly = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
     for (var i = 0; i < 3; i++) {
       final ph = r.nextDouble();
       final ox = sin((t + ph) * 2 * pi) * s.width * 0.03;

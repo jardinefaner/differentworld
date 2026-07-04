@@ -175,28 +175,30 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // runs during the parent route's build phase and AppShell
     // watches kidModeProvider, so a sync write trips Riverpod's
     // "modified during build" assertion.
-    unawaited(Future.microtask(() {
-      if (!mounted) return;
-      // Wave 142: try/catch around the microtask body. If either
-      // notifier ever throws, the surface-level unawaited Future
-      // would bubble up to the web's top-level error handler with
-      // no useful context. Catching here keeps survey-take usable
-      // even if one of these wires is briefly unhealthy.
-      try {
-        ref.read(kidModeProvider.notifier).enter();
-        // Wave 106: pin the locked URL so the router redirect can
-        // bounce any navigation away (e.g. web browser back) back to
-        // this screen. `PopScope.canPop: false` only catches Flutter
-        // Navigator pops, not `window.history.back()`.
-        ref
-            .read(kidModeLockedRouteProvider.notifier)
-            .pin('/surveys/${widget.templateId}/take');
-      } on Object catch (e, st) {
-        if (kDebugMode) {
-          debugPrint('[survey-take] initState microtask failed: $e\n$st');
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        // Wave 142: try/catch around the microtask body. If either
+        // notifier ever throws, the surface-level unawaited Future
+        // would bubble up to the web's top-level error handler with
+        // no useful context. Catching here keeps survey-take usable
+        // even if one of these wires is briefly unhealthy.
+        try {
+          ref.read(kidModeProvider.notifier).enter();
+          // Wave 106: pin the locked URL so the router redirect can
+          // bounce any navigation away (e.g. web browser back) back to
+          // this screen. `PopScope.canPop: false` only catches Flutter
+          // Navigator pops, not `window.history.back()`.
+          ref
+              .read(kidModeLockedRouteProvider.notifier)
+              .pin('/surveys/${widget.templateId}/take');
+        } on Object catch (e, st) {
+          if (kDebugMode) {
+            debugPrint('[survey-take] initState microtask failed: $e\n$st');
+          }
         }
-      }
-    }));
+      }),
+    );
   }
 
   @override
@@ -262,8 +264,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // is now baked into cacheSuffix too, so EN and ES audio for the
     // same question never collide.
     final tag = text.hashCode.toUnsigned(32).toRadixString(36);
-    final cacheKey = '${t.id}__${cacheSuffix}__$tag'
-        .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
+    final cacheKey = '${t.id}__${cacheSuffix}__$tag'.replaceAll(
+      RegExp(r'[^a-zA-Z0-9_\-.]'),
+      '_',
+    );
     final myToken = ++_playRequestId;
     try {
       final source = await _tts.resolve(
@@ -349,8 +353,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// page's question is answered (or is a practice — practices stay
   /// optional). Page index 0..totalQuestions-1; the closeout has
   /// its own logic.
-  bool _canAdvanceFromCurrent(
-      SurveyTemplate t, List<_SurveyPage> pages) {
+  bool _canAdvanceFromCurrent(SurveyTemplate t, List<_SurveyPage> pages) {
     if (_index >= pages.length) return true; // closeout
     final page = pages[_index];
     final q = page.question;
@@ -424,7 +427,9 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     final t = _template;
     if (t == null) return;
     try {
-      await ref.read(surveyActionsProvider).save(
+      await ref
+          .read(surveyActionsProvider)
+          .save(
             id: _responseId,
             templateId: t.id,
             answers: _answers,
@@ -454,7 +459,9 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
       _error = null;
     });
     try {
-      await ref.read(surveyActionsProvider).save(
+      await ref
+          .read(surveyActionsProvider)
+          .save(
             id: _responseId,
             templateId: t.id,
             answers: _answers,
@@ -501,11 +508,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   void _advanceFrom(int from) {
     final pageCount = _pages.length + 1;
     if (from + 1 >= pageCount) return;
-    unawaited(_page.animateToPage(
-      from + 1,
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOut,
-    ));
+    unawaited(
+      _page.animateToPage(
+        from + 1,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   /// Five quick taps on the hidden top-right corner BEGINS the
@@ -571,8 +580,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     final totalQuestions = pages.length;
     // PageView holds N question pages + 1 closeout page at the end.
     final pageCount = totalQuestions + 1;
-    final answeredScored =
-        t.scored.where((q) => _answers.isAnswered(q)).length;
+    final answeredScored = t.scored.where((q) => _answers.isAnswered(q)).length;
     final atCloseout = _index >= totalQuestions;
 
     // Kid-mode hardening: while locked, refuse the system back
@@ -589,8 +597,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // providers into local state. `_language` is read by
     // non-build methods like `_playQuestion`; volume is forwarded to
     // the TTS service the moment it changes.
-    final lang = ref.watch(surveyLanguageProvider).value
-        ?? SurveyLanguage.en;
+    final lang = ref.watch(surveyLanguageProvider).value ?? SurveyLanguage.en;
     if (lang != _language) _language = lang;
     final volume = ref.watch(surveyVolumeProvider).value ?? 1.0;
     // Push volume to the player whenever it changes (also covers
@@ -716,8 +723,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                 // auto-advance) are the ONLY way
                                 // forward, so the required-answer
                                 // gate can't be bypassed by a swipe.
-                                physics:
-                                    const NeverScrollableScrollPhysics(),
+                                physics: const NeverScrollableScrollPhysics(),
                                 onPageChanged: (i) {
                                   setState(() => _index = i);
                                   if (i < totalQuestions) {
@@ -748,10 +754,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                   final q = page.question;
                                   final onReplay = _voiceId == null
                                       ? null
-                                      : () =>
-                                          unawaited(_playQuestion(i));
-                                  void afterAnswer(
-                                      {required bool autoAdvance}) {
+                                      : () => unawaited(_playQuestion(i));
+                                  void afterAnswer({
+                                    required bool autoAdvance,
+                                  }) {
                                     unawaited(_autosave());
                                     if (autoAdvance) {
                                       Future.delayed(
@@ -776,28 +782,30 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                       onReplayTts: onReplay,
                                       language: lang,
                                       onPickYes: () {
-                                        final picked = _answers
-                                            .multiselect(q.key)
-                                            .toSet()
-                                          ..add(opt.key);
+                                        final picked =
+                                            _answers.multiselect(q.key).toSet()
+                                              ..add(opt.key);
                                         final updated =
                                             SurveyAnswers.fromJson(
-                                                _answers.toJson())
-                                              ..setMultiselect(
-                                                  q.key, picked.toList());
+                                              _answers.toJson(),
+                                            )..setMultiselect(
+                                              q.key,
+                                              picked.toList(),
+                                            );
                                         setState(() => _answers = updated);
                                         afterAnswer(autoAdvance: true);
                                       },
                                       onPickNo: () {
-                                        final picked = _answers
-                                            .multiselect(q.key)
-                                            .toSet()
-                                          ..remove(opt.key);
+                                        final picked =
+                                            _answers.multiselect(q.key).toSet()
+                                              ..remove(opt.key);
                                         final updated =
                                             SurveyAnswers.fromJson(
-                                                _answers.toJson())
-                                              ..setMultiselect(
-                                                  q.key, picked.toList());
+                                              _answers.toJson(),
+                                            )..setMultiselect(
+                                              q.key,
+                                              picked.toList(),
+                                            );
                                         setState(() => _answers = updated);
                                         afterAnswer(autoAdvance: true);
                                       },
@@ -809,8 +817,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                     answers: _answers,
                                     onReplayTts: onReplay,
                                     language: lang,
-                                    onAnswered:
-                                        (next, {required autoAdvance}) {
+                                    onAnswered: (next, {required autoAdvance}) {
                                       setState(() => _answers = next);
                                       afterAnswer(autoAdvance: autoAdvance);
                                     },
@@ -835,8 +842,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                         SafeArea(
                           top: false,
                           child: Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                             child: Row(
                               children: [
                                 TextButton.icon(
@@ -844,12 +850,16 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                       ? null
                                       : () {
                                           unawaited(
-                                              HapticFeedback.selectionClick());
-                                          unawaited(_page.previousPage(
-                                            duration: const Duration(
-                                                milliseconds: 240),
-                                            curve: Curves.easeOut,
-                                          ));
+                                            HapticFeedback.selectionClick(),
+                                          );
+                                          unawaited(
+                                            _page.previousPage(
+                                              duration: const Duration(
+                                                milliseconds: 240,
+                                              ),
+                                              curve: Curves.easeOut,
+                                            ),
+                                          );
                                         },
                                   icon: const Icon(Icons.arrow_back),
                                   label: Text(SurveyStrings.of(lang).back),
@@ -857,14 +867,18 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                 const Spacer(),
                                 if (!atCloseout)
                                   SurveyForwardButton(
-                                    question: t.questions[
-                                        _safeQuestionIndex(t, _index)],
+                                    question:
+                                        t.questions[_safeQuestionIndex(
+                                          t,
+                                          _index,
+                                        )],
                                     atCloseout: false,
                                     language: lang,
                                     onTap: canAdvance
                                         ? () {
-                                            unawaited(HapticFeedback
-                                                .selectionClick());
+                                            unawaited(
+                                              HapticFeedback.selectionClick(),
+                                            );
                                             _advanceFrom(_index);
                                           }
                                         : null,
@@ -929,7 +943,7 @@ class _AboutYouBinding extends ConsumerWidget {
   final Future<void> Function(String voiceId) onPickVoice;
   final Future<void> Function(String dimension, String label) onPickIdentity;
   final Future<void> Function(String dimension, String label)
-      onAddIdentityOption;
+  onAddIdentityOption;
   final VoidCallback? onStart;
   final SurveyTtsService ttsService;
   final SurveyLanguage language;

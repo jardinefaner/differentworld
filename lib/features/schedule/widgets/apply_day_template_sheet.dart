@@ -53,8 +53,18 @@ class _ApplyDayTemplateSheetState extends ConsumerState<ApplyDayTemplateSheet> {
 
   String _dateLabel(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${days[d.weekday - 1]}, ${months[d.month - 1]} ${d.day}';
@@ -78,8 +88,10 @@ class _ApplyDayTemplateSheetState extends ConsumerState<ApplyDayTemplateSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Apply “${widget.template.name}”',
-                  style: theme.textTheme.titleMedium),
+              Text(
+                'Apply “${widget.template.name}”',
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 4),
               Text(
                 'Generates ${widget.template.blocks.length} blocks. Existing '
@@ -149,7 +161,9 @@ class _ApplyDayTemplateSheetState extends ConsumerState<ApplyDayTemplateSheet> {
     setState(() => _submitting = true);
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final n = await ref.read(dayTemplateActionsProvider).applyToDate(
+    final n = await ref
+        .read(dayTemplateActionsProvider)
+        .applyToDate(
           spaceId: widget.spaceId,
           templateId: widget.template.id,
           date: _date,
@@ -163,7 +177,7 @@ class _ApplyDayTemplateSheetState extends ConsumerState<ApplyDayTemplateSheet> {
           n == 0
               ? 'Nothing to apply.'
               : 'Added $n ${n == 1 ? "block" : "blocks"} to '
-                  '${_dateLabel(_date)}.',
+                    '${_dateLabel(_date)}.',
         ),
       ),
     );

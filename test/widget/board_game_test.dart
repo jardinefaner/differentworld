@@ -46,8 +46,10 @@ void main() {
 
     test('turn carries the kid name', () {
       final s = BoardState.fromMap(
-        const BoardState(instrument: BoardInstrument.turn, name: 'Aria')
-            .toMap(),
+        const BoardState(
+          instrument: BoardInstrument.turn,
+          name: 'Aria',
+        ).toMap(),
       );
       expect(s.instrument, BoardInstrument.turn);
       expect(s.name, 'Aria');
@@ -96,18 +98,18 @@ void main() {
 
   // A realistic room-screen size; the auto-fit stages scale to fill it.
   Widget host(BoardState state) => MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 640,
-              height: 360,
-              child: Builder(
-                builder: (context) => game.buildStage(context, state),
-              ),
-            ),
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 640,
+          height: 360,
+          child: Builder(
+            builder: (context) => game.buildStage(context, state),
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   testWidgets('word stage shows the word', (tester) async {
     await tester.pumpWidget(
@@ -119,11 +121,13 @@ void main() {
 
   testWidgets('spell stage shows the word (avatar + word)', (tester) async {
     await tester.pumpWidget(
-      host(const BoardState(
-        instrument: BoardInstrument.spell,
-        name: 'Maya',
-        word: 'because',
-      )),
+      host(
+        const BoardState(
+          instrument: BoardInstrument.spell,
+          name: 'Maya',
+          word: 'because',
+        ),
+      ),
     );
     await tester.pump();
     expect(find.text('because'), findsOneWidget);
@@ -132,11 +136,13 @@ void main() {
 
   testWidgets('number stage shows the count + label', (tester) async {
     await tester.pumpWidget(
-      host(const BoardState(
-        instrument: BoardInstrument.number,
-        number: 12,
-        word: 'days together',
-      )),
+      host(
+        const BoardState(
+          instrument: BoardInstrument.number,
+          number: 12,
+          word: 'days together',
+        ),
+      ),
     );
     expect(find.text('12'), findsOneWidget);
     expect(find.text('days together'), findsOneWidget);
@@ -154,11 +160,13 @@ void main() {
 
   testWidgets('reveal stage shows only the revealed lines', (tester) async {
     await tester.pumpWidget(
-      host(const BoardState(
-        instrument: BoardInstrument.reveal,
-        word: 'one\ntwo\nthree',
-        number: 2,
-      )),
+      host(
+        const BoardState(
+          instrument: BoardInstrument.reveal,
+          word: 'one\ntwo\nthree',
+          number: 2,
+        ),
+      ),
     );
     expect(find.text('one'), findsOneWidget);
     expect(find.text('two'), findsOneWidget);
@@ -168,11 +176,13 @@ void main() {
 
   testWidgets('sound stage lights chunks up to the lit count', (tester) async {
     await tester.pumpWidget(
-      host(const BoardState(
-        instrument: BoardInstrument.sound,
-        word: 'but-ter-fly',
-        number: 2,
-      )),
+      host(
+        const BoardState(
+          instrument: BoardInstrument.sound,
+          word: 'but-ter-fly',
+          number: 2,
+        ),
+      ),
     );
     expect(find.text('but'), findsOneWidget);
     expect(find.text('ter'), findsOneWidget);
@@ -187,8 +197,7 @@ void main() {
 
   // FUTURE-PROOFING: every instrument must render its stage without throwing,
   // even on empty content (the receiver paints it before the teacher types).
-  testWidgets('every instrument renders a stage without error',
-      (tester) async {
+  testWidgets('every instrument renders a stage without error', (tester) async {
     for (final i in BoardInstrument.values) {
       await tester.pumpWidget(host(BoardState(instrument: i)));
       await tester.pump();

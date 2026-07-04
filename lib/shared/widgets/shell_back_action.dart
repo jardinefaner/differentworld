@@ -74,5 +74,4 @@ ShellBackAction decideShellBack({
 /// [ShellBackAction.systemPop] for the same inputs.
 bool shellShouldAllowSystemPop({
   required bool shellCanPop,
-}) =>
-    shellCanPop;
+}) => shellCanPop;

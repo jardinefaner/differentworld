@@ -7,21 +7,18 @@ part 'members_dao.g.dart';
 /// `createSpaceForMember`, `removeMemberFromSpace` which both touch
 /// members and another table) stay on `AppDatabase`.
 @DriftAccessor(tables: [Members])
-class MembersDao extends DatabaseAccessor<AppDatabase>
-    with _$MembersDaoMixin {
+class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
   MembersDao(super.attachedDatabase);
 
   Stream<Member?> watchById(String id) {
-    return (select(members)..where((m) => m.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(members)..where((m) => m.id.equals(id))).watchSingleOrNull();
   }
 
   /// One-shot read by ID. Use this — not a captured widget prop —
   /// when a write needs the latest `capabilities` JSONB to avoid
   /// clobbering concurrent edits to other cap keys.
   Future<Member?> findById(String id) {
-    return (select(members)..where((m) => m.id.equals(id)))
-        .getSingleOrNull();
+    return (select(members)..where((m) => m.id.equals(id))).getSingleOrNull();
   }
 
   Stream<List<Member>> watchInSpace(String spaceId) {

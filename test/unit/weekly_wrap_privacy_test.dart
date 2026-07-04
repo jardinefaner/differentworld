@@ -13,8 +13,16 @@ void main() {
       totalPieces: 2,
       otherNames: {'Sofia', 'Mateo'},
       items: const [
-        (day: 'MONDAY', imagePath: null, body: 'Built a fort with Sofia and Mateo'),
-        (day: 'TUESDAY', imagePath: 'student-photos/x.png', body: 'Sofia helped me draw this'),
+        (
+          day: 'MONDAY',
+          imagePath: null,
+          body: 'Built a fort with Sofia and Mateo',
+        ),
+        (
+          day: 'TUESDAY',
+          imagePath: 'student-photos/x.png',
+          body: 'Sofia helped me draw this',
+        ),
       ],
     );
 
@@ -24,26 +32,33 @@ void main() {
 
     expect(flat.contains('Sofia'), isFalse, reason: 'other child name leaked');
     expect(flat.contains('Mateo'), isFalse, reason: 'other child name leaked');
-    expect(flat.contains('Owen'), isTrue, reason: "the subject's own name stays");
-  });
-
-  test('a photo item keeps its hero imagePath; note-only items render as text', () {
-    final slides = buildWeeklyWrapSlides(
-      childName: 'Lux',
-      totalPieces: 2,
-      otherNames: const <String>{},
-      items: const [
-        (day: 'WED', imagePath: 'p/1.png', body: ''),
-        (day: 'THU', imagePath: null, body: 'I counted to twenty'),
-      ],
+    expect(
+      flat.contains('Owen'),
+      isTrue,
+      reason: "the subject's own name stays",
     );
-
-    // lead + photo + note + closing
-    expect(slides.length, 4);
-    expect(slides[1].imagePath, 'p/1.png');
-    expect(slides[2].imagePath, isNull);
-    expect(slides[2].title, 'I counted to twenty');
   });
+
+  test(
+    'a photo item keeps its hero imagePath; note-only items render as text',
+    () {
+      final slides = buildWeeklyWrapSlides(
+        childName: 'Lux',
+        totalPieces: 2,
+        otherNames: const <String>{},
+        items: const [
+          (day: 'WED', imagePath: 'p/1.png', body: ''),
+          (day: 'THU', imagePath: null, body: 'I counted to twenty'),
+        ],
+      );
+
+      // lead + photo + note + closing
+      expect(slides.length, 4);
+      expect(slides[1].imagePath, 'p/1.png');
+      expect(slides[2].imagePath, isNull);
+      expect(slides[2].title, 'I counted to twenty');
+    },
+  );
 
   test('an empty note-only item is dropped (no blank slide)', () {
     final slides = buildWeeklyWrapSlides(

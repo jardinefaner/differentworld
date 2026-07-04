@@ -83,7 +83,11 @@ NudgePlan recomposeNudge(
   String endLabel = 'the end',
 }) {
   if (remaining.isEmpty) {
-    return const NudgePlan(ordered: [], changes: [], summary: 'Nothing left to nudge.');
+    return const NudgePlan(
+      ordered: [],
+      changes: [],
+      summary: 'Nothing left to nudge.',
+    );
   }
   return switch (intent) {
     NudgeIntent.behind => _behind(remaining, availableMin, endLabel),
@@ -111,7 +115,11 @@ NudgePlan _noop(List<NudgeSlot> remaining, String summary) => NudgePlan(
 
 /// Compress the flexible remaining blocks to fit [availableMin]; fixed blocks
 /// (pickup / closed) keep their minutes. No-op when already inside the window.
-NudgePlan _behind(List<NudgeSlot> remaining, int availableMin, String endLabel) {
+NudgePlan _behind(
+  List<NudgeSlot> remaining,
+  int availableMin,
+  String endLabel,
+) {
   final total = _sum(remaining);
   if (total <= availableMin) {
     return _noop(remaining, "You're inside the window — nothing to tighten.");
@@ -143,13 +151,15 @@ NudgePlan _behind(List<NudgeSlot> remaining, int availableMin, String endLabel) 
       energy: s.energy,
       fixed: s.fixed,
     ));
-    changes.add(NudgeChange(
-      slot: s,
-      oldMinutes: s.minutes,
-      newMinutes: newMin,
-      wasIndex: i,
-      nowIndex: i,
-    ));
+    changes.add(
+      NudgeChange(
+        slot: s,
+        oldMinutes: s.minutes,
+        newMinutes: newMin,
+        wasIndex: i,
+        nowIndex: i,
+      ),
+    );
   }
   final saved = total - _sum(out);
   return NudgePlan(
@@ -170,7 +180,10 @@ NudgePlan _ahead(List<NudgeSlot> remaining, int availableMin) {
   }
   final firstFlex = remaining.indexWhere((s) => !s.fixed);
   if (firstFlex < 0) {
-    return _noop(remaining, 'The rest is fixed — nowhere to add the extra time.');
+    return _noop(
+      remaining,
+      'The rest is fixed — nowhere to add the extra time.',
+    );
   }
   final out = <NudgeSlot>[];
   final changes = <NudgeChange>[];
@@ -185,13 +198,15 @@ NudgePlan _ahead(List<NudgeSlot> remaining, int availableMin) {
       energy: s.energy,
       fixed: s.fixed,
     ));
-    changes.add(NudgeChange(
-      slot: s,
-      oldMinutes: s.minutes,
-      newMinutes: newMin,
-      wasIndex: i,
-      nowIndex: i,
-    ));
+    changes.add(
+      NudgeChange(
+        slot: s,
+        oldMinutes: s.minutes,
+        newMinutes: newMin,
+        wasIndex: i,
+        nowIndex: i,
+      ),
+    );
   }
   return NudgePlan(
     ordered: out,
@@ -208,17 +223,24 @@ NudgePlan _wired(List<NudgeSlot> remaining) {
     return _noop(remaining, "The next block's already a calm one.");
   }
   // Otherwise look past the next block for a calm one to bring forward.
-  final calmIndex =
-      remaining.indexWhere((s) => s.energy <= 0.35 && !s.fixed, 1);
+  final calmIndex = remaining.indexWhere(
+    (s) => s.energy <= 0.35 && !s.fixed,
+    1,
+  );
   if (calmIndex < 0) {
-    return _noop(remaining, 'No calm block left to bring forward — add a breather?');
+    return _noop(
+      remaining,
+      'No calm block left to bring forward — add a breather?',
+    );
   }
   final reordered = List<NudgeSlot>.of(remaining);
   final calm = reordered.removeAt(calmIndex);
   reordered.insert(0, calm);
 
   // Build the diff against the original order (durations unchanged).
-  final newIndexOf = {for (var i = 0; i < reordered.length; i++) reordered[i].id: i};
+  final newIndexOf = {
+    for (var i = 0; i < reordered.length; i++) reordered[i].id: i,
+  };
   final changes = [
     for (var i = 0; i < remaining.length; i++)
       NudgeChange(

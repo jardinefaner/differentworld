@@ -21,8 +21,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// role + capabilities are overridden.
 final viewerKindOverrideProvider =
     NotifierProvider<ViewerKindOverrideNotifier, String?>(
-  ViewerKindOverrideNotifier.new,
-);
+      ViewerKindOverrideNotifier.new,
+    );
 
 class ViewerKindOverrideNotifier extends Notifier<String?> {
   @override
@@ -50,8 +50,7 @@ Viewer? buildOverrideViewer(Viewer base, String overrideRoleKey) {
   // Synthesize a member copy with the override role + the role's
   // default cap bundle. Drift's data classes are immutable, so we use
   // copyWith.
-  final overrideCaps =
-      Capabilities(RoleBundles.defaultsFor(overrideRoleKey));
+  final overrideCaps = Capabilities(RoleBundles.defaultsFor(overrideRoleKey));
   final synthesized = realMember.copyWith(
     role: overrideRoleKey,
     capabilities: overrideCaps.toJson(),

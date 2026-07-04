@@ -29,7 +29,9 @@ void main() {
 
   testWidgets('tapping a cue button shows it big on the stage', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: GameRunner(def: CuesGame()))),
+      const ProviderScope(
+        child: MaterialApp(home: GameRunner(def: CuesGame())),
+      ),
     );
     await tester.pump();
 

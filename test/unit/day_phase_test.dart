@@ -46,8 +46,11 @@ void main() {
       var last = DayPhase.prep;
       for (var m = 0; m < 24 * 60; m++) {
         final phase = DayPhase.fromClock(_at(m ~/ 60, m % 60));
-        expect(phase.index, greaterThanOrEqualTo(last.index),
-            reason: 'phase went backward at minute $m');
+        expect(
+          phase.index,
+          greaterThanOrEqualTo(last.index),
+          reason: 'phase went backward at minute $m',
+        );
         last = phase;
       }
       expect(last, DayPhase.closed);

@@ -15,20 +15,18 @@ class DismissedInsightsDao extends DatabaseAccessor<AppDatabase>
   DismissedInsightsDao(super.attachedDatabase);
 
   Stream<List<DismissedInsight>> watchForMember(String memberId) {
-    return (select(dismissedInsights)
-          ..where((d) => d.memberId.equals(memberId)))
-        .watch();
+    return (select(
+      dismissedInsights,
+    )..where((d) => d.memberId.equals(memberId))).watch();
   }
 
   Future<DismissedInsight?> findFor({
     required String memberId,
     required String insightId,
   }) {
-    return (select(dismissedInsights)
-          ..where(
-            (d) =>
-                d.memberId.equals(memberId) & d.insightId.equals(insightId),
-          ))
+    return (select(dismissedInsights)..where(
+          (d) => d.memberId.equals(memberId) & d.insightId.equals(insightId),
+        ))
         .getSingleOrNull();
   }
 
@@ -60,22 +58,22 @@ class DismissedInsightsDao extends DatabaseAccessor<AppDatabase>
       );
       return;
     }
-    await (update(dismissedInsights)
-          ..where((d) => d.id.equals(existing.id)))
-        .write(DismissedInsightsCompanion(
-      dismissedUntil: Value(untilIso),
-    ));
+    await (update(
+      dismissedInsights,
+    )..where((d) => d.id.equals(existing.id))).write(
+      DismissedInsightsCompanion(
+        dismissedUntil: Value(untilIso),
+      ),
+    );
   }
 
   Future<void> deleteFor({
     required String memberId,
     required String insightId,
   }) async {
-    await (delete(dismissedInsights)
-          ..where(
-            (d) =>
-                d.memberId.equals(memberId) & d.insightId.equals(insightId),
-          ))
+    await (delete(dismissedInsights)..where(
+          (d) => d.memberId.equals(memberId) & d.insightId.equals(insightId),
+        ))
         .go();
   }
 }

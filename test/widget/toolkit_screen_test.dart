@@ -33,8 +33,11 @@ void main() {
     test('every slug is unique', () {
       final slugs = <String>{};
       for (final tool in allToolkitTools) {
-        expect(slugs.add(tool.slug), isTrue,
-            reason: 'duplicate slug: ${tool.slug}');
+        expect(
+          slugs.add(tool.slug),
+          isTrue,
+          reason: 'duplicate slug: ${tool.slug}',
+        );
       }
       expect(slugs.length, 30);
     });
@@ -61,8 +64,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('first category is on screen at initial paint',
-        (tester) async {
+    testWidgets('first category is on screen at initial paint', (tester) async {
       await pumpCatalog(tester);
       final firstCat = toolkitCatalog.first;
       expect(find.text(firstCat.name), findsWidgets);
@@ -123,8 +125,7 @@ void main() {
       );
     });
 
-    testWidgets('non-matching query shows the empty state',
-        (tester) async {
+    testWidgets('non-matching query shows the empty state', (tester) async {
       await pumpCatalog(tester);
       await tester.enterText(find.byType(TextField), 'xyzzy123');
       await tester.pump();
@@ -169,8 +170,9 @@ void main() {
   });
 
   group('Responsive split', () {
-    testWidgets('phone width shows mobile catalog only (no detail pane)',
-        (tester) async {
+    testWidgets('phone width shows mobile catalog only (no detail pane)', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(400 * 3, 800 * 3);
       tester.view.devicePixelRatio = 3.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -183,8 +185,9 @@ void main() {
       expect(find.text('Pick a tool'), findsNothing);
     });
 
-    testWidgets('tablet width activates master-detail with placeholder',
-        (tester) async {
+    testWidgets('tablet width activates master-detail with placeholder', (
+      tester,
+    ) async {
       // 1024dp viewport — well above Breakpoints.smallTablet (600dp).
       tester.view.physicalSize = const Size(1024 * 1, 768 * 1);
       tester.view.devicePixelRatio = 1.0;

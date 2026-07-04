@@ -64,8 +64,9 @@ class TeamScreen extends ConsumerWidget {
     // member summary at desktop widths. Refresh / share / browser-
     // back all preserve it because it lives in the URL, not in
     // local state.
-    final selectedId =
-        GoRouterState.of(context).uri.queryParameters['selected'];
+    final selectedId = GoRouterState.of(
+      context,
+    ).uri.queryParameters['selected'];
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
@@ -231,8 +232,7 @@ class _MemberTile extends ConsumerWidget {
     // without a route push. On narrow, keep the drill-in to the
     // full /settings/team/<id> route.
     final isSelected = selectedId == member.id;
-    final isWide =
-        MediaQuery.sizeOf(context).width >= Breakpoints.tablet;
+    final isWide = MediaQuery.sizeOf(context).width >= Breakpoints.tablet;
     return ListTile(
       leading: PersonAvatar(
         name: member.displayName,
@@ -249,8 +249,9 @@ class _MemberTile extends ConsumerWidget {
       ),
       subtitle: subtitle,
       selected: isSelected,
-      selectedTileColor:
-          theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+      selectedTileColor: theme.colorScheme.primaryContainer.withValues(
+        alpha: 0.35,
+      ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
         if (isWide) {
@@ -267,7 +268,11 @@ class _MemberTile extends ConsumerWidget {
 /// the flat [_MemberTile] and the bento [_MemberCard] so they never drift:
 /// "Specialist · Coach" when set, or "Specialist · choose specialty" in the
 /// tertiary tint so a director spots incomplete profiles from the list.
-Widget _memberRoleSubtitle(Member member, String roleLabel, ColorScheme scheme) {
+Widget _memberRoleSubtitle(
+  Member member,
+  String roleLabel,
+  ColorScheme scheme,
+) {
   final specialty = member.role == RoleKey.specialist
       ? member.caps.getString(ChildcareCaps.specialty)
       : null;
@@ -485,15 +490,13 @@ class _InviteTile extends ConsumerWidget {
                       title: 'Revoke this invite?',
                       message: email == null
                           ? 'Code ${_formatCode(code ?? '')} will stop '
-                              'working immediately.'
+                                'working immediately.'
                           : '$email will no longer be able to join with '
-                              'this invite.',
+                                'this invite.',
                       confirmLabel: 'Revoke',
                     );
                     if (!confirmed) return;
-                    await ref
-                        .read(inviteActionsProvider)
-                        .revoke(invite.id);
+                    await ref.read(inviteActionsProvider).revoke(invite.id);
                     messenger.showSnackBar(
                       const SnackBar(
                         content: Text('Invite revoked'),
@@ -520,9 +523,9 @@ class _InviteTile extends ConsumerWidget {
           : null,
       onTap: viewerCanInvite
           ? () => context.push(
-                '/settings/team/invite/${invite.id}',
-                extra: invite,
-              )
+              '/settings/team/invite/${invite.id}',
+              extra: invite,
+            )
           : null,
     );
 
@@ -674,8 +677,7 @@ class _MemberSummaryPanel extends ConsumerWidget {
               ],
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () =>
-                    context.push('/settings/team/${member.id}'),
+                onPressed: () => context.push('/settings/team/${member.id}'),
                 icon: const Icon(Icons.tune),
                 label: const Text('Open full settings'),
               ),

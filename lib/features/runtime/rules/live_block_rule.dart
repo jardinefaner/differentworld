@@ -36,8 +36,9 @@ World entryCreatedWorld({
   return World(
     subject: Noun('Entry', entryId, entryProps),
     context: {
-      'liveBlock':
-          liveBlockId == null ? null : Noun('ScheduleBlock', liveBlockId),
+      'liveBlock': liveBlockId == null
+          ? null
+          : Noun('ScheduleBlock', liveBlockId),
     },
   );
 }

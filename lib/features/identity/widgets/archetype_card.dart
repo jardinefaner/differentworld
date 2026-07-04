@@ -33,8 +33,9 @@ class ArchetypeCard extends ConsumerWidget {
         child: OutlinedButton.icon(
           icon: const Icon(Icons.face_retouching_natural_outlined),
           label: const Text('Choose how you show up'),
-          onPressed: () =>
-              unawaited(showArchetypePicker(context, ref, memberId, archetypeId)),
+          onPressed: () => unawaited(
+            showArchetypePicker(context, ref, memberId, archetypeId),
+          ),
         ),
       );
     }
@@ -83,7 +84,9 @@ Future<void> showArchetypePicker(
     builder: (sheetCtx) {
       final theme = Theme.of(sheetCtx);
       void choose(String? id) {
-        unawaited(ref.read(memberCapActionsProvider).setArchetype(memberId, id));
+        unawaited(
+          ref.read(memberCapActionsProvider).setArchetype(memberId, id),
+        );
         Navigator.of(sheetCtx).pop();
       }
 
@@ -98,8 +101,9 @@ Future<void> showArchetypePicker(
               const GlassDragHandle(),
               Text(
                 'How do you show up?',
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -175,7 +179,9 @@ class _ArchetypeRow extends StatelessWidget {
                             archetype.name,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: selected ? scheme.onPrimaryContainer : null,
+                              color: selected
+                                  ? scheme.onPrimaryContainer
+                                  : null,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -184,8 +190,9 @@ class _ArchetypeRow extends StatelessWidget {
                               archetype.gift,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: selected
-                                    ? scheme.onPrimaryContainer
-                                        .withValues(alpha: 0.8)
+                                    ? scheme.onPrimaryContainer.withValues(
+                                        alpha: 0.8,
+                                      )
                                     : scheme.onSurfaceVariant,
                               ),
                             ),

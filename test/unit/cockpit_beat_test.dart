@@ -48,19 +48,22 @@ void main() {
       );
     });
 
-    group('off-schedule bends the clock — a live field trip wins over phase', () {
-      for (final phase in DayPhase.values) {
-        test('$phase + a field-trip block → fieldTrip', () {
-          expect(
-            computeCockpitBeat(
-              phase: phase,
-              liveBlockKind: BlockKind.fieldTrip,
-            ),
-            CockpitBeat.fieldTrip,
-          );
-        });
-      }
-    });
+    group(
+      'off-schedule bends the clock — a live field trip wins over phase',
+      () {
+        for (final phase in DayPhase.values) {
+          test('$phase + a field-trip block → fieldTrip', () {
+            expect(
+              computeCockpitBeat(
+                phase: phase,
+                liveBlockKind: BlockKind.fieldTrip,
+              ),
+              CockpitBeat.fieldTrip,
+            );
+          });
+        }
+      },
+    );
 
     test('a non-trip live block does NOT override the phase', () {
       expect(

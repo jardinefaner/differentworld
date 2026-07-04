@@ -25,11 +25,11 @@ class DevFlag {
   });
 
   factory DevFlag.fromJson(Map<String, dynamic> j) => DevFlag(
-        route: j['route'] as String? ?? '',
-        label: j['label'] as String? ?? '',
-        note: j['note'] as String? ?? '',
-        at: j['at'] as String? ?? '',
-      );
+    route: j['route'] as String? ?? '',
+    label: j['label'] as String? ?? '',
+    note: j['note'] as String? ?? '',
+    at: j['at'] as String? ?? '',
+  );
 
   /// The exact active route (`uri.path`, ids and all) — what tells Claude
   /// which screen + entity to open.
@@ -44,8 +44,12 @@ class DevFlag {
   /// ISO timestamp — also the stable key for annotating this exact flag.
   final String at;
 
-  Map<String, dynamic> toJson() =>
-      {'route': route, 'label': label, 'note': note, 'at': at};
+  Map<String, dynamic> toJson() => {
+    'route': route,
+    'label': label,
+    'note': note,
+    'at': at,
+  };
 }
 
 /// Append-only store at `<app-docs>/dw_flags.json`. Read-modify-write — fine
@@ -61,7 +65,9 @@ abstract final class DevFlagStore {
       final f = await _file();
       if (!f.existsSync()) return [];
       final list = jsonDecode(await f.readAsString()) as List<dynamic>;
-      return [for (final x in list) DevFlag.fromJson(x as Map<String, dynamic>)];
+      return [
+        for (final x in list) DevFlag.fromJson(x as Map<String, dynamic>),
+      ];
     } on Object {
       return [];
     }
@@ -73,7 +79,8 @@ abstract final class DevFlagStore {
   }
 
   static Future<void> add(DevFlag flag) async {
-    final list = await all()..add(flag);
+    final list = await all()
+      ..add(flag);
     await _write(list);
     if (kDebugMode) debugPrint('[DW-FLAG] ${flag.route}');
   }
@@ -102,8 +109,12 @@ class DevFlagButton extends StatelessWidget {
   Future<void> _flag(BuildContext context) async {
     final route = GoRouterState.of(context).uri.path;
     final at = DateTime.now().toIso8601String();
-    final flag =
-        DevFlag(route: route, label: _labelFor(route), note: '', at: at);
+    final flag = DevFlag(
+      route: route,
+      label: _labelFor(route),
+      note: '',
+      at: at,
+    );
     final messenger = ScaffoldMessenger.of(context);
     unawaited(HapticFeedback.mediumImpact());
     await DevFlagStore.add(flag);

@@ -51,8 +51,7 @@ class DesktopNavRail extends ConsumerWidget {
             // Profile header — compact identity strip at the top, tap
             // to drill into "my member detail" the same way the mobile
             // drawer does; sign-out lives on the trailing edge.
-            if (viewer.member != null)
-              _ProfileHeader(viewer: viewer),
+            if (viewer.member != null) _ProfileHeader(viewer: viewer),
             const Divider(height: 1),
             // Spine (flat) + collapsible groups, scrollable; Settings is
             // pinned below so it sits at the rail's bottom edge.

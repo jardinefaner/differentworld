@@ -21,7 +21,8 @@ enum OmniboxCategory {
   place('Location', Icons.place_outlined),
   activity('Activity', Icons.local_activity_outlined),
   vehicle('Vehicle', Icons.directions_bus_outlined),
-  setting('Setting', Icons.settings_outlined);
+  setting('Setting', Icons.settings_outlined)
+  ;
 
   const OmniboxCategory(this.label, this.icon);
 
@@ -42,27 +43,27 @@ enum OmniboxCategory {
 extension OmniboxCategoryX on OmniboxCategory {
   /// Singular label for a category chip.
   String label(VerticalLabels labels) => switch (this) {
-        OmniboxCategory.action => 'Action',
-        OmniboxCategory.page => 'Page',
-        OmniboxCategory.person => 'Person',
-        OmniboxCategory.classroom => labels.group,
-        OmniboxCategory.place => 'Location',
-        OmniboxCategory.activity => 'Activity',
-        OmniboxCategory.vehicle => 'Vehicle',
-        OmniboxCategory.setting => 'Setting',
-      };
+    OmniboxCategory.action => 'Action',
+    OmniboxCategory.page => 'Page',
+    OmniboxCategory.person => 'Person',
+    OmniboxCategory.classroom => labels.group,
+    OmniboxCategory.place => 'Location',
+    OmniboxCategory.activity => 'Activity',
+    OmniboxCategory.vehicle => 'Vehicle',
+    OmniboxCategory.setting => 'Setting',
+  };
 
   /// Plural label for a section header in the results panel.
   String pluralLabel(VerticalLabels labels) => switch (this) {
-        OmniboxCategory.action => 'Actions',
-        OmniboxCategory.page => 'Pages',
-        OmniboxCategory.person => 'People',
-        OmniboxCategory.classroom => labels.groupPlural,
-        OmniboxCategory.place => 'Locations',
-        OmniboxCategory.activity => 'Activities',
-        OmniboxCategory.vehicle => 'Vehicles',
-        OmniboxCategory.setting => 'Settings',
-      };
+    OmniboxCategory.action => 'Actions',
+    OmniboxCategory.page => 'Pages',
+    OmniboxCategory.person => 'People',
+    OmniboxCategory.classroom => labels.groupPlural,
+    OmniboxCategory.place => 'Locations',
+    OmniboxCategory.activity => 'Activities',
+    OmniboxCategory.vehicle => 'Vehicles',
+    OmniboxCategory.setting => 'Settings',
+  };
 }
 
 /// One indexable entry in the omnibox. Replaces the inline

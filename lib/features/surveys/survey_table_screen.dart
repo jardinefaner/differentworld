@@ -39,8 +39,7 @@ class SurveyTableScreen extends ConsumerStatefulWidget {
   final String templateId;
 
   @override
-  ConsumerState<SurveyTableScreen> createState() =>
-      _SurveyTableScreenState();
+  ConsumerState<SurveyTableScreen> createState() => _SurveyTableScreenState();
 }
 
 class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
@@ -63,9 +62,11 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     final spaceId = viewer.spaceId;
     final responsesAsync = spaceId == null
         ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(surveyResponsesProvider(
-            (spaceId: spaceId, templateId: widget.templateId),
-          ));
+        : ref.watch(
+            surveyResponsesProvider(
+              (spaceId: spaceId, templateId: widget.templateId),
+            ),
+          );
 
     return EdgeScaffold(
       backFallbackRoute: '/surveys/${widget.templateId}',
@@ -74,19 +75,19 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () => ref.invalidate(surveyResponsesProvider(
-            (
-              spaceId: spaceId ?? '',
-              templateId: widget.templateId,
+          onRetry: () => ref.invalidate(
+            surveyResponsesProvider(
+              (
+                spaceId: spaceId ?? '',
+                templateId: widget.templateId,
+              ),
             ),
-          )),
+          ),
         ),
         data: (allResponses) {
           final responses = _statusFilter == null
               ? allResponses
-              : allResponses
-                  .where((r) => r.status == _statusFilter)
-                  .toList();
+              : allResponses.where((r) => r.status == _statusFilter).toList();
           final cols = _buildColumns(template);
 
           return ListView(
@@ -96,7 +97,8 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(
                   title: '${template.title} · Table',
-                  subtitle: '${template.year} · '
+                  subtitle:
+                      '${template.year} · '
                       '${responses.length} '
                       '${responses.length == 1 ? 'response' : 'responses'} · '
                       '${cols.length} columns',
@@ -109,8 +111,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                     Expanded(
                       child: _StatusFilter(
                         selected: _statusFilter,
-                        onChanged: (s) =>
-                            setState(() => _statusFilter = s),
+                        onChanged: (s) => setState(() => _statusFilter = s),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -118,10 +119,10 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                       onPressed: responses.isEmpty
                           ? null
                           : () => _exportCsv(
-                                template: template,
-                                responses: responses,
-                                cols: cols,
-                              ),
+                              template: template,
+                              responses: responses,
+                              cols: cols,
+                            ),
                       icon: const Icon(Icons.download),
                       label: const Text('Export CSV'),
                     ),
@@ -332,8 +333,13 @@ class _Scale5Col extends _Col {
     final v = a.scale5(q.key);
     if (v == null) return '—';
     final labels = q.kind == SurveyQuestionKind.agree5
-        ? const ['Strongly disagree', 'Disagree', 'Kind of agree', 'Agree',
-            'Strongly agree']
+        ? const [
+            'Strongly disagree',
+            'Disagree',
+            'Kind of agree',
+            'Agree',
+            'Strongly agree',
+          ]
         : const ['Not like me', 'A little', 'Somewhat', 'Mostly', 'Exactly'];
     return '${v + 1}/5 · ${labels[v]}';
   }
@@ -535,8 +541,9 @@ DataRow _row(
           },
         ),
       ),
-      DataCell(Text(_formatTimestamp(
-          response.completedAt ?? response.updatedAt))),
+      DataCell(
+        Text(_formatTimestamp(response.completedAt ?? response.updatedAt)),
+      ),
       DataCell(Text(response.ageBand ?? '—')),
       DataCell(Text(response.grade ?? '—')),
       DataCell(Text(response.school ?? '—')),
@@ -566,7 +573,10 @@ String _csvLine(List<String> cells) => cells.map(_csvField).join(',');
 
 String _csvField(String s) {
   final needsQuote =
-      s.contains(',') || s.contains('"') || s.contains('\n') || s.contains('\r');
+      s.contains(',') ||
+      s.contains('"') ||
+      s.contains('\n') ||
+      s.contains('\r');
   if (!needsQuote) return s;
   final escaped = s.replaceAll('"', '""');
   return '"$escaped"';
@@ -579,8 +589,7 @@ String _statusLabel(SurveyAnswers? a, List<SurveyQuestion> questions) {
     final has = switch (q.kind) {
       SurveyQuestionKind.agree3 => a.agree3(q.key) != null,
       SurveyQuestionKind.agree5 ||
-      SurveyQuestionKind.likeMe5 =>
-        a.scale5(q.key) != null,
+      SurveyQuestionKind.likeMe5 => a.scale5(q.key) != null,
       SurveyQuestionKind.multiselect => a.multiselect(q.key).isNotEmpty,
       SurveyQuestionKind.text => a.text(q.key).isNotEmpty,
     };

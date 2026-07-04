@@ -10,18 +10,19 @@ import 'package:uuid/uuid.dart';
 /// All certs a member currently holds, sorted by cert key.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final certsForMemberProvider =
-    StreamProvider.autoDispose.family<List<MemberCertification>, String>(
-  (ref, memberId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.certificationsDao.watchForMember(memberId);
-  },
-);
+final certsForMemberProvider = StreamProvider.autoDispose
+    .family<List<MemberCertification>, String>(
+      (ref, memberId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.certificationsDao.watchForMember(memberId);
+      },
+    );
 
 /// Every cert in the signed-in user's space. Used by future expiring-
 /// soon dashboards; teachers see it but the UI gates edits.
-final certsInSpaceProvider =
-    StreamProvider<List<MemberCertification>>((ref) async* {
+final certsInSpaceProvider = StreamProvider<List<MemberCertification>>((
+  ref,
+) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
   if (spaceId == null) {

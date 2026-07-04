@@ -8,13 +8,13 @@ import 'package:image_picker/image_picker.dart' show XFile;
 /// name). Different World; docs/WORLD.md.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final characterSheetForSubjectProvider =
-    StreamProvider.autoDispose.family<CharacterSheet?, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.characterSheetsDao.watchForSubject(subjectId);
-  },
-);
+final characterSheetForSubjectProvider = StreamProvider.autoDispose
+    .family<CharacterSheet?, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.characterSheetsDao.watchForSubject(subjectId);
+      },
+    );
 
 final characterSheetActionsProvider = Provider<CharacterSheetActions>(
   CharacterSheetActions.new,
@@ -46,9 +46,13 @@ class CharacterSheetActions {
       throw StateError('No Space — sign in and join a program first.');
     }
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.characterSheetsDao
-        .ensureForSubject(spaceId: spaceId, subjectId: subjectId);
-    final stored = await _ref.read(photoServiceProvider).uploadOnly(
+    await db.characterSheetsDao.ensureForSubject(
+      spaceId: spaceId,
+      subjectId: subjectId,
+    );
+    final stored = await _ref
+        .read(photoServiceProvider)
+        .uploadOnly(
           entityKind: 'character_sheet',
           entityId: subjectId,
           picked: drawing,

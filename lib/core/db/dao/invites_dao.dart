@@ -6,8 +6,7 @@ part 'invites_dao.g.dart';
 /// Pending team-member / guardian invites. Acceptance flips a flag on
 /// the server (`app.accept_invite()` RPC); revocation hard-deletes.
 @DriftAccessor(tables: [Invites])
-class InvitesDao extends DatabaseAccessor<AppDatabase>
-    with _$InvitesDaoMixin {
+class InvitesDao extends DatabaseAccessor<AppDatabase> with _$InvitesDaoMixin {
   InvitesDao(super.attachedDatabase);
 
   /// Watch all un-accepted invites for a space. Expired ones are kept
@@ -44,8 +43,7 @@ class InvitesDao extends DatabaseAccessor<AppDatabase>
         role: role,
         email: email == null ? const Value.absent() : Value(email),
         code: code == null ? const Value.absent() : Value(code),
-        subjectId:
-            subjectId == null ? const Value.absent() : Value(subjectId),
+        subjectId: subjectId == null ? const Value.absent() : Value(subjectId),
         createdBy: createdBy == null ? const Value.absent() : Value(createdBy),
         expiresAt: expiresAt == null ? const Value.absent() : Value(expiresAt),
         capabilities: capabilitiesJson,

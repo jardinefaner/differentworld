@@ -54,7 +54,8 @@ class AttendanceRow extends StatelessWidget {
     // Wave 105: an overwrite is when someone OTHER than the original
     // author last touched the row. Calm path (single author, no
     // collision) stays visually quiet.
-    final overwrittenBy = record != null &&
+    final overwrittenBy =
+        record != null &&
             record!.lastUpdatedBy != null &&
             record!.lastUpdatedBy != record!.recordedBy
         ? record!.lastUpdatedBy
@@ -160,9 +161,7 @@ class _StatusButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = status.color(theme.colorScheme);
-    final bg = selected
-        ? color
-        : theme.colorScheme.surfaceContainerHighest;
+    final bg = selected ? color : theme.colorScheme.surfaceContainerHighest;
     final fg = selected
         ? _onColorFor(color, theme.colorScheme)
         : theme.colorScheme.onSurfaceVariant;

@@ -65,10 +65,8 @@ Future<bool> confirmDestructive(
         ),
         FilledButton.tonal(
           style: FilledButton.styleFrom(
-            backgroundColor:
-                Theme.of(dialogCtx).colorScheme.errorContainer,
-            foregroundColor:
-                Theme.of(dialogCtx).colorScheme.onErrorContainer,
+            backgroundColor: Theme.of(dialogCtx).colorScheme.errorContainer,
+            foregroundColor: Theme.of(dialogCtx).colorScheme.onErrorContainer,
           ),
           onPressed: () => Navigator.of(dialogCtx).pop(true),
           child: Text(confirmLabel),

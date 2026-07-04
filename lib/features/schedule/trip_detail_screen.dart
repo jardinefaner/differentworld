@@ -150,7 +150,8 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
       children: [
         const ContentHeader(
           title: 'Plan this trip',
-          subtitle: 'Set the destination to get started — slips, vehicles, '
+          subtitle:
+              'Set the destination to get started — slips, vehicles, '
               'and headcount appear once the trip exists.',
         ),
         const SizedBox(height: 12),
@@ -172,8 +173,9 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
         final slips = slipSnap.data ?? const <PermissionSlip>[];
         final signedIds = {for (final s in slips) s.subjectId};
         final total = subjects.length;
-        final signedCount =
-            subjects.where((s) => signedIds.contains(s.id)).length;
+        final signedCount = subjects
+            .where((s) => signedIds.contains(s.id))
+            .length;
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -218,8 +220,9 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
                 icon: Icons.assignment_turned_in_outlined,
                 initiallyExpanded: false,
                 headerPadding: EdgeInsets.zero,
-                collapsedSummary:
-                    total == 0 ? 'no roster yet' : '$signedCount / $total signed',
+                collapsedSummary: total == 0
+                    ? 'no roster yet'
+                    : '$signedCount / $total signed',
                 child: Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: _SlipList(
@@ -312,7 +315,7 @@ class _TripIdentity extends StatelessWidget {
     final timeStr = dep == null
         ? null
         : 'Departs ${timeOfDay(dep)}'
-            '${ret != null ? ' · back ${timeOfDay(ret)}' : ''}';
+              '${ret != null ? ' · back ${timeOfDay(ret)}' : ''}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,7 +434,7 @@ class _ReadinessBanner extends StatelessWidget {
                   ready
                       ? 'All $total slips are in.'
                       : 'Collect $remaining more '
-                          '${remaining == 1 ? 'slip' : 'slips'} before you go.',
+                            '${remaining == 1 ? 'slip' : 'slips'} before you go.',
                   style: theme.textTheme.bodySmall?.copyWith(color: fg),
                 ),
               ],
@@ -503,7 +506,8 @@ class _SlipListState extends ConsumerState<_SlipList> {
     }
 
     // Unsigned first — the actionable kids rise to the top.
-    final ordered = [...subjects]..sort((a, b) {
+    final ordered = [...subjects]
+      ..sort((a, b) {
         final aSigned = widget.signedIds.contains(a.id) ? 1 : 0;
         final bSigned = widget.signedIds.contains(b.id) ? 1 : 0;
         if (aSigned != bSigned) return aSigned - bSigned;
@@ -582,8 +586,9 @@ class _VehiclesCollapsible extends ConsumerWidget {
           icon: Icons.directions_bus_filled_outlined,
           initiallyExpanded: false,
           headerPadding: EdgeInsets.zero,
-          collapsedSummary:
-              vehicles.isEmpty ? 'none yet' : '${vehicles.length} assigned',
+          collapsedSummary: vehicles.isEmpty
+              ? 'none yet'
+              : '${vehicles.length} assigned',
           child: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: vehicles.isEmpty

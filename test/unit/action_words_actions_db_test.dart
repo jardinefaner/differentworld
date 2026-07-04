@@ -23,7 +23,9 @@ void main() {
   setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await db.createMigrator().createAll();
-    await db.into(db.spaces).insert(
+    await db
+        .into(db.spaces)
+        .insert(
           SpacesCompanion.insert(
             id: 'sp1',
             name: 'Test Program',
@@ -33,7 +35,9 @@ void main() {
             updatedAt: now,
           ),
         );
-    await db.into(db.members).insert(
+    await db
+        .into(db.members)
+        .insert(
           MembersCompanion.insert(
             id: 'm1',
             displayName: 'Tess',
@@ -44,11 +48,12 @@ void main() {
             spaceId: const Value('sp1'),
           ),
         );
-    final member = await (db.select(db.members)
-          ..where((t) => t.id.equals('m1')))
-        .getSingle();
-    final space = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
-        .getSingle();
+    final member = await (db.select(
+      db.members,
+    )..where((t) => t.id.equals('m1'))).getSingle();
+    final space = await (db.select(
+      db.spaces,
+    )..where((t) => t.id.equals('sp1'))).getSingle();
     container = ProviderContainer(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => db),
@@ -83,33 +88,43 @@ void main() {
     expect(day.done, isEmpty);
   });
 
-  test('toggleDone marks a job done, then undone, preserving the picks',
-      () async {
-    final actions = container.read(actionWordsActionsProvider);
-    await actions.setPicks(
-      subjectId: 's1',
-      groupId: 'g1',
-      date: todayKey(),
-      verbIds: const ['carry', 'listen', 'build'],
-    );
+  test(
+    'toggleDone marks a job done, then undone, preserving the picks',
+    () async {
+      final actions = container.read(actionWordsActionsProvider);
+      await actions.setPicks(
+        subjectId: 's1',
+        groupId: 'g1',
+        date: todayKey(),
+        verbIds: const ['carry', 'listen', 'build'],
+      );
 
-    // Kid taps "I did it!" on Listen.
-    await actions.toggleDone(subjectId: 's1', date: todayKey(), verbId: 'listen');
-    var day = await readDay('s1');
-    expect(day.done, contains('listen'));
-    expect(day.doneCount, 1);
-    expect(
-      day.verbPicks,
-      ['carry', 'listen', 'build'],
-      reason: 'toggling done must not disturb the picks',
-    );
+      // Kid taps "I did it!" on Listen.
+      await actions.toggleDone(
+        subjectId: 's1',
+        date: todayKey(),
+        verbId: 'listen',
+      );
+      var day = await readDay('s1');
+      expect(day.done, contains('listen'));
+      expect(day.doneCount, 1);
+      expect(
+        day.verbPicks,
+        ['carry', 'listen', 'build'],
+        reason: 'toggling done must not disturb the picks',
+      );
 
-    // Taps again to undo.
-    await actions.toggleDone(subjectId: 's1', date: todayKey(), verbId: 'listen');
-    day = await readDay('s1');
-    expect(day.done, isNot(contains('listen')));
-    expect(day.isComplete, isFalse);
-  });
+      // Taps again to undo.
+      await actions.toggleDone(
+        subjectId: 's1',
+        date: todayKey(),
+        verbId: 'listen',
+      );
+      day = await readDay('s1');
+      expect(day.done, isNot(contains('listen')));
+      expect(day.isComplete, isFalse);
+    },
+  );
 
   test('all three jobs done → the day is complete', () async {
     final actions = container.read(actionWordsActionsProvider);

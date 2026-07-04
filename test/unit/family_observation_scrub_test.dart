@@ -19,15 +19,19 @@ void main() {
     });
 
     test('only an explicit false disables the scrub', () {
-      final off = const Capabilities.empty()
-          .setting(SpaceCaps.scrubFamilyObservations, false);
+      final off = const Capabilities.empty().setting(
+        SpaceCaps.scrubFamilyObservations,
+        false,
+      );
       expect(
         off.getBool(SpaceCaps.scrubFamilyObservations, fallback: true),
         isFalse,
       );
 
-      final on = const Capabilities.empty()
-          .setting(SpaceCaps.scrubFamilyObservations, true);
+      final on = const Capabilities.empty().setting(
+        SpaceCaps.scrubFamilyObservations,
+        true,
+      );
       expect(
         on.getBool(SpaceCaps.scrubFamilyObservations, fallback: true),
         isTrue,

@@ -74,8 +74,9 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<ScheduleBlock?> watchById(String id) {
-    return (select(scheduleBlocks)..where((b) => b.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      scheduleBlocks,
+    )..where((b) => b.id.equals(id))).watchSingleOrNull();
   }
 
   Future<String> create({
@@ -135,8 +136,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
   Future<List<String>> createBatch({
     required String spaceId,
     required String groupId,
-    required List<({String date, DateTime startAt, DateTime endAt})>
-        templates,
+    required List<({String date, DateTime startAt, DateTime endAt})> templates,
     String? title,
     String? activityId,
     String? leadMemberId,
@@ -192,8 +192,9 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     required String groupId,
     required String date,
     required List<
-            ({String title, String kind, DateTime startAt, DateTime endAt})>
-        blocks,
+      ({String title, String kind, DateTime startAt, DateTime endAt})
+    >
+    blocks,
   }) async {
     if (blocks.isEmpty) return const [];
     final recurrenceId = _uuid.v4();
@@ -240,8 +241,9 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     await (update(scheduleBlocks)..where((b) => b.id.equals(id))).write(
       ScheduleBlocksCompanion(
         title: title == null ? const Value.absent() : Value(title),
-        activityId:
-            activityId == null ? const Value.absent() : Value(activityId),
+        activityId: activityId == null
+            ? const Value.absent()
+            : Value(activityId),
         leadMemberId: leadMemberId == null
             ? const Value.absent()
             : Value(leadMemberId),
@@ -287,21 +289,20 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     required String? substituteMemberId,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    return (update(scheduleBlocks)
-          ..where(
-            (b) =>
-                b.groupId.equals(groupId) &
-                b.date.equals(date) &
-                b.leadMemberId.equals(absentMemberId),
-          ))
+    return (update(scheduleBlocks)..where(
+          (b) =>
+              b.groupId.equals(groupId) &
+              b.date.equals(date) &
+              b.leadMemberId.equals(absentMemberId),
+        ))
         .write(
-      ScheduleBlocksCompanion(
-        leadSubstituteMemberId: substituteMemberId == null
-            ? const Value<String?>(null)
-            : Value(substituteMemberId),
-        updatedAt: Value(now),
-      ),
-    );
+          ScheduleBlocksCompanion(
+            leadSubstituteMemberId: substituteMemberId == null
+                ? const Value<String?>(null)
+                : Value(substituteMemberId),
+            updatedAt: Value(now),
+          ),
+        );
   }
 
   /// Wave 155: set the status of a single block. The on-screen
@@ -317,8 +318,9 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     await (update(scheduleBlocks)..where((b) => b.id.equals(id))).write(
       ScheduleBlocksCompanion(
         status: Value(status),
-        statusReason:
-            reason == null ? const Value<String?>(null) : Value(reason),
+        statusReason: reason == null
+            ? const Value<String?>(null)
+            : Value(reason),
         updatedAt: Value(now),
       ),
     );
@@ -339,20 +341,19 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     required String? substituteMemberId,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    return (update(scheduleBlocks)
-          ..where(
-            (b) =>
-                b.spaceId.equals(spaceId) &
-                b.date.equals(date) &
-                b.leadMemberId.equals(absentMemberId),
-          ))
+    return (update(scheduleBlocks)..where(
+          (b) =>
+              b.spaceId.equals(spaceId) &
+              b.date.equals(date) &
+              b.leadMemberId.equals(absentMemberId),
+        ))
         .write(
-      ScheduleBlocksCompanion(
-        leadSubstituteMemberId: substituteMemberId == null
-            ? const Value<String?>(null)
-            : Value(substituteMemberId),
-        updatedAt: Value(now),
-      ),
-    );
+          ScheduleBlocksCompanion(
+            leadSubstituteMemberId: substituteMemberId == null
+                ? const Value<String?>(null)
+                : Value(substituteMemberId),
+            updatedAt: Value(now),
+          ),
+        );
   }
 }

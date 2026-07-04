@@ -58,8 +58,7 @@ void main() {
 
     test('is ten weekly worlds, weeks 1..10 unique', () {
       expect(arcs.length, 10);
-      expect(arcs.map((a) => a.week).toList(),
-          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      expect(arcs.map((a) => a.week).toList(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
       expect(arcs.first.id, 'me');
       expect(arcs.last.id, 'us');
     });
@@ -67,15 +66,28 @@ void main() {
     test('ids match the canonical weekly worlds', () {
       expect(
         arcs.map((a) => a.id).toList(),
-        ['me', 'stories', 'nature', 'water', 'music', 'space', 'dreams',
-            'time', 'feelings', 'us'],
+        [
+          'me',
+          'stories',
+          'nature',
+          'water',
+          'music',
+          'space',
+          'dreams',
+          'time',
+          'feelings',
+          'us',
+        ],
       );
     });
 
     test('every world has full missions + rpg content', () {
       for (final a in arcs) {
-        expect(a.missions.daily.length, greaterThanOrEqualTo(8),
-            reason: '${a.id} thin on daily missions');
+        expect(
+          a.missions.daily.length,
+          greaterThanOrEqualTo(8),
+          reason: '${a.id} thin on daily missions',
+        );
         expect(a.missions.weekly, isNotEmpty, reason: '${a.id} no weekly');
         expect(a.missions.project, isNotEmpty, reason: '${a.id} no project');
         for (final field in [
@@ -113,8 +125,7 @@ void main() {
 
   group('arcForWeek', () {
     final arcs = [
-      for (var w = 1; w <= 10; w++)
-        WorldArc.fromJson({'week': w, 'id': 'w$w'}),
+      for (var w = 1; w <= 10; w++) WorldArc.fromJson({'week': w, 'id': 'w$w'}),
     ];
 
     test('finds the world for a week', () {
@@ -131,8 +142,7 @@ void main() {
 
   group('arcForDay', () {
     final arcs = [
-      for (var w = 1; w <= 10; w++)
-        WorldArc.fromJson({'week': w, 'id': 'w$w'}),
+      for (var w = 1; w <= 10; w++) WorldArc.fromJson({'week': w, 'id': 'w$w'}),
     ];
 
     test('maps each five-day window to its world (day-1)~/5', () {

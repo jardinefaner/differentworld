@@ -16,23 +16,24 @@ class GuardiansDao extends DatabaseAccessor<AppDatabase>
   /// All guardians attached to a specific subject. Joined via the
   /// subject_guardians link table; primary first, then alphabetical.
   Stream<List<Guardian>> watchForSubject(String subjectId) {
-    final query = select(guardians).join([
-      innerJoin(
-        subjectGuardians,
-        subjectGuardians.guardianId.equalsExp(guardians.id),
-      ),
-    ])
-      ..where(subjectGuardians.subjectId.equals(subjectId))
-      ..orderBy([
-        OrderingTerm(
-          expression: subjectGuardians.isPrimary,
-          mode: OrderingMode.desc,
-        ),
-        OrderingTerm(expression: guardians.name),
-      ]);
-    return query
-        .watch()
-        .map((rows) => rows.map((r) => r.readTable(guardians)).toList());
+    final query =
+        select(guardians).join([
+            innerJoin(
+              subjectGuardians,
+              subjectGuardians.guardianId.equalsExp(guardians.id),
+            ),
+          ])
+          ..where(subjectGuardians.subjectId.equals(subjectId))
+          ..orderBy([
+            OrderingTerm(
+              expression: subjectGuardians.isPrimary,
+              mode: OrderingMode.desc,
+            ),
+            OrderingTerm(expression: guardians.name),
+          ]);
+    return query.watch().map(
+      (rows) => rows.map((r) => r.readTable(guardians)).toList(),
+    );
   }
 
   /// Add a new guardian and attach them to a subject in one
@@ -83,12 +84,10 @@ class GuardiansDao extends DatabaseAccessor<AppDatabase>
     required String guardianId,
     required String subjectId,
   }) async {
-    await (delete(subjectGuardians)
-          ..where(
-            (sg) =>
-                sg.guardianId.equals(guardianId) &
-                sg.subjectId.equals(subjectId),
-          ))
+    await (delete(subjectGuardians)..where(
+          (sg) =>
+              sg.guardianId.equals(guardianId) & sg.subjectId.equals(subjectId),
+        ))
         .go();
   }
 
@@ -96,26 +95,28 @@ class GuardiansDao extends DatabaseAccessor<AppDatabase>
   /// Returns null when the signed-in user isn't linked to any guardian
   /// — i.e., they're staff or not yet onboarded.
   Stream<Guardian?> watchForUser(String authUserId) {
-    return (select(guardians)..where((g) => g.userId.equals(authUserId)))
-        .watchSingleOrNull();
+    return (select(
+      guardians,
+    )..where((g) => g.userId.equals(authUserId))).watchSingleOrNull();
   }
 
   /// Subjects this guardian is linked to via subject_guardians. The
   /// family-side lens reads ONLY these subjects.
   Stream<List<Subject>> watchChildrenFor(String guardianId) {
-    final query = select(subjects).join([
-      innerJoin(
-        subjectGuardians,
-        subjectGuardians.subjectId.equalsExp(subjects.id),
-      ),
-    ])
-      ..where(subjectGuardians.guardianId.equals(guardianId))
-      ..orderBy([
-        OrderingTerm(expression: subjects.firstName),
-        OrderingTerm(expression: subjects.lastName),
-      ]);
-    return query
-        .watch()
-        .map((rows) => rows.map((r) => r.readTable(subjects)).toList());
+    final query =
+        select(subjects).join([
+            innerJoin(
+              subjectGuardians,
+              subjectGuardians.subjectId.equalsExp(subjects.id),
+            ),
+          ])
+          ..where(subjectGuardians.guardianId.equals(guardianId))
+          ..orderBy([
+            OrderingTerm(expression: subjects.firstName),
+            OrderingTerm(expression: subjects.lastName),
+          ]);
+    return query.watch().map(
+      (rows) => rows.map((r) => r.readTable(subjects)).toList(),
+    );
   }
 }

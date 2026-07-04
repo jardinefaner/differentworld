@@ -140,8 +140,12 @@ class _RightNowCard extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final (Color container, Color onContainer, Color accent, Color onAccent) =
-        switch (lead.tone) {
+    final (
+      Color container,
+      Color onContainer,
+      Color accent,
+      Color onAccent,
+    ) = switch (lead.tone) {
       ContextTone.go => (
         scheme.primaryContainer,
         scheme.onPrimaryContainer,
@@ -312,9 +316,9 @@ class _LeadChip extends StatelessWidget {
                 Text(
                   move.label,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: fg,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: fg,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -735,8 +739,11 @@ class _TodaysFocusCard extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.format_quote_outlined,
-                          size: 18, color: theme.colorScheme.onSurfaceVariant),
+                      Icon(
+                        Icons.format_quote_outlined,
+                        size: 18,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

@@ -45,8 +45,11 @@ class CastChromeButton extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.cast_connected,
-                    size: 18, color: scheme.onPrimaryContainer),
+                Icon(
+                  Icons.cast_connected,
+                  size: 18,
+                  color: scheme.onPrimaryContainer,
+                ),
                 const SizedBox(width: 7),
                 Text(
                   snap.code ?? '',

@@ -69,7 +69,8 @@ class KidStoryScreen extends ConsumerWidget {
             return EmptyState(
               icon: Icons.auto_stories_outlined,
               title: '$firstName’s story starts here',
-              message: 'Every observation, world, mission, and photo you '
+              message:
+                  'Every observation, world, mission, and photo you '
                   'capture lands here — the story grows as the days go by.',
             );
           }

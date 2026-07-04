@@ -137,7 +137,8 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
         context,
         title: 'Moment',
         slides: [
-          for (final url in widget.urls) PresentSlide(title: '', imagePath: url),
+          for (final url in widget.urls)
+            PresentSlide(title: '', imagePath: url),
         ],
       ),
     );
@@ -148,8 +149,7 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
     // The background fades out as the photo is dragged away.
     final bgOpacity = (1 - _dragDy.abs() / 400).clamp(0.0, 1.0);
     final captions = widget.captions;
-    final caption =
-        (captions != null && _index < captions.length)
+    final caption = (captions != null && _index < captions.length)
         ? captions[_index].trim()
         : '';
 

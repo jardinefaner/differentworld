@@ -428,7 +428,9 @@ class _RoutineScriptEditorScreenState
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.check, size: 18),
                         label: Text('Save ${_selected.label}'),

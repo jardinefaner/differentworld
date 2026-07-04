@@ -33,8 +33,7 @@ class MessageThreadScreen extends ConsumerStatefulWidget {
       _MessageThreadScreenState();
 }
 
-class _MessageThreadScreenState
-    extends ConsumerState<MessageThreadScreen> {
+class _MessageThreadScreenState extends ConsumerState<MessageThreadScreen> {
   final TextEditingController _ctrl = TextEditingController();
   final ScrollController _scroll = ScrollController();
   bool _sending = false;
@@ -104,11 +103,13 @@ class _MessageThreadScreenState
     // delivers it (a short delay is enough for the rebuild).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
-      unawaited(_scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-      ));
+      unawaited(
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        ),
+      );
     });
   }
 
@@ -134,115 +135,114 @@ class _MessageThreadScreenState
     return RouteTitle(
       title: threadTitle,
       child: EdgeScaffold(
-      body: Column(
-        children: [
-          // Shell now reserves the top chrome height; no per-screen
-          // SizedBox needed.
-          // Privacy preamble — collapsible to a single tap-to-expand
-          // pill once the user has acknowledged it.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _showPreamble
-                ? Stack(
-                    children: [
-                      const ContentHeader(
-                        title: 'Messages',
-                        subtitle:
-                            'A direct line between family and staff for '
-                            "this child. Don't share medical specifics "
-                            "or anything you wouldn't put in writing.",
-                        bottomGap: 8,
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 0,
-                        child: IconButton(
-                          tooltip: 'Hide reminder',
-                          icon: const Icon(
-                            Icons.keyboard_arrow_up,
-                            size: 20,
-                          ),
-                          onPressed: () =>
-                              setState(() => _showPreamble = false),
-                        ),
-                      ),
-                    ],
-                  )
-                : Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 4),
-                    child: Row(
+        body: Column(
+          children: [
+            // Shell now reserves the top chrome height; no per-screen
+            // SizedBox needed.
+            // Privacy preamble — collapsible to a single tap-to-expand
+            // pill once the user has acknowledged it.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _showPreamble
+                  ? Stack(
                       children: [
-                        Text('Messages', style: theme.textTheme.titleLarge),
-                        const Spacer(),
-                        IconButton(
-                          tooltip: 'Show reminder',
-                          icon: const Icon(Icons.info_outline, size: 20),
-                          onPressed: () =>
-                              setState(() => _showPreamble = true),
+                        const ContentHeader(
+                          title: 'Messages',
+                          subtitle:
+                              'A direct line between family and staff for '
+                              "this child. Don't share medical specifics "
+                              "or anything you wouldn't put in writing.",
+                          bottomGap: 8,
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 0,
+                          child: IconButton(
+                            tooltip: 'Hide reminder',
+                            icon: const Icon(
+                              Icons.keyboard_arrow_up,
+                              size: 20,
+                            ),
+                            onPressed: () =>
+                                setState(() => _showPreamble = false),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 4),
+                      child: Row(
+                        children: [
+                          Text('Messages', style: theme.textTheme.titleLarge),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Show reminder',
+                            icon: const Icon(Icons.info_outline, size: 20),
+                            onPressed: () =>
+                                setState(() => _showPreamble = true),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+            Expanded(
+              child: messagesAsync.when(
+                loading: () => const LoadingSlot(),
+                error: (_, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Could not load this thread.'),
+                        const SizedBox(height: 12),
+                        FilledButton.tonalIcon(
+                          onPressed: () => ref.invalidate(
+                            messageThreadProvider(threadKey),
+                          ),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Try again'),
                         ),
                       ],
                     ),
                   ),
-          ),
-          Expanded(
-            child: messagesAsync.when(
-              loading: () => const LoadingSlot(),
-              error: (_, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('Could not load this thread.'),
-                      const SizedBox(height: 12),
-                      FilledButton.tonalIcon(
-                        onPressed: () => ref.invalidate(
-                          messageThreadProvider(threadKey),
-                        ),
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('Try again'),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        iAmGuardian
-                            ? 'Nothing here yet. Say hi to the team.'
-                            : 'No messages yet from this family.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                data: (messages) {
+                  if (messages.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          iAmGuardian
+                              ? 'Nothing here yet. Say hi to the team.'
+                              : 'No messages yet from this family.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                    ),
+                    );
+                  }
+                  // First frame after data lands: jump to the bottom so
+                  // the user sees the latest message immediately.
+                  _scheduleInitialScrollToBottom();
+                  return ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    itemCount: messages.length,
+                    itemBuilder: (_, i) => _MessageBubble(message: messages[i]),
                   );
-                }
-                // First frame after data lands: jump to the bottom so
-                // the user sees the latest message immediately.
-                _scheduleInitialScrollToBottom();
-                return ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  itemCount: messages.length,
-                  itemBuilder: (_, i) =>
-                      _MessageBubble(message: messages[i]),
-                );
-              },
+                },
+              ),
             ),
-          ),
-          _Composer(
-            controller: _ctrl,
-            sending: _sending,
-            onSend: _send,
-          ),
-        ],
+            _Composer(
+              controller: _ctrl,
+              sending: _sending,
+              onSend: _send,
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -262,17 +262,16 @@ class _MessageBubble extends ConsumerWidget {
     final bg = mine
         ? theme.colorScheme.primary
         : theme.colorScheme.surfaceContainerHighest;
-    final fg = mine
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onSurface;
+    final fg = mine ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface;
 
     final when = DateTime.tryParse(message.createdAt)?.toLocal();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment:
-            mine ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: mine
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           ConstrainedBox(
             // Wave 107: cap absolute bubble width at 560dp so a
@@ -293,10 +292,8 @@ class _MessageBubble extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(16).copyWith(
-                  bottomLeft:
-                      mine ? const Radius.circular(16) : Radius.zero,
-                  bottomRight:
-                      mine ? Radius.zero : const Radius.circular(16),
+                  bottomLeft: mine ? const Radius.circular(16) : Radius.zero,
+                  bottomRight: mine ? Radius.zero : const Radius.circular(16),
                 ),
               ),
               child: Column(

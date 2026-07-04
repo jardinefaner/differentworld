@@ -13,8 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('RuleEngine — the live-block auto-tag as data', () {
-    test('block live → entry tagged to it (reproduces the hardcoded path)',
-        () {
+    test('block live → entry tagged to it (reproduces the hardcoded path)', () {
       final engine = RuleEngine([liveBlockAutoTag]);
       final world = entryCreatedWorld(entryId: 'e1', liveBlockId: 'b1');
 

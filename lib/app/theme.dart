@@ -55,8 +55,10 @@ const _snackBarTheme = SnackBarThemeData(
 /// so every role keeps its M3-guaranteed contrast pairing.
 ColorScheme appColorScheme(Brightness brightness) {
   final base = ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
-  final warm =
-      ColorScheme.fromSeed(seedColor: _warmSeed, brightness: brightness);
+  final warm = ColorScheme.fromSeed(
+    seedColor: _warmSeed,
+    brightness: brightness,
+  );
   final scheme = base.copyWith(
     tertiary: warm.primary,
     onTertiary: warm.onPrimary,
@@ -122,15 +124,15 @@ final _buttonShape = RoundedRectangleBorder(
 );
 
 ButtonStyle _baseButtonStyle(TextTheme text) => ButtonStyle(
-      shape: WidgetStatePropertyAll(_buttonShape),
-      minimumSize: const WidgetStatePropertyAll(Size(64, 48)),
-      padding: const WidgetStatePropertyAll(
-        EdgeInsets.symmetric(horizontal: Insets.xl, vertical: Insets.md),
-      ),
-      // labelLarge carries the button voice — read from the ACTIVE ramp (so it
-      // follows the font picker), not a baked AppType.textTheme() snapshot.
-      textStyle: WidgetStatePropertyAll(text.labelLarge),
-    );
+  shape: WidgetStatePropertyAll(_buttonShape),
+  minimumSize: const WidgetStatePropertyAll(Size(64, 48)),
+  padding: const WidgetStatePropertyAll(
+    EdgeInsets.symmetric(horizontal: Insets.xl, vertical: Insets.md),
+  ),
+  // labelLarge carries the button voice — read from the ACTIVE ramp (so it
+  // follows the font picker), not a baked AppType.textTheme() snapshot.
+  textStyle: WidgetStatePropertyAll(text.labelLarge),
+);
 
 /// Assembles a full [ThemeData] from a [ColorScheme]. Light + dark differ
 /// only by the scheme they pass in; the type ramp, component themes, and
@@ -238,14 +240,14 @@ ThemeData buildDarkTheme({TextTheme? textTheme}) =>
 /// colour is only the default. `app.dart` swaps this in when
 /// `displayStyleProvider` is Calm.
 CardThemeData flatCardTheme(ColorScheme scheme) => CardThemeData(
-      elevation: 0,
-      color: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Radii.card),
-        side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.6),
-          width: 0.5,
-        ),
-      ),
-    );
+  elevation: 0,
+  color: Colors.transparent,
+  surfaceTintColor: Colors.transparent,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(Radii.card),
+    side: BorderSide(
+      color: scheme.outlineVariant.withValues(alpha: 0.6),
+      width: 0.5,
+    ),
+  ),
+);

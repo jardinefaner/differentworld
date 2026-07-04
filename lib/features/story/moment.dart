@@ -62,8 +62,9 @@ Moment? momentFor(Entry e) {
       final day = ActionWordsDay.fromEntry(e);
       if (!day.hasPicks) return null;
       final world = day.world?.world;
-      final verbs =
-          verbsByIds(day.verbPicks).map((v) => v.label.toLowerCase()).join(', ');
+      final verbs = verbsByIds(
+        day.verbPicks,
+      ).map((v) => v.label.toLowerCase()).join(', ');
       final name = world?.name ?? day.worldName ?? 'a new world';
       final emoji = world?.emoji ?? '🌟';
       return Moment(

@@ -136,7 +136,10 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 14),
-          Text('or', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white38)),
+          Text(
+            'or',
+            style: theme.textTheme.titleMedium?.copyWith(color: Colors.white38),
+          ),
           const SizedBox(height: 14),
           _Choice(text: b, accent: vibe.accent),
           if (s.revealed) ...[
@@ -144,7 +147,9 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
             Text(
               'Why? Turn to a partner and tell them.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(color: Colors.white60),
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: Colors.white60,
+              ),
             ),
           ],
         ],
@@ -175,9 +180,9 @@ class _Choice extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: AppColors.readableOnDark(accent),
-              fontWeight: FontWeight.w400,
-            ),
+          color: AppColors.readableOnDark(accent),
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }

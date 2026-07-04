@@ -32,8 +32,9 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
   }
 
   Stream<TripLogistic?> watchById(String id) {
-    return (select(tripLogistics)..where((t) => t.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      tripLogistics,
+    )..where((t) => t.id.equals(id))).watchSingleOrNull();
   }
 
   Future<String> createLogistics({
@@ -78,9 +79,9 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
     String atIso,
   ) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await (update(tripLogistics)
-          ..where((t) => t.scheduleBlockId.equals(scheduleBlockId)))
-        .write(
+    await (update(
+      tripLogistics,
+    )..where((t) => t.scheduleBlockId.equals(scheduleBlockId))).write(
       TripLogisticsCompanion(
         pinnedLat: Value(lat),
         pinnedLng: Value(lng),
@@ -99,9 +100,9 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
     double lng,
   ) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await (update(tripLogistics)
-          ..where((t) => t.scheduleBlockId.equals(scheduleBlockId)))
-        .write(
+    await (update(
+      tripLogistics,
+    )..where((t) => t.scheduleBlockId.equals(scheduleBlockId))).write(
       TripLogisticsCompanion(
         destinationLat: Value(lat),
         destinationLng: Value(lng),
@@ -113,9 +114,9 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
   // -------- trip_vehicles ---------------------------------------------------
 
   Stream<List<TripVehicle>> watchVehiclesFor(String tripLogisticsId) {
-    return (select(tripVehicles)
-          ..where((v) => v.tripLogisticsId.equals(tripLogisticsId)))
-        .watch();
+    return (select(
+      tripVehicles,
+    )..where((v) => v.tripLogisticsId.equals(tripLogisticsId))).watch();
   }
 
   Future<String> assignVehicle({
@@ -147,8 +148,9 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
     required List<String> subjectIds,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await (update(tripVehicles)..where((v) => v.id.equals(tripVehicleId)))
-        .write(
+    await (update(
+      tripVehicles,
+    )..where((v) => v.id.equals(tripVehicleId))).write(
       TripVehiclesCompanion(
         manifest: Value(jsonEncode(subjectIds)),
         updatedAt: Value(now),
@@ -163,9 +165,9 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
   // -------- permission_slips ------------------------------------------------
 
   Stream<List<PermissionSlip>> watchSlipsForTrip(String tripLogisticsId) {
-    return (select(permissionSlips)
-          ..where((s) => s.tripLogisticsId.equals(tripLogisticsId)))
-        .watch();
+    return (select(
+      permissionSlips,
+    )..where((s) => s.tripLogisticsId.equals(tripLogisticsId))).watch();
   }
 
   /// Did this kid sign for this trip? Returns the slip row if yes, or
@@ -174,10 +176,11 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
     required String tripLogisticsId,
     required String subjectId,
   }) {
-    return (select(permissionSlips)
-          ..where((s) =>
+    return (select(permissionSlips)..where(
+          (s) =>
               s.tripLogisticsId.equals(tripLogisticsId) &
-              s.subjectId.equals(subjectId)))
+              s.subjectId.equals(subjectId),
+        ))
         .watchSingleOrNull();
   }
 

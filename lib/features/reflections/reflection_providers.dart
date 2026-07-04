@@ -53,13 +53,13 @@ class ReflectionView {
 // ignore: specify_nonobvious_property_types
 final recentReflectionsProvider =
     StreamProvider.autoDispose<List<ReflectionView>>((ref) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  final spaceId = ref.watch(viewerProvider).spaceId;
-  if (spaceId == null) {
-    yield const [];
-    return;
-  }
-  yield* db.entriesDao
-      .watchInSpace(spaceId: spaceId, kind: EntryKind.reflection)
-      .map((rows) => rows.map(ReflectionView.of).toList(growable: false));
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      final spaceId = ref.watch(viewerProvider).spaceId;
+      if (spaceId == null) {
+        yield const [];
+        return;
+      }
+      yield* db.entriesDao
+          .watchInSpace(spaceId: spaceId, kind: EntryKind.reflection)
+          .map((rows) => rows.map(ReflectionView.of).toList(growable: false));
+    });

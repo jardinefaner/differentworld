@@ -14,13 +14,17 @@ import 'package:flutter/material.dart';
 /// `MemoryMatchScreen`; the shuffled board rides the wire-state so a joined
 /// controller taps the same layout.
 class MemoryCard {
-  const MemoryCard({required this.image, required this.label, required this.pair});
+  const MemoryCard({
+    required this.image,
+    required this.label,
+    required this.pair,
+  });
 
   factory MemoryCard.fromMap(Map<String, dynamic> m) => MemoryCard(
-        image: m['image'] as String? ?? '',
-        label: m['label'] as String? ?? '',
-        pair: m['pair'] as String? ?? '',
-      );
+    image: m['image'] as String? ?? '',
+    label: m['label'] as String? ?? '',
+    pair: m['pair'] as String? ?? '',
+  );
 
   final String image;
   final String label;
@@ -41,20 +45,20 @@ class MemoryState {
   });
 
   factory MemoryState.fromMap(Map<String, dynamic> m) => MemoryState(
-        cards: [
-          for (final c in (m['cards'] as List? ?? const <dynamic>[]))
-            MemoryCard.fromMap(Map<String, dynamic>.from(c as Map)),
-        ],
-        flipped: [
-          for (final v in (m['flipped'] as List? ?? const <dynamic>[]))
-            (v as num).toInt(),
-        ],
-        matched: {
-          for (final v in (m['matched'] as List? ?? const <dynamic>[]))
-            (v as num).toInt(),
-        },
-        done: m['d'] as bool? ?? false,
-      );
+    cards: [
+      for (final c in (m['cards'] as List? ?? const <dynamic>[]))
+        MemoryCard.fromMap(Map<String, dynamic>.from(c as Map)),
+    ],
+    flipped: [
+      for (final v in (m['flipped'] as List? ?? const <dynamic>[]))
+        (v as num).toInt(),
+    ],
+    matched: {
+      for (final v in (m['matched'] as List? ?? const <dynamic>[]))
+        (v as num).toInt(),
+    },
+    done: m['d'] as bool? ?? false,
+  );
 
   final List<MemoryCard> cards;
 
@@ -90,19 +94,18 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
   String get title => 'Memory';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.plum);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
 
   @override
   String? get liveRoute => '/live/memory-match';
 
   @override
   Map<String, dynamic> initialState(ContentSource content) => {
-        'cards': const <Map<String, dynamic>>[],
-        'flipped': const <int>[],
-        'matched': const <int>[],
-        'd': false,
-      };
+    'cards': const <Map<String, dynamic>>[],
+    'flipped': const <int>[],
+    'matched': const <int>[],
+    'd': false,
+  };
 
   @override
   MemoryState decode(Map<String, dynamic> state) => MemoryState.fromMap(state);
@@ -182,9 +185,9 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
 
   @override
   Set<GameIntent> activeIntents(MemoryState s) => {
-        if (s.flipped.isNotEmpty) GameIntent.back,
-        GameIntent.reset,
-      };
+    if (s.flipped.isNotEmpty) GameIntent.back,
+    GameIntent.reset,
+  };
 
   // The board lays out in this many columns (4 → a 4×3 board for 12 cards).
   static int columnsFor(int count) => count <= 6 ? 3 : 4;
@@ -242,8 +245,7 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
     BuildContext context,
     MemoryState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) =>
-      _MemoryControls(state: state, accent: vibe.accent, send: send);
+  ) => _MemoryControls(state: state, accent: vibe.accent, send: send);
 }
 
 /// The big read-only board (the stage / cast view). Fractional rows so it can't
@@ -360,7 +362,9 @@ class _MemoryCell extends StatelessWidget {
     final tile = ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: ColoredBox(
-        color: status == MemoryCellStatus.down ? Colors.transparent : Colors.white,
+        color: status == MemoryCellStatus.down
+            ? Colors.transparent
+            : Colors.white,
         child: face,
       ),
     );

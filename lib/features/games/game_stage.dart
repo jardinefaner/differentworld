@@ -15,29 +15,28 @@ abstract final class GameStage {
     String text, {
     int maxLines = 4,
     Color? color,
-  }) =>
-      Text(
-        text,
-        textAlign: TextAlign.center,
-        maxLines: maxLines,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: color ?? Colors.white,
-              fontWeight: FontWeight.w400,
-              height: 1.12,
-            ),
-      );
+  }) => Text(
+    text,
+    textAlign: TextAlign.center,
+    maxLines: maxLines,
+    overflow: TextOverflow.ellipsis,
+    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+      color: color ?? Colors.white,
+      fontWeight: FontWeight.w400,
+      height: 1.12,
+    ),
+  );
 
   /// The eyebrow — a small tracked-caps label above the hero (the instruction
   /// or category). Muted, so the hero leads.
   static Widget eyebrow(BuildContext context, String text) => Text(
-        text.toUpperCase(),
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.5),
-              letterSpacing: 1.6,
-            ),
-      );
+    text.toUpperCase(),
+    textAlign: TextAlign.center,
+    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+      color: Colors.white.withValues(alpha: 0.5),
+      letterSpacing: 1.6,
+    ),
+  );
 
   /// A centered, width-clamped column — eyebrow · hero · body — with air. The
   /// shared stage skeleton; pass the per-game body (vote buttons, options, the
@@ -47,28 +46,27 @@ abstract final class GameStage {
     required Widget hero,
     String? eyebrow,
     Widget? body,
-  }) =>
-      Center(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (eyebrow case final e?) ...[
-                    GameStage.eyebrow(context, e),
-                    const SizedBox(height: 20),
-                  ],
-                  hero,
-                  ?body,
-                ],
-              ),
-            ),
+  }) => Center(
+    child: SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (eyebrow case final e?) ...[
+                GameStage.eyebrow(context, e),
+                const SizedBox(height: 20),
+              ],
+              hero,
+              ?body,
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   /// THE choice pill — the ONE atom every game uses for a choice (True/Fib, a
   /// poll option, a math answer, a reveal slot). Flat with a hairline by
@@ -89,7 +87,11 @@ abstract final class GameStage {
         : (dimmed ? Colors.white24 : Colors.white);
     final labelText = Text(
       label,
-      style: TextStyle(color: fg, fontSize: fontSize, fontWeight: FontWeight.w500),
+      style: TextStyle(
+        color: fg,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w500,
+      ),
     );
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -110,7 +112,10 @@ abstract final class GameStage {
                 Expanded(child: labelText),
                 Text(
                   trailing,
-                  style: TextStyle(color: fg.withValues(alpha: 0.75), fontSize: fontSize),
+                  style: TextStyle(
+                    color: fg.withValues(alpha: 0.75),
+                    fontSize: fontSize,
+                  ),
                 ),
               ],
             ),
@@ -124,24 +129,23 @@ abstract final class GameStage {
     required String value,
     required String caption,
     required Color accent,
-  }) =>
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w400,
-                ),
-          ),
-          Text(
-            caption.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Colors.white38,
-                  letterSpacing: 1.4,
-                ),
-          ),
-        ],
-      );
+  }) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        value,
+        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+          color: accent,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      Text(
+        caption.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Colors.white38,
+          letterSpacing: 1.4,
+        ),
+      ),
+    ],
+  );
 }

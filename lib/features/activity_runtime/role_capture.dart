@@ -27,7 +27,9 @@ enum RoleToolKind { snap, draw, note }
 /// Map an artifact's own wording to its tool (icon + verb + modality). The
 /// single source of truth for BOTH the card's tile (display) and the tap
 /// action — so the glyph the user sees always matches what the tap does.
-({IconData icon, String label, RoleToolKind kind}) roleToolFor(String artifact) {
+({IconData icon, String label, RoleToolKind kind}) roleToolFor(
+  String artifact,
+) {
   final a = artifact.toLowerCase();
   if (a.contains('draw') ||
       a.contains('maze') ||
@@ -49,7 +51,11 @@ enum RoleToolKind { snap, draw, note }
   }
   // list / count / record / song / dance / note / everything else → a quick
   // typed note (audio is out of scope for v1, so "record" becomes "describe").
-  return (icon: Icons.edit_note_outlined, label: 'Note', kind: RoleToolKind.note);
+  return (
+    icon: Icons.edit_note_outlined,
+    label: 'Note',
+    kind: RoleToolKind.note,
+  );
 }
 
 /// How many pieces a child has made while practising a given role (all-time) —
@@ -73,7 +79,8 @@ final rolePracticeCountProvider = Provider.autoDispose
         final raw = e.details.trim();
         if (raw.isEmpty) continue;
         try {
-          if ((jsonDecode(raw) as Map<String, dynamic>)['role'] == key.roleName) {
+          if ((jsonDecode(raw) as Map<String, dynamic>)['role'] ==
+              key.roleName) {
             n++;
           }
         } on Object catch (_) {
@@ -369,7 +376,10 @@ class _RoleDrawScreenState extends ConsumerState<_RoleDrawScreen> {
                     onPressed: _saving
                         ? null
                         : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: Colors.white), // raw-canvas
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                    ), // raw-canvas
                   ),
                   Expanded(
                     child: Text(
@@ -413,7 +423,9 @@ class _RoleDrawScreenState extends ConsumerState<_RoleDrawScreen> {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.check),
                         label: const Text('Save to their work'),

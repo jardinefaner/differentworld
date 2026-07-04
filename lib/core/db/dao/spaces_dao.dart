@@ -11,21 +11,18 @@ part 'spaces_dao.g.dart';
 /// `createSpaceForMember`) stay on `AppDatabase` since they require a
 /// transaction across two DAOs.
 @DriftAccessor(tables: [Spaces])
-class SpacesDao extends DatabaseAccessor<AppDatabase>
-    with _$SpacesDaoMixin {
+class SpacesDao extends DatabaseAccessor<AppDatabase> with _$SpacesDaoMixin {
   SpacesDao(super.attachedDatabase);
 
   Stream<Space?> watchById(String id) {
-    return (select(spaces)..where((s) => s.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(spaces)..where((s) => s.id.equals(id))).watchSingleOrNull();
   }
 
   /// One-shot read by ID. Use this — not a captured widget prop —
   /// when a write needs the latest `capabilities` JSONB to avoid
   /// clobbering concurrent edits to other cap keys.
   Future<Space?> findById(String id) {
-    return (select(spaces)..where((s) => s.id.equals(id)))
-        .getSingleOrNull();
+    return (select(spaces)..where((s) => s.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> updateCapabilities(String id, String capabilitiesJson) async {

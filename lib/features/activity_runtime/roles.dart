@@ -377,7 +377,11 @@ const _peopleCards = <RoleCard>[
   RoleCard(
     emoji: '🧑‍🚀',
     name: 'Astronaut',
-    habits: ['explore somewhere new', 'check every step', 'stay brave in the dark'],
+    habits: [
+      'explore somewhere new',
+      'check every step',
+      'stay brave in the dark',
+    ],
     artifacts: [
       'drawing of the planet I explored',
       'photo of the bravest thing I tried',

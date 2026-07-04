@@ -50,8 +50,7 @@ class _GroupDiscussionScreenState extends State<GroupDiscussionScreen> {
     setState(() {
       _band = band;
       // Drop a topic that has nothing for the new band.
-      if (_topicId != null &&
-          !topicsFor(band).any((t) => t.id == _topicId)) {
+      if (_topicId != null && !topicsFor(band).any((t) => t.id == _topicId)) {
         _topicId = null;
       }
     });

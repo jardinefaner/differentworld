@@ -41,7 +41,8 @@ class SecondaryActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final disabled = onPressed == null;
-    final tint = iconColor ??
+    final tint =
+        iconColor ??
         (disabled ? scheme.onSurfaceVariant : scheme.onSurfaceVariant);
     return Tooltip(
       message: tooltip,

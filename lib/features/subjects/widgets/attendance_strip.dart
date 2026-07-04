@@ -1,4 +1,3 @@
-
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -14,8 +13,9 @@ class AttendanceStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final historyAsync =
-        ref.watch(attendanceHistoryForSubjectProvider(subjectId));
+    final historyAsync = ref.watch(
+      attendanceHistoryForSubjectProvider(subjectId),
+    );
 
     return historyAsync.when(
       loading: () => const Padding(
@@ -79,7 +79,8 @@ class _AttendanceDot extends StatelessWidget {
         : status!.color(scheme).withValues(alpha: 0.85);
     return Expanded(
       child: Tooltip(
-        message: '${DateFormat.MMMd().format(date)} '
+        message:
+            '${DateFormat.MMMd().format(date)} '
             '· ${status?.label ?? "no record"}',
         child: Column(
           mainAxisSize: MainAxisSize.min,

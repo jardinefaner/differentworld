@@ -11,47 +11,47 @@ import 'package:go_router/go_router.dart';
 
 void main() {
   GoRouter buildRouter({required String initial}) => GoRouter(
-        initialLocation: initial,
-        routes: [
-          GoRoute(
-            path: '/origin',
-            builder: (_, _) => Scaffold(
-              body: Builder(
-                builder: (context) => Column(
-                  children: [
-                    const Text('origin-screen'),
-                    TextButton(
-                      onPressed: () => context.push('/detail'),
-                      child: const Text('open detail'),
-                    ),
-                  ],
+    initialLocation: initial,
+    routes: [
+      GoRoute(
+        path: '/origin',
+        builder: (_, _) => Scaffold(
+          body: Builder(
+            builder: (context) => Column(
+              children: [
+                const Text('origin-screen'),
+                TextButton(
+                  onPressed: () => context.push('/detail'),
+                  child: const Text('open detail'),
                 ),
-              ),
+              ],
             ),
           ),
-          GoRoute(
-            path: '/detail',
-            builder: (_, _) => const Scaffold(
-              body: Stack(
-                children: [
-                  Text('detail-screen'),
-                  // Fallback deliberately points AWAY from /origin so a
-                  // pop that lands on /elsewhere would expose a regression.
-                  FloatingBack(fallbackRoute: '/elsewhere'),
-                ],
-              ),
-            ),
+        ),
+      ),
+      GoRoute(
+        path: '/detail',
+        builder: (_, _) => const Scaffold(
+          body: Stack(
+            children: [
+              Text('detail-screen'),
+              // Fallback deliberately points AWAY from /origin so a
+              // pop that lands on /elsewhere would expose a regression.
+              FloatingBack(fallbackRoute: '/elsewhere'),
+            ],
           ),
-          GoRoute(
-            path: '/elsewhere',
-            builder: (_, _) =>
-                const Scaffold(body: Text('elsewhere-screen')),
-          ),
-        ],
-      );
+        ),
+      ),
+      GoRoute(
+        path: '/elsewhere',
+        builder: (_, _) => const Scaffold(body: Text('elsewhere-screen')),
+      ),
+    ],
+  );
 
-  testWidgets('back pops to the actual origin, not the fallback',
-      (tester) async {
+  testWidgets('back pops to the actual origin, not the fallback', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp.router(routerConfig: buildRouter(initial: '/origin')),
     );
@@ -68,8 +68,9 @@ void main() {
     expect(find.text('elsewhere-screen'), findsNothing);
   });
 
-  testWidgets('cold entry (nothing to pop) goes to the fallback',
-      (tester) async {
+  testWidgets('cold entry (nothing to pop) goes to the fallback', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp.router(routerConfig: buildRouter(initial: '/detail')),
     );
@@ -82,8 +83,9 @@ void main() {
     expect(find.text('elsewhere-screen'), findsOneWidget);
   });
 
-  testWidgets('onPressed override replaces pop/fallback entirely',
-      (tester) async {
+  testWidgets('onPressed override replaces pop/fallback entirely', (
+    tester,
+  ) async {
     var called = false;
     await tester.pumpWidget(
       MaterialApp(

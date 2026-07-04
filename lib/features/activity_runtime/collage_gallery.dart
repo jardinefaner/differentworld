@@ -32,7 +32,8 @@ enum CollageBlockKind {
   halves(2),
 
   /// Three across.
-  thirds(3);
+  thirds(3)
+  ;
 
   const CollageBlockKind(this.tileCount);
   final int tileCount;

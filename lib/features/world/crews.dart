@@ -25,14 +25,49 @@ class Crew {
 }
 
 const List<Crew> kCrews = [
-  Crew(id: 'explorer', emoji: '🧭', name: 'Explorer', blurb: 'goes first, finds the way'),
-  Crew(id: 'builder', emoji: '🔨', name: 'Builder', blurb: 'makes things that last'),
+  Crew(
+    id: 'explorer',
+    emoji: '🧭',
+    name: 'Explorer',
+    blurb: 'goes first, finds the way',
+  ),
+  Crew(
+    id: 'builder',
+    emoji: '🔨',
+    name: 'Builder',
+    blurb: 'makes things that last',
+  ),
   Crew(id: 'helper', emoji: '🤝', name: 'Helper', blurb: 'lifts everyone up'),
-  Crew(id: 'storyteller', emoji: '📖', name: 'Storyteller', blurb: 'turns the day into a tale'),
-  Crew(id: 'maker', emoji: '🎨', name: 'Maker', blurb: 'imagines it, then makes it real'),
-  Crew(id: 'scientist', emoji: '🔬', name: 'Scientist', blurb: 'asks why, then finds out'),
-  Crew(id: 'guardian', emoji: '🛡️', name: 'Guardian', blurb: 'keeps the room safe and kind'),
-  Crew(id: 'dreamer', emoji: '💭', name: 'Dreamer', blurb: 'sees what could be'),
+  Crew(
+    id: 'storyteller',
+    emoji: '📖',
+    name: 'Storyteller',
+    blurb: 'turns the day into a tale',
+  ),
+  Crew(
+    id: 'maker',
+    emoji: '🎨',
+    name: 'Maker',
+    blurb: 'imagines it, then makes it real',
+  ),
+  Crew(
+    id: 'scientist',
+    emoji: '🔬',
+    name: 'Scientist',
+    blurb: 'asks why, then finds out',
+  ),
+  Crew(
+    id: 'guardian',
+    emoji: '🛡️',
+    name: 'Guardian',
+    blurb: 'keeps the room safe and kind',
+  ),
+  Crew(
+    id: 'dreamer',
+    emoji: '💭',
+    name: 'Dreamer',
+    blurb: 'sees what could be',
+  ),
 ];
 
 Crew? crewById(String? id) {

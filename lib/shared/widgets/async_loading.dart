@@ -27,7 +27,9 @@ class LoadingSlot extends StatelessWidget {
     return switch (variant) {
       LoadingVariant.list => const SkeletonList(),
       LoadingVariant.cards => const SkeletonCards(),
-      LoadingVariant.spinner => const Center(child: CircularProgressIndicator()),
+      LoadingVariant.spinner => const Center(
+        child: CircularProgressIndicator(),
+      ),
     };
   }
 }

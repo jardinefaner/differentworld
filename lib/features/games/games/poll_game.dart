@@ -135,7 +135,9 @@ class PollGame extends GameDefinition<PollState> {
             ],
             const SizedBox(height: 8),
             Text(
-              s.totalVotes == 0 ? 'Vote with your hands' : '${s.totalVotes} votes',
+              s.totalVotes == 0
+                  ? 'Vote with your hands'
+                  : '${s.totalVotes} votes',
               style: const TextStyle(color: Colors.white38),
             ),
           ],
@@ -162,7 +164,9 @@ class PollGame extends GameDefinition<PollState> {
           ),
         FilledButton.icon(
           onPressed: () => send(GameIntent.reveal),
-          icon: Icon(state.revealed ? Icons.visibility_off : Icons.emoji_events),
+          icon: Icon(
+            state.revealed ? Icons.visibility_off : Icons.emoji_events,
+          ),
           label: Text(state.revealed ? 'Hide' : 'Winner'),
         ),
         IconButton.filledTonal(

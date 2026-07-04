@@ -22,18 +22,18 @@ enum CaptureFilter { open, all }
 // ignore: specify_nonobvious_property_types
 final capturesProvider = StreamProvider.autoDispose
     .family<List<Capture>, CaptureFilter>((ref, filter) async* {
-  final viewer = ref.watch(viewerProvider);
-  final spaceId = viewer.spaceId;
-  if (spaceId == null) {
-    yield const <Capture>[];
-    return;
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* switch (filter) {
-    CaptureFilter.open => db.capturesDao.watchOpen(spaceId),
-    CaptureFilter.all => db.capturesDao.watchAll(spaceId),
-  };
-});
+      final viewer = ref.watch(viewerProvider);
+      final spaceId = viewer.spaceId;
+      if (spaceId == null) {
+        yield const <Capture>[];
+        return;
+      }
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* switch (filter) {
+        CaptureFilter.open => db.capturesDao.watchOpen(spaceId),
+        CaptureFilter.all => db.capturesDao.watchAll(spaceId),
+      };
+    });
 
 /// Open captures only. Drives the inbox + Today launchpad badge.
 // ignore: specify_nonobvious_property_types
@@ -99,8 +99,9 @@ class CaptureActions {
     String kind = 'observation',
   }) async {
     final viewer = _ref.read(viewerProvider);
-    final (:spaceId, :memberId) =
-        viewer.requireSpaceAndMember(action: 'promote a capture');
+    final (:spaceId, :memberId) = viewer.requireSpaceAndMember(
+      action: 'promote a capture',
+    );
     final db = await _ref.read(appDatabaseProvider.future);
     // Read the source rows outside the transaction — they're read-only
     // and not part of the atomicity contract. Pulling the subject's
@@ -152,8 +153,9 @@ class CaptureActions {
     String? dueAt,
   }) async {
     final viewer = _ref.read(viewerProvider);
-    final spaceId =
-        viewer.requireSpaceId(action: 'promote a capture to a task');
+    final spaceId = viewer.requireSpaceId(
+      action: 'promote a capture to a task',
+    );
     final db = await _ref.read(appDatabaseProvider.future);
     final cap = await db.capturesDao.findById(captureId);
     if (cap == null) {

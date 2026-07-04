@@ -66,17 +66,17 @@ class _GameSettingsSheetState extends State<_GameSettingsSheet> {
   }
 
   Widget _control(GameSetting setting) => switch (setting) {
-        final IntSetting s => _IntControl(
-            setting: s,
-            value: _values.intSetting(s.id, s.initial),
-            onChanged: (v) => setState(() => _values[s.id] = v),
-          ),
-        final MultiSetting s => _MultiControl(
-            setting: s,
-            value: _values.multiSetting(s.id, s.initial),
-            onChanged: (v) => setState(() => _values[s.id] = v),
-          ),
-      };
+    final IntSetting s => _IntControl(
+      setting: s,
+      value: _values.intSetting(s.id, s.initial),
+      onChanged: (v) => setState(() => _values[s.id] = v),
+    ),
+    final MultiSetting s => _MultiControl(
+      setting: s,
+      value: _values.multiSetting(s.id, s.initial),
+      onChanged: (v) => setState(() => _values[s.id] = v),
+    ),
+  };
 }
 
 /// A labelled stepper for an [IntSetting], clamped to its range.
@@ -105,8 +105,9 @@ class _IntControl extends StatelessWidget {
             children: [
               Text(
                 setting.label,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (setting.hint != null)
                 Text(
@@ -128,8 +129,9 @@ class _IntControl extends StatelessWidget {
           child: Text(
             '$value',
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         IconButton.filledTonal(
@@ -162,8 +164,9 @@ class _MultiControl extends StatelessWidget {
       children: [
         Text(
           setting.label,
-          style: theme.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 8),
         Wrap(

@@ -41,7 +41,8 @@ class FloatingBack extends StatelessWidget {
         // (Interaction Guard). Pop the current route if there's one to pop,
         // else route to the fallback (home by default) so back never
         // dead-ends or exits unexpectedly.
-        onPressed: onPressed ??
+        onPressed:
+            onPressed ??
             () {
               if (context.canPop()) {
                 context.pop();

@@ -31,14 +31,16 @@ class VehicleDeepLink {
     final segments = uri.pathSegments;
 
     final customScheme = scheme == 'differentworld' && host == 'v';
-    final httpsApex = (scheme == 'https' || scheme == 'http') &&
+    final httpsApex =
+        (scheme == 'https' || scheme == 'http') &&
         host == 'differentworld.app' &&
         segments.isNotEmpty &&
         segments.first == 'v';
     // Wave 170: while DNS for differentworld.app is unresolved, QRs
     // encode the github.io project-page URL. Path shape there is
     // `/differentworld-web/v/<id>/<kind>`.
-    final httpsPages = (scheme == 'https' || scheme == 'http') &&
+    final httpsPages =
+        (scheme == 'https' || scheme == 'http') &&
         host == 'jardinefaner.github.io' &&
         segments.length >= 3 &&
         segments[0] == 'differentworld-web' &&
@@ -49,8 +51,8 @@ class VehicleDeepLink {
     final path = customScheme
         ? segments
         : httpsApex
-            ? segments.skip(1).toList()
-            : segments.skip(2).toList();
+        ? segments.skip(1).toList()
+        : segments.skip(2).toList();
     if (path.length < 2) return null;
     final id = path[0];
     final kind = path[1].toLowerCase();
@@ -67,8 +69,7 @@ class VehicleDeepLink {
   static Uri customSchemeUri({
     required String vehicleId,
     required String kind,
-  }) =>
-      Uri.parse('differentworld://v/$vehicleId/$kind');
+  }) => Uri.parse('differentworld://v/$vehicleId/$kind');
 
   /// Build the HTTPS form for [vehicleId] + [kind]. Used by the QR
   /// generator AFTER the `.well-known/` files are hosted on
@@ -76,8 +77,7 @@ class VehicleDeepLink {
   static Uri httpsUri({
     required String vehicleId,
     required String kind,
-  }) =>
-      Uri.parse('https://differentworld.app/v/$vehicleId/$kind');
+  }) => Uri.parse('https://differentworld.app/v/$vehicleId/$kind');
 
   /// Wave 170: while DNS for differentworld.app is unresolved, QRs
   /// encode this github.io project-page URL instead. The 404.html on
@@ -87,10 +87,9 @@ class VehicleDeepLink {
   static Uri pagesUri({
     required String vehicleId,
     required String kind,
-  }) =>
-      Uri.parse(
-        'https://jardinefaner.github.io/differentworld-web/v/$vehicleId/$kind',
-      );
+  }) => Uri.parse(
+    'https://jardinefaner.github.io/differentworld-web/v/$vehicleId/$kind',
+  );
 
   /// Path inside the app router. Pair with `context.push` from the
   /// signed-in shell when a pending link lands.
@@ -115,5 +114,5 @@ class PendingVehicleDeepLinkNotifier extends Notifier<VehicleDeepLink?> {
 
 final pendingVehicleDeepLinkProvider =
     NotifierProvider<PendingVehicleDeepLinkNotifier, VehicleDeepLink?>(
-  PendingVehicleDeepLinkNotifier.new,
-);
+      PendingVehicleDeepLinkNotifier.new,
+    );

@@ -10,51 +10,52 @@ import 'package:flutter_test/flutter_test.dart';
 const _space = 'space-1';
 
 Group _group(String id, String name) => Group(
-      id: id,
-      spaceId: _space,
-      name: name,
-      capabilities: '{}',
-      createdAt: '2026-06-06T00:00:00Z',
-      updatedAt: '2026-06-06T00:00:00Z',
-    );
+  id: id,
+  spaceId: _space,
+  name: name,
+  capabilities: '{}',
+  createdAt: '2026-06-06T00:00:00Z',
+  updatedAt: '2026-06-06T00:00:00Z',
+);
 
 Subject _subject(String id, String first, String last) => Subject(
-      id: id,
-      spaceId: _space,
-      firstName: first,
-      lastName: last,
-      capabilities: '{}',
-      createdAt: '2026-06-06T00:00:00Z',
-      updatedAt: '2026-06-06T00:00:00Z',
-    );
+  id: id,
+  spaceId: _space,
+  firstName: first,
+  lastName: last,
+  capabilities: '{}',
+  createdAt: '2026-06-06T00:00:00Z',
+  updatedAt: '2026-06-06T00:00:00Z',
+);
 
 AttendanceRecord _att(String subjectId, String status) => AttendanceRecord(
-      id: 'att-$subjectId',
-      spaceId: _space,
-      subjectId: subjectId,
-      date: '2026-06-06',
-      status: status,
-      recordedBy: 'm1',
-      recordedAt: '2026-06-06T15:00:00Z',
-      updatedAt: '2026-06-06T15:00:00Z',
-    );
+  id: 'att-$subjectId',
+  spaceId: _space,
+  subjectId: subjectId,
+  date: '2026-06-06',
+  status: status,
+  recordedBy: 'm1',
+  recordedAt: '2026-06-06T15:00:00Z',
+  updatedAt: '2026-06-06T15:00:00Z',
+);
 
 Entry _departure(String subjectId, {required String at, String? to}) => Entry(
-      id: 'dep-$subjectId-$at',
-      spaceId: _space,
-      kind: 'departure',
-      details: '{}',
-      recordedBy: 'm1',
-      recordedAt: at,
-      updatedAt: at,
-      subjectId: subjectId,
-      body: to,
-    );
+  id: 'dep-$subjectId-$at',
+  spaceId: _space,
+  kind: 'departure',
+  details: '{}',
+  recordedBy: 'm1',
+  recordedAt: at,
+  updatedAt: at,
+  subjectId: subjectId,
+  body: to,
+);
 
 void main() {
   // Local 4:00pm and 5:00pm on the "today" date used by the fixtures.
   const today = '2026-06-06';
-  String at(int h, int m) => DateTime(2026, 6, 6, h, m).toUtc().toIso8601String();
+  String at(int h, int m) =>
+      DateTime(2026, 6, 6, h, m).toUtc().toIso8601String();
 
   group('computePickupBoard', () {
     test('present + late are here; absent/excused never appear', () {

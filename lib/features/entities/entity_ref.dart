@@ -53,44 +53,44 @@ class EntityRef {
 /// (the content-driven-color contract in CLAUDE.md / THEME_ADHERENCE.md).
 extension EntityKindVisual on EntityKind {
   Color get accent => switch (this) {
-        EntityKind.subject => const Color(0xFFC8502D), // coral — children
-        EntityKind.member => const Color(0xFF3B7DD8), // blue — staff
-        EntityKind.group => const Color(0xFF2E8B97), // teal-blue — cohorts
-        EntityKind.activity => const Color(0xFF5E9A1F), // green — activities
-        EntityKind.location => const Color(0xFF1D9E75), // teal — places
-        EntityKind.vehicle => const Color(0xFF6B7280), // slate — vehicles
-        EntityKind.role => const Color(0xFFBA7517), // amber — roles
-        EntityKind.world => const Color(0xFF6E50D2), // purple — worlds
-        EntityKind.verb => const Color(0xFFC23E6B), // rose — action words
-        EntityKind.tool => const Color(0xFF5A6BB5), // indigo — tools
-      };
+    EntityKind.subject => const Color(0xFFC8502D), // coral — children
+    EntityKind.member => const Color(0xFF3B7DD8), // blue — staff
+    EntityKind.group => const Color(0xFF2E8B97), // teal-blue — cohorts
+    EntityKind.activity => const Color(0xFF5E9A1F), // green — activities
+    EntityKind.location => const Color(0xFF1D9E75), // teal — places
+    EntityKind.vehicle => const Color(0xFF6B7280), // slate — vehicles
+    EntityKind.role => const Color(0xFFBA7517), // amber — roles
+    EntityKind.world => const Color(0xFF6E50D2), // purple — worlds
+    EntityKind.verb => const Color(0xFFC23E6B), // rose — action words
+    EntityKind.tool => const Color(0xFF5A6BB5), // indigo — tools
+  };
 
   IconData get icon => switch (this) {
-        EntityKind.subject => Icons.face_outlined,
-        EntityKind.member => Icons.badge_outlined,
-        EntityKind.group => Icons.groups_2_outlined,
-        EntityKind.activity => Icons.local_activity_outlined,
-        EntityKind.location => Icons.place_outlined,
-        EntityKind.vehicle => Icons.directions_bus_outlined,
-        EntityKind.role => Icons.auto_awesome_outlined,
-        EntityKind.world => Icons.travel_explore_outlined,
-        EntityKind.verb => Icons.bolt_outlined,
-        EntityKind.tool => Icons.handyman_outlined,
-      };
+    EntityKind.subject => Icons.face_outlined,
+    EntityKind.member => Icons.badge_outlined,
+    EntityKind.group => Icons.groups_2_outlined,
+    EntityKind.activity => Icons.local_activity_outlined,
+    EntityKind.location => Icons.place_outlined,
+    EntityKind.vehicle => Icons.directions_bus_outlined,
+    EntityKind.role => Icons.auto_awesome_outlined,
+    EntityKind.world => Icons.travel_explore_outlined,
+    EntityKind.verb => Icons.bolt_outlined,
+    EntityKind.tool => Icons.handyman_outlined,
+  };
 
   /// The human label for the kind ("Child", "Activity"…) — the peek eyebrow.
   String get noun => switch (this) {
-        EntityKind.subject => 'Child',
-        EntityKind.member => 'Staff',
-        EntityKind.group => 'Cohort',
-        EntityKind.activity => 'Activity',
-        EntityKind.location => 'Place',
-        EntityKind.vehicle => 'Vehicle',
-        EntityKind.role => 'Role',
-        EntityKind.world => 'World',
-        EntityKind.verb => 'Action word',
-        EntityKind.tool => 'Tool',
-      };
+    EntityKind.subject => 'Child',
+    EntityKind.member => 'Staff',
+    EntityKind.group => 'Cohort',
+    EntityKind.activity => 'Activity',
+    EntityKind.location => 'Place',
+    EntityKind.vehicle => 'Vehicle',
+    EntityKind.role => 'Role',
+    EntityKind.world => 'World',
+    EntityKind.verb => 'Action word',
+    EntityKind.tool => 'Tool',
+  };
 
   /// People (→ a `PersonAvatar` with initials) vs a thing (→ [icon]).
   bool get isPerson => this == EntityKind.subject || this == EntityKind.member;

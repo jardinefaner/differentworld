@@ -77,14 +77,14 @@ class Insight {
   final String? vehicleName;
 
   IconData get icon => switch (kind) {
-        InsightKind.attendanceLateStreak => Icons.schedule_outlined,
-        InsightKind.certExpiringSoon => Icons.workspace_premium_outlined,
-        InsightKind.certAlreadyExpired => Icons.warning_amber_outlined,
-        InsightKind.vehicleNeedsRepair => Icons.handyman_outlined,
-        InsightKind.vehicleUnsafe => Icons.dangerous_outlined,
-        InsightKind.quietKid => Icons.menu_book_outlined,
-        InsightKind.surveyOpen => Icons.poll_outlined,
-      };
+    InsightKind.attendanceLateStreak => Icons.schedule_outlined,
+    InsightKind.certExpiringSoon => Icons.workspace_premium_outlined,
+    InsightKind.certAlreadyExpired => Icons.warning_amber_outlined,
+    InsightKind.vehicleNeedsRepair => Icons.handyman_outlined,
+    InsightKind.vehicleUnsafe => Icons.dangerous_outlined,
+    InsightKind.quietKid => Icons.menu_book_outlined,
+    InsightKind.surveyOpen => Icons.poll_outlined,
+  };
 }
 
 @immutable
@@ -103,8 +103,7 @@ class InsightAction {
 /// with `dismissed_until` null is muted indefinitely (until the user
 /// explicitly un-snoozes). An entry with a timestamp re-surfaces
 /// automatically when the timestamp passes.
-final _dismissedInsightIdsProvider =
-    StreamProvider<Set<String>>((ref) async* {
+final _dismissedInsightIdsProvider = StreamProvider<Set<String>>((ref) async* {
   final viewer = ref.watch(viewerProvider);
   final memberId = viewer.memberId;
   if (memberId == null) {
@@ -166,18 +165,18 @@ final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
       attendanceAsync.value ?? const <String, List<AttendanceRecord>>{};
   final dismissed = dismissedAsync.value ?? const <String>{};
 
-  final insights = <Insight>[
-    ..._certInsights(certs),
-    ..._vehicleInsights(ref, vehicles),
-    ..._quietKidInsights(subjects, observations),
-    ..._attendanceInsights(attendanceBySubject, subjects),
-    ..._surveyInsights(ref, spaceId, subjects),
-  ].where((i) => !dismissed.contains(i.id)).toList()
-    ..sort((a, b) {
-      final s = a.severity.index.compareTo(b.severity.index);
-      if (s != 0) return s;
-      return a.kind.index.compareTo(b.kind.index);
-    });
+  final insights =
+      <Insight>[
+        ..._certInsights(certs),
+        ..._vehicleInsights(ref, vehicles),
+        ..._quietKidInsights(subjects, observations),
+        ..._attendanceInsights(attendanceBySubject, subjects),
+        ..._surveyInsights(ref, spaceId, subjects),
+      ].where((i) => !dismissed.contains(i.id)).toList()..sort((a, b) {
+        final s = a.severity.index.compareTo(b.severity.index);
+        if (s != 0) return s;
+        return a.kind.index.compareTo(b.kind.index);
+      });
   return AsyncValue.data(List<Insight>.unmodifiable(insights));
 });
 
@@ -192,21 +191,28 @@ enum InsightSnoozeOption {
 
 extension InsightSnoozeOptionX on InsightSnoozeOption {
   String get label => switch (this) {
-        InsightSnoozeOption.untilTomorrow => 'Snooze until tomorrow',
-        InsightSnoozeOption.untilNextWeek => 'Snooze for a week',
-        InsightSnoozeOption.untilFurtherNotice =>
-          'Hide until I unhide it',
-      };
+    InsightSnoozeOption.untilTomorrow => 'Snooze until tomorrow',
+    InsightSnoozeOption.untilNextWeek => 'Snooze for a week',
+    InsightSnoozeOption.untilFurtherNotice => 'Hide until I unhide it',
+  };
 
   /// Returns the resolved `dismissed_until` timestamp, or null for
   /// "indefinitely."
   DateTime? resolveUntil() {
     final now = DateTime.now();
     return switch (this) {
-      InsightSnoozeOption.untilTomorrow =>
-        DateTime(now.year, now.month, now.day + 1, 6),
-      InsightSnoozeOption.untilNextWeek =>
-        DateTime(now.year, now.month, now.day + 7, 6),
+      InsightSnoozeOption.untilTomorrow => DateTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        6,
+      ),
+      InsightSnoozeOption.untilNextWeek => DateTime(
+        now.year,
+        now.month,
+        now.day + 7,
+        6,
+      ),
       InsightSnoozeOption.untilFurtherNotice => null,
     };
   }
@@ -223,8 +229,9 @@ class InsightActions {
     required InsightSnoozeOption option,
   }) async {
     final viewer = _ref.read(viewerProvider);
-    final (:spaceId, :memberId) =
-        viewer.requireSpaceAndMember(action: 'snooze an insight');
+    final (:spaceId, :memberId) = viewer.requireSpaceAndMember(
+      action: 'snooze an insight',
+    );
     final db = await _ref.read(appDatabaseProvider.future);
     await db.dismissedInsightsDao.upsert(
       id: _uuid.v4(),
@@ -247,8 +254,7 @@ class InsightActions {
   }
 }
 
-final insightActionsProvider =
-    Provider<InsightActions>(InsightActions.new);
+final insightActionsProvider = Provider<InsightActions>(InsightActions.new);
 
 // ---------------------------------------------------------------------------
 // Derivations — pure-ish functions over the streams handed in. Each
@@ -266,36 +272,43 @@ List<Insight> _certInsights(List<MemberCertification> certs) {
     if (dt == null) continue;
     final days = dt.difference(today).inDays;
     if (days < 0) {
-      out.add(Insight(
-        id: 'cert_expired_${c.memberId}_${c.certKey}',
-        kind: InsightKind.certAlreadyExpired,
-        severity: InsightSeverity.urgent,
-        prompt: '${_certLabel(c.certKey)} is expired '
-            '(${days.abs()} ${days == -1 ? 'day' : 'days'} ago). '
-            'Renew now?',
-        actions: [
-          InsightAction(
-            label: 'Open team member',
-            route: '/settings/team/${c.memberId}',
-          ),
-        ],
-      ));
+      out.add(
+        Insight(
+          id: 'cert_expired_${c.memberId}_${c.certKey}',
+          kind: InsightKind.certAlreadyExpired,
+          severity: InsightSeverity.urgent,
+          prompt:
+              '${_certLabel(c.certKey)} is expired '
+              '(${days.abs()} ${days == -1 ? 'day' : 'days'} ago). '
+              'Renew now?',
+          actions: [
+            InsightAction(
+              label: 'Open team member',
+              route: '/settings/team/${c.memberId}',
+            ),
+          ],
+        ),
+      );
     } else if (days <= 30) {
-      out.add(Insight(
-        id: 'cert_soon_${c.memberId}_${c.certKey}',
-        kind: InsightKind.certExpiringSoon,
-        severity:
-            days <= 7 ? InsightSeverity.urgent : InsightSeverity.suggestion,
-        prompt: '${_certLabel(c.certKey)} expires in $days '
-            '${days == 1 ? 'day' : 'days'}. '
-            'Start the renewal?',
-        actions: [
-          InsightAction(
-            label: 'Open team member',
-            route: '/settings/team/${c.memberId}',
-          ),
-        ],
-      ));
+      out.add(
+        Insight(
+          id: 'cert_soon_${c.memberId}_${c.certKey}',
+          kind: InsightKind.certExpiringSoon,
+          severity: days <= 7
+              ? InsightSeverity.urgent
+              : InsightSeverity.suggestion,
+          prompt:
+              '${_certLabel(c.certKey)} expires in $days '
+              '${days == 1 ? 'day' : 'days'}. '
+              'Start the renewal?',
+          actions: [
+            InsightAction(
+              label: 'Open team member',
+              route: '/settings/team/${c.memberId}',
+            ),
+          ],
+        ),
+      );
     }
   }
   return out;
@@ -322,35 +335,41 @@ List<Insight> _vehicleInsights(Ref ref, List<Vehicle> vehicles) {
       }
     }
     if (anyUnsafe) {
-      out.add(Insight(
-        id: 'vehicle_unsafe_${v.id}',
-        kind: InsightKind.vehicleUnsafe,
-        severity: InsightSeverity.urgent,
-        vehicleName: v.name,
-        prompt: '${v.name} was flagged unsafe on the last inspection. '
-            "Don't drive — schedule a mechanic.",
-        actions: [
-          InsightAction(
-            label: 'Open vehicle',
-            route: '/vehicles/${v.id}',
-          ),
-        ],
-      ));
+      out.add(
+        Insight(
+          id: 'vehicle_unsafe_${v.id}',
+          kind: InsightKind.vehicleUnsafe,
+          severity: InsightSeverity.urgent,
+          vehicleName: v.name,
+          prompt:
+              '${v.name} was flagged unsafe on the last inspection. '
+              "Don't drive — schedule a mechanic.",
+          actions: [
+            InsightAction(
+              label: 'Open vehicle',
+              route: '/vehicles/${v.id}',
+            ),
+          ],
+        ),
+      );
     } else if (anyNeedsRepair) {
-      out.add(Insight(
-        id: 'vehicle_repair_${v.id}',
-        kind: InsightKind.vehicleNeedsRepair,
-        severity: InsightSeverity.suggestion,
-        vehicleName: v.name,
-        prompt: '${v.name} has items flagged "needs repair" on the '
-            'last inspection. Worth a mechanic visit soon.',
-        actions: [
-          InsightAction(
-            label: 'Open vehicle',
-            route: '/vehicles/${v.id}',
-          ),
-        ],
-      ));
+      out.add(
+        Insight(
+          id: 'vehicle_repair_${v.id}',
+          kind: InsightKind.vehicleNeedsRepair,
+          severity: InsightSeverity.suggestion,
+          vehicleName: v.name,
+          prompt:
+              '${v.name} has items flagged "needs repair" on the '
+              'last inspection. Worth a mechanic visit soon.',
+          actions: [
+            InsightAction(
+              label: 'Open vehicle',
+              route: '/vehicles/${v.id}',
+            ),
+          ],
+        ),
+      );
     }
   }
   return out;
@@ -383,20 +402,23 @@ List<Insight> _quietKidInsights(
     final daysSince = last == null
         ? 'No observations yet this year'
         : '${_today().difference(last).inDays} days since the last observation';
-    out.add(Insight(
-      id: 'quiet_kid_${s.id}',
-      kind: InsightKind.quietKid,
-      severity: InsightSeverity.info,
-      subjectName: '${s.firstName} ${s.lastName}',
-      prompt: "${s.firstName} ${s.lastName} hasn't had an observation "
-          'in a while — $daysSince. Worth a check-in this week.',
-      actions: [
-        InsightAction(
-          label: 'Open child',
-          route: '/groups/${s.groupId}/students/${s.id}',
-        ),
-      ],
-    ));
+    out.add(
+      Insight(
+        id: 'quiet_kid_${s.id}',
+        kind: InsightKind.quietKid,
+        severity: InsightSeverity.info,
+        subjectName: '${s.firstName} ${s.lastName}',
+        prompt:
+            "${s.firstName} ${s.lastName} hasn't had an observation "
+            'in a while — $daysSince. Worth a check-in this week.',
+        actions: [
+          InsightAction(
+            label: 'Open child',
+            route: '/groups/${s.groupId}/students/${s.id}',
+          ),
+        ],
+      ),
+    );
   }
   return out;
 }
@@ -413,30 +435,31 @@ const _attendanceWindowDays = 10;
 /// years of attendance into memory.
 final recentAttendanceBySubjectProvider =
     StreamProvider<Map<String, List<AttendanceRecord>>>((ref) async* {
-  final spaceId = ref.watch(viewerProvider).spaceId;
-  if (spaceId == null) {
-    yield const <String, List<AttendanceRecord>>{};
-    return;
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  // `date` is 'YYYY-MM-DD' text — ISO keys compare lexically = chronologically.
-  final cutoffKey = _today()
-      .subtract(const Duration(days: _attendanceWindowDays))
-      .toIso8601String()
-      .substring(0, 10);
-  yield* (db.select(db.attendanceRecords)
-        ..where((a) =>
-            a.spaceId.equals(spaceId) &
-            a.date.isBiggerOrEqualValue(cutoffKey)))
-      .watch()
-      .map((rows) {
-    final bySubject = <String, List<AttendanceRecord>>{};
-    for (final r in rows) {
-      (bySubject[r.subjectId] ??= <AttendanceRecord>[]).add(r);
-    }
-    return bySubject;
-  });
-});
+      final spaceId = ref.watch(viewerProvider).spaceId;
+      if (spaceId == null) {
+        yield const <String, List<AttendanceRecord>>{};
+        return;
+      }
+      final db = await ref.watch(appDatabaseProvider.future);
+      // `date` is 'YYYY-MM-DD' text — ISO keys compare lexically = chronologically.
+      final cutoffKey = _today()
+          .subtract(const Duration(days: _attendanceWindowDays))
+          .toIso8601String()
+          .substring(0, 10);
+      yield* (db.select(db.attendanceRecords)..where(
+            (a) =>
+                a.spaceId.equals(spaceId) &
+                a.date.isBiggerOrEqualValue(cutoffKey),
+          ))
+          .watch()
+          .map((rows) {
+            final bySubject = <String, List<AttendanceRecord>>{};
+            for (final r in rows) {
+              (bySubject[r.subjectId] ??= <AttendanceRecord>[]).add(r);
+            }
+            return bySubject;
+          });
+    });
 
 /// Surface when a kid has been late ≥ 2 days in the last 7 calendar days,
 /// reading the pre-grouped windowed map above — no per-subject fan-out.
@@ -457,21 +480,23 @@ List<Insight> _attendanceInsights(
       }
     }
     if (lateCount < 2 || s.groupId == null) continue;
-    out.add(Insight(
-      id: 'late_streak_${s.id}',
-      kind: InsightKind.attendanceLateStreak,
-      severity: InsightSeverity.suggestion,
-      subjectName: '${s.firstName} ${s.lastName}',
-      prompt:
-          '${s.firstName} ${s.lastName} has been late $lateCount times this '
-          'week. Want to reach out to family?',
-      actions: [
-        InsightAction(
-          label: 'Open child',
-          route: '/groups/${s.groupId}/students/${s.id}',
-        ),
-      ],
-    ));
+    out.add(
+      Insight(
+        id: 'late_streak_${s.id}',
+        kind: InsightKind.attendanceLateStreak,
+        severity: InsightSeverity.suggestion,
+        subjectName: '${s.firstName} ${s.lastName}',
+        prompt:
+            '${s.firstName} ${s.lastName} has been late $lateCount times this '
+            'week. Want to reach out to family?',
+        actions: [
+          InsightAction(
+            label: 'Open child',
+            route: '/groups/${s.groupId}/students/${s.id}',
+          ),
+        ],
+      ),
+    );
   }
   return out;
 }
@@ -499,13 +524,13 @@ DateTime _today() {
 }
 
 String _certLabel(String key) => switch (key) {
-      'mat' => 'MAT certification',
-      'cpr' => 'CPR certification',
-      'first_aid' => 'First-aid certification',
-      'background' => 'Background check',
-      'driver' => 'Driver certification',
-      _ => key,
-    };
+  'mat' => 'MAT certification',
+  'cpr' => 'CPR certification',
+  'first_aid' => 'First-aid certification',
+  'background' => 'Background check',
+  'driver' => 'Driver certification',
+  _ => key,
+};
 
 /// `vehicle_logs.items` JSONB shape: `{section: {item_key: status}}`.
 /// Tolerates malformed strings — returns empty rather than throwing.

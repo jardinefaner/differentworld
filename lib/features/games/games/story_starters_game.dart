@@ -18,17 +18,17 @@ class StoryState {
   });
 
   factory StoryState.fromMap(Map<String, dynamic> m) => StoryState(
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        twistCursor: (m['ti'] as num?)?.toInt() ?? 0,
-        twist: (m['tw'] as String?) ?? '',
-        done: m['d'] == true,
-        starters: [
-          for (final x in (m['starters'] as List? ?? const [])) x.toString(),
-        ],
-        twists: [
-          for (final x in (m['twists'] as List? ?? const [])) x.toString(),
-        ],
-      );
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    twistCursor: (m['ti'] as num?)?.toInt() ?? 0,
+    twist: (m['tw'] as String?) ?? '',
+    done: m['d'] == true,
+    starters: [
+      for (final x in (m['starters'] as List? ?? const [])) x.toString(),
+    ],
+    twists: [
+      for (final x in (m['twists'] as List? ?? const [])) x.toString(),
+    ],
+  );
 
   final int index;
   final int twistCursor;
@@ -54,8 +54,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
   String get title => 'Story Starters';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.amber);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
   String? get liveRoute => '/live/story';

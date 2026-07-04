@@ -61,7 +61,9 @@ class ContextPill extends ConsumerWidget {
       }
     } else if (live != null) {
       final room = roomById(live.groupId);
-      label = room == null ? 'Across your rooms' : '${room.name} · ${live.title}';
+      label = room == null
+          ? 'Across your rooms'
+          : '${room.name} · ${live.title}';
       empty = false;
     } else {
       label = 'No block now · pick a room';
@@ -79,7 +81,9 @@ class ContextPill extends ConsumerWidget {
         alignment: Alignment.centerLeft,
         child: Material(
           color: bg,
-          shape: StadiumBorder(side: BorderSide(color: fg.withValues(alpha: 0.22))),
+          shape: StadiumBorder(
+            side: BorderSide(color: fg.withValues(alpha: 0.22)),
+          ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () {

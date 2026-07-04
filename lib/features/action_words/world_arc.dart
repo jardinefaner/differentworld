@@ -17,14 +17,14 @@ class WorldMissions {
   });
 
   factory WorldMissions.fromJson(Map<String, dynamic> j) => WorldMissions(
-        daily: <String>[
-          for (final m in (j['daily'] as List? ?? const [])) m.toString(),
-        ],
-        weekly: <String>[
-          for (final m in (j['weekly'] as List? ?? const [])) m.toString(),
-        ],
-        project: (j['project'] as String?) ?? '',
-      );
+    daily: <String>[
+      for (final m in (j['daily'] as List? ?? const [])) m.toString(),
+    ],
+    weekly: <String>[
+      for (final m in (j['weekly'] as List? ?? const [])) m.toString(),
+    ],
+    project: (j['project'] as String?) ?? '',
+  );
 
   final List<String> daily;
   final List<String> weekly;
@@ -51,15 +51,15 @@ class WorldRpg {
   });
 
   factory WorldRpg.fromJson(Map<String, dynamic> j) => WorldRpg(
-        avatar: (j['avatar'] as String?) ?? '',
-        name: (j['name'] as String?) ?? '',
-        spells: (j['spells'] as String?) ?? '',
-        tools: (j['tools'] as String?) ?? '',
-        inventory: (j['inventory'] as String?) ?? '',
-        allies: (j['allies'] as String?) ?? '',
-        lore: (j['lore'] as String?) ?? '',
-        weather: (j['weather'] as String?) ?? '',
-      );
+    avatar: (j['avatar'] as String?) ?? '',
+    name: (j['name'] as String?) ?? '',
+    spells: (j['spells'] as String?) ?? '',
+    tools: (j['tools'] as String?) ?? '',
+    inventory: (j['inventory'] as String?) ?? '',
+    allies: (j['allies'] as String?) ?? '',
+    lore: (j['lore'] as String?) ?? '',
+    weather: (j['weather'] as String?) ?? '',
+  );
 
   final String avatar;
   final String name;
@@ -85,15 +85,15 @@ class WorldArc {
   });
 
   factory WorldArc.fromJson(Map<String, dynamic> j) => WorldArc(
-        week: (j['week'] as num?)?.toInt() ?? 0,
-        id: (j['id'] as String?) ?? '',
-        missions: WorldMissions.fromJson(
-          (j['missions'] as Map<String, dynamic>?) ?? const {},
-        ),
-        rpg: WorldRpg.fromJson(
-          (j['rpg'] as Map<String, dynamic>?) ?? const {},
-        ),
-      );
+    week: (j['week'] as num?)?.toInt() ?? 0,
+    id: (j['id'] as String?) ?? '',
+    missions: WorldMissions.fromJson(
+      (j['missions'] as Map<String, dynamic>?) ?? const {},
+    ),
+    rpg: WorldRpg.fromJson(
+      (j['rpg'] as Map<String, dynamic>?) ?? const {},
+    ),
+  );
 
   /// The curriculum week (1–10) — matches `CurriculumWorld` / `WorldBlock`.
   final int week;

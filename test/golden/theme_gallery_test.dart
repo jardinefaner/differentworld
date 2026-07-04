@@ -109,7 +109,10 @@ class _Gallery extends StatelessWidget {
             const _Label('TYPE RAMP'),
             Text('Headline small', style: theme.textTheme.headlineSmall),
             Text('Title large', style: theme.textTheme.titleLarge),
-            Text('Title medium — a card row', style: theme.textTheme.titleMedium),
+            Text(
+              'Title medium — a card row',
+              style: theme.textTheme.titleMedium,
+            ),
             Text(
               'Body large. The quick brown fox jumps over the lazy dog.',
               style: theme.textTheme.bodyLarge,
@@ -142,7 +145,10 @@ class _Gallery extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 FilledButton(onPressed: () {}, child: const Text('Filled')),
-                FilledButton.tonal(onPressed: () {}, child: const Text('Tonal')),
+                FilledButton.tonal(
+                  onPressed: () {},
+                  child: const Text('Tonal'),
+                ),
                 OutlinedButton(onPressed: () {}, child: const Text('Outlined')),
                 TextButton(onPressed: () {}, child: const Text('Text')),
               ],
@@ -261,10 +267,7 @@ class _Swatch extends StatelessWidget {
       alignment: Alignment.bottomLeft,
       child: Text(
         name,
-        style: Theme.of(context)
-            .textTheme
-            .labelMedium
-            ?.copyWith(color: on),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: on),
       ),
     );
   }

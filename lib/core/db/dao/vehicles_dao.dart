@@ -22,13 +22,13 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<Vehicle?> watchById(String id) {
-    return (select(vehicles)..where((v) => v.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      vehicles,
+    )..where((v) => v.id.equals(id))).watchSingleOrNull();
   }
 
   Future<Vehicle?> findById(String id) {
-    return (select(vehicles)..where((v) => v.id.equals(id)))
-        .getSingleOrNull();
+    return (select(vehicles)..where((v) => v.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> create({
@@ -120,9 +120,9 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
           ..where((l) => l.vehicleId.equals(vehicleId))
           ..orderBy([
             (l) => OrderingTerm(
-                  expression: l.createdAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: l.createdAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -135,9 +135,9 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
           ..where((l) => l.vehicleId.equals(vehicleId))
           ..orderBy([
             (l) => OrderingTerm(
-                  expression: l.createdAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: l.createdAt,
+              mode: OrderingMode.desc,
+            ),
           ])
           ..limit(1))
         .watchSingleOrNull();

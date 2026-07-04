@@ -11,18 +11,17 @@ Entry _e(
   String kind, {
   String? body,
   Map<String, dynamic> details = const {},
-}) =>
-    Entry(
-      id: 'e-$kind',
-      spaceId: 's1',
-      kind: kind,
-      details: jsonEncode(details),
-      recordedBy: 'm1',
-      recordedAt: '2026-06-06T15:00:00Z',
-      updatedAt: '2026-06-06T15:00:00Z',
-      subjectId: 'kid1',
-      body: body,
-    );
+}) => Entry(
+  id: 'e-$kind',
+  spaceId: 's1',
+  kind: kind,
+  details: jsonEncode(details),
+  recordedBy: 'm1',
+  recordedAt: '2026-06-06T15:00:00Z',
+  updatedAt: '2026-06-06T15:00:00Z',
+  subjectId: 'kid1',
+  body: body,
+);
 
 void main() {
   test('observation → a note beat with photos', () {
@@ -33,30 +32,43 @@ void main() {
   });
 
   test('action_words → the world + practiced verbs', () {
-    final m = momentFor(_e('action_words', details: {
-      'verb_picks': ['watch', 'spark', 'shine'],
-    }))!;
+    final m = momentFor(
+      _e(
+        'action_words',
+        details: {
+          'verb_picks': ['watch', 'spark', 'shine'],
+        },
+      ),
+    )!;
     expect(m.emoji, '🦅'); // Eagle
     expect(m.title, 'Was Eagle');
     expect(m.body, 'Practiced watch, spark, shine');
   });
 
   test('mission → did the mission', () {
-    final m = momentFor(_e('mission', details: {'missionName': 'Plant Helper'}))!;
+    final m = momentFor(
+      _e('mission', details: {'missionName': 'Plant Helper'}),
+    )!;
     expect(m.emoji, '🎯');
     expect(m.title, 'Did: Plant Helper');
   });
 
   test('role → was the role, with its emoji', () {
-    final m = momentFor(_e('role', details: {'role_name': 'Bee', 'emoji': '🐝'}))!;
+    final m = momentFor(
+      _e('role', details: {'role_name': 'Bee', 'emoji': '🐝'}),
+    )!;
     expect(m.emoji, '🐝');
     expect(m.title, 'Was a Bee');
   });
 
   test('incident → the type + narrative', () {
-    final m = momentFor(_e('incident',
+    final m = momentFor(
+      _e(
+        'incident',
         body: 'Scraped a knee.',
-        details: {'incident_type': 'injury', 'parent_notified': false}))!;
+        details: {'incident_type': 'injury', 'parent_notified': false},
+      ),
+    )!;
     expect(m.emoji, '⚠️');
     expect(m.title, 'Injury / bump logged');
     expect(m.body, 'Scraped a knee.');

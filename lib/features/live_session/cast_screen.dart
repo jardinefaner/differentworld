@@ -64,9 +64,11 @@ class _CastScreenState extends ConsumerState<CastScreen> {
   }
 
   // Provider write off the build phase (AppShell watches castImmersive).
-  void _enterImmersiveSoon() => unawaited(Future.microtask(() {
-        if (mounted) _immersive.enter();
-      }));
+  void _enterImmersiveSoon() => unawaited(
+    Future.microtask(() {
+      if (mounted) _immersive.enter();
+    }),
+  );
 
   /// MY controller code — the channel I broadcast on when I cast, and the one a
   /// screen signed into my account auto-follows. Null without a member/space.
@@ -144,8 +146,9 @@ class _CastScreenState extends ConsumerState<CastScreen> {
         _Mode.cast => Scaffold(
           // The cast cockpit is a projection stage (the TV), not a themed
           // surface — hardcoded dark per docs/THEME_ADHERENCE.md.
-          backgroundColor:
-              const Color(0xFF0C0D14), // raw-canvas: cast cockpit (TV) stage
+          backgroundColor: const Color(
+            0xFF0C0D14,
+          ), // raw-canvas: cast cockpit (TV) stage
           body: SafeArea(
             child: CastCockpit(
               key: ValueKey('cast-$_code'),
@@ -234,7 +237,8 @@ class _LobbyState extends State<_Lobby> {
                 _BigCard(
                   icon: Icons.cast,
                   title: 'Cast to your screens',
-                  subtitle: 'Pick a game, world, or activity — it shows on '
+                  subtitle:
+                      'Pick a game, world, or activity — it shows on '
                       'every screen following your code ($code).',
                   onTap: () => widget.onCast(code),
                 ),

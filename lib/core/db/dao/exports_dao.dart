@@ -7,21 +7,22 @@ part 'exports_dao.g.dart';
 /// program generates. Bytes live in Supabase Storage at
 /// `exports/<id>.<format>`; this DAO owns the metadata rows.
 @DriftAccessor(tables: [Exports, ExportRecipients])
-class ExportsDao extends DatabaseAccessor<AppDatabase>
-    with _$ExportsDaoMixin {
+class ExportsDao extends DatabaseAccessor<AppDatabase> with _$ExportsDaoMixin {
   ExportsDao(super.attachedDatabase);
 
   /// All non-archived exports in the space, newest first. Drives
   /// the per-program audit list.
   Stream<List<Export>> watchInSpace(String spaceId) {
     return (select(exports)
-          ..where((e) =>
-              e.spaceId.equals(spaceId) & e.status.equals('archived').not())
+          ..where(
+            (e) =>
+                e.spaceId.equals(spaceId) & e.status.equals('archived').not(),
+          )
           ..orderBy([
             (e) => OrderingTerm(
-                  expression: e.generatedAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: e.generatedAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -33,9 +34,9 @@ class ExportsDao extends DatabaseAccessor<AppDatabase>
           ..where((e) => e.subjectId.equals(subjectId))
           ..orderBy([
             (e) => OrderingTerm(
-                  expression: e.generatedAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: e.generatedAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -61,23 +62,24 @@ class ExportsDao extends DatabaseAccessor<AppDatabase>
   /// External-email-only recipients have `guardian_id IS NULL` and
   /// are excluded.
   Stream<List<Export>> watchReceivedByGuardian(String guardianId) {
-    final query = select(exports).join([
-      innerJoin(
-        exportRecipients,
-        exportRecipients.exportId.equalsExp(exports.id),
-      ),
-    ])
-      ..where(exportRecipients.guardianId.equals(guardianId))
-      ..where(exports.status.equals('sent'))
-      ..orderBy([
-        OrderingTerm(
-          expression: exports.sentAt,
-          mode: OrderingMode.desc,
-        ),
-      ]);
+    final query =
+        select(exports).join([
+            innerJoin(
+              exportRecipients,
+              exportRecipients.exportId.equalsExp(exports.id),
+            ),
+          ])
+          ..where(exportRecipients.guardianId.equals(guardianId))
+          ..where(exports.status.equals('sent'))
+          ..orderBy([
+            OrderingTerm(
+              expression: exports.sentAt,
+              mode: OrderingMode.desc,
+            ),
+          ]);
     return query.watch().map(
-          (rows) => rows.map((r) => r.readTable(exports)).toList(),
-        );
+      (rows) => rows.map((r) => r.readTable(exports)).toList(),
+    );
   }
 
   Future<Export?> findById(String id) {
@@ -85,9 +87,9 @@ class ExportsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<List<ExportRecipient>> watchRecipientsFor(String exportId) {
-    return (select(exportRecipients)
-          ..where((r) => r.exportId.equals(exportId)))
-        .watch();
+    return (select(
+      exportRecipients,
+    )..where((r) => r.exportId.equals(exportId))).watch();
   }
 
   /// Create a fresh export row. Returns the id so the caller can

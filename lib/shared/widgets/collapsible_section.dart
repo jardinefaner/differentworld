@@ -68,8 +68,9 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
           child: InkWell(
             onTap: _toggle,
             child: Padding(
-              padding:
-                  widget.headerPadding.add(const EdgeInsets.symmetric(vertical: 6)),
+              padding: widget.headerPadding.add(
+                const EdgeInsets.symmetric(vertical: 6),
+              ),
               child: Row(
                 children: [
                   if (widget.icon != null) ...[
@@ -93,7 +94,10 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.expand_more, color: scheme.onSurfaceVariant),
+                    child: Icon(
+                      Icons.expand_more,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -103,8 +107,9 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
         AnimatedCrossFade(
           firstChild: widget.child,
           secondChild: const SizedBox(width: double.infinity),
-          crossFadeState:
-              _expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+          crossFadeState: _expanded
+              ? CrossFadeState.showFirst
+              : CrossFadeState.showSecond,
           duration: const Duration(milliseconds: 200),
           sizeCurve: Curves.easeOutCubic,
         ),

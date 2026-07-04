@@ -47,7 +47,9 @@ void main() {
     setUp(() async {
       db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.createMigrator().createAll();
-      await db.into(db.members).insert(
+      await db
+          .into(db.members)
+          .insert(
             MembersCompanion.insert(
               id: 'm1',
               displayName: 'Tess',
@@ -69,8 +71,9 @@ void main() {
     });
 
     Future<Viewer> viewerFor(String id) async {
-      final m = await (db.select(db.members)..where((t) => t.id.equals(id)))
-          .getSingle();
+      final m = await (db.select(
+        db.members,
+      )..where((t) => t.id.equals(id))).getSingle();
       return Viewer(member: m, space: null);
     }
 
@@ -87,15 +90,18 @@ void main() {
       expect(v.archetypeId, isNull);
     });
 
-    test('archetype never affects a capability gate (decorates only)', () async {
-      final actions = container.read(memberCapActionsProvider);
-      await actions.setArchetype('m1', 'protector');
-      final v = await viewerFor('m1');
-      // Setting an archetype must not grant any boolean cap.
-      expect(v.canObserve, isFalse);
-      expect(v.canManageSpace, isFalse);
-      expect(v.memberCaps.getString(MemberCaps.archetype), 'protector');
-    });
+    test(
+      'archetype never affects a capability gate (decorates only)',
+      () async {
+        final actions = container.read(memberCapActionsProvider);
+        await actions.setArchetype('m1', 'protector');
+        final v = await viewerFor('m1');
+        // Setting an archetype must not grant any boolean cap.
+        expect(v.canObserve, isFalse);
+        expect(v.canManageSpace, isFalse);
+        expect(v.memberCaps.getString(MemberCaps.archetype), 'protector');
+      },
+    );
   });
 
   group('Role-3: archetype tunes the palette (decorates, never gates)', () {
@@ -185,8 +191,13 @@ void main() {
       expect(tuned.first.route, '/captures/new');
       expect(
         tuned.where((t) => t.route != '/captures/new').map((t) => t.route),
-        ['/insights', '/settings/program', '/settings/team', '/schedule',
-            '/present'],
+        [
+          '/insights',
+          '/settings/program',
+          '/settings/team',
+          '/schedule',
+          '/present',
+        ],
       );
     });
 

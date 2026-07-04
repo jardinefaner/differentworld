@@ -22,9 +22,11 @@ import '_helpers.dart';
 /// emoji font in the test bundle) — so the glyph shows as a placeholder box;
 /// the LABEL + LENS (the substance) render for real.
 Future<void> _loadFonts() async {
-  final manifest = json.decode(
-    await rootBundle.loadString('FontManifest.json'),
-  ) as List<dynamic>;
+  final manifest =
+      json.decode(
+            await rootBundle.loadString('FontManifest.json'),
+          )
+          as List<dynamic>;
   for (final entry in manifest) {
     final family = (entry as Map<String, dynamic>)['family'] as String;
     final loader = FontLoader(family);
@@ -48,7 +50,12 @@ void main() {
 
   // The gold world-accent (AppColors.gold) — the signature colour of the
   // Different World / Action Words surfaces, tuned per brightness.
-  _scene('worlds/gold_accent', width: 440, height: 260, (_) => const _GoldAccent());
+  _scene(
+    'worlds/gold_accent',
+    width: 440,
+    height: 260,
+    (_) => const _GoldAccent(),
+  );
 
   // The world ATOMS — one plate per atom (the action-words vocabulary).
   _scene('worlds/atom_verb', width: 480, height: 150, (c) {
@@ -81,7 +88,10 @@ void main() {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(color: gold, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: gold,
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           const SizedBox(width: 12),
           Text(
@@ -109,7 +119,10 @@ void main() {
           children: [
             Text(
               'explore',
-              style: theme.textTheme.titleLarge?.copyWith(color: gold, fontWeight: FontWeight.w400),
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: gold,
+                fontWeight: FontWeight.w400,
+              ),
             ),
             const SizedBox(height: 3),
             const Text(
@@ -130,7 +143,10 @@ void main() {
     return _worldPlate(
       Container(
         width: 240,
-        decoration: BoxDecoration(color: cueColor, borderRadius: BorderRadius.circular(14)),
+        decoration: BoxDecoration(
+          color: cueColor,
+          borderRadius: BorderRadius.circular(14),
+        ),
         padding: const EdgeInsets.symmetric(vertical: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -139,7 +155,10 @@ void main() {
             const SizedBox(height: 10),
             Text(
               'Eyes up',
-              style: theme.textTheme.headlineSmall?.copyWith(color: cueFg, fontWeight: FontWeight.w400),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: cueFg,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),
@@ -165,10 +184,20 @@ void main() {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: on ? gold.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.04),
-                    border: Border(left: BorderSide(color: on ? gold : Colors.white24, width: 3)),
+                    color: on
+                        ? gold.withValues(alpha: 0.12)
+                        : Colors.white.withValues(alpha: 0.04),
+                    border: Border(
+                      left: BorderSide(
+                        color: on ? gold : Colors.white24,
+                        width: 3,
+                      ),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
                   child: Text(
                     w,
                     style: theme.textTheme.titleLarge?.copyWith(
@@ -343,8 +372,8 @@ class _Swatch extends StatelessWidget {
 
 /// Centres one atom or molecule on the dark world surface — one plate each.
 Widget _worldPlate(Widget child) => ColoredBox(
-      color: const Color(0xFF10100F),
-      child: Center(
-        child: Padding(padding: const EdgeInsets.all(28), child: child),
-      ),
-    );
+  color: const Color(0xFF10100F),
+  child: Center(
+    child: Padding(padding: const EdgeInsets.all(28), child: child),
+  ),
+);

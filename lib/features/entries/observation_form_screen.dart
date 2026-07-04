@@ -74,6 +74,7 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   String? _subjectId;
   bool _saving = false;
   bool _photoUploading = false;
+
   /// Wave 117: true while the user is hovering with a dragged file
   /// (from the OS or the browser) over the photo grid. Drives the
   /// hover-highlight on the DropTarget.
@@ -324,7 +325,8 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       // old getTemporaryDirectory()/File() write crashed on web (no
       // filesystem). _handleDroppedFiles filters on name + mimeType, not
       // path, so the in-memory XFile passes its image check.
-      final name = 'paste_${DateTime.now().millisecondsSinceEpoch}'
+      final name =
+          'paste_${DateTime.now().millisecondsSinceEpoch}'
           '.${fmt == Formats.png ? 'png' : 'jpg'}';
       final mime = fmt == Formats.png ? 'image/png' : 'image/jpeg';
       await _handleDroppedFiles([
@@ -348,13 +350,18 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
     // image, accept; reject everything else.
     final images = <XFile>[];
     const imageExts = {
-      '.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif',
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.webp',
+      '.gif',
+      '.heic',
+      '.heif',
     };
     for (final f in files) {
       final name = f.name.toLowerCase();
       final mime = f.mimeType?.toLowerCase() ?? '';
-      final isImage = mime.startsWith('image/') ||
-          imageExts.any(name.endsWith);
+      final isImage = mime.startsWith('image/') || imageExts.any(name.endsWith);
       if (isImage) images.add(f);
     }
     if (images.isEmpty) {
@@ -703,37 +710,47 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
             // contents fall through to TextField's normal paste.
             CallbackShortcuts(
               bindings: {
-                const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
-                    () => unawaited(_handlePasteShortcut()),
-                const SingleActivator(LogicalKeyboardKey.keyV, control: true):
-                    () => unawaited(_handlePasteShortcut()),
+                const SingleActivator(
+                  LogicalKeyboardKey.keyV,
+                  meta: true,
+                ): () =>
+                    unawaited(_handlePasteShortcut()),
+                const SingleActivator(
+                  LogicalKeyboardKey.keyV,
+                  control: true,
+                ): () =>
+                    unawaited(_handlePasteShortcut()),
               },
               child: TextField(
-              controller: _textCtrl,
-              autofocus: !_isEdit && _subjectId != null,
-              minLines: 4,
-              maxLines: 10,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: 'What happened?',
-                helperText: _voiceActive ? 'Listening…' : null,
-                border: const OutlineInputBorder(),
-                // Mic lives as the suffix so it sits adjacent to the
-                // text the user is dictating into. Tap toggles a live
-                // Deepgram session; the transcript appends to the
-                // existing prefix so typed-then-dictated works.
-                suffixIcon: IconButton(
-                  tooltip: _voiceActive ? 'Stop dictation' : 'Dictate by voice',
-                  icon: Icon(
-                    _voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
-                    color: _voiceActive
-                        ? Theme.of(context).colorScheme.error
-                        : null,
+                controller: _textCtrl,
+                autofocus: !_isEdit && _subjectId != null,
+                minLines: 4,
+                maxLines: 10,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  labelText: 'What happened?',
+                  helperText: _voiceActive ? 'Listening…' : null,
+                  border: const OutlineInputBorder(),
+                  // Mic lives as the suffix so it sits adjacent to the
+                  // text the user is dictating into. Tap toggles a live
+                  // Deepgram session; the transcript appends to the
+                  // existing prefix so typed-then-dictated works.
+                  suffixIcon: IconButton(
+                    tooltip: _voiceActive
+                        ? 'Stop dictation'
+                        : 'Dictate by voice',
+                    icon: Icon(
+                      _voiceActive
+                          ? Icons.stop_circle
+                          : Icons.mic_none_outlined,
+                      color: _voiceActive
+                          ? Theme.of(context).colorScheme.error
+                          : null,
+                    ),
+                    onPressed: _toggleVoice,
                   ),
-                  onPressed: _toggleVoice,
                 ),
               ),
-            ),
             ),
             const SizedBox(height: 16),
             // Wave 117: DropTarget accepts files dragged from the OS
@@ -764,8 +781,9 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
                           width: 2,
                         ),
                   color: _isDragging
-                      ? theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.18)
+                      ? theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.18,
+                        )
                       : Colors.transparent,
                 ),
                 padding: const EdgeInsets.all(4),

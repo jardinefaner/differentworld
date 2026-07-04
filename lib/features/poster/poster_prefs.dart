@@ -31,7 +31,11 @@ class PosterPrefs {
           PosterOrientation.auto,
         ),
         fit: _enumByName(PosterFit.values, map['fit'], PosterFit.whole),
-        paper: _enumByName(PosterPaper.values, map['paper'], PosterPaper.letter),
+        paper: _enumByName(
+          PosterPaper.values,
+          map['paper'],
+          PosterPaper.letter,
+        ),
         quality: _enumByName(
           PosterQuality.values,
           map['quality'],
@@ -67,7 +71,11 @@ class PosterPrefs {
     }
   }
 
-  static T _enumByName<T extends Enum>(List<T> values, Object? raw, T fallback) {
+  static T _enumByName<T extends Enum>(
+    List<T> values,
+    Object? raw,
+    T fallback,
+  ) {
     for (final v in values) {
       if (v.name == raw) return v;
     }

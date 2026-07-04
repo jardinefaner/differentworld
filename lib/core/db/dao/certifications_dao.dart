@@ -36,10 +36,9 @@ class CertificationsDao extends DatabaseAccessor<AppDatabase>
     required String memberId,
     required String certKey,
   }) {
-    return (select(memberCertifications)
-          ..where(
-            (c) => c.memberId.equals(memberId) & c.certKey.equals(certKey),
-          ))
+    return (select(memberCertifications)..where(
+          (c) => c.memberId.equals(memberId) & c.certKey.equals(certKey),
+        ))
         .getSingleOrNull();
   }
 
@@ -79,9 +78,9 @@ class CertificationsDao extends DatabaseAccessor<AppDatabase>
       );
       return id;
     }
-    await (update(memberCertifications)
-          ..where((c) => c.id.equals(existing.id)))
-        .write(
+    await (update(
+      memberCertifications,
+    )..where((c) => c.id.equals(existing.id))).write(
       MemberCertificationsCompanion(
         issuedAt: Value(issuedAt),
         expiresAt: Value(expiresAt),
@@ -94,18 +93,16 @@ class CertificationsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<void> deleteById(String id) async {
-    await (delete(memberCertifications)..where((c) => c.id.equals(id)))
-        .go();
+    await (delete(memberCertifications)..where((c) => c.id.equals(id))).go();
   }
 
   Future<void> deleteByMemberKey({
     required String memberId,
     required String certKey,
   }) async {
-    await (delete(memberCertifications)
-          ..where(
-            (c) => c.memberId.equals(memberId) & c.certKey.equals(certKey),
-          ))
+    await (delete(memberCertifications)..where(
+          (c) => c.memberId.equals(memberId) & c.certKey.equals(certKey),
+        ))
         .go();
   }
 }

@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// physical device, not the account.
 final roomScreenFollowsProvider =
     AsyncNotifierProvider<RoomScreenFollowsNotifier, String?>(
-  RoomScreenFollowsNotifier.new,
-);
+      RoomScreenFollowsNotifier.new,
+    );
 
 class RoomScreenFollowsNotifier extends AsyncNotifier<String?> {
   static const _key = 'cast.roomScreenFollows';

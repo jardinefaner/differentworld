@@ -21,15 +21,15 @@ class CharacterSheetsDao extends DatabaseAccessor<AppDatabase>
 
   /// Live view of a child's world-self (null until the day-one ritual).
   Stream<CharacterSheet?> watchForSubject(String subjectId) {
-    return (select(characterSheets)
-          ..where((c) => c.subjectId.equals(subjectId)))
-        .watchSingleOrNull();
+    return (select(
+      characterSheets,
+    )..where((c) => c.subjectId.equals(subjectId))).watchSingleOrNull();
   }
 
   Future<CharacterSheet?> findForSubject(String subjectId) {
-    return (select(characterSheets)
-          ..where((c) => c.subjectId.equals(subjectId)))
-        .getSingleOrNull();
+    return (select(
+      characterSheets,
+    )..where((c) => c.subjectId.equals(subjectId))).getSingleOrNull();
   }
 
   /// Ensure a sheet exists for the subject, returning it. Idempotent — the

@@ -57,12 +57,16 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
       code: widget.code,
     );
     _subs
-      ..add(session.states.listen((v) {
-        if (mounted) setState(() => _meta = v);
-      }))
-      ..add(session.status.listen((v) {
-        if (mounted) setState(() => _status = v);
-      }));
+      ..add(
+        session.states.listen((v) {
+          if (mounted) setState(() => _meta = v);
+        }),
+      )
+      ..add(
+        session.status.listen((v) {
+          if (mounted) setState(() => _status = v);
+        }),
+      );
     _session = session;
     _scheduleHide();
   }
@@ -81,8 +85,8 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
   }
 
   Future<void> _applyFullscreen() => SystemChrome.setEnabledSystemUIMode(
-        _fullscreen ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
-      );
+    _fullscreen ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+  );
 
   void _scheduleHide() {
     _hideTimer?.cancel();
@@ -116,7 +120,9 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
 
     final Widget body;
     if (gameId == null) {
-      body = SafeArea(child: _IdleCard(code: widget.code, status: _status));
+      body = SafeArea(
+        child: _IdleCard(code: widget.code, status: _status),
+      );
     } else if (def == null) {
       // The phone cast a game this build doesn't know (a newer app).
       body = const SafeArea(
@@ -129,7 +135,10 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
       // The clean stage — full-bleed, nothing else (no SafeArea by design).
       body = ColoredBox(
         color: def.vibe.surface,
-        child: def.buildStage(context, def.decode(CastSession.gameStateOf(_meta))),
+        child: def.buildStage(
+          context,
+          def.decode(CastSession.gameStateOf(_meta)),
+        ),
       );
     }
 

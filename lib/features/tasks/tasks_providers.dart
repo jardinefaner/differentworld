@@ -13,20 +13,21 @@ enum TaskFilter { open, all }
 /// All tasks matching the given filter in the signed-in user's
 /// space, due-first then oldest open first. Empty when no space.
 // ignore: specify_nonobvious_property_types
-final tasksProvider = StreamProvider.autoDispose
-    .family<List<Task>, TaskFilter>((ref, filter) async* {
-  final viewer = ref.watch(viewerProvider);
-  final spaceId = viewer.spaceId;
-  if (spaceId == null) {
-    yield const <Task>[];
-    return;
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* switch (filter) {
-    TaskFilter.open => db.tasksDao.watchOpen(spaceId),
-    TaskFilter.all => db.tasksDao.watchAll(spaceId),
-  };
-});
+final tasksProvider = StreamProvider.autoDispose.family<List<Task>, TaskFilter>(
+  (ref, filter) async* {
+    final viewer = ref.watch(viewerProvider);
+    final spaceId = viewer.spaceId;
+    if (spaceId == null) {
+      yield const <Task>[];
+      return;
+    }
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* switch (filter) {
+      TaskFilter.open => db.tasksDao.watchOpen(spaceId),
+      TaskFilter.all => db.tasksDao.watchAll(spaceId),
+    };
+  },
+);
 
 /// Open tasks only. Drives the Today launchpad badge + task list.
 // ignore: specify_nonobvious_property_types
@@ -39,13 +40,13 @@ final allTasksProvider = tasksProvider(TaskFilter.all);
 /// Tasks attached to a specific kid — surfaces on family / staff
 /// per-subject screens.
 // ignore: specify_nonobvious_property_types
-final tasksForSubjectProvider =
-    StreamProvider.autoDispose.family<List<Task>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.tasksDao.watchForSubject(subjectId);
-  },
-);
+final tasksForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Task>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.tasksDao.watchForSubject(subjectId);
+      },
+    );
 
 /// Status discriminator for the `tasks` table.
 class TaskStatus {

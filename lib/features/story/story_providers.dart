@@ -57,14 +57,14 @@ final roomMomentsProvider = Provider<AsyncValue<List<Moment>>>((ref) {
 /// logistics beats) stays in each screen — it's cheap (no decode).
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final momentsForSubjectProvider =
-    Provider.autoDispose.family<AsyncValue<List<Moment>>, String>(
-  (ref, subjectId) {
-    final entries = ref.watch(
-      entriesForSubjectProvider((subjectId: subjectId, kind: null)),
+final momentsForSubjectProvider = Provider.autoDispose
+    .family<AsyncValue<List<Moment>>, String>(
+      (ref, subjectId) {
+        final entries = ref.watch(
+          entriesForSubjectProvider((subjectId: subjectId, kind: null)),
+        );
+        // `whenData` maps only the data case, so loading / error pass straight
+        // through; the decode reruns only when the entries list actually changes.
+        return entries.whenData(momentsFrom);
+      },
     );
-    // `whenData` maps only the data case, so loading / error pass straight
-    // through; the decode reruns only when the entries list actually changes.
-    return entries.whenData(momentsFrom);
-  },
-);

@@ -28,8 +28,7 @@ class BlockPresentScreen extends ConsumerStatefulWidget {
   final String groupId;
 
   @override
-  ConsumerState<BlockPresentScreen> createState() =>
-      _BlockPresentScreenState();
+  ConsumerState<BlockPresentScreen> createState() => _BlockPresentScreenState();
 }
 
 class _BlockPresentScreenState extends ConsumerState<BlockPresentScreen> {

@@ -25,14 +25,14 @@ class NameItState {
   });
 
   factory NameItState.fromMap(Map<String, dynamic> m) => NameItState(
-        cards: [
-          for (final c in (m['cards'] as List? ?? const []))
-            NameItCard((c as Map)['image'] as String, c['label'] as String),
-        ],
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        revealed: m['r'] as bool? ?? false,
-        done: m['d'] as bool? ?? false,
-      );
+    cards: [
+      for (final c in (m['cards'] as List? ?? const []))
+        NameItCard((c as Map)['image'] as String, c['label'] as String),
+    ],
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    revealed: m['r'] as bool? ?? false,
+    done: m['d'] as bool? ?? false,
+  );
 
   final List<NameItCard> cards;
   final int index;
@@ -65,11 +65,11 @@ class NameItGame extends GameDefinition<NameItState> {
 
   @override
   Map<String, dynamic> initialState(ContentSource content) => {
-        'cards': const <Map<String, String>>[],
-        'i': 0,
-        'r': false,
-        'd': false,
-      };
+    'cards': const <Map<String, String>>[],
+    'i': 0,
+    'r': false,
+    'd': false,
+  };
 
   @override
   NameItState decode(Map<String, dynamic> state) => NameItState.fromMap(state);
@@ -114,10 +114,10 @@ class NameItGame extends GameDefinition<NameItState> {
 
   @override
   Set<GameIntent> activeIntents(NameItState s) => {
-        if (s.index > 0) GameIntent.back,
-        if (!s.revealed) GameIntent.reveal,
-        if (s.index < s.cards.length - 1) GameIntent.next,
-      };
+    if (s.index > 0) GameIntent.back,
+    if (!s.revealed) GameIntent.reveal,
+    if (s.index < s.cards.length - 1) GameIntent.next,
+  };
 
   @override
   Widget buildStage(BuildContext context, NameItState s) {

@@ -41,7 +41,10 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     // The advance control is present (Next prompt, or Wrap up on a 1-deck).
     final advancing =
-        find.widgetWithText(FilledButton, 'Next prompt').evaluate().isNotEmpty ||
+        find
+            .widgetWithText(FilledButton, 'Next prompt')
+            .evaluate()
+            .isNotEmpty ||
         find.widgetWithText(FilledButton, 'Wrap up').evaluate().isNotEmpty;
     expect(advancing, isTrue);
     expect(find.text('Back'), findsOneWidget);

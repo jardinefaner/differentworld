@@ -21,7 +21,11 @@ import 'package:image_picker/image_picker.dart' show XFile;
 
 /// One pen stroke — a color, a width, and the points it passes through.
 class DrawingStroke {
-  DrawingStroke({required this.color, required this.width, required this.points});
+  DrawingStroke({
+    required this.color,
+    required this.width,
+    required this.points,
+  });
 
   final Color color;
   final double width;
@@ -219,7 +223,11 @@ class _DrawingPainter extends CustomPainter {
 /// The color + brush-thickness tools, styled for the dark drawing chrome.
 /// Reflects + drives the [controller]; [enabled] off while saving.
 class DrawingTools extends StatelessWidget {
-  const DrawingTools({required this.controller, this.enabled = true, super.key});
+  const DrawingTools({
+    required this.controller,
+    this.enabled = true,
+    super.key,
+  });
 
   final DrawingController controller;
   final bool enabled;
@@ -265,9 +273,7 @@ class DrawingTools extends StatelessWidget {
                               color: c,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selected
-                                    ? Colors.white
-                                    : Colors.white24,
+                                color: selected ? Colors.white : Colors.white24,
                                 width: selected ? 4 : 1.5,
                               ),
                             ),
@@ -415,7 +421,9 @@ class _DrawingPadScreenState extends State<_DrawingPadScreen> {
                 children: [
                   IconButton(
                     tooltip: 'Cancel',
-                    onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close, color: Colors.white),
                     iconSize: 28,
                   ),

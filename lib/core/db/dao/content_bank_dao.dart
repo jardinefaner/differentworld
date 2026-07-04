@@ -20,9 +20,9 @@ class ContentBankDao extends DatabaseAccessor<AppDatabase>
 
   /// Everything [spaceId] can see: global rows ∪ its own. Feeds the bank.
   Stream<List<ContentItemRow>> watchForSpace(String spaceId) {
-    return (select(contentItems)
-          ..where((c) => c.spaceId.isNull() | c.spaceId.equals(spaceId)))
-        .watch();
+    return (select(
+      contentItems,
+    )..where((c) => c.spaceId.isNull() | c.spaceId.equals(spaceId))).watch();
   }
 
   /// Global rows only — for a viewer with no space yet (guardian /
@@ -96,9 +96,9 @@ class ContentBankDao extends DatabaseAccessor<AppDatabase>
   /// label is preserved; a no-op if the row is gone (deleted before the upload
   /// landed) or its payload is malformed.
   Future<void> updatePicturePath(String id, String realPath) async {
-    final row =
-        await (select(contentItems)..where((c) => c.id.equals(id)))
-            .getSingleOrNull();
+    final row = await (select(
+      contentItems,
+    )..where((c) => c.id.equals(id))).getSingleOrNull();
     if (row == null) return;
     final Map<String, Object?> payload;
     try {
@@ -116,8 +116,9 @@ class ContentBankDao extends DatabaseAccessor<AppDatabase>
   /// Edit an authored item's payload (rename a picture, fix a pair). Only the
   /// payload is mutable; kind / space / source are fixed at creation.
   Future<void> updatePayload(String id, String payload) async {
-    await (update(contentItems)..where((c) => c.id.equals(id)))
-        .write(ContentItemsCompanion(payload: Value(payload)));
+    await (update(contentItems)..where((c) => c.id.equals(id))).write(
+      ContentItemsCompanion(payload: Value(payload)),
+    );
   }
 
   /// Remove an authored item. Hard delete — PowerSync propagates it; the

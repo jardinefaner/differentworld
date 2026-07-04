@@ -112,7 +112,8 @@ PickupBoard computePickupBoard({
       // Everyone who came today: present / late (in the building) or
       // early_pickup (came, already left early). Absent / excused / no
       // record never appear.
-      final came = st == AttendanceStatus.present ||
+      final came =
+          st == AttendanceStatus.present ||
           st == AttendanceStatus.late ||
           st == AttendanceStatus.earlyPickup;
       if (!came) continue;
@@ -137,8 +138,9 @@ PickupBoard computePickupBoard({
       a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase());
   // Still-here: cohort, then name (scans like the roster).
   stillHere.sort((a, b) {
-    final byGroup =
-        a.group.name.toLowerCase().compareTo(b.group.name.toLowerCase());
+    final byGroup = a.group.name.toLowerCase().compareTo(
+      b.group.name.toLowerCase(),
+    );
     return byGroup != 0 ? byGroup : byName(a, b);
   });
   // Released: board releases (with a timestamp) most-recent first, then
@@ -249,5 +251,6 @@ class PickupBoardActions {
   }
 }
 
-final pickupBoardActionsProvider =
-    Provider<PickupBoardActions>(PickupBoardActions.new);
+final pickupBoardActionsProvider = Provider<PickupBoardActions>(
+  PickupBoardActions.new,
+);

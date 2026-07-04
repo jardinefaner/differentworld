@@ -117,13 +117,13 @@ class _HorizonPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) => paintHorizon(
-        canvas,
-        size,
-        field: field,
-        ink: ink,
-        sun: sun,
-        markScale: markScale,
-      );
+    canvas,
+    size,
+    field: field,
+    ink: ink,
+    sun: sun,
+    markScale: markScale,
+  );
 
   @override
   bool shouldRepaint(_HorizonPainter old) =>

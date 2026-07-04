@@ -8,8 +8,7 @@ part 'tasks_dao.g.dart';
 /// or a Discard). Tasks can stand alone or live attached to a kid
 /// via `subject_id`.
 @DriftAccessor(tables: [Tasks])
-class TasksDao extends DatabaseAccessor<AppDatabase>
-    with _$TasksDaoMixin {
+class TasksDao extends DatabaseAccessor<AppDatabase> with _$TasksDaoMixin {
   TasksDao(super.attachedDatabase);
 
   /// Open tasks in a space, due-date first (nulls last), then oldest
@@ -32,9 +31,9 @@ class TasksDao extends DatabaseAccessor<AppDatabase>
           ..where((t) => t.spaceId.equals(spaceId))
           ..orderBy([
             (t) => OrderingTerm(
-                  expression: t.createdAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: t.createdAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }

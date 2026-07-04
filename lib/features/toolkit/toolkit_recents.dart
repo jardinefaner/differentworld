@@ -19,8 +19,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// shelf at the top of the catalog gets the common case to 1 tap.
 final toolkitRecentsProvider =
     AsyncNotifierProvider<ToolkitRecentsNotifier, List<String>>(
-  ToolkitRecentsNotifier.new,
-);
+      ToolkitRecentsNotifier.new,
+    );
 
 class ToolkitRecentsNotifier extends AsyncNotifier<List<String>> {
   /// Storage key.

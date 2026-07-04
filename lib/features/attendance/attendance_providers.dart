@@ -14,22 +14,22 @@ typedef AttendanceKey = ({String groupId, String date});
 // ignore: specify_nonobvious_property_types
 final attendanceForDayProvider =
     StreamProvider.family<List<AttendanceRecord>, AttendanceKey>(
-  (ref, key) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.attendanceDao.watchForGroupOnDate(key.groupId, key.date);
-  },
-);
+      (ref, key) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attendanceDao.watchForGroupOnDate(key.groupId, key.date);
+      },
+    );
 
 /// Every attendance record for a single subject, newest first. Drives
 /// the per-kid history (subject detail, progress report export).
 // ignore: specify_nonobvious_property_types
-final attendanceForSubjectProvider =
-    StreamProvider.autoDispose.family<List<AttendanceRecord>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.attendanceDao.watchForSubject(subjectId);
-  },
-);
+final attendanceForSubjectProvider = StreamProvider.autoDispose
+    .family<List<AttendanceRecord>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attendanceDao.watchForSubject(subjectId);
+      },
+    );
 
 class AttendanceActions {
   AttendanceActions(this._ref);
@@ -123,5 +123,6 @@ class AttendanceActions {
   }
 }
 
-final attendanceActionsProvider =
-    Provider<AttendanceActions>(AttendanceActions.new);
+final attendanceActionsProvider = Provider<AttendanceActions>(
+  AttendanceActions.new,
+);

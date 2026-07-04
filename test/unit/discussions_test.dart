@@ -10,7 +10,11 @@ void main() {
     test('is non-empty with unique fingerprints', () {
       expect(discussionLibrary, isNotEmpty);
       final fps = discussionLibrary.map((d) => d.fingerprint).toSet();
-      expect(fps, hasLength(discussionLibrary.length), reason: 'unique prompts');
+      expect(
+        fps,
+        hasLength(discussionLibrary.length),
+        reason: 'unique prompts',
+      );
     });
 
     test('every prompt has a known topic, a non-empty band set, real text', () {

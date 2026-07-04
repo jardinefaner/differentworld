@@ -172,7 +172,10 @@ class NowNextGame extends GameDefinition<NowNextState> {
         const Spacer(),
         Text(
           n == 0 ? '—' : '${state.index + 1} of $n',
-          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            color: Colors.white70,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const Spacer(),
         FilledButton.icon(
@@ -205,7 +208,9 @@ class _Banner extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(big ? 28 : 18),
       decoration: BoxDecoration(
-        color: big ? accent.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.06),
+        color: big
+            ? accent.withValues(alpha: 0.18)
+            : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: big ? accent : Colors.white24,
@@ -238,14 +243,15 @@ class _Banner extends StatelessWidget {
               Expanded(
                 child: Text(
                   block?.title ?? '',
-                  style: (big
-                          ? theme.textTheme.displaySmall
-                          : theme.textTheme.headlineSmall)
-                      ?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w400,
-                        height: 1.05,
-                      ),
+                  style:
+                      (big
+                              ? theme.textTheme.displaySmall
+                              : theme.textTheme.headlineSmall)
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w400,
+                            height: 1.05,
+                          ),
                 ),
               ),
             ],

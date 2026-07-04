@@ -37,7 +37,8 @@ enum ChibiVariant {
   eggCream,
 
   /// Egg, teal. Cool counterweight to the warm cream egg.
-  eggTeal;
+  eggTeal
+  ;
 
   /// Deterministic rotation across questions. Q0 → tallCoral, Q1 →
   /// tallSky, …, Q8 → tallCoral again. Even if a template grows past
@@ -73,15 +74,16 @@ enum ChibiExpression {
 
   /// Bigger D-smile, brighter sparkles, slight bounce. The closeout
   /// celebration face.
-  excited;
+  excited
+  ;
 
   /// Map an agree3 answer (0/1/2) to the matching expression.
   static ChibiExpression forAgree3(int value) => switch (value) {
-        0 => ChibiExpression.sad,
-        1 => ChibiExpression.unsure,
-        2 => ChibiExpression.happy,
-        _ => ChibiExpression.neutral,
-      };
+    0 => ChibiExpression.sad,
+    1 => ChibiExpression.unsure,
+    2 => ChibiExpression.happy,
+    _ => ChibiExpression.neutral,
+  };
 
   /// "No / Disagree / Sad" labels for the agree3 triplet.
   static String agree3Label(int value, {bool practice = false}) {
@@ -170,10 +172,10 @@ class _ChibiSmileyState extends State<ChibiSmiley>
     final scale = widget.tapping
         ? 1.12
         : widget.selected
-            ? 1.08
-            : widget.dimmed
-                ? 0.92
-                : 1.0;
+        ? 1.08
+        : widget.dimmed
+        ? 0.92
+        : 1.0;
     final opacity = widget.dimmed ? 0.45 : 1.0;
 
     return AnimatedOpacity(
@@ -230,64 +232,64 @@ const _commonBlush = Color(0xFFE8634A);
 _ChibiPalette _paletteFor(ChibiVariant v) {
   return switch (v) {
     ChibiVariant.tallCoral => const _ChibiPalette(
-        fill: Color(0xFFEF6F63),
-        shade: Color(0xFFC34A3E),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFFEF6F63),
+      shade: Color(0xFFC34A3E),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.tallSky => const _ChibiPalette(
-        fill: Color(0xFF7EB7E0),
-        shade: Color(0xFF4F8AB5),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFF7EB7E0),
+      shade: Color(0xFF4F8AB5),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.circleGold => const _ChibiPalette(
-        fill: Color(0xFFF6D469),
-        shade: Color(0xFFC9A23A),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFFF6D469),
+      shade: Color(0xFFC9A23A),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.circleGrass => const _ChibiPalette(
-        fill: Color(0xFF8FC9A3),
-        shade: Color(0xFF5E9A78),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFF8FC9A3),
+      shade: Color(0xFF5E9A78),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.wideLavender => const _ChibiPalette(
-        fill: Color(0xFFBDA8E0),
-        shade: Color(0xFF8E76BB),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFFBDA8E0),
+      shade: Color(0xFF8E76BB),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.wideOrange => const _ChibiPalette(
-        fill: Color(0xFFF4A05B),
-        shade: Color(0xFFCC7733),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFFF4A05B),
+      shade: Color(0xFFCC7733),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.eggCream => const _ChibiPalette(
-        fill: Color(0xFFF7E3B1),
-        shade: Color(0xFFCAA866),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFFF7E3B1),
+      shade: Color(0xFFCAA866),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
     ChibiVariant.eggTeal => const _ChibiPalette(
-        fill: Color(0xFF7BC4C4),
-        shade: Color(0xFF4F9494),
-        ink: _ink,
-        blush: _commonBlush,
-      ),
+      fill: Color(0xFF7BC4C4),
+      shade: Color(0xFF4F9494),
+      ink: _ink,
+      blush: _commonBlush,
+    ),
   };
 }
 
 enum _BodyShape { tall, circle, wide, egg }
 
 _BodyShape _shapeFor(ChibiVariant v) => switch (v) {
-      ChibiVariant.tallCoral || ChibiVariant.tallSky => _BodyShape.tall,
-      ChibiVariant.circleGold || ChibiVariant.circleGrass => _BodyShape.circle,
-      ChibiVariant.wideLavender || ChibiVariant.wideOrange => _BodyShape.wide,
-      ChibiVariant.eggCream || ChibiVariant.eggTeal => _BodyShape.egg,
-    };
+  ChibiVariant.tallCoral || ChibiVariant.tallSky => _BodyShape.tall,
+  ChibiVariant.circleGold || ChibiVariant.circleGrass => _BodyShape.circle,
+  ChibiVariant.wideLavender || ChibiVariant.wideOrange => _BodyShape.wide,
+  ChibiVariant.eggCream || ChibiVariant.eggTeal => _BodyShape.egg,
+};
 
 // ---------------------------------------------------------------------------
 // Painter — everything procedurally drawn so the only assets we ship
@@ -528,11 +530,13 @@ class _ChibiPainter extends CustomPainter {
       canvas.save();
       canvas.translate(cx, 120);
       canvas.scale(s, s);
-      final rx = expression == ChibiExpression.happy ||
+      final rx =
+          expression == ChibiExpression.happy ||
               expression == ChibiExpression.excited
           ? 11.0
           : 10.0;
-      final ry = expression == ChibiExpression.happy ||
+      final ry =
+          expression == ChibiExpression.happy ||
               expression == ChibiExpression.excited
           ? 6.0
           : 5.5;
@@ -633,8 +637,8 @@ class _ChibiPainter extends CustomPainter {
     final opacity = raw < 0.2
         ? raw * 5
         : raw > 0.8
-            ? (1 - raw) * 5
-            : 1.0;
+        ? (1 - raw) * 5
+        : 1.0;
     final paint = Paint()
       ..color = const Color(0xFF6FB3C4).withValues(alpha: opacity.clamp(0, 1))
       ..isAntiAlias = true;
@@ -652,11 +656,29 @@ class _ChibiPainter extends CustomPainter {
     final extra = expression == ChibiExpression.excited;
     _drawOneSpark(canvas, 28, 58, phase: 0, color: const Color(0xFFF4B14A));
     _drawOneSpark(canvas, 174, 52, phase: 0.33, color: const Color(0xFFE8634A));
-    _drawOneSpark(canvas, 180, 112, phase: 0.66, color: const Color(0xFFF6D469));
+    _drawOneSpark(
+      canvas,
+      180,
+      112,
+      phase: 0.66,
+      color: const Color(0xFFF6D469),
+    );
     if (extra) {
       // Two more for the excited variant — feels louder + busier.
-      _drawOneSpark(canvas, 20, 130, phase: 0.15, color: const Color(0xFF8FC9A3));
-      _drawOneSpark(canvas, 170, 170, phase: 0.5, color: const Color(0xFFBDA8E0));
+      _drawOneSpark(
+        canvas,
+        20,
+        130,
+        phase: 0.15,
+        color: const Color(0xFF8FC9A3),
+      );
+      _drawOneSpark(
+        canvas,
+        170,
+        170,
+        phase: 0.5,
+        color: const Color(0xFFBDA8E0),
+      );
     }
   }
 

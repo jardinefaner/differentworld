@@ -46,13 +46,11 @@ class YearlyReviewScreen extends ConsumerWidget {
     final subjects =
         ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
-    final certs = ref.watch(certsInSpaceProvider).value ??
-        const <MemberCertification>[];
+    final certs =
+        ref.watch(certsInSpaceProvider).value ?? const <MemberCertification>[];
     final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
-    final insights =
-        ref.watch(insightsProvider).value ?? const <Insight>[];
-    final captures =
-        ref.watch(openCapturesProvider).value ?? const <Capture>[];
+    final insights = ref.watch(insightsProvider).value ?? const <Insight>[];
+    final captures = ref.watch(openCapturesProvider).value ?? const <Capture>[];
 
     final yearLabel = _academicYearLabel(DateTime.now());
 
@@ -119,7 +117,8 @@ class YearlyReviewScreen extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: ContentHeader(
             title: 'Yearly review',
-            subtitle: 'A snapshot of where your program is — '
+            subtitle:
+                'A snapshot of where your program is — '
                 'and an invitation to decide what comes next.',
           ),
         ),
@@ -192,7 +191,8 @@ class YearlyReviewScreen extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: ContentHeader(
             title: 'Yearly review',
-            subtitle: 'A snapshot of where your program is — '
+            subtitle:
+                'A snapshot of where your program is — '
                 'and an invitation to decide what comes next.',
           ),
         ),
@@ -370,10 +370,10 @@ class _NoticedSection extends StatelessWidget {
           child: Text(
             insights.isEmpty
                 ? "The system isn't surfacing any questions right now."
-                    ' Quiet is a good place to start the year from.'
+                      ' Quiet is a good place to start the year from.'
                 : '${insights.length} '
-                    '${insights.length == 1 ? 'question' : 'questions'} '
-                    'open across your data.',
+                      '${insights.length == 1 ? 'question' : 'questions'} '
+                      'open across your data.',
             style: theme.textTheme.bodyMedium,
           ),
         ),
@@ -656,9 +656,9 @@ class _SeverityChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w700,
-            ),
+          color: fg,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -676,15 +676,15 @@ class _FoundationPrompts extends StatelessWidget {
   static const _prompts = [
     (
       'Why does this program exist?',
-      'What did you tell yourself, back when you started, that this would be?'
+      'What did you tell yourself, back when you started, that this would be?',
     ),
     (
       'Who do we need on the team?',
-      'Roles + capabilities for the kids you have now and the ones coming.'
+      'Roles + capabilities for the kids you have now and the ones coming.',
     ),
     (
       "What's the build?",
-      'The single thing you most want to be different a year from now.'
+      'The single thing you most want to be different a year from now.',
     ),
   ];
 

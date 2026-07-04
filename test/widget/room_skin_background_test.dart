@@ -25,7 +25,9 @@ void main() {
     }
   });
 
-  testWidgets('a null skin renders nothing (the safe fallback)', (tester) async {
+  testWidgets('a null skin renders nothing (the safe fallback)', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const Center(
         child: SizedBox(

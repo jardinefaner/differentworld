@@ -70,12 +70,13 @@ class ErrorState extends StatelessWidget {
                 detail ??
                     "We couldn't reach the server. Your local data is "
                         'safe — try again in a moment.',
-                style: (isWide
-                        ? theme.textTheme.bodyMedium
-                        : theme.textTheme.bodySmall)
-                    ?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style:
+                    (isWide
+                            ? theme.textTheme.bodyMedium
+                            : theme.textTheme.bodySmall)
+                        ?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                 textAlign: TextAlign.center,
               ),
               if (onRetry != null) ...[

@@ -47,8 +47,10 @@ extension ViewerRequireX on Viewer {
   /// mutation needs both — most do.
   ({String spaceId, String memberId}) requireSpaceAndMember({
     String? action,
-  }) =>
-      (spaceId: requireSpaceId(action: action), memberId: requireMemberId(action: action));
+  }) => (
+    spaceId: requireSpaceId(action: action),
+    memberId: requireMemberId(action: action),
+  );
 }
 
 String _msg(String what, String? action) =>

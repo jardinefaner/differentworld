@@ -71,7 +71,10 @@ void main() {
       );
       final a = engine.take(ContentKind.riddle, 5);
       final b = engine.take(ContentKind.riddle, 5);
-      final seen = {...a.map((i) => i.fingerprint), ...b.map((i) => i.fingerprint)};
+      final seen = {
+        ...a.map((i) => i.fingerprint),
+        ...b.map((i) => i.fingerprint),
+      };
       expect(seen.length, a.length + b.length); // no overlap across two takes
     });
 
@@ -86,12 +89,20 @@ void main() {
           ),
       ];
       // First open: 2 served + recorded into the shared memory.
-      final first = ContentEngine(pool, generators: const {}, memory: mem, random: Random(1))
-          .take(ContentKind.riddle, 2);
+      final first = ContentEngine(
+        pool,
+        generators: const {},
+        memory: mem,
+        random: Random(1),
+      ).take(ContentKind.riddle, 2);
       final firstFps = first.map((i) => i.fingerprint).toSet();
       // Second open (new engine, SAME memory): the 2 unseen come first.
-      final second = ContentEngine(pool, generators: const {}, memory: mem, random: Random(9))
-          .take(ContentKind.riddle, 2);
+      final second = ContentEngine(
+        pool,
+        generators: const {},
+        memory: mem,
+        random: Random(9),
+      ).take(ContentKind.riddle, 2);
       final secondFps = second.map((i) => i.fingerprint).toSet();
       // The two NOT shown first time should both appear now.
       final unseen = pool

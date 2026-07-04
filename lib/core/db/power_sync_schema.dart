@@ -79,35 +79,39 @@ const appSchema = Schema([
     Column.integer('is_primary'),
     Column.text('created_at'),
   ]),
-  Table('attendance_records', [
-    Column.text('space_id'),
-    Column.text('group_id'),
-    Column.text('subject_id'),
-    Column.text('date'),
-    Column.text('status'),
-    Column.text('notes'),
-    Column.text('recorded_by'),
-    Column.text('recorded_at'),
-    Column.text('updated_at'),
-    // Wave 105: last-write attribution. Nullable on the server side
-    // (existing rows have no value); the local schema mirrors that.
-    Column.text('last_updated_by'),
-  ], indexes: [
-    // Attendance grows ~1 row per child per day; these keep the history strip,
-    // the per-group day grid, and the late-streak insight off a full scan.
-    Index('attendance_subject', [
-      IndexedColumn('subject_id'),
-      IndexedColumn.descending('date'),
-    ]), // history strip + subject/date upsert lookups
-    Index('attendance_space_date', [
-      IndexedColumn('space_id'),
-      IndexedColumn.descending('date'),
-    ]), // recentAttendanceBySubjectProvider — windowed late-streak insight
-    Index('attendance_group_date', [
-      IndexedColumn('group_id'),
-      IndexedColumn('date'),
-    ]), // the per-group, per-day attendance screen
-  ]),
+  Table(
+    'attendance_records',
+    [
+      Column.text('space_id'),
+      Column.text('group_id'),
+      Column.text('subject_id'),
+      Column.text('date'),
+      Column.text('status'),
+      Column.text('notes'),
+      Column.text('recorded_by'),
+      Column.text('recorded_at'),
+      Column.text('updated_at'),
+      // Wave 105: last-write attribution. Nullable on the server side
+      // (existing rows have no value); the local schema mirrors that.
+      Column.text('last_updated_by'),
+    ],
+    indexes: [
+      // Attendance grows ~1 row per child per day; these keep the history strip,
+      // the per-group day grid, and the late-streak insight off a full scan.
+      Index('attendance_subject', [
+        IndexedColumn('subject_id'),
+        IndexedColumn.descending('date'),
+      ]), // history strip + subject/date upsert lookups
+      Index('attendance_space_date', [
+        IndexedColumn('space_id'),
+        IndexedColumn.descending('date'),
+      ]), // recentAttendanceBySubjectProvider — windowed late-streak insight
+      Index('attendance_group_date', [
+        IndexedColumn('group_id'),
+        IndexedColumn('date'),
+      ]), // the per-group, per-day attendance screen
+    ],
+  ),
   Table('invites', [
     Column.text('space_id'),
     Column.text('email'),
@@ -128,49 +132,53 @@ const appSchema = Schema([
     Column.text('role_in_group'),
     Column.text('assigned_at'),
   ]),
-  Table('entries', [
-    Column.text('space_id'),
-    Column.text('group_id'),
-    Column.text('subject_id'),
-    // Live-block capture: the block this moment happened during (null =
-    // untagged). See docs/LIVE_BLOCK_CONTEXT.md.
-    Column.text('schedule_block_id'),
-    Column.text('kind'),
-    Column.text('text'),
-    Column.text('photo_url'),
-    Column.text('details'),
-    Column.text('recorded_by'),
-    Column.text('recorded_at'),
-    Column.text('updated_at'),
-  ], indexes: [
-    // `entries` grows unbounded with history, and EVERY watch filters by one
-    // owner column and orders newest-first. Without these, each stream
-    // emission full-scans + sorts the whole table locally. `recorded_at`
-    // descending makes `ORDER BY recorded_at DESC LIMIT n` a direct index
-    // prefix (no separate sort). One index per query shape in entries_dao.
-    Index('entries_space', [
-      IndexedColumn('space_id'),
-      IndexedColumn.descending('recorded_at'),
-    ]), // watchAllInSpace — the room Story (all kinds, newest first)
-    Index('entries_space_kind', [
-      IndexedColumn('space_id'),
-      IndexedColumn('kind'),
-      IndexedColumn.descending('recorded_at'),
-    ]), // watchInSpace(kind) — observation feed, action-words substrate
-    Index('entries_subject', [
-      IndexedColumn('subject_id'),
-      IndexedColumn.descending('recorded_at'),
-    ]), // watchForSubject — a child's Story / per-child timelines
-    Index('entries_group_kind', [
-      IndexedColumn('group_id'),
-      IndexedColumn('kind'),
-      IndexedColumn.descending('recorded_at'),
-    ]), // watchForGroup(kind) — a classroom's observations
-    Index('entries_block', [
-      IndexedColumn('schedule_block_id'),
-      IndexedColumn.descending('recorded_at'),
-    ]), // watchForBlock — live-block capture context
-  ]),
+  Table(
+    'entries',
+    [
+      Column.text('space_id'),
+      Column.text('group_id'),
+      Column.text('subject_id'),
+      // Live-block capture: the block this moment happened during (null =
+      // untagged). See docs/LIVE_BLOCK_CONTEXT.md.
+      Column.text('schedule_block_id'),
+      Column.text('kind'),
+      Column.text('text'),
+      Column.text('photo_url'),
+      Column.text('details'),
+      Column.text('recorded_by'),
+      Column.text('recorded_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      // `entries` grows unbounded with history, and EVERY watch filters by one
+      // owner column and orders newest-first. Without these, each stream
+      // emission full-scans + sorts the whole table locally. `recorded_at`
+      // descending makes `ORDER BY recorded_at DESC LIMIT n` a direct index
+      // prefix (no separate sort). One index per query shape in entries_dao.
+      Index('entries_space', [
+        IndexedColumn('space_id'),
+        IndexedColumn.descending('recorded_at'),
+      ]), // watchAllInSpace — the room Story (all kinds, newest first)
+      Index('entries_space_kind', [
+        IndexedColumn('space_id'),
+        IndexedColumn('kind'),
+        IndexedColumn.descending('recorded_at'),
+      ]), // watchInSpace(kind) — observation feed, action-words substrate
+      Index('entries_subject', [
+        IndexedColumn('subject_id'),
+        IndexedColumn.descending('recorded_at'),
+      ]), // watchForSubject — a child's Story / per-child timelines
+      Index('entries_group_kind', [
+        IndexedColumn('group_id'),
+        IndexedColumn('kind'),
+        IndexedColumn.descending('recorded_at'),
+      ]), // watchForGroup(kind) — a classroom's observations
+      Index('entries_block', [
+        IndexedColumn('schedule_block_id'),
+        IndexedColumn.descending('recorded_at'),
+      ]), // watchForBlock — live-block capture context
+    ],
+  ),
   Table('vehicles', [
     Column.text('space_id'),
     Column.text('name'),
@@ -209,42 +217,46 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
-  Table('attachments', [
-    Column.text('space_id'),
-    Column.text('entity_kind'),
-    Column.text('entity_id'),
-    Column.text('url'),
-    Column.text('thumb_url'),
-    Column.text('mime_type'),
-    Column.text('caption'),
-    Column.integer('sort_order'),
-    Column.text('uploaded_by'),
-    Column.text('taken_at'),
-    // The tag axes (migration 20260621000001): the child the photo is OF, the
-    // child who SHOT it (their progress folder), and the activity/block it
-    // came from. Each is a single-owner query.
-    Column.text('subject_id'),
-    Column.text('captured_by_subject_id'),
-    Column.text('schedule_block_id'),
-    Column.text('created_at'),
-    Column.text('updated_at'),
-  ], indexes: [
-    // Each new axis is a single-owner watch ordered newest-first — index so a
-    // per-child folder / per-block package doesn't full-scan the growing
-    // table (mirrors the entries indexes above).
-    Index('attachments_subject', [
-      IndexedColumn('subject_id'),
-      IndexedColumn.descending('created_at'),
-    ]),
-    Index('attachments_captured_by', [
-      IndexedColumn('captured_by_subject_id'),
-      IndexedColumn.descending('created_at'),
-    ]),
-    Index('attachments_block', [
-      IndexedColumn('schedule_block_id'),
-      IndexedColumn.descending('created_at'),
-    ]),
-  ]),
+  Table(
+    'attachments',
+    [
+      Column.text('space_id'),
+      Column.text('entity_kind'),
+      Column.text('entity_id'),
+      Column.text('url'),
+      Column.text('thumb_url'),
+      Column.text('mime_type'),
+      Column.text('caption'),
+      Column.integer('sort_order'),
+      Column.text('uploaded_by'),
+      Column.text('taken_at'),
+      // The tag axes (migration 20260621000001): the child the photo is OF, the
+      // child who SHOT it (their progress folder), and the activity/block it
+      // came from. Each is a single-owner query.
+      Column.text('subject_id'),
+      Column.text('captured_by_subject_id'),
+      Column.text('schedule_block_id'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      // Each new axis is a single-owner watch ordered newest-first — index so a
+      // per-child folder / per-block package doesn't full-scan the growing
+      // table (mirrors the entries indexes above).
+      Index('attachments_subject', [
+        IndexedColumn('subject_id'),
+        IndexedColumn.descending('created_at'),
+      ]),
+      Index('attachments_captured_by', [
+        IndexedColumn('captured_by_subject_id'),
+        IndexedColumn.descending('created_at'),
+      ]),
+      Index('attachments_block', [
+        IndexedColumn('schedule_block_id'),
+        IndexedColumn.descending('created_at'),
+      ]),
+    ],
+  ),
   Table('survey_responses', [
     Column.text('space_id'),
     Column.text('template_id'),
@@ -308,36 +320,40 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
-  Table('messages', [
-    Column.text('space_id'),
-    Column.text('subject_id'),
-    Column.text('guardian_id'),
-    Column.text('sender_kind'),
-    Column.text('sender_member_id'),
-    Column.text('sender_guardian_id'),
-    Column.text('body'),
-    Column.text('read_at'),
-    // JSONB on the server side; stored as raw JSON string locally.
-    // Per-guardian read-state for co-parent / multi-guardian threads.
-    Column.text('read_by_guardian_ids'),
-    Column.text('created_at'),
-  ], indexes: [
-    // Threads grow unbounded and every messages watch filters + orders by
-    // created_at; without these each open / new message full-scans the table.
-    Index('messages_thread', [
-      IndexedColumn('subject_id'),
-      IndexedColumn('guardian_id'),
-      IndexedColumn('created_at'),
-    ]), // watchThread — the staff↔guardian conversation (chronological)
-    Index('messages_guardian', [
-      IndexedColumn('guardian_id'),
-      IndexedColumn('created_at'),
-    ]), // watchAllForGuardian — a family's inbox
-    Index('messages_space', [
-      IndexedColumn('space_id'),
-      IndexedColumn('created_at'),
-    ]), // watchInSpace — the staff-side message surface
-  ]),
+  Table(
+    'messages',
+    [
+      Column.text('space_id'),
+      Column.text('subject_id'),
+      Column.text('guardian_id'),
+      Column.text('sender_kind'),
+      Column.text('sender_member_id'),
+      Column.text('sender_guardian_id'),
+      Column.text('body'),
+      Column.text('read_at'),
+      // JSONB on the server side; stored as raw JSON string locally.
+      // Per-guardian read-state for co-parent / multi-guardian threads.
+      Column.text('read_by_guardian_ids'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      // Threads grow unbounded and every messages watch filters + orders by
+      // created_at; without these each open / new message full-scans the table.
+      Index('messages_thread', [
+        IndexedColumn('subject_id'),
+        IndexedColumn('guardian_id'),
+        IndexedColumn('created_at'),
+      ]), // watchThread — the staff↔guardian conversation (chronological)
+      Index('messages_guardian', [
+        IndexedColumn('guardian_id'),
+        IndexedColumn('created_at'),
+      ]), // watchAllForGuardian — a family's inbox
+      Index('messages_space', [
+        IndexedColumn('space_id'),
+        IndexedColumn('created_at'),
+      ]), // watchInSpace — the staff-side message surface
+    ],
+  ),
   Table('exports', [
     Column.text('space_id'),
     Column.text('author_id'),

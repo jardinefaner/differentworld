@@ -54,8 +54,7 @@ class DebugViewerToggle extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Tooltip(
-        message:
-            'Debug · view as a different role. Currently: $label.',
+        message: 'Debug · view as a different role. Currently: $label.',
         child: Material(
           color: isOverridden
               ? theme.colorScheme.tertiaryContainer
@@ -123,8 +122,7 @@ class DebugViewerToggle extends ConsumerWidget {
               ];
             },
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

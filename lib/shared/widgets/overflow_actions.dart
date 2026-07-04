@@ -131,14 +131,14 @@ class OverflowActions extends StatelessWidget {
   /// Mirrors `FloatingActions`' inter-pill spacing (2 dp) so an inline
   /// row built here lines up with one built from raw widgets.
   Widget _row(List<Widget> children) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            children[i],
-            if (i < children.length - 1) const SizedBox(width: 2),
-          ],
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (var i = 0; i < children.length; i++) ...[
+        children[i],
+        if (i < children.length - 1) const SizedBox(width: 2),
+      ],
+    ],
+  );
 }
 
 /// The "⋯" pill — a [PopupMenuButton] sized + tinted to match

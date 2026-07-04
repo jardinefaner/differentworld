@@ -46,8 +46,9 @@ void main() {
     expect(find.text('Add pictures'), findsWidgets);
   });
 
-  testWidgets('data state shows the label, the add tile, and the mix toggle',
-      (tester) async {
+  testWidgets('data state shows the label, the add tile, and the mix toggle', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       harness(const [
         CustomPicture(id: 'p1', label: 'Our class dog', path: 'pending:p1'),

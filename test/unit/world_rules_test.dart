@@ -26,8 +26,11 @@ void main() {
         expect(rule.text, isNotEmpty);
         expect(rule.verbs, isNotEmpty);
         for (final v in rule.verbs) {
-          expect(verbIds.contains(v), isTrue,
-              reason: '${entry.key} rule references unknown verb "$v"');
+          expect(
+            verbIds.contains(v),
+            isTrue,
+            reason: '${entry.key} rule references unknown verb "$v"',
+          );
         }
       }
     }

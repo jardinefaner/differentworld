@@ -24,12 +24,18 @@ void main() {
 
   group('shotsFor — config resolution', () {
     test('blank / invalid capabilities → defaults', () {
-      expect(shotsFor('', 'checkout').map((s) => s.key),
-          defaultShotsFor('checkout').map((s) => s.key));
-      expect(shotsFor('not json', 'checkout').length,
-          defaultShotsFor('checkout').length);
-      expect(shotsFor('{}', 'checkout').length,
-          defaultShotsFor('checkout').length);
+      expect(
+        shotsFor('', 'checkout').map((s) => s.key),
+        defaultShotsFor('checkout').map((s) => s.key),
+      );
+      expect(
+        shotsFor('not json', 'checkout').length,
+        defaultShotsFor('checkout').length,
+      );
+      expect(
+        shotsFor('{}', 'checkout').length,
+        defaultShotsFor('checkout').length,
+      );
     });
 
     test('a per-vehicle config overrides the defaults', () {
@@ -37,7 +43,12 @@ void main() {
         'photoShots': {
           'checkout': [
             {'key': 'front', 'label': 'Front', 'hint': '', 'required': true},
-            {'key': 'tires', 'label': 'Tires', 'hint': 'all four', 'required': false},
+            {
+              'key': 'tires',
+              'label': 'Tires',
+              'hint': 'all four',
+              'required': false,
+            },
           ],
         },
       });
@@ -46,19 +57,26 @@ void main() {
       expect(shots[1].label, 'Tires');
     });
 
-    test('check-in re-appends the empty-cabin shot even if a config drops it', () {
-      final caps = jsonEncode({
-        'photoShots': {
-          'checkin': [
-            {'key': 'odometer', 'label': 'Odometer', 'required': true},
-          ],
-        },
-      });
-      final shots = shotsFor(caps, 'checkin');
-      final cabin = shots.where((s) => s.key == 'empty_cabin');
-      expect(cabin, hasLength(1), reason: 'safety floor — cannot be configured away');
-      expect(cabin.first.required, isTrue);
-    });
+    test(
+      'check-in re-appends the empty-cabin shot even if a config drops it',
+      () {
+        final caps = jsonEncode({
+          'photoShots': {
+            'checkin': [
+              {'key': 'odometer', 'label': 'Odometer', 'required': true},
+            ],
+          },
+        });
+        final shots = shotsFor(caps, 'checkin');
+        final cabin = shots.where((s) => s.key == 'empty_cabin');
+        expect(
+          cabin,
+          hasLength(1),
+          reason: 'safety floor — cannot be configured away',
+        );
+        expect(cabin.first.required, isTrue);
+      },
+    );
 
     test('a config for one kind does not affect the other', () {
       final caps = jsonEncode({
@@ -69,31 +87,36 @@ void main() {
         },
       });
       // checkout has no override → defaults
-      expect(shotsFor(caps, 'checkout').length,
-          defaultShotsFor('checkout').length);
+      expect(
+        shotsFor(caps, 'checkout').length,
+        defaultShotsFor('checkout').length,
+      );
     });
   });
 
   group('withPhotoShots — editor round-trip', () {
-    test('writes a shot-list that shotsFor reads back, preserving other caps', () {
-      const original = '{"canDrive":true}';
-      final newShots = [
-        const VehiclePhotoShot(
-          key: 'front',
-          label: 'Front',
-          hint: 'whole front',
-          required: true,
-        ),
-        const VehiclePhotoShot(key: 'roof', label: 'Roof', hint: ''),
-      ];
-      final updated = withPhotoShots(original, 'checkout', newShots);
+    test(
+      'writes a shot-list that shotsFor reads back, preserving other caps',
+      () {
+        const original = '{"canDrive":true}';
+        final newShots = [
+          const VehiclePhotoShot(
+            key: 'front',
+            label: 'Front',
+            hint: 'whole front',
+            required: true,
+          ),
+          const VehiclePhotoShot(key: 'roof', label: 'Roof', hint: ''),
+        ];
+        final updated = withPhotoShots(original, 'checkout', newShots);
 
-      // other capability keys survive
-      expect((jsonDecode(updated) as Map)['canDrive'], true);
-      // and the shots read back
-      final readBack = shotsFor(updated, 'checkout');
-      expect(readBack.map((s) => s.key), ['front', 'roof']);
-      expect(readBack.first.required, isTrue);
-    });
+        // other capability keys survive
+        expect((jsonDecode(updated) as Map)['canDrive'], true);
+        // and the shots read back
+        final readBack = shotsFor(updated, 'checkout');
+        expect(readBack.map((s) => s.key), ['front', 'roof']);
+        expect(readBack.first.required, isTrue);
+      },
+    );
   });
 }

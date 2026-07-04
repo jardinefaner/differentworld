@@ -160,17 +160,19 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
     _notifier = null;
     final key = _chromeKey;
     if (notifier != null) {
-      unawaited(Future.microtask(() {
-        try {
-          notifier.pop(key);
-        } on Object {
-          // Notifier may already be disposed (e.g. the ProviderScope
-          // tore down before the microtask ran — happens during test
-          // teardown and on app-shutdown). Chrome stack cleanup is
-          // best-effort housekeeping; if the provider's already gone,
-          // there's nothing to clean.
-        }
-      }));
+      unawaited(
+        Future.microtask(() {
+          try {
+            notifier.pop(key);
+          } on Object {
+            // Notifier may already be disposed (e.g. the ProviderScope
+            // tore down before the microtask ran — happens during test
+            // teardown and on app-shutdown). Chrome stack cleanup is
+            // best-effort housekeeping; if the provider's already gone,
+            // there's nothing to clean.
+          }
+        }),
+      );
     }
     super.dispose();
   }

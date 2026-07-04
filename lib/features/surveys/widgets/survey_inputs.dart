@@ -156,8 +156,8 @@ class SmileyChoice extends StatelessWidget {
                     color: dimmed
                         ? theme.colorScheme.onSurfaceVariant
                         : selected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface,
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
@@ -552,13 +552,9 @@ class _TextAnswerState extends State<TextAnswer> {
             // IconButton's default 48dp insets — same pattern the
             // observation form uses.
             suffixIcon: IconButton(
-              tooltip: _voiceActive
-                  ? 'Stop dictation'
-                  : 'Dictate by voice',
+              tooltip: _voiceActive ? 'Stop dictation' : 'Dictate by voice',
               icon: Icon(
-                _voiceActive
-                    ? Icons.stop_circle
-                    : Icons.mic_none_outlined,
+                _voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
                 color: _voiceActive ? theme.colorScheme.error : null,
               ),
               onPressed: _toggleVoice,
@@ -715,8 +711,9 @@ class _Scale5Cell extends StatelessWidget {
                     border: Border.all(
                       color: selected
                           ? color
-                          : theme.colorScheme.outlineVariant
-                                .withValues(alpha: 0.5),
+                          : theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.5,
+                            ),
                       width: selected ? 3 : 1,
                     ),
                   ),
@@ -742,11 +739,12 @@ class _Scale5Cell extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: dimmed
-                          ? theme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.6)
+                          ? theme.colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.6,
+                            )
                           : selected
-                              ? color
-                              : theme.colorScheme.onSurfaceVariant,
+                          ? color
+                          : theme.colorScheme.onSurfaceVariant,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                       height: 1.2,
                     ),

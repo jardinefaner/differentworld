@@ -27,10 +27,10 @@ class PickupPerson {
   final String? notes;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'name': name,
-        if (phone != null && phone!.isNotEmpty) 'phone': phone,
-        if (notes != null && notes!.isNotEmpty) 'notes': notes,
-      };
+    'name': name,
+    if (phone != null && phone!.isNotEmpty) 'phone': phone,
+    if (notes != null && notes!.isNotEmpty) 'notes': notes,
+  };
 }
 
 /// Decode the pickup_people list off a subject's capabilities blob.
@@ -75,5 +75,4 @@ class PickupActions {
   }
 }
 
-final pickupActionsProvider =
-    Provider<PickupActions>(PickupActions.new);
+final pickupActionsProvider = Provider<PickupActions>(PickupActions.new);

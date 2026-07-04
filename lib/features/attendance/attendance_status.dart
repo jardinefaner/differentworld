@@ -7,7 +7,8 @@ enum AttendanceStatus {
   absent,
   late,
   earlyPickup,
-  excused;
+  excused
+  ;
 
   /// Round-trip from DB string. Returns null on unknown values so a
   /// future server-side enum addition doesn't crash the client.
@@ -24,34 +25,34 @@ enum AttendanceStatus {
   }
 
   String get dbValue => switch (this) {
-        AttendanceStatus.present => 'present',
-        AttendanceStatus.absent => 'absent',
-        AttendanceStatus.late => 'late',
-        AttendanceStatus.earlyPickup => 'early_pickup',
-        AttendanceStatus.excused => 'excused',
-      };
+    AttendanceStatus.present => 'present',
+    AttendanceStatus.absent => 'absent',
+    AttendanceStatus.late => 'late',
+    AttendanceStatus.earlyPickup => 'early_pickup',
+    AttendanceStatus.excused => 'excused',
+  };
 
   String get label => switch (this) {
-        AttendanceStatus.present => 'Present',
-        AttendanceStatus.absent => 'Absent',
-        AttendanceStatus.late => 'Late',
-        AttendanceStatus.earlyPickup => 'Early pickup',
-        AttendanceStatus.excused => 'Excused',
-      };
+    AttendanceStatus.present => 'Present',
+    AttendanceStatus.absent => 'Absent',
+    AttendanceStatus.late => 'Late',
+    AttendanceStatus.earlyPickup => 'Early pickup',
+    AttendanceStatus.excused => 'Excused',
+  };
 
   IconData get icon => switch (this) {
-        AttendanceStatus.present => Icons.check_circle,
-        AttendanceStatus.absent => Icons.cancel_outlined,
-        AttendanceStatus.late => Icons.schedule,
-        AttendanceStatus.earlyPickup => Icons.directions_walk,
-        AttendanceStatus.excused => Icons.medical_information_outlined,
-      };
+    AttendanceStatus.present => Icons.check_circle,
+    AttendanceStatus.absent => Icons.cancel_outlined,
+    AttendanceStatus.late => Icons.schedule,
+    AttendanceStatus.earlyPickup => Icons.directions_walk,
+    AttendanceStatus.excused => Icons.medical_information_outlined,
+  };
 
   Color color(ColorScheme scheme) => switch (this) {
-        AttendanceStatus.present => scheme.primary,
-        AttendanceStatus.absent => scheme.error,
-        AttendanceStatus.late => scheme.tertiary,
-        AttendanceStatus.earlyPickup => scheme.secondary,
-        AttendanceStatus.excused => scheme.onSurfaceVariant,
-      };
+    AttendanceStatus.present => scheme.primary,
+    AttendanceStatus.absent => scheme.error,
+    AttendanceStatus.late => scheme.tertiary,
+    AttendanceStatus.earlyPickup => scheme.secondary,
+    AttendanceStatus.excused => scheme.onSurfaceVariant,
+  };
 }

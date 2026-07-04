@@ -17,18 +17,11 @@ class BentoSpan {
   });
 
   /// A full-bleed banner at every width (claims the whole row).
-  const BentoSpan.wide({this.rows = 1})
-      : phone = 2,
-        tablet = 4,
-        desktop = 6;
+  const BentoSpan.wide({this.rows = 1}) : phone = 2, tablet = 4, desktop = 6;
 
   /// The hero: full width on phone, two-thirds on tablet, two-thirds on
   /// desktop, and two rows tall.
-  const BentoSpan.hero()
-      : phone = 2,
-        tablet = 4,
-        desktop = 4,
-        rows = 2;
+  const BentoSpan.hero() : phone = 2, tablet = 4, desktop = 4, rows = 2;
 
   final int phone;
   final int tablet;
@@ -36,10 +29,10 @@ class BentoSpan {
   final int rows;
 
   int forColumns(int columns) => switch (columns) {
-        <= 2 => phone,
-        <= 4 => tablet,
-        _ => desktop,
-      };
+    <= 2 => phone,
+    <= 4 => tablet,
+    _ => desktop,
+  };
 }
 
 /// One module in a [BentoGrid]: a span + the widget that fills it. [id] keys
@@ -76,10 +69,10 @@ class BentoGrid extends StatelessWidget {
   final double baseRowHeight;
 
   static int columnsForWidth(double width) => switch (width) {
-        < 600 => 2,
-        < 1100 => 4,
-        _ => 6,
-      };
+    < 600 => 2,
+    < 1100 => 4,
+    _ => 6,
+  };
 
   @override
   Widget build(BuildContext context) {

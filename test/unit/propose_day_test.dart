@@ -57,8 +57,14 @@ void main() {
     });
 
     test('adapts to a longer window — flex blocks absorb the extra', () {
-      final short = DayTemplate.proposed(startMinute: 15 * 60, endMinute: 18 * 60);
-      final long = DayTemplate.proposed(startMinute: 14 * 60, endMinute: 19 * 60);
+      final short = DayTemplate.proposed(
+        startMinute: 15 * 60,
+        endMinute: 18 * 60,
+      );
+      final long = DayTemplate.proposed(
+        startMinute: 14 * 60,
+        endMinute: 19 * 60,
+      );
       expect(long.blocks.length, 7);
       expect(long.plannedMinutes, greaterThan(short.plannedMinutes));
       // Bookends stay 15m; only the program blocks grow.

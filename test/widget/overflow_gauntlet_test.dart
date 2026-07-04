@@ -57,16 +57,16 @@ void main() {
   final screens = <String, Widget Function(double scale)>{
     'login': (s) => ProviderScope(child: _scaledApp(s, const LoginScreen())),
     'captures': (s) => ProviderScope(
-          overrides: [
-            capturesProvider(CaptureFilter.open).overrideWith(
-              (_) => Stream<List<Capture>>.value(const <Capture>[]),
-            ),
-            capturesProvider(CaptureFilter.all).overrideWith(
-              (_) => Stream<List<Capture>>.value(const <Capture>[]),
-            ),
-          ],
-          child: _scaledApp(s, const CaptureInboxScreen()),
+      overrides: [
+        capturesProvider(CaptureFilter.open).overrideWith(
+          (_) => Stream<List<Capture>>.value(const <Capture>[]),
         ),
+        capturesProvider(CaptureFilter.all).overrideWith(
+          (_) => Stream<List<Capture>>.value(const <Capture>[]),
+        ),
+      ],
+      child: _scaledApp(s, const CaptureInboxScreen()),
+    ),
     // NOTE: data-gated screens (tasks, today, attendance, …) can't be
     // rendered to their data/empty state in isolation — their providers need
     // a viewer + space + DB this harness doesn't mock, so they stall on the
@@ -74,13 +74,13 @@ void main() {
     // primitives (EmptyState / ErrorState / LoadingSlot). Add such a screen
     // here only once there's a viewer/DB mock to resolve it.
     'insights': (s) => ProviderScope(
-          overrides: [
-            insightsProvider.overrideWith(
-              (_) => const AsyncValue<List<Insight>>.data(<Insight>[]),
-            ),
-          ],
-          child: _scaledApp(s, const InsightsScreen()),
+      overrides: [
+        insightsProvider.overrideWith(
+          (_) => const AsyncValue<List<Insight>>.data(<Insight>[]),
         ),
+      ],
+      child: _scaledApp(s, const InsightsScreen()),
+    ),
     // Provider-free (static deck); the card grid's fixed-height cells are
     // exactly the "fixed-height container around text" a11y trap, so the
     // deck earns a permanent gauntlet slot.
@@ -93,12 +93,16 @@ void main() {
       group('${sz.key} @ ${scale}x', () {
         for (final sc in screens.entries) {
           testWidgets(sc.key, (tester) async {
-            final overflows =
-                await _collectOverflows(tester, () => sc.value(scale), sz.value);
+            final overflows = await _collectOverflows(
+              tester,
+              () => sc.value(scale),
+              sz.value,
+            );
             expect(
               overflows,
               isEmpty,
-              reason: '${sc.key} @ ${sz.key} @ ${scale}x overflowed:\n'
+              reason:
+                  '${sc.key} @ ${sz.key} @ ${scale}x overflowed:\n'
                   '${overflows.join('\n')}',
             );
           });
@@ -117,19 +121,20 @@ void main() {
         'unrelenting detail across many words';
 
     Widget host(Widget child) => _scaledApp(
-          2,
-          Scaffold(
-            body: SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.all(12),
-                children: [child],
-              ),
-            ),
+      2,
+      Scaffold(
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [child],
           ),
-        );
+        ),
+      ),
+    );
 
-    testWidgets('FeatureCard (long title + subtitle + trailing)',
-        (tester) async {
+    testWidgets('FeatureCard (long title + subtitle + trailing)', (
+      tester,
+    ) async {
       final o = await _collectOverflows(
         tester,
         // FeatureCard is now a ConsumerWidget (reads displayStyleProvider),
@@ -157,7 +162,10 @@ void main() {
             icon: Icons.forum_outlined,
             title: long,
             trailing: Text('+12 more'),
-            child: Padding(padding: EdgeInsets.only(bottom: 12), child: Text(longer)),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(longer),
+            ),
           ),
         ),
         const Size(320, 800),
@@ -165,8 +173,9 @@ void main() {
       expect(o, isEmpty, reason: o.join('\n'));
     });
 
-    testWidgets('ContentHeader (long uppercased title + subtitle + trailing)',
-        (tester) async {
+    testWidgets('ContentHeader (long uppercased title + subtitle + trailing)', (
+      tester,
+    ) async {
       final o = await _collectOverflows(
         tester,
         () => host(
@@ -195,7 +204,10 @@ void main() {
               icon: Icons.inbox_outlined,
               title: long,
               message: longer,
-              action: FilledButton(onPressed: () {}, child: const Text('Do the thing')),
+              action: FilledButton(
+                onPressed: () {},
+                child: const Text('Do the thing'),
+              ),
             ),
           ),
         ),
@@ -234,16 +246,16 @@ void main() {
 /// Wraps [home] in the app theme and FORCES text scaling to [scale] on every
 /// route (injected above the Navigator via the MaterialApp builder).
 MaterialApp _scaledApp(double scale, Widget home) => MaterialApp(
-      theme: buildLightTheme(),
-      debugShowCheckedModeBanner: false,
-      home: home,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(scale),
-        ),
-        child: child!,
-      ),
-    );
+  theme: buildLightTheme(),
+  debugShowCheckedModeBanner: false,
+  home: home,
+  builder: (context, child) => MediaQuery(
+    data: MediaQuery.of(context).copyWith(
+      textScaler: TextScaler.linear(scale),
+    ),
+    child: child!,
+  ),
+);
 
 /// Pumps [build] at [size], COLLECTING every RenderFlex overflow (instead of
 /// aborting on the first) by temporarily intercepting `FlutterError.onError`.

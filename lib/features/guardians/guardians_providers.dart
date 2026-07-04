@@ -7,13 +7,13 @@ import 'package:uuid/uuid.dart';
 /// guardians first.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final guardiansForSubjectProvider =
-    StreamProvider.autoDispose.family<List<Guardian>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.guardiansDao.watchForSubject(subjectId);
-  },
-);
+final guardiansForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Guardian>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.guardiansDao.watchForSubject(subjectId);
+      },
+    );
 
 class GuardianActions {
   GuardianActions(this._ref);
@@ -58,5 +58,4 @@ class GuardianActions {
   }
 }
 
-final guardianActionsProvider =
-    Provider<GuardianActions>(GuardianActions.new);
+final guardianActionsProvider = Provider<GuardianActions>(GuardianActions.new);

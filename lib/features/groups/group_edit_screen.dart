@@ -194,14 +194,12 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     final groupAsync = widget.isEdit
         ? ref.watch(_groupByIdProvider(widget.groupId!))
         : const AsyncValue<Group?>.data(null);
-    final groupForDirtyCheck =
-        (groupAsync..whenData(_seedFromGroup)).value;
+    final groupForDirtyCheck = (groupAsync..whenData(_seedFromGroup)).value;
 
     return DismissGuard(
       isDirty: () => _isDirty(groupForDirtyCheck),
       child: EdgeScaffold(
-        backFallbackRoute:
-            widget.isEdit ? '/groups/${widget.groupId}' : '/',
+        backFallbackRoute: widget.isEdit ? '/groups/${widget.groupId}' : '/',
         actions: [
           IconButton(
             tooltip: 'Save',
@@ -219,8 +217,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
           loading: () => const LoadingSlot(),
           error: (_, _) => ErrorState(
             title: 'Could not load ${labels.group.toLowerCase()}',
-            onRetry: () =>
-                ref.invalidate(_groupByIdProvider(widget.groupId!)),
+            onRetry: () => ref.invalidate(_groupByIdProvider(widget.groupId!)),
           ),
           data: (group) {
             if (widget.isEdit && group == null) {
@@ -239,8 +236,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
             final groupLower = labels.group.toLowerCase();
             return LayoutBuilder(
               builder: (context, constraints) {
-                final twoCol =
-                    bento && constraints.maxWidth >= _twoColMinWidth;
+                final twoCol = bento && constraints.maxWidth >= _twoColMinWidth;
 
                 // Each field is built ONCE here and placed into either the
                 // single-column Column or the paired 2-column rows below.

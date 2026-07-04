@@ -39,7 +39,8 @@ class WallScreen extends ConsumerWidget {
         body: EmptyState(
           icon: Icons.dashboard_customize_outlined,
           title: 'The Wall opens with the journey',
-          message: 'Once this week’s world is set, the room’s Wall — its '
+          message:
+              'Once this week’s world is set, the room’s Wall — its '
               'Problems and Dreams — lives here.',
         ),
       );
@@ -91,7 +92,8 @@ class WallScreen extends ConsumerWidget {
             child: EmptyState(
               icon: Icons.sticky_note_2_outlined,
               title: 'The wall is bare',
-              message: 'Add the first note — a Problem this world is '
+              message:
+                  'Add the first note — a Problem this world is '
                   'working on, or a Dream for it.',
             ),
           )
@@ -140,7 +142,8 @@ class WallScreen extends ConsumerWidget {
             child: EmptyState(
               icon: Icons.sticky_note_2_outlined,
               title: 'The wall is bare',
-              message: 'Add the first note — a Problem this world is '
+              message:
+                  'Add the first note — a Problem this world is '
                   'working on, or a Dream for it.',
             ),
           )
@@ -270,11 +273,11 @@ class _QuestionOfTheDayBanner extends ConsumerWidget {
 }
 
 Color _toneFor(WallNoteType t, ColorScheme s) => switch (t) {
-      WallNoteType.problem => s.errorContainer,
-      WallNoteType.dream => s.tertiaryContainer,
-      WallNoteType.feeling => s.secondaryContainer,
-      WallNoteType.free => s.surfaceContainerHighest,
-    };
+  WallNoteType.problem => s.errorContainer,
+  WallNoteType.dream => s.tertiaryContainer,
+  WallNoteType.feeling => s.secondaryContainer,
+  WallNoteType.free => s.surfaceContainerHighest,
+};
 
 class _NoteCard extends StatelessWidget {
   const _NoteCard({required this.note, required this.onDelete, super.key});
@@ -299,8 +302,10 @@ class _NoteCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${note.type.emoji} ${note.type.label}',
-                style: theme.textTheme.labelSmall),
+            Text(
+              '${note.type.emoji} ${note.type.label}',
+              style: theme.textTheme.labelSmall,
+            ),
             const SizedBox(height: 6),
             Flexible(
               child: Text(
@@ -392,7 +397,9 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                   final text = _text.text.trim();
                   if (text.isEmpty) return;
                   final nav = Navigator.of(context);
-                  await ref.read(entryActionsProvider).createWallNote(
+                  await ref
+                      .read(entryActionsProvider)
+                      .createWallNote(
                         text: text,
                         worldId: widget.worldId,
                         noteType: _type.name,

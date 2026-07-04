@@ -27,8 +27,8 @@ enum DisplayStyle { boxed, calm, clean }
 /// direction is the app's look now; an explicit toggle-off reverts to boxed.
 final displayStyleProvider =
     AsyncNotifierProvider<DisplayStyleNotifier, DisplayStyle>(
-  DisplayStyleNotifier.new,
-);
+      DisplayStyleNotifier.new,
+    );
 
 class DisplayStyleNotifier extends AsyncNotifier<DisplayStyle> {
   static const _kKey = 'settings.display_style';
@@ -56,14 +56,14 @@ class DisplayStyleNotifier extends AsyncNotifier<DisplayStyle> {
 /// Human labels for the settings picker.
 extension DisplayStyleLabel on DisplayStyle {
   String get label => switch (this) {
-        DisplayStyle.boxed => 'Boxed',
-        DisplayStyle.calm => 'Calm',
-        DisplayStyle.clean => 'Clean',
-      };
+    DisplayStyle.boxed => 'Boxed',
+    DisplayStyle.calm => 'Calm',
+    DisplayStyle.clean => 'Clean',
+  };
 
   String get description => switch (this) {
-        DisplayStyle.boxed => 'Filled cards, each its own box',
-        DisplayStyle.calm => 'Flat one-edge cards — the default',
-        DisplayStyle.clean => 'Calm, plus smaller, lighter headings',
-      };
+    DisplayStyle.boxed => 'Filled cards, each its own box',
+    DisplayStyle.calm => 'Flat one-edge cards — the default',
+    DisplayStyle.clean => 'Calm, plus smaller, lighter headings',
+  };
 }

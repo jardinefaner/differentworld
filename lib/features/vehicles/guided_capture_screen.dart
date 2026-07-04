@@ -63,8 +63,9 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
   List<VehiclePhotoShot> get _shots => widget.shots;
   VehiclePhotoShot get _shot => _shots[_current];
   int get _capturedCount => _captured.length;
-  bool get _allRequiredDone =>
-      _shots.where((s) => s.required).every((s) => _captured.containsKey(s.key));
+  bool get _allRequiredDone => _shots
+      .where((s) => s.required)
+      .every((s) => _captured.containsKey(s.key));
 
   @override
   void initState() {
@@ -242,7 +243,9 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
           title: 'No camera here',
           message: 'This device has no camera available.',
         ),
-        _ => const Center(child: CircularProgressIndicator(color: Colors.white)),
+        _ => const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
       },
     );
   }
@@ -304,7 +307,10 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
                   Expanded(
                     child: Text(
                       '$_capturedCount of $total captured',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   _CapButton(
@@ -332,7 +338,10 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
                     if (captured)
                       const Padding(
                         padding: EdgeInsets.only(right: 8, top: 2),
-                        child: Icon(Icons.check_circle, color: Colors.greenAccent),
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.greenAccent,
+                        ),
                       ),
                     Expanded(
                       child: Column(

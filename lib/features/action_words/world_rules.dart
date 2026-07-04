@@ -22,7 +22,10 @@ const Map<String, List<WorldRule>> kWorldRules = {
     WorldRule('Name it to claim it', ['spark', 'shine']),
   ],
   'stories': [
-    WorldRule('The hero tries three times before they succeed', ['wait', 'solve']),
+    WorldRule('The hero tries three times before they succeed', [
+      'wait',
+      'solve',
+    ]),
     WorldRule('Something has to change', ['spark', 'build']),
     WorldRule('Every story needs a problem', ['solve', 'watch']),
   ],
@@ -43,8 +46,14 @@ const Map<String, List<WorldRule>> kWorldRules = {
   ],
   'space': [
     WorldRule('Everything orbits something', ['help', 'echo']),
-    WorldRule('Some things travel for years before they land', ['wait', 'spark']),
-    WorldRule('The dark is full of things we haven’t found', ['watch', 'shine']),
+    WorldRule('Some things travel for years before they land', [
+      'wait',
+      'spark',
+    ]),
+    WorldRule('The dark is full of things we haven’t found', [
+      'watch',
+      'shine',
+    ]),
   ],
   'dreams': [
     WorldRule('Impossible is normal', ['spark', 'play']),
@@ -62,7 +71,10 @@ const Map<String, List<WorldRule>> kWorldRules = {
     WorldRule('Name it — don’t pretend it isn’t there', ['shine', 'help']),
   ],
   'us': [
-    WorldRule('Pick three verbs, do them, discover who you are', ['spark', 'build']),
+    WorldRule('Pick three verbs, do them, discover who you are', [
+      'spark',
+      'build',
+    ]),
     WorldRule('There are no strangers here', ['help', 'echo']),
     WorldRule('The practice travels with you', ['carry', 'shine']),
   ],

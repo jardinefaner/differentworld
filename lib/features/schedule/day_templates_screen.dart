@@ -52,7 +52,8 @@ class DayTemplatesScreen extends ConsumerWidget {
           ? EmptyState(
               icon: Icons.view_timeline_outlined,
               title: 'No day templates yet',
-              message: 'Build the shape of your day once — blocks you can '
+              message:
+                  'Build the shape of your day once — blocks you can '
                   'drag to reorder — then drop it onto any day. Teachers '
                   'fill in the details.',
               action: FilledButton.icon(
@@ -62,8 +63,8 @@ class DayTemplatesScreen extends ConsumerWidget {
               ),
             )
           : bento
-              ? _bentoBody(context, templates, spaceId)
-              : _flatBody(context, templates, spaceId),
+          ? _bentoBody(context, templates, spaceId)
+          : _flatBody(context, templates, spaceId),
     );
   }
 
@@ -127,7 +128,9 @@ class DayTemplatesScreen extends ConsumerWidget {
     final spaceId = viewer.spaceId;
     if (spaceId == null) return;
     final router = GoRouter.of(context);
-    final id = await ref.read(dayTemplateActionsProvider).createTemplate(
+    final id = await ref
+        .read(dayTemplateActionsProvider)
+        .createTemplate(
           spaceId: spaceId,
           name: 'Regular day',
         );
@@ -142,8 +145,8 @@ class DayTemplatesScreen extends ConsumerWidget {
   final fill = t.isOverfilled
       ? '${durationLabel(-t.freeMinutes)} over'
       : t.freeMinutes == 0
-          ? 'filled'
-          : '${durationLabel(t.freeMinutes)} free';
+      ? 'filled'
+      : '${durationLabel(t.freeMinutes)} free';
   return (fill: fill, overfilled: t.isOverfilled);
 }
 
@@ -161,7 +164,8 @@ class _TemplateCard extends StatelessWidget {
       child: FeatureCard(
         leading: const Icon(Icons.view_timeline_outlined),
         title: template.name,
-        subtitle: '$blockCount ${blockCount == 1 ? "block" : "blocks"} · '
+        subtitle:
+            '$blockCount ${blockCount == 1 ? "block" : "blocks"} · '
             '${clockLabel(template.startMinute)}–'
             '${clockLabel(template.endMinute)} · ${f.fill}',
         tone: f.overfilled ? FeatureCardTone.danger : FeatureCardTone.neutral,
@@ -215,8 +219,7 @@ class _TemplateBentoCard extends StatelessWidget {
       child: Semantics(
         button: true,
         child: InkWell(
-          onTap: () =>
-              context.push('/schedule/day-templates/${template.id}'),
+          onTap: () => context.push('/schedule/day-templates/${template.id}'),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(

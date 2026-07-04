@@ -32,8 +32,7 @@ class RunbookScreen extends ConsumerWidget {
           title: 'Could not load the runbook',
           onRetry: () => ref.invalidate(staffRunbookProvider),
         ),
-        data: (moments) =>
-            bento ? _bentoBody(moments) : _flatBody(moments),
+        data: (moments) => bento ? _bentoBody(moments) : _flatBody(moments),
       ),
     );
   }
@@ -45,7 +44,8 @@ class RunbookScreen extends ConsumerWidget {
       children: [
         const ContentHeader(
           title: 'The day, moment by moment',
-          subtitle: 'Lead · Helper · If it breaks — any adult can run the '
+          subtitle:
+              'Lead · Helper · If it breaks — any adult can run the '
               'next hour',
         ),
         for (final m in moments) _MomentCard(moment: m),
@@ -65,7 +65,8 @@ class RunbookScreen extends ConsumerWidget {
       children: [
         const ContentHeader(
           title: 'The day, moment by moment',
-          subtitle: 'Lead · Helper · If it breaks — any adult can run the '
+          subtitle:
+              'Lead · Helper · If it breaks — any adult can run the '
               'next hour',
         ),
         const SizedBox(height: 4),
@@ -101,9 +102,7 @@ class _MomentCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
-      margin: inGrid
-          ? EdgeInsets.zero
-          : const EdgeInsets.only(bottom: 10),
+      margin: inGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 10),
       child: ExpansionTile(
         leading: Text(moment.emoji, style: const TextStyle(fontSize: 26)),
         title: Text(

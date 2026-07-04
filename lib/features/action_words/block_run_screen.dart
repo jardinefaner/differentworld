@@ -302,7 +302,10 @@ class _BlockDayDeck extends ConsumerWidget {
           title: 'Run the day',
           subtitle:
               '${group.name} · ${beats.length} ${beats.length == 1 ? 'block' : 'blocks'}',
-          arc: DayArcStrip(energies: [for (final b in beats) b.energy], accent: accent),
+          arc: DayArcStrip(
+            energies: [for (final b in beats) b.energy],
+            accent: accent,
+          ),
           // Each slide-card carries its "use right now" tray — the app features
           // relevant to THAT block, one tap away (docs/VISION.md "the slide is a
           // launchpad"). Host-only: the overview card is never mirrored.

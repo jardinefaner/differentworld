@@ -22,10 +22,13 @@ class WorkGallery extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final samples = ref
-            .watch(entriesForSubjectProvider(
-              (subjectId: subjectId, kind: EntryKind.workSample),
-            ))
+    final samples =
+        ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: subjectId, kind: EntryKind.workSample),
+              ),
+            )
             .value ??
         const <Entry>[];
     if (samples.isEmpty) {
@@ -71,7 +74,8 @@ class _WorkTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final photos = ref
+    final photos =
+        ref
             .watch(attachmentsForEntityProvider((kind: 'entry', id: entry.id)))
             .value
             ?.urls ??

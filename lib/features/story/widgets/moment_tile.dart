@@ -28,12 +28,14 @@ class MomentTile extends ConsumerWidget {
     final when = moment.when;
     final photos = moment.showsPhotos
         ? (ref
-                .watch(attachmentsForEntityProvider(
-                  (kind: 'entry', id: moment.id),
-                ))
-                .value
-                ?.urls ??
-            const <String>[])
+                  .watch(
+                    attachmentsForEntityProvider(
+                      (kind: 'entry', id: moment.id),
+                    ),
+                  )
+                  .value
+                  ?.urls ??
+              const <String>[])
         : const <String>[];
     final name = subject == null
         ? null
@@ -164,26 +166,26 @@ String storyDayLabel(DateTime when) {
 }
 
 String _weekday(DateTime d) => const [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ][d.weekday - 1];
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+][d.weekday - 1];
 
 String _month(DateTime d) => const [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ][d.month - 1];
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+][d.month - 1];

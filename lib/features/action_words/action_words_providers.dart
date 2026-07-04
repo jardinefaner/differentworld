@@ -77,8 +77,7 @@ class ActionWordsDay {
 
   /// The world the picks reveal — deterministic lookup, null until 3 are
   /// picked.
-  WorldMatch? get world =>
-      hasPicks ? matchWorld(verbPicks.toSet()) : null;
+  WorldMatch? get world => hasPicks ? matchWorld(verbPicks.toSet()) : null;
 }
 
 typedef ActionWordsDayKey = ({String subjectId, String date});
@@ -87,15 +86,21 @@ typedef ActionWordsDayKey = ({String subjectId, String date});
 /// synced `entries` table.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final actionWordsForDayProvider =
-    StreamProvider.autoDispose.family<ActionWordsDay, ActionWordsDayKey>(
-  (ref, key) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.entriesDao
-        .watchForSubject(subjectId: key.subjectId, kind: EntryKind.actionWords)
-        .map((entries) => ActionWordsDay.fromEntry(_entryForDate(entries, key.date)));
-  },
-);
+final actionWordsForDayProvider = StreamProvider.autoDispose
+    .family<ActionWordsDay, ActionWordsDayKey>(
+      (ref, key) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.entriesDao
+            .watchForSubject(
+              subjectId: key.subjectId,
+              kind: EntryKind.actionWords,
+            )
+            .map(
+              (entries) =>
+                  ActionWordsDay.fromEntry(_entryForDate(entries, key.date)),
+            );
+      },
+    );
 
 Entry? _entryForDate(List<Entry> entries, String date) {
   for (final e in entries) {
@@ -183,15 +188,15 @@ class ActionWordsCollection {
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final actionWordsCollectionProvider =
-    StreamProvider.autoDispose.family<ActionWordsCollection, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.entriesDao
-        .watchForSubject(subjectId: subjectId, kind: EntryKind.actionWords)
-        .map(ActionWordsCollection.fromEntries);
-  },
-);
+final actionWordsCollectionProvider = StreamProvider.autoDispose
+    .family<ActionWordsCollection, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.entriesDao
+            .watchForSubject(subjectId: subjectId, kind: EntryKind.actionWords)
+            .map(ActionWordsCollection.fromEntries);
+      },
+    );
 
 /// All Action Words entries across the program — the substrate for the
 /// class-wide world book.
@@ -203,8 +208,10 @@ final _spaceActionWordsProvider = StreamProvider<List<Entry>>((ref) async* {
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.entriesDao
-      .watchInSpace(spaceId: spaceId, kind: EntryKind.actionWords);
+  yield* db.entriesDao.watchInSpace(
+    spaceId: spaceId,
+    kind: EntryKind.actionWords,
+  );
 });
 
 /// Every child's Action Words collection in one shot — the single space-wide
@@ -215,21 +222,21 @@ final _spaceActionWordsProvider = StreamProvider<List<Entry>>((ref) async* {
 /// family. `fromEntries` only counts, so grouping order is irrelevant.
 final actionWordsCollectionsBySubjectProvider =
     Provider<AsyncValue<Map<String, ActionWordsCollection>>>((ref) {
-  return ref.watch(_spaceActionWordsProvider).whenData((entries) {
-    final bySubject = <String, List<Entry>>{};
-    for (final e in entries) {
-      // Class-wide days carry no subject — they belong to no child's
-      // collection (the per-subject family filters them out too).
-      final sid = e.subjectId;
-      if (sid == null) continue;
-      (bySubject[sid] ??= <Entry>[]).add(e);
-    }
-    return {
-      for (final group in bySubject.entries)
-        group.key: ActionWordsCollection.fromEntries(group.value),
-    };
-  });
-});
+      return ref.watch(_spaceActionWordsProvider).whenData((entries) {
+        final bySubject = <String, List<Entry>>{};
+        for (final e in entries) {
+          // Class-wide days carry no subject — they belong to no child's
+          // collection (the per-subject family filters them out too).
+          final sid = e.subjectId;
+          if (sid == null) continue;
+          (bySubject[sid] ??= <Entry>[]).add(e);
+        }
+        return {
+          for (final group in bySubject.entries)
+            group.key: ActionWordsCollection.fromEntries(group.value),
+        };
+      });
+    });
 
 /// A world the class INVENTED — a fresh combo (no named world) that a kid
 /// named. The growth that stays unhidden (docs/ACTION_WORDS.md).
@@ -268,15 +275,16 @@ final inventedWorldsProvider = Provider<AsyncValue<List<InventedWorld>>>((ref) {
         (prev?.$3 ?? 0) + 1,
       );
     }
-    final list = [
-      for (final v in byName.values)
-        InventedWorld(name: v.$1, verbs: v.$2, count: v.$3),
-    ]..sort((a, b) {
-        final byCount = b.count.compareTo(a.count);
-        return byCount != 0
-            ? byCount
-            : a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
+    final list =
+        [
+          for (final v in byName.values)
+            InventedWorld(name: v.$1, verbs: v.$2, count: v.$3),
+        ]..sort((a, b) {
+          final byCount = b.count.compareTo(a.count);
+          return byCount != 0
+              ? byCount
+              : a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        });
     return list;
   });
 });
@@ -416,10 +424,15 @@ class ActionWordsActions {
       );
       if (existing != null) {
         final next = update(_decodeDetails(existing.details));
-        await db.entriesDao
-            .updateDetails(id: existing.id, detailsJson: jsonEncode(next));
+        await db.entriesDao.updateDetails(
+          id: existing.id,
+          detailsJson: jsonEncode(next),
+        );
       } else {
-        final next = update(<String, dynamic>{'verb_picks': <String>[], 'done': <String>[]});
+        final next = update(<String, dynamic>{
+          'verb_picks': <String>[],
+          'done': <String>[],
+        });
         await db.entriesDao.create(
           id: _uuid.v4(),
           spaceId: spaceId,
@@ -439,14 +452,13 @@ class ActionWordsActions {
     required String date,
     required List<String> verbIds,
     String? groupId,
-  }) =>
-      _mutate(subjectId, groupId, date, (d) {
-        d['verb_picks'] = verbIds;
-        // Drop any done verbs no longer picked.
-        final picks = verbIds.toSet();
-        d['done'] = _stringList(d['done']).where(picks.contains).toList();
-        return d;
-      });
+  }) => _mutate(subjectId, groupId, date, (d) {
+    d['verb_picks'] = verbIds;
+    // Drop any done verbs no longer picked.
+    final picks = verbIds.toSet();
+    d['done'] = _stringList(d['done']).where(picks.contains).toList();
+    return d;
+  });
 
   /// Toggle a picked verb's done state.
   Future<void> toggleDone({
@@ -454,35 +466,32 @@ class ActionWordsActions {
     required String date,
     required String verbId,
     String? groupId,
-  }) =>
-      _mutate(subjectId, groupId, date, (d) {
-        final done = _stringList(d['done']).toSet();
-        if (!done.remove(verbId)) done.add(verbId);
-        d['done'] = done.toList();
-        return d;
-      });
+  }) => _mutate(subjectId, groupId, date, (d) {
+    final done = _stringList(d['done']).toSet();
+    if (!done.remove(verbId)) done.add(verbId);
+    d['done'] = done.toList();
+    return d;
+  });
 
   Future<void> setNote({
     required String subjectId,
     required String date,
     required String note,
     String? groupId,
-  }) =>
-      _mutate(subjectId, groupId, date, (d) {
-        d['note'] = note.trim();
-        return d;
-      });
+  }) => _mutate(subjectId, groupId, date, (d) {
+    d['note'] = note.trim();
+    return d;
+  });
 
   Future<void> setWordOfDay({
     required String subjectId,
     required String date,
     required String word,
     String? groupId,
-  }) =>
-      _mutate(subjectId, groupId, date, (d) {
-        d['word_of_day'] = word.trim();
-        return d;
-      });
+  }) => _mutate(subjectId, groupId, date, (d) {
+    d['word_of_day'] = word.trim();
+    return d;
+  });
 
   /// Name a *fresh* world (a combo that maps to no named world).
   Future<void> setWorldName({
@@ -490,12 +499,12 @@ class ActionWordsActions {
     required String date,
     required String name,
     String? groupId,
-  }) =>
-      _mutate(subjectId, groupId, date, (d) {
-        d['world_name'] = name.trim();
-        return d;
-      });
+  }) => _mutate(subjectId, groupId, date, (d) {
+    d['world_name'] = name.trim();
+    return d;
+  });
 }
 
-final actionWordsActionsProvider =
-    Provider<ActionWordsActions>(ActionWordsActions.new);
+final actionWordsActionsProvider = Provider<ActionWordsActions>(
+  ActionWordsActions.new,
+);

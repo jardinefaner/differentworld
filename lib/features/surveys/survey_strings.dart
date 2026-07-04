@@ -64,7 +64,8 @@ class SurveyStrings {
 
   static const _en = SurveyStrings._(
     aboutYouTitle: 'A few things about you',
-    aboutYouSubtitle: 'Pick a language and reader, tell us a little, '
+    aboutYouSubtitle:
+        'Pick a language and reader, tell us a little, '
         'then tap Start.',
     language: 'Language',
     reader: 'Reader',
@@ -81,7 +82,8 @@ class SurveyStrings {
     allDoneTitle: 'All done!',
     allDoneBody: 'Great job. Tap Finish to save your answers.',
     almostThereTitle: "You're almost there!",
-    almostThereBody: 'Tap Back to look at any question again, or '
+    almostThereBody:
+        'Tap Back to look at any question again, or '
         "Finish to save what you've answered.",
     required: 'Tap a smiley first.',
     practiceBadge: 'PRACTICE',
@@ -89,7 +91,8 @@ class SurveyStrings {
 
   static const _es = SurveyStrings._(
     aboutYouTitle: 'Un poco sobre ti',
-    aboutYouSubtitle: 'Elige un idioma y un lector, cuéntanos un '
+    aboutYouSubtitle:
+        'Elige un idioma y un lector, cuéntanos un '
         'poco y luego presiona Empezar.',
     language: 'Idioma',
     reader: 'Lector',
@@ -104,10 +107,12 @@ class SurveyStrings {
     next: 'Siguiente',
     finish: 'Terminar',
     allDoneTitle: '¡Listo!',
-    allDoneBody: '¡Buen trabajo! Presiona Terminar para guardar '
+    allDoneBody:
+        '¡Buen trabajo! Presiona Terminar para guardar '
         'tus respuestas.',
     almostThereTitle: '¡Ya casi!',
-    almostThereBody: 'Toca Atrás para revisar cualquier pregunta, '
+    almostThereBody:
+        'Toca Atrás para revisar cualquier pregunta, '
         'o Terminar para guardar lo que ya respondiste.',
     required: 'Toca una carita primero.',
     practiceBadge: 'PRÁCTICA',

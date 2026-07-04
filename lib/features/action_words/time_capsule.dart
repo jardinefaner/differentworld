@@ -25,7 +25,9 @@ class TimeCapsule {
     return TimeCapsule(
       id: e.id,
       text: e.body ?? '',
-      sealedUntil: DateTime.tryParse((details['sealed_until'] as String?) ?? ''),
+      sealedUntil: DateTime.tryParse(
+        (details['sealed_until'] as String?) ?? '',
+      ),
       buriedAt: e.recordedAt,
     );
   }
@@ -50,17 +52,17 @@ bool capsuleIsSealed(DateTime? sealedUntil, DateTime now) {
 List<TimeCapsule> sortCapsules(List<Entry> entries, DateTime now) {
   final capsules = [for (final e in entries) TimeCapsule.fromEntry(e)]
     ..sort((a, b) {
-    final aSealed = a.sealedAt(now);
-    final bSealed = b.sealedAt(now);
-    if (aSealed != bSealed) return aSealed ? -1 : 1;
-    if (aSealed) {
-      // Sealed: soonest to open first.
-      final au = a.sealedUntil ?? DateTime(9999);
-      final bu = b.sealedUntil ?? DateTime(9999);
-      return au.compareTo(bu);
-    }
-    // Opened: newest buried first.
-    return b.buriedAt.compareTo(a.buriedAt);
-  });
+      final aSealed = a.sealedAt(now);
+      final bSealed = b.sealedAt(now);
+      if (aSealed != bSealed) return aSealed ? -1 : 1;
+      if (aSealed) {
+        // Sealed: soonest to open first.
+        final au = a.sealedUntil ?? DateTime(9999);
+        final bu = b.sealedUntil ?? DateTime(9999);
+        return au.compareTo(bu);
+      }
+      // Opened: newest buried first.
+      return b.buriedAt.compareTo(a.buriedAt);
+    });
   return capsules;
 }

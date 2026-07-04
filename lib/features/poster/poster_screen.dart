@@ -72,17 +72,21 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   void initState() {
     super.initState();
     // Restore the teacher's last size / fit / paper / labels choices.
-    unawaited(PosterPrefs.load().then((saved) {
-      if (mounted) setState(() => _opts = saved);
-    }));
+    unawaited(
+      PosterPrefs.load().then((saved) {
+        if (mounted) setState(() => _opts = saved);
+      }),
+    );
     // Seeded from another tool (e.g. a Pattern): skip the chooser, go straight
     // to the editor with this image + its aspect.
     final seed = widget.seedImage;
     if (seed != null) {
       _bytes = seed;
-      unawaited(_decodeAspect(seed).then((aspect) {
-        if (mounted) setState(() => _imageAspect = aspect);
-      }));
+      unawaited(
+        _decodeAspect(seed).then((aspect) {
+          if (mounted) setState(() => _imageAspect = aspect);
+        }),
+      );
     }
   }
 
@@ -98,10 +102,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   }
 
   void _resetCrop() => setState(() {
-        _zoom = 1;
-        _focusX = 0.5;
-        _focusY = 0.5;
-      });
+    _zoom = 1;
+    _focusX = 0.5;
+    _focusY = 0.5;
+  });
 
   /// Rotate the working image 90° — baked into the bytes (off-thread) so pan /
   /// zoom + the engine all share one "as-displayed" coordinate space.
@@ -296,7 +300,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   /// Save arbitrary bytes via the share sheet (mirrors the survey export):
   /// in-memory on web, a temp file elsewhere. The share sheet is the path
   /// onto a computer — "Save to Files", Drive, AirDrop, or email-to-self.
-  Future<void> _shareBytes(Uint8List bytes, String filename, String mime) async {
+  Future<void> _shareBytes(
+    Uint8List bytes,
+    String filename,
+    String mime,
+  ) async {
     if (kIsWeb) {
       await SharePlus.instance.share(
         ShareParams(
@@ -406,7 +414,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               children: [
                 const ContentHeader(
                   title: 'Poster',
-                  subtitle: 'Blow up an image across printed pages you tape '
+                  subtitle:
+                      'Blow up an image across printed pages you tape '
                       'together',
                 ),
                 if (_working)
@@ -727,19 +736,18 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   }
 
   String _qualityHint(PosterQuality q) => switch (q) {
-        PosterQuality.standard =>
-          'Smaller files, quick — good for most photos.',
-        PosterQuality.high =>
-          'Sharper on big grids. Larger files, slower to build.',
-        PosterQuality.lossless =>
-          'Crispest for drawings, line art & text — but the largest files.',
-      };
+    PosterQuality.standard => 'Smaller files, quick — good for most photos.',
+    PosterQuality.high =>
+      'Sharper on big grids. Larger files, slower to build.',
+    PosterQuality.lossless =>
+      'Crispest for drawings, line art & text — but the largest files.',
+  };
 
   String _qualityLabel(PosterQuality q) => switch (q) {
-        PosterQuality.standard => 'Standard',
-        PosterQuality.high => 'High',
-        PosterQuality.lossless => 'Lossless',
-      };
+    PosterQuality.standard => 'Standard',
+    PosterQuality.high => 'High',
+    PosterQuality.lossless => 'Lossless',
+  };
 
   /// Live one-line summary of the collapsed "Print options" group.
   String _printOptionsSummary() {
@@ -764,12 +772,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   }
 
   Widget _label(BuildContext context, String text) => Text(
-        text,
-        style: Theme.of(context)
-            .textTheme
-            .titleSmall
-            ?.copyWith(fontWeight: FontWeight.w600),
-      );
+    text,
+    style: Theme.of(
+      context,
+    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+  );
 }
 
 String _inches(double v) =>
@@ -866,7 +873,8 @@ class _PosterPreviewState extends State<_PosterPreview> {
     final align = Alignment(widget.focusX * 2 - 1, widget.focusY * 2 - 1);
 
     final framed = Semantics(
-      label: 'Poster preview — ${widget.layout.cols} by ${widget.layout.rows} '
+      label:
+          'Poster preview — ${widget.layout.cols} by ${widget.layout.rows} '
           'pages, ${isFill ? 'edge to edge' : 'whole image'}. The lines show '
           'where the pages divide.',
       image: true,
@@ -927,12 +935,14 @@ class _PosterPreviewState extends State<_PosterPreview> {
             // Drag right reveals the left of the image → focus moves left.
             // Divide by zoom so a given finger move pans the same on-screen
             // distance at every zoom (the visible crop shrinks as you zoom in).
-            final fx = (widget.focusX -
-                    details.focalPointDelta.dx / boxW / widget.zoom)
-                .clamp(0.0, 1.0);
-            final fy = (widget.focusY -
-                    details.focalPointDelta.dy / boxH / widget.zoom)
-                .clamp(0.0, 1.0);
+            final fx =
+                (widget.focusX -
+                        details.focalPointDelta.dx / boxW / widget.zoom)
+                    .clamp(0.0, 1.0);
+            final fy =
+                (widget.focusY -
+                        details.focalPointDelta.dy / boxH / widget.zoom)
+                    .clamp(0.0, 1.0);
             widget.onReposition(z, fx, fy);
           },
           child: framed,
@@ -1053,11 +1063,12 @@ class _HowToPrint extends StatelessWidget {
     final theme = Theme.of(context);
     // Wrapped strings live in locals (not inline list elements) to avoid the
     // adjacent-strings-in-list footgun.
-    const printStep = 'Print at 100% / “Actual size” — turn OFF “Fit to page” '
+    const printStep =
+        'Print at 100% / “Actual size” — turn OFF “Fit to page” '
         '/ “Scale to fit”. This is what keeps the pieces lined up.';
     final tapeStep = guides
         ? 'Trim each page on the dashed line, line them up (R1-C1 at the '
-            'top-left), and tape.'
+              'top-left), and tape.'
         : 'Lay the $pageCount pages out in order and tape them together.';
     final steps = <String>[
       'Save it to your phone (Files or Drive), or email it to yourself.',
@@ -1084,8 +1095,9 @@ class _HowToPrint extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'How to print it',
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -1098,8 +1110,9 @@ class _HowToPrint extends StatelessWidget {
                 children: [
                   Text(
                     '${i + 1}.  ',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Expanded(
                     child: Text(steps[i], style: theme.textTheme.bodyMedium),

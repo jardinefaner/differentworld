@@ -22,8 +22,7 @@ class InviteCreateScreen extends ConsumerStatefulWidget {
   const InviteCreateScreen({super.key});
 
   @override
-  ConsumerState<InviteCreateScreen> createState() =>
-      _InviteCreateScreenState();
+  ConsumerState<InviteCreateScreen> createState() => _InviteCreateScreenState();
 }
 
 class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
@@ -109,8 +108,8 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
     final defaultRole = roles.isEmpty
         ? 'teacher'
         : roles.length > 2
-            ? roles[roles.length - 2]
-            : roles.last;
+        ? roles[roles.length - 2]
+        : roles.last;
     final selected = _role ?? defaultRole;
     final bento = bentoEnabled(ref, perScreen: null);
 
@@ -198,7 +197,8 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
             decoration: const InputDecoration(
               labelText: 'Their email (optional)',
               hintText: 'jane@example.com',
-              helperText: 'If they sign in with this email, they join '
+              helperText:
+                  'If they sign in with this email, they join '
                   'automatically — no code needed.',
               helperMaxLines: 3,
               border: OutlineInputBorder(),
@@ -258,7 +258,8 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
             children: [
               const ContentHeader(
                 title: 'Invite a teammate',
-                subtitle: 'Pick their role. They join by code or by signing '
+                subtitle:
+                    'Pick their role. They join by code or by signing '
                     'in with the email below.',
               ),
               roleBlock,

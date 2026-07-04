@@ -70,8 +70,7 @@ class CapabilityLockedTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: scheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: scheme.outlineVariant),
+                    border: Border.all(color: scheme.outlineVariant),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

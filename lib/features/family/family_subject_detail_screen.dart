@@ -2,9 +2,11 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
-import 'package:differentworld/features/entries/entries_providers.dart' show EntryKind;
+import 'package:differentworld/features/entries/entries_providers.dart'
+    show EntryKind;
 import 'package:differentworld/features/family/family_providers.dart';
-import 'package:differentworld/features/incidents/incidents_providers.dart' show Incident;
+import 'package:differentworld/features/incidents/incidents_providers.dart'
+    show Incident;
 import 'package:differentworld/features/incidents/widgets/family_incident_card.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
@@ -48,41 +50,39 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
     final childName = subjectAsync.value == null
         ? 'Child'
         : '${subjectAsync.value!.firstName} ${subjectAsync.value!.lastName}'
-            .trim();
+              .trim();
 
     return RouteTitle(
       title: childName.isEmpty ? 'Child' : childName,
       child: EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
-      body: subjectAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (_, _) => ErrorState(
-          title: 'Could not load',
-          onRetry: () =>
-              ref.invalidate(familySubjectByIdProvider(subjectId)),
+        actions: const [SyncStatusIndicator()],
+        body: subjectAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (_, _) => ErrorState(
+            title: 'Could not load',
+            onRetry: () => ref.invalidate(familySubjectByIdProvider(subjectId)),
+          ),
+          data: (subject) {
+            if (subject == null) {
+              return const EmptyState(
+                icon: Icons.help_outline,
+                title: 'Child not found',
+                message: "We couldn't load this profile. Pull to refresh.",
+              );
+            }
+            // Defensive: a guardian who navigated to the wrong subject
+            // shouldn't see anything sensitive. The router gate also
+            // catches this, but layered defense is cheap.
+            if (viewer is GuardianViewer && !viewer.canSeeSubject(subject.id)) {
+              return const EmptyState(
+                icon: Icons.lock_outline,
+                title: 'Not available',
+              );
+            }
+            return _FamilyDetailBody(subject: subject);
+          },
         ),
-        data: (subject) {
-          if (subject == null) {
-            return const EmptyState(
-              icon: Icons.help_outline,
-              title: 'Child not found',
-              message: "We couldn't load this profile. Pull to refresh.",
-            );
-          }
-          // Defensive: a guardian who navigated to the wrong subject
-          // shouldn't see anything sensitive. The router gate also
-          // catches this, but layered defense is cheap.
-          if (viewer is GuardianViewer &&
-              !viewer.canSeeSubject(subject.id)) {
-            return const EmptyState(
-              icon: Icons.lock_outline,
-              title: 'Not available',
-            );
-          }
-          return _FamilyDetailBody(subject: subject);
-        },
       ),
-    ),
     );
   }
 }
@@ -222,8 +222,7 @@ class _FamilyDetailBody extends ConsumerWidget {
     final now = DateTime.now();
     final years = now.year - dt.year - (now.month < dt.month ? 1 : 0);
     if (years <= 0) {
-      final months = (now.year - dt.year) * 12 +
-          (now.month - dt.month);
+      final months = (now.year - dt.year) * 12 + (now.month - dt.month);
       return '$months months old';
     }
     return '$years years old';
@@ -288,15 +287,18 @@ class _TodayCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final myRecord = ref
-        .watch(familyAttendanceForSubjectProvider(
-          (subjectId: subject.id, dateIso: _todayIso),
-        ))
+        .watch(
+          familyAttendanceForSubjectProvider(
+            (subjectId: subject.id, dateIso: _todayIso),
+          ),
+        )
         .value;
-    final status =
-        myRecord == null ? null : AttendanceStatus.fromDb(myRecord.status);
+    final status = myRecord == null
+        ? null
+        : AttendanceStatus.fromDb(myRecord.status);
 
-    final statusColor = status?.color(theme.colorScheme) ??
-        theme.colorScheme.onSurfaceVariant;
+    final statusColor =
+        status?.color(theme.colorScheme) ?? theme.colorScheme.onSurfaceVariant;
     final notes = myRecord?.notes;
     return FeatureCard(
       padding: const EdgeInsets.all(16),
@@ -326,15 +328,15 @@ class _TodayObservations extends ConsumerWidget {
     final theme = Theme.of(context);
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    final entriesAsync = ref.watch(familyEntriesForSubjectProvider(
-      (subjectId: subjectId, kind: EntryKind.observation),
-    ));
-    final todays = (entriesAsync.value ?? const <Entry>[])
-        .where((e) {
-          final dt = DateTime.tryParse(e.recordedAt);
-          return dt != null && !dt.isBefore(startOfDay);
-        })
-        .toList();
+    final entriesAsync = ref.watch(
+      familyEntriesForSubjectProvider(
+        (subjectId: subjectId, kind: EntryKind.observation),
+      ),
+    );
+    final todays = (entriesAsync.value ?? const <Entry>[]).where((e) {
+      final dt = DateTime.tryParse(e.recordedAt);
+      return dt != null && !dt.isBefore(startOfDay);
+    }).toList();
 
     if (todays.isEmpty) {
       return Padding(
@@ -368,20 +370,19 @@ class _RecentObservations extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final cutoff =
-        DateTime(now.year, now.month, now.day - 7);
-    final entriesAsync = ref.watch(familyEntriesForSubjectProvider(
-      (subjectId: subjectId, kind: EntryKind.observation),
-    ));
+    final cutoff = DateTime(now.year, now.month, now.day - 7);
+    final entriesAsync = ref.watch(
+      familyEntriesForSubjectProvider(
+        (subjectId: subjectId, kind: EntryKind.observation),
+      ),
+    );
     final today = DateTime(now.year, now.month, now.day);
-    final recent = (entriesAsync.value ?? const <Entry>[])
-        .where((e) {
-          final dt = DateTime.tryParse(e.recordedAt);
-          if (dt == null) return false;
-          // Older than today, newer than 7 days ago.
-          return dt.isBefore(today) && dt.isAfter(cutoff);
-        })
-        .toList();
+    final recent = (entriesAsync.value ?? const <Entry>[]).where((e) {
+      final dt = DateTime.tryParse(e.recordedAt);
+      if (dt == null) return false;
+      // Older than today, newer than 7 days ago.
+      return dt.isBefore(today) && dt.isAfter(cutoff);
+    }).toList();
 
     if (recent.isEmpty) {
       return Padding(
@@ -535,9 +536,11 @@ class _MessagesCard extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final guardianId = viewer.guardian.id;
-    final messagesAsync = ref.watch(messageThreadProvider(
-      (subjectId: subjectId, guardianId: guardianId),
-    ));
+    final messagesAsync = ref.watch(
+      messageThreadProvider(
+        (subjectId: subjectId, guardianId: guardianId),
+      ),
+    );
     final messages = messagesAsync.value ?? const <Message>[];
     final lastFromStaff = messages.lastWhere(
       (m) => m.senderKind == MessageSenderKind.staff,
@@ -591,8 +594,7 @@ class _MessagesCard extends ConsumerWidget {
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton.icon(
-              onPressed: () =>
-                  context.push('/messages/$subjectId/$guardianId'),
+              onPressed: () => context.push('/messages/$subjectId/$guardianId'),
               icon: const Icon(Icons.forum_outlined),
               label: Text(hasMessages ? 'Open thread' : 'Start a thread'),
             ),

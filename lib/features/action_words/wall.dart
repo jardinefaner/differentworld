@@ -10,7 +10,8 @@ enum WallNoteType {
   problem('⚠️', 'Problem', 'What is this world working on?'),
   dream('✨', 'Dream', 'What is the big dream here?'),
   feeling('💛', 'Feeling', 'Something nobody knows you feel'),
-  free('📝', 'Note', 'A note for the wall');
+  free('📝', 'Note', 'A note for the wall')
+  ;
 
   const WallNoteType(this.emoji, this.label, this.prompt);
   final String emoji;

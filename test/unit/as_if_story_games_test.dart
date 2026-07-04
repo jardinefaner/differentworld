@@ -10,29 +10,41 @@ void main() {
   group('AsIfGame', () {
     const game = AsIfGame();
     Map<String, dynamic> stateAt({int li = 0, int ai = 0, int p = 0}) => {
-          'li': li,
-          'ai': ai,
-          'p': p,
-          'lines': ['a', 'b', 'c'],
-          'asifs': ['x', 'y'],
-        };
+      'li': li,
+      'ai': ai,
+      'p': p,
+      'lines': ['a', 'b', 'c'],
+      'asifs': ['x', 'y'],
+    };
 
     test('I did it (tally) counts + advances both cycles', () {
-      final r = game.reduce(stateAt(li: 1, ai: 1, p: 2), GameIntent.tally, const {});
+      final r = game.reduce(
+        stateAt(li: 1, ai: 1, p: 2),
+        GameIntent.tally,
+        const {},
+      );
       expect(r['p'], 3);
       expect(r['li'], 2);
       expect(r['ai'], 2);
     });
 
     test('Another one (next) advances without counting', () {
-      final r = game.reduce(stateAt(li: 1, ai: 1, p: 2), GameIntent.next, const {});
+      final r = game.reduce(
+        stateAt(li: 1, ai: 1, p: 2),
+        GameIntent.next,
+        const {},
+      );
       expect(r['p'], 2);
       expect(r['li'], 2);
       expect(r['ai'], 2);
     });
 
     test('reset zeroes everything', () {
-      final r = game.reduce(stateAt(li: 4, ai: 3, p: 5), GameIntent.reset, const {});
+      final r = game.reduce(
+        stateAt(li: 4, ai: 3, p: 5),
+        GameIntent.reset,
+        const {},
+      );
       expect(r['li'], 0);
       expect(r['ai'], 0);
       expect(r['p'], 0);
@@ -60,14 +72,14 @@ void main() {
       bool d = false,
       int n = 3,
     }) => {
-          'i': i,
-          'ti': ti,
-          'tw': tw,
-          'd': d,
-          'n': n,
-          'starters': [for (var k = 0; k < n; k++) 'start$k'],
-          'twists': ['twist0', 'twist1'],
-        };
+      'i': i,
+      'ti': ti,
+      'tw': tw,
+      'd': d,
+      'n': n,
+      'starters': [for (var k = 0; k < n; k++) 'start$k'],
+      'twists': ['twist0', 'twist1'],
+    };
 
     test('reveal drops a plot twist and advances the cursor', () {
       final r = game.reduce(stateAt(), GameIntent.reveal, const {});

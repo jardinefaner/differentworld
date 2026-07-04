@@ -16,15 +16,17 @@ class GroupMembersDao extends DatabaseAccessor<AppDatabase>
   /// they're scoped to. Directors don't need this; their groupsProvider
   /// returns the full space.
   Stream<List<GroupMember>> watchForMember(String memberId) {
-    return (select(groupMembers)..where((g) => g.memberId.equals(memberId)))
-        .watch();
+    return (select(
+      groupMembers,
+    )..where((g) => g.memberId.equals(memberId))).watch();
   }
 
   /// All members assigned to a classroom. Used by the Group detail
   /// screen's staff list.
   Stream<List<GroupMember>> watchForGroup(String groupId) {
-    return (select(groupMembers)..where((g) => g.groupId.equals(groupId)))
-        .watch();
+    return (select(
+      groupMembers,
+    )..where((g) => g.groupId.equals(groupId))).watch();
   }
 
   /// Idempotent assign. Inserts a row if the (group, member) pair
@@ -35,11 +37,11 @@ class GroupMembersDao extends DatabaseAccessor<AppDatabase>
     required String spaceId,
     String? roleInGroup,
   }) async {
-    final existing = await (select(groupMembers)
-          ..where(
-            (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (select(groupMembers)..where(
+              (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
+            ))
+            .getSingleOrNull();
     if (existing != null) return;
     final now = DateTime.now().toUtc().toIso8601String();
     await into(groupMembers).insert(
@@ -48,8 +50,9 @@ class GroupMembersDao extends DatabaseAccessor<AppDatabase>
         groupId: groupId,
         memberId: memberId,
         spaceId: spaceId,
-        roleInGroup:
-            roleInGroup == null ? const Value.absent() : Value(roleInGroup),
+        roleInGroup: roleInGroup == null
+            ? const Value.absent()
+            : Value(roleInGroup),
         assignedAt: now,
       ),
     );
@@ -60,10 +63,9 @@ class GroupMembersDao extends DatabaseAccessor<AppDatabase>
     required String groupId,
     required String memberId,
   }) async {
-    await (delete(groupMembers)
-          ..where(
-            (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
-          ))
+    await (delete(groupMembers)..where(
+          (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
+        ))
         .go();
   }
 }

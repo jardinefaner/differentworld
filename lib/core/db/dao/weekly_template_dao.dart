@@ -122,17 +122,19 @@ class WeeklyTemplateDao extends DatabaseAccessor<AppDatabase>
     required DateTime fromDate,
     required DateTime toDate,
   }) async {
-    final slots = await (select(weeklyTemplateBlocks)
-          ..where((b) => b.templateId.equals(templateId)))
-        .get();
+    final slots = await (select(
+      weeklyTemplateBlocks,
+    )..where((b) => b.templateId.equals(templateId))).get();
     if (slots.isEmpty) return 0;
     final now = DateTime.now().toUtc().toIso8601String();
     const uuid = Uuid();
     var written = 0;
     await transaction(() async {
-      for (var d = fromDate;
-          !d.isAfter(toDate);
-          d = d.add(const Duration(days: 1))) {
+      for (
+        var d = fromDate;
+        !d.isAfter(toDate);
+        d = d.add(const Duration(days: 1))
+      ) {
         final dow = d.weekday - 1; // ISO Mon=1..Sun=7 → 0..6
         final daySlots = slots.where((s) => s.dayOfWeek == dow);
         for (final slot in daySlots) {
@@ -174,11 +176,12 @@ class WeeklyTemplateDao extends DatabaseAccessor<AppDatabase>
   }) async {
     final fromIso = _isoDate(fromDate);
     final toIso = _isoDate(toDate);
-    return (delete(scheduleBlocks)
-          ..where((b) =>
+    return (delete(scheduleBlocks)..where(
+          (b) =>
               b.spaceId.equals(spaceId) &
               b.date.isBiggerOrEqualValue(fromIso) &
-              b.date.isSmallerOrEqualValue(toIso)))
+              b.date.isSmallerOrEqualValue(toIso),
+        ))
         .go();
   }
 }

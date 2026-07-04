@@ -29,11 +29,17 @@ void main() {
   group('supplyCategoryLabel', () {
     test('falls back to Uncategorized when blank or null', () {
       expect(supplyCategoryLabel(_supply(name: 'A')), 'Uncategorized');
-      expect(supplyCategoryLabel(_supply(name: 'A', category: '   ')), 'Uncategorized');
+      expect(
+        supplyCategoryLabel(_supply(name: 'A', category: '   ')),
+        'Uncategorized',
+      );
     });
 
     test('trims a real category', () {
-      expect(supplyCategoryLabel(_supply(name: 'A', category: '  Art ')), 'Art');
+      expect(
+        supplyCategoryLabel(_supply(name: 'A', category: '  Art ')),
+        'Art',
+      );
     });
   });
 
@@ -45,9 +51,18 @@ void main() {
     });
 
     test('low when quantity is at or below the threshold', () {
-      expect(isLowStock(_supply(name: 'A', quantity: 2, lowStockThreshold: 3)), isTrue);
-      expect(isLowStock(_supply(name: 'A', quantity: 3, lowStockThreshold: 3)), isTrue);
-      expect(isLowStock(_supply(name: 'A', quantity: 4, lowStockThreshold: 3)), isFalse);
+      expect(
+        isLowStock(_supply(name: 'A', quantity: 2, lowStockThreshold: 3)),
+        isTrue,
+      );
+      expect(
+        isLowStock(_supply(name: 'A', quantity: 3, lowStockThreshold: 3)),
+        isTrue,
+      );
+      expect(
+        isLowStock(_supply(name: 'A', quantity: 4, lowStockThreshold: 3)),
+        isFalse,
+      );
     });
   });
 
@@ -92,17 +107,26 @@ void main() {
 
     test('resolves the real location name by id', () {
       expect(
-        supplyLocationLabel(_supply(name: 'Markers', locationId: 'loc-art'), names),
+        supplyLocationLabel(
+          _supply(name: 'Markers', locationId: 'loc-art'),
+          names,
+        ),
         'Art Barn',
       );
     });
 
     test('falls back to the free-text spot, then to No location set', () {
       expect(
-        supplyLocationLabel(_supply(name: 'Glue', location: 'Cabinet B'), names),
+        supplyLocationLabel(
+          _supply(name: 'Glue', location: 'Cabinet B'),
+          names,
+        ),
         'Cabinet B',
       );
-      expect(supplyLocationLabel(_supply(name: 'Mystery'), names), 'No location set');
+      expect(
+        supplyLocationLabel(_supply(name: 'Mystery'), names),
+        'No location set',
+      );
     });
 
     test('unknown id falls through to free-text', () {

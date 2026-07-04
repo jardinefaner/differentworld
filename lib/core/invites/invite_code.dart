@@ -87,11 +87,13 @@ abstract final class InviteCode {
   static String? extractFromUri(Uri uri) {
     final isCustomScheme =
         uri.scheme == 'differentworld' && uri.host == 'invite';
-    final isHttpsApex = uri.scheme == 'https' &&
+    final isHttpsApex =
+        uri.scheme == 'https' &&
         uri.host == 'differentworld.app' &&
         uri.pathSegments.isNotEmpty &&
         uri.pathSegments.first == 'invite';
-    final isHttpsPages = uri.scheme == 'https' &&
+    final isHttpsPages =
+        uri.scheme == 'https' &&
         uri.host == 'jardinefaner.github.io' &&
         uri.pathSegments.length >= 2 &&
         uri.pathSegments[0] == 'differentworld-web' &&

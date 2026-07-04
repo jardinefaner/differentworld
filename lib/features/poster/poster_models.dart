@@ -113,15 +113,14 @@ class PosterOptions {
     PosterQuality? quality,
     bool? labels,
     bool? guides,
-  }) =>
-      PosterOptions(
-        size: size ?? this.size,
-        fitShape: fitShape ?? this.fitShape,
-        orientation: orientation ?? this.orientation,
-        fit: fit ?? this.fit,
-        paper: paper ?? this.paper,
-        quality: quality ?? this.quality,
-        labels: labels ?? this.labels,
-        guides: guides ?? this.guides,
-      );
+  }) => PosterOptions(
+    size: size ?? this.size,
+    fitShape: fitShape ?? this.fitShape,
+    orientation: orientation ?? this.orientation,
+    fit: fit ?? this.fit,
+    paper: paper ?? this.paper,
+    quality: quality ?? this.quality,
+    labels: labels ?? this.labels,
+    guides: guides ?? this.guides,
+  );
 }

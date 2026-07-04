@@ -99,8 +99,7 @@ class RouteChromeNotifier extends Notifier<RouteChrome> {
 
 // Riverpod 3 doesn't yet have a stable public-typed name for
 // NotifierProvider so we have to write the type out explicitly.
-final NotifierProvider<RouteChromeNotifier, RouteChrome>
-    routeChromeProvider =
+final NotifierProvider<RouteChromeNotifier, RouteChrome> routeChromeProvider =
     NotifierProvider<RouteChromeNotifier, RouteChrome>(
-  RouteChromeNotifier.new,
-);
+      RouteChromeNotifier.new,
+    );

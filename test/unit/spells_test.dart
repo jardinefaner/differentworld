@@ -36,8 +36,10 @@ void main() {
       final freeze = kSpells.firstWhere((s) => s.id == 'freeze');
       final picks = <String>{
         for (var d = 1; d <= 28; d++)
-          spellWordForDay(freeze, '2026-06-${d.toString().padLeft(2, '0')}')
-              .word,
+          spellWordForDay(
+            freeze,
+            '2026-06-${d.toString().padLeft(2, '0')}',
+          ).word,
       };
       // Over a month it should land on more than one language.
       expect(picks.length, greaterThan(1));

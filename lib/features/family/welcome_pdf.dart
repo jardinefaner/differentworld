@@ -68,11 +68,13 @@ Future<Uint8List> buildWelcomePdf({
           ),
           pw.SizedBox(height: 10),
           pw.Text(
-            _safe(welcomeLine ??
-                'Here, every day your child picks three action words - like '
-                    'explore, build, and help - and lives them through play. '
-                    'Over the weeks, those choices add up to a story of who '
-                    'they are becoming. Not worksheets: play, with intention.'),
+            _safe(
+              welcomeLine ??
+                  'Here, every day your child picks three action words - like '
+                      'explore, build, and help - and lives them through play. '
+                      'Over the weeks, those choices add up to a story of who '
+                      'they are becoming. Not worksheets: play, with intention.',
+            ),
             style: pw.TextStyle(font: font, fontSize: 13, lineSpacing: 3),
           ),
           pw.SizedBox(height: 22),
@@ -107,18 +109,24 @@ Future<Uint8List> buildWelcomePdf({
                         pw.Text(
                           'See $child at school, live',
                           style: pw.TextStyle(
-                              font: bold, fontSize: 15, color: teal),
+                            font: bold,
+                            fontSize: 15,
+                            color: teal,
+                          ),
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
                           inviteUrl != null
                               ? "Scan to join the family app: today's photo, "
-                                  'the words they chose, when they are checked '
-                                  'in and picked up, and a direct line to their '
-                                  'teacher.'
+                                    'the words they chose, when they are checked '
+                                    'in and picked up, and a direct line to their '
+                                    'teacher.'
                               : _safe(inviteFallbackLine!),
                           style: pw.TextStyle(
-                              font: font, fontSize: 11, lineSpacing: 2),
+                            font: font,
+                            fontSize: 11,
+                            lineSpacing: 2,
+                          ),
                         ),
                         if (inviteCode != null) ...[
                           pw.SizedBox(height: 6),
@@ -156,8 +164,11 @@ Future<Uint8List> buildWelcomePdf({
           ],
           pw.Text(
             'THE PRACTICAL STUFF',
-            style:
-                pw.TextStyle(font: bold, fontSize: 10, color: PdfColors.grey600),
+            style: pw.TextStyle(
+              font: bold,
+              fontSize: 10,
+              color: PdfColors.grey600,
+            ),
           ),
           pw.SizedBox(height: 8),
           for (var i = 0; i < facts.length; i += 2)
@@ -178,16 +189,24 @@ Future<Uint8List> buildWelcomePdf({
             'Please bring: ${_safe(whatToBring ?? 'a water bottle and a snack')}. '
             'And please confirm with us: allergies, your pickup list, and '
             'photo consent.',
-            style:
-                pw.TextStyle(font: font, fontSize: 11, color: PdfColors.grey700),
+            style: pw.TextStyle(
+              font: font,
+              fontSize: 11,
+              color: PdfColors.grey700,
+            ),
           ),
           pw.Spacer(),
           pw.Divider(color: PdfColors.grey300),
           pw.Text(
-            _safe(contactLine ??
-                'Questions any time - message your teacher right in the app.'),
-            style:
-                pw.TextStyle(font: font, fontSize: 11, color: PdfColors.grey700),
+            _safe(
+              contactLine ??
+                  'Questions any time - message your teacher right in the app.',
+            ),
+            style: pw.TextStyle(
+              font: font,
+              fontSize: 11,
+              color: PdfColors.grey700,
+            ),
           ),
         ],
       ),
@@ -196,17 +215,19 @@ Future<Uint8List> buildWelcomePdf({
   return doc.save();
 }
 
-pw.Widget _factCell(pw.Font font, pw.Font bold, WelcomeFact fact) => pw.Expanded(
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            _safe(fact.label),
-            style:
-                pw.TextStyle(font: font, fontSize: 10, color: PdfColors.grey600),
-          ),
-          pw.Text(_safe(fact.value),
-              style: pw.TextStyle(font: bold, fontSize: 13)),
-        ],
+pw.Widget _factCell(
+  pw.Font font,
+  pw.Font bold,
+  WelcomeFact fact,
+) => pw.Expanded(
+  child: pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        _safe(fact.label),
+        style: pw.TextStyle(font: font, fontSize: 10, color: PdfColors.grey600),
       ),
-    );
+      pw.Text(_safe(fact.value), style: pw.TextStyle(font: bold, fontSize: 13)),
+    ],
+  ),
+);

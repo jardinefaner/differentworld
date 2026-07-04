@@ -82,7 +82,9 @@ class _ReflectionSessionScreenState
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {
-      await ref.read(entryActionsProvider).recordReflection(
+      await ref
+          .read(entryActionsProvider)
+          .recordReflection(
             seconds: _seconds,
             face: _face,
             note: _note.text,
@@ -184,8 +186,9 @@ class _ReflectionSessionScreenState
                         'Finish a session above and your first one lands here '
                         '— then it only grows.',
                         textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -237,8 +240,9 @@ class _SessionCard extends StatelessWidget {
           children: [
             Text(
               reflecting ? 'You stuck with it for' : 'Counting up',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -274,8 +278,9 @@ class _SessionCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     'Optional for a quick one',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               const SizedBox(height: 14),
@@ -292,8 +297,9 @@ class _SessionCard extends StatelessWidget {
               FilledButton(
                 // Past the threshold a face is required; below it a quick
                 // session can save without one.
-                onPressed:
-                    (saving || (face == 0 && faceRequired)) ? null : onSave,
+                onPressed: (saving || (face == 0 && faceRequired))
+                    ? null
+                    : onSave,
                 child: saving
                     ? const SizedBox(
                         width: 18,
@@ -344,9 +350,9 @@ class _FaceButton extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: tint,
-                      fontWeight: selected ? FontWeight.w700 : null,
-                    ),
+                  color: tint,
+                  fontWeight: selected ? FontWeight.w700 : null,
+                ),
               ),
             ],
           ),
@@ -374,8 +380,9 @@ class _ReflectionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final faceIcon =
-        (r.face >= 1 && r.face <= 4) ? _faces[r.face - 1].$1 : Icons.remove;
+    final faceIcon = (r.face >= 1 && r.face <= 4)
+        ? _faces[r.face - 1].$1
+        : Icons.remove;
     final when = DateTime.tryParse(r.entry.recordedAt);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
@@ -407,8 +414,9 @@ class _ReflectionTile extends StatelessWidget {
                 if (when != null)
                   Text(
                     relativeTimeAgo(when),
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
               ],
             ),

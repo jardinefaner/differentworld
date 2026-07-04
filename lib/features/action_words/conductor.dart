@@ -12,27 +12,34 @@ import 'package:flutter/material.dart';
 
 /// Split pasted text into lines of words (blank lines dropped).
 List<List<String>> parseLyrics(String text) => [
-      for (final line in text.split('\n'))
-        if (line.trim().isNotEmpty)
-          [for (final w in line.trim().split(RegExp(r'\s+'))) w],
-    ];
+  for (final line in text.split('\n'))
+    if (line.trim().isNotEmpty)
+      [for (final w in line.trim().split(RegExp(r'\s+'))) w],
+];
 
 /// The wire-state for casting [text]. `i` = the flat index of the lit word
 /// (-1 = nothing lit, the whole text shown evenly).
-Map<String, dynamic> conductorSeed(String text, {String title = ''}) =>
-    {'lines': parseLyrics(text), 'i': -1, 'title': title};
+Map<String, dynamic> conductorSeed(String text, {String title = ''}) => {
+  'lines': parseLyrics(text),
+  'i': -1,
+  'title': title,
+};
 
 class ConductorState {
-  const ConductorState({this.lines = const [], this.active = -1, this.title = ''});
+  const ConductorState({
+    this.lines = const [],
+    this.active = -1,
+    this.title = '',
+  });
 
   factory ConductorState.fromMap(Map<String, dynamic> m) => ConductorState(
-        lines: [
-          for (final line in (m['lines'] as List? ?? const []))
-            [for (final w in (line as List? ?? const [])) w.toString()],
-        ],
-        active: (m['i'] as num?)?.toInt() ?? -1,
-        title: (m['title'] as String?) ?? '',
-      );
+    lines: [
+      for (final line in (m['lines'] as List? ?? const []))
+        [for (final w in (line as List? ?? const [])) w.toString()],
+    ],
+    active: (m['i'] as num?)?.toInt() ?? -1,
+    title: (m['title'] as String?) ?? '',
+  );
 
   final List<List<String>> lines;
   final int active;
@@ -59,15 +66,17 @@ class ConductorGame extends GameDefinition<ConductorState> {
   String get title => 'Conduct';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.slate);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
   @override
   bool get seedsFromContentBank => false;
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) =>
-      <String, dynamic>{'lines': <dynamic>[], 'i': -1, 'title': ''};
+  Map<String, dynamic> initialState(ContentSource content) => <String, dynamic>{
+    'lines': <dynamic>[],
+    'i': -1,
+    'title': '',
+  };
 
   @override
   ConductorState decode(Map<String, dynamic> state) =>
@@ -103,8 +112,12 @@ class ConductorGame extends GameDefinition<ConductorState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(ConductorState s) =>
-      {GameIntent.pick, GameIntent.next, GameIntent.back, GameIntent.reset};
+  Set<GameIntent> activeIntents(ConductorState s) => {
+    GameIntent.pick,
+    GameIntent.next,
+    GameIntent.back,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, ConductorState s) {
@@ -205,35 +218,39 @@ class _Lines extends StatelessWidget {
               runSpacing: big ? 8 : 4,
               children: [
                 for (final word in line)
-                  Builder(builder: (context) {
-                    flat++;
-                    final idx = flat;
-                    final lit = state.active == idx;
-                    final dim = hasFocus && !lit;
-                    final text = Text(
-                      word,
-                      style: TextStyle(
-                        color: lit
-                            ? accent
-                            : dim
-                                ? Colors.white24
-                                : Colors.white,
-                        fontSize: big ? (lit ? 64 : 48) : 20,
-                        fontWeight: lit ? FontWeight.w800 : FontWeight.w500,
-                        height: 1.1,
-                      ),
-                    );
-                    if (onTapWord == null) return text;
-                    return InkWell(
-                      onTap: () => onTapWord!(idx),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: text,
-                      ),
-                    );
-                  }),
+                  Builder(
+                    builder: (context) {
+                      flat++;
+                      final idx = flat;
+                      final lit = state.active == idx;
+                      final dim = hasFocus && !lit;
+                      final text = Text(
+                        word,
+                        style: TextStyle(
+                          color: lit
+                              ? accent
+                              : dim
+                              ? Colors.white24
+                              : Colors.white,
+                          fontSize: big ? (lit ? 64 : 48) : 20,
+                          fontWeight: lit ? FontWeight.w800 : FontWeight.w500,
+                          height: 1.1,
+                        ),
+                      );
+                      if (onTapWord == null) return text;
+                      return InkWell(
+                        onTap: () => onTapWord!(idx),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          child: text,
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ),

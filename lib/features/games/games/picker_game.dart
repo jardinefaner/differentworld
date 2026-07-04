@@ -28,8 +28,7 @@ class PickerState {
   final int index;
   final bool spun;
 
-  String get current =>
-      names.isEmpty ? '' : names[index % names.length];
+  String get current => names.isEmpty ? '' : names[index % names.length];
 }
 
 class PickerGame extends GameDefinition<PickerState> {

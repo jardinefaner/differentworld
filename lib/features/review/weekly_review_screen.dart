@@ -27,8 +27,7 @@ class WeeklyReviewScreen extends ConsumerStatefulWidget {
   const WeeklyReviewScreen({super.key});
 
   @override
-  ConsumerState<WeeklyReviewScreen> createState() =>
-      _WeeklyReviewScreenState();
+  ConsumerState<WeeklyReviewScreen> createState() => _WeeklyReviewScreenState();
 }
 
 class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
@@ -86,10 +85,7 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
     final byId = {for (final i in liveInsights) i.id: i};
     final ordered = <_Page>[
       for (final id in _initialOrder)
-        if (byId[id] != null)
-          _Page.live(byId[id]!)
-        else
-          _Page.gone(id),
+        if (byId[id] != null) _Page.live(byId[id]!) else _Page.gone(id),
       for (final i in liveInsights)
         if (!_initialOrder.contains(i.id)) _Page.live(i),
     ];
@@ -102,7 +98,8 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
         body: EmptyState(
           icon: Icons.check_circle_outline,
           title: 'All clear for this week',
-          message: "Nothing's calling for attention right now. "
+          message:
+              "Nothing's calling for attention right now. "
               'See you next week.',
           action: FilledButton(
             onPressed: () => context.pop(),
@@ -165,10 +162,12 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
                         ? null
                         : () {
                             unawaited(HapticFeedback.selectionClick());
-                            unawaited(_page.previousPage(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOut,
-                            ));
+                            unawaited(
+                              _page.previousPage(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeOut,
+                              ),
+                            );
                           },
                     icon: const Icon(Icons.arrow_back),
                     label: const Text('Back'),
@@ -178,10 +177,12 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
                     TextButton.icon(
                       onPressed: () {
                         unawaited(HapticFeedback.selectionClick());
-                        unawaited(_page.nextPage(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOut,
-                        ));
+                        unawaited(
+                          _page.nextPage(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOut,
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.arrow_forward),
                       label: const Text('Next'),

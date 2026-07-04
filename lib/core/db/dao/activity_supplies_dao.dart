@@ -16,15 +16,16 @@ class ActivitySuppliesDao extends DatabaseAccessor<AppDatabase>
 
   /// The supply links for one activity.
   Stream<List<ActivitySupply>> watchForActivity(String activityId) {
-    return (select(activitySupplies)
-          ..where((r) => r.activityId.equals(activityId)))
-        .watch();
+    return (select(
+      activitySupplies,
+    )..where((r) => r.activityId.equals(activityId))).watch();
   }
 
   /// All links in the space (for a day/program-wide pack-list rollup).
   Stream<List<ActivitySupply>> watchInSpace(String spaceId) {
-    return (select(activitySupplies)..where((r) => r.spaceId.equals(spaceId)))
-        .watch();
+    return (select(
+      activitySupplies,
+    )..where((r) => r.spaceId.equals(spaceId))).watch();
   }
 
   /// Replace the whole set of links for [activityId] with [picks]

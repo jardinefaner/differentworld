@@ -91,9 +91,8 @@ Future<void> showTextSizePicker(BuildContext context, WidgetRef ref) async {
 }
 
 String _subtitle(TextScaleMode option) => switch (option) {
-      TextScaleMode.systemDefault =>
-        'Use the size from your phone / tablet settings.',
-      TextScaleMode.large => 'Boost everywhere — about 130% of the default.',
-      TextScaleMode.extraLarge =>
-        'Boost more — about 150%. Some labels may wrap.',
-    };
+  TextScaleMode.systemDefault =>
+    'Use the size from your phone / tablet settings.',
+  TextScaleMode.large => 'Boost everywhere — about 130% of the default.',
+  TextScaleMode.extraLarge => 'Boost more — about 150%. Some labels may wrap.',
+};

@@ -145,7 +145,9 @@ pw.Widget _incidentBlock(IncidentReportEntry e) {
   final whenLabel = when == null ? '' : '${dateKey(when)} ${timeOfDay(when)}';
   return pw.Container(
     decoration: const pw.BoxDecoration(
-      border: pw.Border(left: pw.BorderSide(color: PdfColors.grey400, width: 2)),
+      border: pw.Border(
+        left: pw.BorderSide(color: PdfColors.grey400, width: 2),
+      ),
     ),
     padding: const pw.EdgeInsets.only(left: 10, bottom: 6),
     child: pw.Column(

@@ -10,8 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('empty state shows the pick-a-source CTA (not a blank screen)',
-      (tester) async {
+  testWidgets('empty state shows the pick-a-source CTA (not a blank screen)', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(home: PosterScreen()),

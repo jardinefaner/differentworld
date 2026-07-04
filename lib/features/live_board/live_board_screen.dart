@@ -132,32 +132,36 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   }
 
   BoardState get _state => switch (_active) {
-        BoardInstrument.word =>
-          BoardState(instrument: BoardInstrument.word, word: _wordCtrl.text),
-        BoardInstrument.spell => BoardState(
-            instrument: BoardInstrument.spell,
-            word: _spellWordCtrl.text,
-            name: _spellName,
-          ),
-        BoardInstrument.number => BoardState(
-            instrument: BoardInstrument.number,
-            number: _number,
-            word: _numberLabelCtrl.text,
-          ),
-        BoardInstrument.turn =>
-          BoardState(instrument: BoardInstrument.turn, name: _turnName),
-        BoardInstrument.reveal => BoardState(
-            instrument: BoardInstrument.reveal,
-            word: _revealCtrl.text,
-            number: _revealShown,
-          ),
-        BoardInstrument.sound => BoardState(
-            instrument: BoardInstrument.sound,
-            word: _soundCtrl.text,
-            number: _soundLit,
-          ),
-        BoardInstrument.idle => const BoardState(),
-      };
+    BoardInstrument.word => BoardState(
+      instrument: BoardInstrument.word,
+      word: _wordCtrl.text,
+    ),
+    BoardInstrument.spell => BoardState(
+      instrument: BoardInstrument.spell,
+      word: _spellWordCtrl.text,
+      name: _spellName,
+    ),
+    BoardInstrument.number => BoardState(
+      instrument: BoardInstrument.number,
+      number: _number,
+      word: _numberLabelCtrl.text,
+    ),
+    BoardInstrument.turn => BoardState(
+      instrument: BoardInstrument.turn,
+      name: _turnName,
+    ),
+    BoardInstrument.reveal => BoardState(
+      instrument: BoardInstrument.reveal,
+      word: _revealCtrl.text,
+      number: _revealShown,
+    ),
+    BoardInstrument.sound => BoardState(
+      instrument: BoardInstrument.sound,
+      word: _soundCtrl.text,
+      number: _soundLit,
+    ),
+    BoardInstrument.idle => const BoardState(),
+  };
 
   /// Push the current instrument's state to every screen, and refresh the
   /// on-phone preview.
@@ -232,78 +236,79 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
             const SizedBox(height: 16),
             switch (_active) {
               BoardInstrument.word => _WordControls(
-                  controller: _wordCtrl,
-                  focusNode: _wordFocus,
-                  onChanged: (_) => _push(),
-                ),
+                controller: _wordCtrl,
+                focusNode: _wordFocus,
+                onChanged: (_) => _push(),
+              ),
               BoardInstrument.spell => _SpellControls(
-                  wordController: _spellWordCtrl,
-                  wordFocus: _spellFocus,
-                  selectedName: _spellName,
-                  onPickName: (n) {
-                    setState(() => _spellName = n);
-                    _push();
-                  },
-                  onWordChanged: (_) => _push(),
-                ),
+                wordController: _spellWordCtrl,
+                wordFocus: _spellFocus,
+                selectedName: _spellName,
+                onPickName: (n) {
+                  setState(() => _spellName = n);
+                  _push();
+                },
+                onWordChanged: (_) => _push(),
+              ),
               BoardInstrument.number => _NumberControls(
-                  number: _number,
-                  labelController: _numberLabelCtrl,
-                  onStep: (delta) {
-                    setState(() => _number = (_number + delta).clamp(0, 9999));
-                    _push();
-                  },
-                  onReset: () {
-                    setState(() => _number = 0);
-                    _push();
-                  },
-                  onLabelChanged: (_) => _push(),
-                ),
+                number: _number,
+                labelController: _numberLabelCtrl,
+                onStep: (delta) {
+                  setState(() => _number = (_number + delta).clamp(0, 9999));
+                  _push();
+                },
+                onReset: () {
+                  setState(() => _number = 0);
+                  _push();
+                },
+                onLabelChanged: (_) => _push(),
+              ),
               BoardInstrument.turn => _RosterPicker(
-                  selectedName: _turnName,
-                  onPick: (n) {
-                    setState(() => _turnName = n);
-                    _push();
-                  },
-                ),
+                selectedName: _turnName,
+                onPick: (n) {
+                  setState(() => _turnName = n);
+                  _push();
+                },
+              ),
               BoardInstrument.reveal => _RevealControls(
-                  controller: _revealCtrl,
-                  focusNode: _revealFocus,
-                  shown: _revealShown,
-                  total: _revealCtrl.text
-                      .split('\n')
-                      .where((l) => l.trim().isNotEmpty)
-                      .length,
-                  onLinesChanged: (_) => _push(),
-                  onStep: (delta) {
-                    setState(() => _revealShown =
-                        (_revealShown + delta).clamp(0, 99));
-                    _push();
-                  },
-                  onReset: () {
-                    setState(() => _revealShown = 0);
-                    _push();
-                  },
-                ),
+                controller: _revealCtrl,
+                focusNode: _revealFocus,
+                shown: _revealShown,
+                total: _revealCtrl.text
+                    .split('\n')
+                    .where((l) => l.trim().isNotEmpty)
+                    .length,
+                onLinesChanged: (_) => _push(),
+                onStep: (delta) {
+                  setState(
+                    () => _revealShown = (_revealShown + delta).clamp(0, 99),
+                  );
+                  _push();
+                },
+                onReset: () {
+                  setState(() => _revealShown = 0);
+                  _push();
+                },
+              ),
               BoardInstrument.sound => _RevealControls(
-                  controller: _soundCtrl,
-                  focusNode: _soundFocus,
-                  shown: _soundLit,
-                  total: soundChunks(_soundCtrl.text).length,
-                  label: 'Word',
-                  hint: 'Separate the sounds with - (e.g. but-ter-fly)',
-                  nextLabel: 'Light next',
-                  minLines: 1,
-                  onLinesChanged: (_) => _push(),
-                  onStep: (delta) {
-                    setState(() => _soundLit = (_soundLit + delta).clamp(0, 99));
-                    _push();
-                  },
-                  onReset: () {
-                    setState(() => _soundLit = 0);
-                    _push();
-                  },
-                ),
+                controller: _soundCtrl,
+                focusNode: _soundFocus,
+                shown: _soundLit,
+                total: soundChunks(_soundCtrl.text).length,
+                label: 'Word',
+                hint: 'Separate the sounds with - (e.g. but-ter-fly)',
+                nextLabel: 'Light next',
+                minLines: 1,
+                onLinesChanged: (_) => _push(),
+                onStep: (delta) {
+                  setState(() => _soundLit = (_soundLit + delta).clamp(0, 99));
+                  _push();
+                },
+                onReset: () {
+                  setState(() => _soundLit = 0);
+                  _push();
+                },
+              ),
               BoardInstrument.idle => const SizedBox.shrink(),
             },
           ],
@@ -353,9 +358,7 @@ class _JoinCard extends StatelessWidget {
                   ? 'On each room screen: Cast → Be the screen → enter this code.'
                   : '$peers screen${peers == 1 ? '' : 's'} connected.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: peers == 0
-                    ? scheme.onSurfaceVariant
-                    : scheme.primary,
+                color: peers == 0 ? scheme.onSurfaceVariant : scheme.primary,
               ),
             ),
           ),

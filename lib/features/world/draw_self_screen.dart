@@ -210,7 +210,9 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
                         // system back is the thing we block, not the controls.
                         Navigator.of(context).pop();
                       },
-                onUndo: _controller.canUndo && !_saving ? _controller.undo : null,
+                onUndo: _controller.canUndo && !_saving
+                    ? _controller.undo
+                    : null,
                 onClear: hasDrawing && !_saving ? _controller.clear : null,
               ),
               Expanded(

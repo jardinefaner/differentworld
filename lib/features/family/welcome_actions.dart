@@ -44,81 +44,83 @@ Future<void> generateFirstDayWelcome(
   _welcomeInFlight.add(subjectId);
   try {
     final spaceId = viewer.spaceId;
-  final programName = (viewer.space?.name ?? '').trim().isEmpty
-      ? 'our program'
-      : viewer.space!.name;
+    final programName = (viewer.space?.name ?? '').trim().isEmpty
+        ? 'our program'
+        : viewer.space!.name;
 
-  // Cohort (room + age band).
-  final groups = ref.read(groupsProvider).value ?? const <Group>[];
-  Group? group;
-  for (final g in groups) {
-    if (g.id == subject.groupId) {
-      group = g;
-      break;
-    }
-  }
-
-  // This week's curriculum world (drives the dinner question).
-  final world = ref.read(currentWorldProvider);
-
-  // The guardian invite → the family-app QR. Only mint + embed it when we're
-  // ONLINE: an invite created offline hasn't synced to the server yet, so a
-  // parent scanning the QR right away would land on "invalid invite". Offline
-  // → omit the QR and print a note instead (the rest of the page is the value).
-  final connected = ref.read(syncStatusProvider).value?.connected ?? false;
-  String? inviteUrl;
-  String? inviteCode;
-  String? inviteFallbackLine;
-  if (connected && spaceId != null) {
-    try {
-      final invite = await ref.read(inviteActionsProvider).createGuardianInvite(
-            spaceId: spaceId,
-            subjectId: subjectId,
-            expiry: InviteExpiry.thirtyDays,
-            createdBy: viewer.memberId,
-          );
-      final code = invite.code;
-      if (code != null && code.isNotEmpty) {
-        inviteCode = code;
-        inviteUrl = InviteCode.pagesLinkFor(code);
+    // Cohort (room + age band).
+    final groups = ref.read(groupsProvider).value ?? const <Group>[];
+    Group? group;
+    for (final g in groups) {
+      if (g.id == subject.groupId) {
+        group = g;
+        break;
       }
-    } on Object catch (e, st) {
-      if (kDebugMode) debugPrint('[welcome] invite create failed: $e\n$st');
     }
-  } else if (!connected) {
-    inviteFallbackLine =
-        'Your family-app invite will be ready once we’re back online — '
-        'just ask us for it.';
-  }
 
-  final facts = <WelcomeFact>[
-    if (group != null)
-      (
-        label: 'Room',
-        value: [group.name, group.ageRange]
-            .whereType<String>()
-            .where((s) => s.trim().isNotEmpty)
-            .join(' · '),
-      ),
-    if ((subject.pickupWindowEnd ?? '').trim().isNotEmpty)
-      (label: 'Pickup by', value: _formatTime(subject.pickupWindowEnd!)),
-  ];
+    // This week's curriculum world (drives the dinner question).
+    final world = ref.read(currentWorldProvider);
 
-  final bytes = await buildWelcomePdf(
-    programName: programName,
-    childFirstName: subject.firstName,
-    facts: facts,
-    worldName: world?.name,
-    dinnerQuestion: world?.question,
-    inviteUrl: inviteUrl,
-    inviteCode: inviteCode,
-    inviteFallbackLine: inviteFallbackLine,
-  );
+    // The guardian invite → the family-app QR. Only mint + embed it when we're
+    // ONLINE: an invite created offline hasn't synced to the server yet, so a
+    // parent scanning the QR right away would land on "invalid invite". Offline
+    // → omit the QR and print a note instead (the rest of the page is the value).
+    final connected = ref.read(syncStatusProvider).value?.connected ?? false;
+    String? inviteUrl;
+    String? inviteCode;
+    String? inviteFallbackLine;
+    if (connected && spaceId != null) {
+      try {
+        final invite = await ref
+            .read(inviteActionsProvider)
+            .createGuardianInvite(
+              spaceId: spaceId,
+              subjectId: subjectId,
+              expiry: InviteExpiry.thirtyDays,
+              createdBy: viewer.memberId,
+            );
+        final code = invite.code;
+        if (code != null && code.isNotEmpty) {
+          inviteCode = code;
+          inviteUrl = InviteCode.pagesLinkFor(code);
+        }
+      } on Object catch (e, st) {
+        if (kDebugMode) debugPrint('[welcome] invite create failed: $e\n$st');
+      }
+    } else if (!connected) {
+      inviteFallbackLine =
+          'Your family-app invite will be ready once we’re back online — '
+          'just ask us for it.';
+    }
 
-  await Printing.layoutPdf(
-    onLayout: (_) => bytes,
-    name: 'Welcome — ${subject.firstName}',
-  );
+    final facts = <WelcomeFact>[
+      if (group != null)
+        (
+          label: 'Room',
+          value: [
+            group.name,
+            group.ageRange,
+          ].whereType<String>().where((s) => s.trim().isNotEmpty).join(' · '),
+        ),
+      if ((subject.pickupWindowEnd ?? '').trim().isNotEmpty)
+        (label: 'Pickup by', value: _formatTime(subject.pickupWindowEnd!)),
+    ];
+
+    final bytes = await buildWelcomePdf(
+      programName: programName,
+      childFirstName: subject.firstName,
+      facts: facts,
+      worldName: world?.name,
+      dinnerQuestion: world?.question,
+      inviteUrl: inviteUrl,
+      inviteCode: inviteCode,
+      inviteFallbackLine: inviteFallbackLine,
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (_) => bytes,
+      name: 'Welcome — ${subject.firstName}',
+    );
   } finally {
     _welcomeInFlight.remove(subjectId);
   }

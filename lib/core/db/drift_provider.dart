@@ -154,20 +154,20 @@ Future<Guardian?> _fetchGuardianFromPostgrest(String userId) async {
 /// `Guardians` table in `app_database.dart`. Kept here next to the
 /// fetch helper so the round-trip-and-decode lives in one place.
 Guardian _guardianFromMap(Map<String, dynamic> r) => Guardian(
-      id: r['id'] as String,
-      spaceId: r['space_id'] as String,
-      userId: r['user_id'] as String?,
-      name: r['name'] as String,
-      relationship: r['relationship'] as String?,
-      phone: r['phone'] as String?,
-      email: r['email'] as String?,
-      authorizedForPickup: r['authorized_for_pickup'] is bool
-          ? ((r['authorized_for_pickup'] as bool) ? 1 : 0)
-          : r['authorized_for_pickup'] as int?,
-      notes: r['notes'] as String?,
-      createdAt: r['created_at'] as String,
-      updatedAt: r['updated_at'] as String,
-    );
+  id: r['id'] as String,
+  spaceId: r['space_id'] as String,
+  userId: r['user_id'] as String?,
+  name: r['name'] as String,
+  relationship: r['relationship'] as String?,
+  phone: r['phone'] as String?,
+  email: r['email'] as String?,
+  authorizedForPickup: r['authorized_for_pickup'] is bool
+      ? ((r['authorized_for_pickup'] as bool) ? 1 : 0)
+      : r['authorized_for_pickup'] as int?,
+  notes: r['notes'] as String?,
+  createdAt: r['created_at'] as String,
+  updatedAt: r['updated_at'] as String,
+);
 
 /// IDs of the children the signed-in guardian is linked to.
 ///
@@ -190,8 +190,7 @@ Guardian _guardianFromMap(Map<String, dynamic> r) => Guardian(
 /// only when the visible kid roster actually changes.
 ///
 /// Empty for staff viewers — they have no guardian row.
-final myChildSubjectIdsProvider =
-    StreamProvider<List<String>>((ref) async* {
+final myChildSubjectIdsProvider = StreamProvider<List<String>>((ref) async* {
   final guardian = ref.watch(currentGuardianProvider).value;
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
@@ -199,11 +198,12 @@ final myChildSubjectIdsProvider =
     yield const <String>[];
     return;
   }
-  final driftStream = (db.select(db.subjectGuardians)
-        ..where((sg) => sg.guardianId.equals(guardian.id)))
-      .watch()
-      .map((rows) => rows.map((r) => r.subjectId).toList())
-      .distinct(_listEquals);
+  final driftStream =
+      (db.select(db.subjectGuardians)
+            ..where((sg) => sg.guardianId.equals(guardian.id)))
+          .watch()
+          .map((rows) => rows.map((r) => r.subjectId).toList())
+          .distinct(_listEquals);
 
   // First Drift emission. If non-empty, we're offline-first — yield
   // and continue watching from the second emission (skip(1)).
@@ -282,8 +282,10 @@ bool _listEquals(List<String> a, List<String> b) {
 /// have many concurrent subscriptions (autoDispose tears down idle ones).
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final memberByIdProvider =
-    StreamProvider.autoDispose.family<Member?, String>((ref, id) async* {
+final memberByIdProvider = StreamProvider.autoDispose.family<Member?, String>((
+  ref,
+  id,
+) async* {
   final db = await ref.watch(appDatabaseProvider.future);
   yield* db.membersDao.watchById(id);
 });

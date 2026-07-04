@@ -167,8 +167,7 @@ Future<void> _printDeck(BuildContext context, WidgetRef ref) async {
     );
     return;
   }
-  final subjects =
-      ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
+  final subjects = ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
   final nameById = {for (final s in subjects) s.id: s.firstName};
   final prints = <RoleCardPrint>[];
   for (final c in cards) {
@@ -182,8 +181,9 @@ Future<void> _printDeck(BuildContext context, WidgetRef ref) async {
       );
       final path = atts.urls.lastOrNull;
       if (path != null) {
-        final signed =
-            await ref.read(signedPersonPhotoUrlProvider(path).future);
+        final signed = await ref.read(
+          signedPersonPhotoUrlProvider(path).future,
+        );
         if (signed != null && signed.isNotEmpty) {
           portrait = await networkImage(signed);
         }

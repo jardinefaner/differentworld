@@ -117,9 +117,9 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
   /// raw-canvas allowlist in docs/THEME_ADHERENCE.md); it is NOT a themed
   /// surface. The lobby (above) IS themed.
   Widget _darkStage(Widget child) => ColoredBox(
-        color: const Color(0xFF0E1117), // raw-canvas: presentation stage
-        child: SafeArea(child: child),
-      );
+    color: const Color(0xFF0E1117), // raw-canvas: presentation stage
+    child: SafeArea(child: child),
+  );
 
   // ── Lobby ────────────────────────────────────────────────────────────────
   Widget _lobby(BuildContext context) {
@@ -171,7 +171,8 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                       label: Text(k.label),
                       visualDensity: VisualDensity.compact,
                       side: BorderSide.none,
-                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
                       labelStyle: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

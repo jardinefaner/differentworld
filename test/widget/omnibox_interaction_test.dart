@@ -38,8 +38,9 @@ void main() {
       );
     }
 
-    testWidgets('tapping the bar fires onTap (it is a button, not a field)',
-        (tester) async {
+    testWidgets('tapping the bar fires onTap (it is a button, not a field)', (
+      tester,
+    ) async {
       var taps = 0;
       await tester.pumpWidget(mount(onTap: () => taps++));
 
@@ -50,41 +51,47 @@ void main() {
       expect(
         taps,
         equals(1),
-        reason: 'The bar is a tap-target that pushes /search; its '
+        reason:
+            'The bar is a tap-target that pushes /search; its '
             'onTap must fire on tap. (CLAUDE.md interaction rule: '
             'a tap must dispatch, never a silent no-op.)',
       );
     });
 
-    testWidgets('the bar has NO editable field (input lives on the page)',
-        (tester) async {
+    testWidgets('the bar has NO editable field (input lives on the page)', (
+      tester,
+    ) async {
       await tester.pumpWidget(mount(onTap: () {}));
 
       expect(
         find.byType(TextField),
         findsNothing,
-        reason: 'The editable composer field moved onto the /search '
+        reason:
+            'The editable composer field moved onto the /search '
             'page (autofocused). The bar must not host a TextField — '
             'that is what made the cross-route focus handoff tear down '
             'the IME in the old design.',
       );
     });
 
-    testWidgets('the bar shows a search affordance (icon + placeholder hint)',
-        (tester) async {
+    testWidgets('the bar shows a search affordance (icon + placeholder hint)', (
+      tester,
+    ) async {
       await tester.pumpWidget(mount(onTap: () {}));
 
       expect(find.byIcon(Icons.search), findsOneWidget);
       expect(
         find.textContaining('Search anything'),
         findsOneWidget,
-        reason: 'A fresh user must read the pill as a search box even '
+        reason:
+            'A fresh user must read the pill as a search box even '
             'though it is a button — the placeholder hint carries that.',
       );
     });
 
-    testWidgets('the bar exposes a Semantics button for screen readers',
-        (tester) async {
+    testWidgets('the bar exposes a Semantics button for screen readers', (
+      tester,
+    ) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(mount(onTap: () {}));
 
@@ -96,7 +103,8 @@ void main() {
       expect(
         find.bySemanticsLabel(RegExp('Search')),
         findsOneWidget,
-        reason: 'The tap-target must announce itself as a button to '
+        reason:
+            'The tap-target must announce itself as a button to '
             'VoiceOver / TalkBack.',
       );
       handle.dispose();

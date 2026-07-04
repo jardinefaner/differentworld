@@ -39,48 +39,52 @@ void main() {
     );
   }
 
-  testWidgets('EntityLink is a tappable link when live entities are on',
-      (tester) async {
+  testWidgets('EntityLink is a tappable link when live entities are on', (
+    tester,
+  ) async {
     await tester.pumpWidget(host(const EntityLink(entity: sofia), live: true));
     await tester.pumpAndSettle();
     expect(find.text('Sofia'), findsOneWidget);
     expect(find.byType(InkWell), findsOneWidget);
   });
 
-  testWidgets('EntityLink degrades to plain text when live entities are off',
-      (tester) async {
+  testWidgets('EntityLink degrades to plain text when live entities are off', (
+    tester,
+  ) async {
     await tester.pumpWidget(host(const EntityLink(entity: sofia), live: false));
     await tester.pumpAndSettle();
     expect(find.text('Sofia'), findsOneWidget);
     expect(find.byType(InkWell), findsNothing);
   });
 
-  testWidgets('LinkifiedText autotags in staff scope but stays plain for family',
-      (tester) async {
-    const index = [
-      EntityMatchTerm(text: 'Sofia', ref: sofia, properNounOnly: true),
-    ];
+  testWidgets(
+    'LinkifiedText autotags in staff scope but stays plain for family',
+    (tester) async {
+      const index = [
+        EntityMatchTerm(text: 'Sofia', ref: sofia, properNounOnly: true),
+      ];
 
-    // Staff: the body becomes rich — the matched name carries a tap span.
-    await tester.pumpWidget(
-      host(const LinkifiedText('Sofia played'), live: true, index: index),
-    );
-    await tester.pumpAndSettle();
-    final staffText = tester.widget<Text>(find.byType(Text).first);
-    expect(staffText.textSpan, isNotNull);
-    expect(staffText.data, isNull);
+      // Staff: the body becomes rich — the matched name carries a tap span.
+      await tester.pumpWidget(
+        host(const LinkifiedText('Sofia played'), live: true, index: index),
+      );
+      await tester.pumpAndSettle();
+      final staffText = tester.widget<Text>(find.byType(Text).first);
+      expect(staffText.textSpan, isNotNull);
+      expect(staffText.data, isNull);
 
-    // Family: plain Text, no autotag — the privacy boundary holds even with a
-    // matching index loaded.
-    await tester.pumpWidget(
-      host(
-        const LinkifiedText('Sofia played', scope: EntityScope.family),
-        live: true,
-        index: index,
-      ),
-    );
-    await tester.pumpAndSettle();
-    final familyText = tester.widget<Text>(find.byType(Text).first);
-    expect(familyText.data, 'Sofia played');
-  });
+      // Family: plain Text, no autotag — the privacy boundary holds even with a
+      // matching index loaded.
+      await tester.pumpWidget(
+        host(
+          const LinkifiedText('Sofia played', scope: EntityScope.family),
+          live: true,
+          index: index,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final familyText = tester.widget<Text>(find.byType(Text).first);
+      expect(familyText.data, 'Sofia played');
+    },
+  );
 }

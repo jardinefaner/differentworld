@@ -64,7 +64,8 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
   Future<void> _makePoster() async {
     if (_capturing) return;
     final boundary =
-        _patternKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        _patternKey.currentContext?.findRenderObject()
+            as RenderRepaintBoundary?;
     if (boundary == null) return;
     setState(() => _capturing = true);
     Uint8List? bytes;
@@ -81,7 +82,9 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
     setState(() => _capturing = false);
     if (bytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't make a poster from this pattern")),
+        const SnackBar(
+          content: Text("Couldn't make a poster from this pattern"),
+        ),
       );
       return;
     }

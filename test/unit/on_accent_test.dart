@@ -49,8 +49,11 @@ void main() {
   group('onAccent returns a DARK foreground on the light fills', () {
     lightFills.forEach((name, fill) {
       test(name, () {
-        expect(AppColors.onAccent(fill), Colors.black,
-            reason: '$name is light → white would fail AA');
+        expect(
+          AppColors.onAccent(fill),
+          Colors.black,
+          reason: '$name is light → white would fail AA',
+        );
       });
     });
   });
@@ -72,8 +75,11 @@ void main() {
     // better of black/white guarantees this for any fill.
     palette.forEach((name, fill) {
       final ratio = _contrast(AppColors.onAccent(fill), fill);
-      expect(ratio, greaterThanOrEqualTo(3.0),
-          reason: '$name: ${ratio.toStringAsFixed(2)}:1 is below large-text AA');
+      expect(
+        ratio,
+        greaterThanOrEqualTo(3.0),
+        reason: '$name: ${ratio.toStringAsFixed(2)}:1 is below large-text AA',
+      );
     });
   });
 }

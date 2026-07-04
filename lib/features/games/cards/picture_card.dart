@@ -17,12 +17,12 @@ class PictureCard {
   });
 
   factory PictureCard.fromContentItem(ContentItem i) => PictureCard(
-        id: i.payload['id']! as String,
-        label: i.payload['label']! as String,
-        image: i.payload['image']! as String,
-        category: (i.payload['category'] as String?) ?? 'thing',
-        deck: (i.payload['deck'] as String?) ?? 'deck',
-      );
+    id: i.payload['id']! as String,
+    label: i.payload['label']! as String,
+    image: i.payload['image']! as String,
+    category: (i.payload['category'] as String?) ?? 'thing',
+    deck: (i.payload['deck'] as String?) ?? 'deck',
+  );
 
   final String id;
   final String label;
@@ -41,23 +41,26 @@ class PictureCard {
   /// from the broadcast with no content fetch (docs/CARD_GAMES.md, the cast
   /// invariant). Embed the PATH, never bytes.
   ContentItem toContentItem() => ContentItem(
-        kind: ContentKind.picture,
-        fingerprint: '$deck:$id',
-        payload: {
-          'id': id,
-          'label': label,
-          'image': image,
-          'category': category,
-          'letter': letter,
-          'deck': deck,
-        },
-      );
+    kind: ContentKind.picture,
+    fingerprint: '$deck:$id',
+    payload: {
+      'id': id,
+      'label': label,
+      'image': image,
+      'category': category,
+      'letter': letter,
+      'deck': deck,
+    },
+  );
 }
 
 /// Parse a deck `manifest.json` (the slicer's output) into cards. Image paths
 /// are resolved relative to [assetDir] (the deck's bundled folder). Bad/missing
 /// fields degrade gracefully so a malformed card can't crash a game boot.
-List<PictureCard> parseDeckManifest(String jsonStr, {required String assetDir}) {
+List<PictureCard> parseDeckManifest(
+  String jsonStr, {
+  required String assetDir,
+}) {
   final Map<String, dynamic> m;
   try {
     m = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -72,13 +75,15 @@ List<PictureCard> parseDeckManifest(String jsonStr, {required String assetDir}) 
     final id = c['id'];
     final image = c['image'];
     if (id is! String || image is! String) continue;
-    out.add(PictureCard(
-      id: id,
-      label: (c['label'] as String?) ?? id.replaceAll('-', ' '),
-      image: '$assetDir/$image',
-      category: (c['category'] as String?) ?? 'thing',
-      deck: deck,
-    ));
+    out.add(
+      PictureCard(
+        id: id,
+        label: (c['label'] as String?) ?? id.replaceAll('-', ' '),
+        image: '$assetDir/$image',
+        category: (c['category'] as String?) ?? 'thing',
+        deck: deck,
+      ),
+    );
   }
   return out;
 }

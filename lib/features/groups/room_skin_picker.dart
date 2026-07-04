@@ -47,7 +47,11 @@ class RoomSkinChip extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.edit, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.edit,
+                  size: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ],
             ),
           ),
@@ -63,7 +67,9 @@ class RoomSkinChip extends ConsumerWidget {
       builder: (_) => _SkinSheet(currentId: current),
     );
     if (picked == null) return; // cancelled
-    await ref.read(groupCapActionsProvider).setStringCap(
+    await ref
+        .read(groupCapActionsProvider)
+        .setStringCap(
           group.id,
           GroupCaps.roomSkin,
           picked.isEmpty ? null : picked, // '' = clear
@@ -108,8 +114,10 @@ class _SkinSheet extends StatelessWidget {
               if (currentId != null)
                 ListTile(
                   leading: Icon(Icons.clear, color: theme.colorScheme.error),
-                  title: Text('Clear theme',
-                      style: TextStyle(color: theme.colorScheme.error)),
+                  title: Text(
+                    'Clear theme',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
                   // Empty string = the caller clears the cap.
                   onTap: () => Navigator.of(context).pop(''),
                 ),

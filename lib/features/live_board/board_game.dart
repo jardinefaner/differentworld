@@ -23,19 +23,19 @@ class BoardState {
   });
 
   factory BoardState.fromMap(Map<String, dynamic> m) => BoardState(
-        instrument: switch (m['kind'] as String?) {
-          'word' => BoardInstrument.word,
-          'spell' => BoardInstrument.spell,
-          'number' => BoardInstrument.number,
-          'turn' => BoardInstrument.turn,
-          'reveal' => BoardInstrument.reveal,
-          'sound' => BoardInstrument.sound,
-          _ => BoardInstrument.idle,
-        },
-        word: (m['word'] as String?) ?? '',
-        name: (m['name'] as String?) ?? '',
-        number: (m['number'] as num?)?.toInt() ?? 0,
-      );
+    instrument: switch (m['kind'] as String?) {
+      'word' => BoardInstrument.word,
+      'spell' => BoardInstrument.spell,
+      'number' => BoardInstrument.number,
+      'turn' => BoardInstrument.turn,
+      'reveal' => BoardInstrument.reveal,
+      'sound' => BoardInstrument.sound,
+      _ => BoardInstrument.idle,
+    },
+    word: (m['word'] as String?) ?? '',
+    name: (m['name'] as String?) ?? '',
+    number: (m['number'] as num?)?.toInt() ?? 0,
+  );
 
   final BoardInstrument instrument;
 
@@ -52,11 +52,11 @@ class BoardState {
   /// The wire-state the caster broadcasts. Self-describing — the receiver
   /// needs no roster/catalog access.
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'kind': instrument.name,
-        'word': word,
-        'name': name,
-        'number': number,
-      };
+    'kind': instrument.name,
+    'word': word,
+    'name': name,
+    'number': number,
+  };
 }
 
 class BoardGame extends GameDefinition<BoardState> {
@@ -71,8 +71,7 @@ class BoardGame extends GameDefinition<BoardState> {
   String get title => 'Live Board';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.deepTeal);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);
 
   // Cast-only — seeded explicitly via castStage, never from the content bank,
   // so it stays out of the standard game launcher.
@@ -92,8 +91,7 @@ class BoardGame extends GameDefinition<BoardState> {
     Map<String, dynamic> state,
     GameIntent intent,
     Map<String, dynamic> args,
-  ) =>
-      state;
+  ) => state;
 
   @override
   Set<GameIntent> activeIntents(BoardState state) => const {};
@@ -103,13 +101,16 @@ class BoardGame extends GameDefinition<BoardState> {
     return switch (state.instrument) {
       BoardInstrument.word => _WordStage(word: state.word),
       BoardInstrument.spell => _SpellStage(name: state.name, word: state.word),
-      BoardInstrument.number =>
-        _NumberStage(number: state.number, label: state.word),
+      BoardInstrument.number => _NumberStage(
+        number: state.number,
+        label: state.word,
+      ),
       BoardInstrument.turn => _TurnStage(name: state.name),
-      BoardInstrument.reveal =>
-        _RevealStage(text: state.word, shown: state.number),
-      BoardInstrument.sound =>
-        _SoundStage(text: state.word, lit: state.number),
+      BoardInstrument.reveal => _RevealStage(
+        text: state.word,
+        shown: state.number,
+      ),
+      BoardInstrument.sound => _SoundStage(text: state.word, lit: state.number),
       BoardInstrument.idle => const _IdleStage(),
     };
   }

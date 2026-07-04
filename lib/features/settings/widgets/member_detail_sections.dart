@@ -56,13 +56,15 @@ class MemberRoleSelector extends ConsumerWidget {
     final roles = RoleBundles.rolesFor(vertical);
     final directorRole = RoleBundles.directorRoleFor(vertical);
 
-    final members =
-        ref.watch(membersInSpaceProvider).value ?? const <Member>[];
-    final admins = members.where((m) {
-      if (m.role == directorRole) return true;
-      return m.caps.getBool(CoreCaps.canActAsDirector);
-    }).toList(growable: false);
-    final iAmLastDirector = selected == directorRole &&
+    final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+    final admins = members
+        .where((m) {
+          if (m.role == directorRole) return true;
+          return m.caps.getBool(CoreCaps.canActAsDirector);
+        })
+        .toList(growable: false);
+    final iAmLastDirector =
+        selected == directorRole &&
         admins.length == 1 &&
         admins.first.id == memberId;
 
@@ -200,8 +202,7 @@ class MemberAssignmentsList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final groupsAsync = ref.watch(allGroupsInSpaceProvider);
-    final assignmentsAsync =
-        ref.watch(assignmentsForMemberProvider(member.id));
+    final assignmentsAsync = ref.watch(assignmentsForMemberProvider(member.id));
 
     return groupsAsync.when(
       loading: () => const Padding(
@@ -343,20 +344,22 @@ class MemberCertificationsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final cert in activeCerts) ...[
-            Builder(builder: (rowContext) {
-              final row = active.firstWhere((c) => c.certKey == cert.key);
-              return _ActiveCertRow(
-                cert: cert,
-                expiryIso: row.expiresAt,
-                expired: _expired(row),
-                onEditExpiry: onSetExpiry == null
-                    ? null
-                    : () => _editExpiry(rowContext, cert, row),
-                onRemove: onToggle == null
-                    ? null
-                    : () => onToggle!(cert.key, false),
-              );
-            }),
+            Builder(
+              builder: (rowContext) {
+                final row = active.firstWhere((c) => c.certKey == cert.key);
+                return _ActiveCertRow(
+                  cert: cert,
+                  expiryIso: row.expiresAt,
+                  expired: _expired(row),
+                  onEditExpiry: onSetExpiry == null
+                      ? null
+                      : () => _editExpiry(rowContext, cert, row),
+                  onRemove: onToggle == null
+                      ? null
+                      : () => onToggle!(cert.key, false),
+                );
+              },
+            ),
             const SizedBox(height: 4),
           ],
           if (activeCerts.isNotEmpty && inactiveCerts.isNotEmpty)
@@ -458,9 +461,7 @@ class _ActiveCertRow extends StatelessWidget {
                     child: Text(
                       expirySubtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: expired
-                            ? scheme.error
-                            : scheme.onSurfaceVariant,
+                        color: expired ? scheme.error : scheme.onSurfaceVariant,
                       ),
                     ),
                   ),

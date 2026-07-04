@@ -8,15 +8,15 @@ import 'package:flutter_test/flutter_test.dart';
 const _game = NameItGame();
 
 Map<String, dynamic> _seed() => {
-      'cards': const [
-        {'image': 'a.png', 'label': 'apple'},
-        {'image': 'b.png', 'label': 'banana'},
-        {'image': 'c.png', 'label': 'cat'},
-      ],
-      'i': 0,
-      'r': false,
-      'd': false,
-    };
+  'cards': const [
+    {'image': 'a.png', 'label': 'apple'},
+    {'image': 'b.png', 'label': 'banana'},
+    {'image': 'c.png', 'label': 'cat'},
+  ],
+  'i': 0,
+  'r': false,
+  'd': false,
+};
 
 Map<String, dynamic> _do(Map<String, dynamic> s, GameIntent i) =>
     _game.reduce(s, i, const {});

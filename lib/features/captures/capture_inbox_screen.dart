@@ -41,8 +41,7 @@ class CaptureInboxScreen extends ConsumerStatefulWidget {
   const CaptureInboxScreen({super.key});
 
   @override
-  ConsumerState<CaptureInboxScreen> createState() =>
-      _CaptureInboxScreenState();
+  ConsumerState<CaptureInboxScreen> createState() => _CaptureInboxScreenState();
 }
 
 class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
@@ -222,7 +221,8 @@ class _CaptureCard extends ConsumerWidget {
     // Show a thumbnail when this capture carries photos (mirrors the
     // observation index's _IndexPhotoThumb). `.value` (not requireValue)
     // so a still-loading stream just renders no thumb — never an error.
-    final photos = ref
+    final photos =
+        ref
             .watch(
               attachmentsForEntityProvider((kind: 'capture', id: capture.id)),
             )
@@ -237,10 +237,10 @@ class _CaptureCard extends ConsumerWidget {
     final ageColor = ageDays == 0
         ? scheme.primary
         : ageDays < 3
-            ? scheme.tertiary
-            : ageDays < 7
-                ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
-                : scheme.error.withValues(alpha: 0.65);
+        ? scheme.tertiary
+        : ageDays < 7
+        ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
+        : scheme.error.withValues(alpha: 0.65);
 
     return Material(
       color: selected
@@ -323,8 +323,7 @@ class _CaptureCard extends ConsumerWidget {
                         IconButton(
                           tooltip: 'Triage',
                           icon: const Icon(Icons.more_vert),
-                          onPressed: () =>
-                              _openTriage(context, ref, capture),
+                          onPressed: () => _openTriage(context, ref, capture),
                         ),
                     ],
                   ),

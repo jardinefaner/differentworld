@@ -36,7 +36,10 @@ class ChildTrailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final name = ref.watch(subjectByIdProvider(subjectId)).value?.firstName;
     final samplesAsync = ref.watch(
-      entriesForSubjectProvider((subjectId: subjectId, kind: EntryKind.workSample)),
+      entriesForSubjectProvider((
+        subjectId: subjectId,
+        kind: EntryKind.workSample,
+      )),
     );
 
     return EdgeScaffold(
@@ -112,7 +115,9 @@ class ChildTrailScreen extends ConsumerWidget {
                 for (final day in byDay.entries) ...[
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    sliver: SliverToBoxAdapter(child: _DayLabel(dayKey: day.key)),
+                    sliver: SliverToBoxAdapter(
+                      child: _DayLabel(dayKey: day.key),
+                    ),
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -255,7 +260,8 @@ class _TrailPiece extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final urls = ref
+    final urls =
+        ref
             .watch(attachmentsForEntityProvider((kind: 'entry', id: entry.id)))
             .value
             ?.urls ??

@@ -23,8 +23,9 @@ class PendingInviteCode extends Notifier<String?> {
   void clear() => state = null;
 }
 
-final pendingInviteCodeProvider =
-    NotifierProvider<PendingInviteCode, String?>(PendingInviteCode.new);
+final pendingInviteCodeProvider = NotifierProvider<PendingInviteCode, String?>(
+  PendingInviteCode.new,
+);
 
 /// Wires the OS deep-link plumbing — `differentworld://invite/<code>` on
 /// mobile, `https://differentworld.app/invite/<code>` on Android (App

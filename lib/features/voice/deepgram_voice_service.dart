@@ -53,10 +53,10 @@ class VoiceUpdate {
 /// resource (one mic at a time) so we share state across screens.
 final Provider<DeepgramVoiceController> deepgramVoiceProvider =
     Provider<DeepgramVoiceController>((ref) {
-  final ctrl = DeepgramVoiceController();
-  ref.onDispose(ctrl.dispose);
-  return ctrl;
-});
+      final ctrl = DeepgramVoiceController();
+      ref.onDispose(ctrl.dispose);
+      return ctrl;
+    });
 
 /// Streams audio from the device mic to Deepgram's live-transcription
 /// WebSocket endpoint and surfaces interim + final transcripts back
@@ -78,7 +78,7 @@ final Provider<DeepgramVoiceController> deepgramVoiceProvider =
 /// sign-in." and stays in idle.
 class DeepgramVoiceController {
   DeepgramVoiceController({AudioRecorder? recorder})
-      : _recorder = recorder ?? AudioRecorder();
+    : _recorder = recorder ?? AudioRecorder();
 
   final AudioRecorder _recorder;
   WebSocketChannel? _channel;
@@ -93,8 +93,7 @@ class DeepgramVoiceController {
   VoiceState _state = VoiceState.idle;
 
   Stream<VoiceUpdate> get updates => _updates.stream;
-  bool get isActive =>
-      _state != VoiceState.idle && _state != VoiceState.error;
+  bool get isActive => _state != VoiceState.idle && _state != VoiceState.error;
 
   /// Begin recording + streaming. Audio is sent to Deepgram as
   /// 16-bit signed little-endian PCM at 16 kHz mono — the format

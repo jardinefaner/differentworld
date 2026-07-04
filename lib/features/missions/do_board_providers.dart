@@ -33,30 +33,32 @@ final activeRolesTodayProvider = StreamProvider<List<ActiveRole>>((ref) async* {
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.entriesDao
-      .watchInSpace(spaceId: spaceId, kind: EntryKind.role)
-      .map((entries) {
-    final today = todayKey();
-    final out = <ActiveRole>[];
-    for (final e in entries) {
-      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
-      if (local == null || dateKey(local) != today) continue;
-      Map<String, dynamic> d;
-      try {
-        final decoded = jsonDecode(e.details);
-        d = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
-      } on FormatException {
-        d = <String, dynamic>{};
+  yield* db.entriesDao.watchInSpace(spaceId: spaceId, kind: EntryKind.role).map(
+    (entries) {
+      final today = todayKey();
+      final out = <ActiveRole>[];
+      for (final e in entries) {
+        final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+        if (local == null || dateKey(local) != today) continue;
+        Map<String, dynamic> d;
+        try {
+          final decoded = jsonDecode(e.details);
+          d = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
+        } on FormatException {
+          d = <String, dynamic>{};
+        }
+        out.add(
+          ActiveRole(
+            entryId: e.id,
+            name: (d['role_name'] as String?) ?? 'Role',
+            emoji: (d['emoji'] as String?) ?? '🎭',
+            done: d['done'] == true,
+          ),
+        );
       }
-      out.add(ActiveRole(
-        entryId: e.id,
-        name: (d['role_name'] as String?) ?? 'Role',
-        emoji: (d['emoji'] as String?) ?? '🎭',
-        done: d['done'] == true,
-      ));
-    }
-    return out;
-  });
+      return out;
+    },
+  );
 });
 
 class RoleBoardActions {
@@ -107,5 +109,6 @@ class RoleBoardActions {
   }
 }
 
-final roleBoardActionsProvider =
-    Provider<RoleBoardActions>(RoleBoardActions.new);
+final roleBoardActionsProvider = Provider<RoleBoardActions>(
+  RoleBoardActions.new,
+);

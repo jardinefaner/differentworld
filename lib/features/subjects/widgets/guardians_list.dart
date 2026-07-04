@@ -1,4 +1,3 @@
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
@@ -60,13 +59,16 @@ class _GuardianRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final messagesAsync = ref.watch(messageThreadProvider(
-      (subjectId: subjectId, guardianId: guardian.id),
-    ));
+    final messagesAsync = ref.watch(
+      messageThreadProvider(
+        (subjectId: subjectId, guardianId: guardian.id),
+      ),
+    );
     final messages = messagesAsync.value ?? const <Message>[];
     final unread = messages
-        .where((m) =>
-            m.senderKind == MessageSenderKind.guardian && m.readAt == null)
+        .where(
+          (m) => m.senderKind == MessageSenderKind.guardian && m.readAt == null,
+        )
         .length;
 
     return ListTile(
@@ -114,8 +116,7 @@ class _GuardianRow extends ConsumerWidget {
               ),
           ],
         ),
-        onPressed: () =>
-            context.push('/messages/$subjectId/${guardian.id}'),
+        onPressed: () => context.push('/messages/$subjectId/${guardian.id}'),
       ),
     );
   }

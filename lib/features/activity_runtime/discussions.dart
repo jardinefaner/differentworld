@@ -14,7 +14,8 @@ library;
 enum DiscussionBand {
   early('4–6', 'Ages 4–6'),
   middle('7–9', 'Ages 7–9'),
-  older('10–12', 'Ages 10–12');
+  older('10–12', 'Ages 10–12')
+  ;
 
   const DiscussionBand(this.short, this.label);
 
@@ -166,7 +167,8 @@ const discussionLibrary = <Discussion>[
   ),
   Discussion(
     topicId: 'fairness',
-    prompt: 'Have you seen something that felt unfair? What did you wish happened?',
+    prompt:
+        'Have you seen something that felt unfair? What did you wish happened?',
     bands: _mo,
   ),
   // ── Our World ───────────────────────────────────────────────────────
@@ -254,7 +256,8 @@ const discussionLibrary = <Discussion>[
   ),
   Discussion(
     topicId: 'courage',
-    prompt: "What's the difference between being brave and not being scared at all?",
+    prompt:
+        "What's the difference between being brave and not being scared at all?",
     bands: _o,
   ),
 ];

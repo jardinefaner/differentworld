@@ -23,24 +23,24 @@ class ThinkingTool {
     this.script,
     this.tags = const <String>[],
   }) : assert(
-          kind != ToolKind.runnable || route != null,
-          'A runnable tool must carry a launch route — otherwise the "Run" '
-          'affordance would advertise an action it cannot deliver.',
-        );
+         kind != ToolKind.runnable || route != null,
+         'A runnable tool must carry a launch route — otherwise the "Run" '
+         'affordance would advertise an action it cannot deliver.',
+       );
 
   /// Adapt one editorial Toolkit tool into the unified shape (reference-only —
   /// no route, carries the when/why/script reference face).
   factory ThinkingTool.fromToolkit(ToolkitTool t) => ThinkingTool(
-        id: t.slug,
-        kind: ToolKind.reference,
-        name: t.name,
-        // The situation reads well as the card subtitle ("when to reach for it").
-        blurb: t.when,
-        whenToUse: t.when,
-        why: t.why,
-        script: t.quick,
-        tags: <String>[t.categoryId.name],
-      );
+    id: t.slug,
+    kind: ToolKind.reference,
+    name: t.name,
+    // The situation reads well as the card subtitle ("when to reach for it").
+    blurb: t.when,
+    whenToUse: t.when,
+    why: t.why,
+    script: t.quick,
+    tags: <String>[t.categoryId.name],
+  );
 
   /// Stable id. Reference tools reuse the Toolkit slug; runnable tools use
   /// their activity id.
@@ -151,8 +151,8 @@ const List<ThinkingTool> runnableThinkingTools = <ThinkingTool>[
 /// reference tool, one shelf. Runnable tools lead (the distinctive "run it
 /// with the room" face); the reference set follows.
 List<ThinkingTool> buildToolLibrary() => <ThinkingTool>[
-      ...runnableThinkingTools,
-      ...universalThinkingTools,
-      for (final category in toolkitCatalog)
-        for (final tool in category.tools) ThinkingTool.fromToolkit(tool),
-    ];
+  ...runnableThinkingTools,
+  ...universalThinkingTools,
+  for (final category in toolkitCatalog)
+    for (final tool in category.tools) ThinkingTool.fromToolkit(tool),
+];

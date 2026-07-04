@@ -144,12 +144,12 @@ Future<Uint8List> renderWorksheetsBytes(
 
 /// One world's worksheets — download on web, print on native.
 Future<bool> printWorldWorksheets(CurriculumWorld world) async => emitPdfBytes(
-      name: '${world.name} worksheets',
-      bytes: await renderWorksheetsBytes(
-        [world],
-        heading: '${world.name} — Worksheets',
-      ),
-    );
+  name: '${world.name} worksheets',
+  bytes: await renderWorksheetsBytes(
+    [world],
+    heading: '${world.name} — Worksheets',
+  ),
+);
 
 /// The whole 10-week worksheet packet — download on web, print on native.
 Future<bool> printAllWorksheets(List<CurriculumWorld> worlds) async =>

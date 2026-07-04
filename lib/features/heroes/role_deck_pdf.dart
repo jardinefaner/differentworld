@@ -32,8 +32,10 @@ class RoleCardPrint {
   final pw.ImageProvider? portrait;
 }
 
-String _ascii(String s) =>
-    s.replaceAll(RegExp(r'[^\x20-\x7E]'), '').replaceAll(RegExp(r'\s+'), ' ').trim();
+String _ascii(String s) => s
+    .replaceAll(RegExp(r'[^\x20-\x7E]'), '')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim();
 
 Future<Uint8List> buildRoleDeckPdf({required List<RoleCardPrint> cards}) async {
   final doc = pw.Document(title: 'Role deck', creator: 'Different World');

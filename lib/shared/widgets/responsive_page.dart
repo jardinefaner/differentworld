@@ -37,9 +37,9 @@ class ResponsivePage extends StatelessWidget {
     this.physics,
     super.key,
   }) : assert(
-          children != null || slivers != null || itemBuilder != null,
-          'Provide one of children:, slivers:, or itemBuilder:',
-        );
+         children != null || slivers != null || itemBuilder != null,
+         'Provide one of children:, slivers:, or itemBuilder:',
+       );
 
   /// Convenience for `.builder`-shape lists — use when itemCount can
   /// be large enough that materializing every row up front matters.
@@ -51,8 +51,8 @@ class ResponsivePage extends StatelessWidget {
     this.bottomPadding = 96,
     this.physics,
     super.key,
-  })  : children = null,
-        slivers = null;
+  }) : children = null,
+       slivers = null;
 
   /// Flat list of widgets — rendered as a `ListView`. Most screens
   /// use this.

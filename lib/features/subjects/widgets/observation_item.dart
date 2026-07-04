@@ -17,8 +17,9 @@ class SubjectObservationItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final when = DateTime.tryParse(entry.recordedAt);
-    final whenLabel =
-        when == null ? '' : DateFormat.MMMd().add_jm().format(when);
+    final whenLabel = when == null
+        ? ''
+        : DateFormat.MMMd().add_jm().format(when);
     final attachmentsAsync = ref.watch(
       attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
     );

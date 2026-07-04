@@ -41,14 +41,17 @@ void main() {
     expect(find.text('2 / 10'), findsOneWidget);
   });
 
-  test('fact-or-fib seed: every item has a statement, bool verdict, and note', () {
-    final bank = LocalContentBank.seeded();
-    final claims = bank.take(ContentKind.factOrFib, 100);
-    expect(claims.length, greaterThanOrEqualTo(12));
-    for (final c in claims) {
-      expect((c.payload['statement']! as String).trim(), isNotEmpty);
-      expect(c.payload['isTrue'], isA<bool>());
-      expect((c.payload['note']! as String).trim(), isNotEmpty);
-    }
-  });
+  test(
+    'fact-or-fib seed: every item has a statement, bool verdict, and note',
+    () {
+      final bank = LocalContentBank.seeded();
+      final claims = bank.take(ContentKind.factOrFib, 100);
+      expect(claims.length, greaterThanOrEqualTo(12));
+      for (final c in claims) {
+        expect((c.payload['statement']! as String).trim(), isNotEmpty);
+        expect(c.payload['isTrue'], isA<bool>());
+        expect((c.payload['note']! as String).trim(), isNotEmpty);
+      }
+    },
+  );
 }

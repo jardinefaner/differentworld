@@ -93,8 +93,8 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
 
   @override
   Widget build(BuildContext context) => GameScaffold<S>(
-        def: widget.def,
-        controller: _controller,
-        onSettings: widget.def.settings.isEmpty ? null : _openSettings,
-      );
+    def: widget.def,
+    controller: _controller,
+    onSettings: widget.def.settings.isEmpty ? null : _openSettings,
+  );
 }

@@ -53,7 +53,8 @@ class TimeCapsuleScreen extends ConsumerWidget {
             return EmptyState(
               icon: Icons.lock_clock_outlined,
               title: 'No capsules yet',
-              message: 'Seal a note, a wish, a message to the future — it '
+              message:
+                  'Seal a note, a wish, a message to the future — it '
                   'stays locked until the day you choose.',
               action: FilledButton.icon(
                 onPressed: () => _bury(context, ref),
@@ -226,8 +227,7 @@ class _CapsuleCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sealed',
-                            style: theme.textTheme.titleSmall),
+                        Text('Sealed', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 2),
                         Text(
                           'Opens $dateLabel',
@@ -341,7 +341,9 @@ class _BurySheetState extends ConsumerState<_BurySheet> {
                   final text = _text.text.trim();
                   if (text.isEmpty) return;
                   final nav = Navigator.of(context);
-                  await ref.read(entryActionsProvider).createTimeCapsule(
+                  await ref
+                      .read(entryActionsProvider)
+                      .createTimeCapsule(
                         text: text,
                         sealedUntil: _until,
                       );

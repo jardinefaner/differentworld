@@ -53,8 +53,9 @@ class ThinkingScreen extends ConsumerWidget {
             for (final g in games)
               if (!shownIds.contains(g.id)) g,
           ];
-          final weekLabel =
-              world == null ? 'This week' : 'This week · ${world.name}';
+          final weekLabel = world == null
+              ? 'This week'
+              : 'This week · ${world.name}';
           return bento
               ? _bentoBody(
                   weekLabel: weekLabel,

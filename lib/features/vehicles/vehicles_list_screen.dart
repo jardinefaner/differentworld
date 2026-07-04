@@ -74,7 +74,7 @@ class VehiclesListScreen extends ConsumerWidget {
               title: 'No vehicles yet',
               message: canEditFleet
                   ? 'Add a vehicle so drivers can run pre-trip safety '
-                      'checks and check it in or out.'
+                        'checks and check it in or out.'
                   : 'Your director will set up the fleet here.',
               action: canEditFleet
                   ? FilledButton.icon(
@@ -110,14 +110,14 @@ class VehiclesListScreen extends ConsumerWidget {
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 180,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          // Compact tile: icon row + name + chips + status.
-                          // A fixed cell that fits all four at the narrow
-                          // phone width without overflow.
-                          mainAxisExtent: 156,
-                        ),
+                              maxCrossAxisExtent: 180,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              // Compact tile: icon row + name + chips + status.
+                              // A fixed cell that fits all four at the narrow
+                              // phone width without overflow.
+                              mainAxisExtent: 156,
+                            ),
                         itemCount: vehicles.length,
                         itemBuilder: (_, i) => _VehicleGridCard(
                           key: ValueKey('vehicle-card-${vehicles[i].id}'),
@@ -154,8 +154,7 @@ class _VehicleTile extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final latestAsync = ref.watch(latestVehicleLogProvider(vehicle.id));
     final isOut = latestAsync.value?.isCheckout ?? false;
-    final stateUnknown =
-        latestAsync.isLoading && latestAsync.value == null;
+    final stateUnknown = latestAsync.isLoading && latestAsync.value == null;
 
     // Subtitle as compact chips — year / make / model / plate. The
     // plate gets its own chip so a driver eyeballing for "TX-1234"
@@ -178,12 +177,8 @@ class _VehicleTile extends ConsumerWidget {
             ? scheme.tertiaryContainer
             : scheme.surfaceContainerHighest,
         child: Icon(
-          isOut
-              ? Icons.local_shipping_outlined
-              : Icons.directions_bus_outlined,
-          color: isOut
-              ? scheme.onTertiaryContainer
-              : scheme.onSurfaceVariant,
+          isOut ? Icons.local_shipping_outlined : Icons.directions_bus_outlined,
+          color: isOut ? scheme.onTertiaryContainer : scheme.onSurfaceVariant,
         ),
       ),
       title: EntityLink(
@@ -206,23 +201,21 @@ class _VehicleTile extends ConsumerWidget {
               child: SkeletonBox(width: 36, height: 22, radius: 11),
             )
           : isOut
-              ? Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: scheme.tertiaryContainer,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'Out',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: scheme.onTertiaryContainer,
-                    ),
-                  ),
-                )
-              : const Icon(Icons.chevron_right),
-      onTap: () =>
-          context.push('/vehicles/${vehicle.id}'),
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: scheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Out',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+            )
+          : const Icon(Icons.chevron_right),
+      onTap: () => context.push('/vehicles/${vehicle.id}'),
     );
   }
 }

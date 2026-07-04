@@ -55,8 +55,9 @@ void main() {
 
       // At least one world beat resolved from the id.
       expect(
-        beats.where((b) =>
-            b.kind == DayBeatKind.open && b.label.contains('days as')),
+        beats.where(
+          (b) => b.kind == DayBeatKind.open && b.label.contains('days as'),
+        ),
         isNotEmpty,
       );
 
@@ -92,15 +93,18 @@ void main() {
           (i) => (url: 'path/$i.jpg', caption: 'May ${i + 1}'),
         ),
       );
-      final photoBeats =
-          beats.where((b) => b.kind == DayBeatKind.photo).toList();
+      final photoBeats = beats
+          .where((b) => b.kind == DayBeatKind.photo)
+          .toList();
       expect(photoBeats, hasLength(6)); // capped
       expect(photoBeats.first.imageUrl, 'path/0.jpg');
       expect(photoBeats.first.big, 'May 1');
       // The open beat still leads; photos come after.
       expect(beats.first.kind, DayBeatKind.open);
-      expect(beats.indexWhere((b) => b.kind == DayBeatKind.photo),
-          greaterThan(0));
+      expect(
+        beats.indexWhere((b) => b.kind == DayBeatKind.photo),
+        greaterThan(0),
+      );
     });
 
     test('no photos → no photo beats (arc unchanged)', () {

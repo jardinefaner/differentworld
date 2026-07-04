@@ -83,18 +83,17 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
           onRetry: () => ref.invalidate(activitiesProvider),
         ),
         data: (activities) {
-          final active =
-              activities.where((a) => a.archivedAt == null).toList();
+          final active = activities.where((a) => a.archivedAt == null).toList();
           if (active.isEmpty) {
             return EmptyState(
               icon: Icons.local_activity_outlined,
               title: 'No activities yet',
               message: isDirector
                   ? 'Import the 10-week curriculum’s activities — each one '
-                      'tagged with the verbs it practices — or add your own.'
+                        'tagged with the verbs it practices — or add your own.'
                   : 'Add activities in your Schedule first, then tag each '
-                      'one with the three action words it practices — they’ll '
-                      'show up here when those words are picked.',
+                        'one with the three action words it practices — they’ll '
+                        'show up here when those words are picked.',
               action: isDirector
                   ? FilledButton.icon(
                       onPressed: _import,
@@ -143,8 +142,8 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
                     'or pick fewer words.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 )
               else if (bento)
@@ -181,7 +180,7 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
           n == 0
               ? 'All curriculum activities are already in your library.'
               : 'Added $n curriculum ${n == 1 ? "activity" : "activities"} — '
-                  'tagged with their verbs.',
+                    'tagged with their verbs.',
         ),
       ),
     );
@@ -339,8 +338,10 @@ class _ActivityCard extends StatelessWidget {
                         id: v.id,
                         label: v.label,
                       ),
-                      child: Text('${v.emoji} ${v.label}',
-                          style: theme.textTheme.bodySmall),
+                      child: Text(
+                        '${v.emoji} ${v.label}',
+                        style: theme.textTheme.bodySmall,
+                      ),
                     ),
                   for (final s in activitySenses(activity))
                     Text(s.emoji, style: const TextStyle(fontSize: 14)),
@@ -380,7 +381,9 @@ class _TagSheetState extends ConsumerState<_TagSheet> {
     setState(() => _saving = true);
     final nav = Navigator.of(context);
     unawaited(HapticFeedback.selectionClick());
-    await ref.read(activityActionsProvider).setActivityTags(
+    await ref
+        .read(activityActionsProvider)
+        .setActivityTags(
           widget.activity,
           verbs: _selected.toList(),
           senses: _senses.map((s) => s.name).toList(),
@@ -504,7 +507,9 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
     });
     final nav = Navigator.of(context);
     unawaited(HapticFeedback.selectionClick());
-    await ref.read(activityActionsProvider).createTagged(
+    await ref
+        .read(activityActionsProvider)
+        .createTagged(
           name: name,
           description: _instruction.text.trim().isEmpty
               ? null
@@ -553,7 +558,8 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'One-sentence instruction (optional)',
-                  hintText: 'Carry the heaviest thing you safely can to a '
+                  hintText:
+                      'Carry the heaviest thing you safely can to a '
                       'friend.',
                   border: OutlineInputBorder(),
                 ),
@@ -561,8 +567,10 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Words it practices',
-                    style: theme.textTheme.labelLarge),
+                child: Text(
+                  'Words it practices',
+                  style: theme.textTheme.labelLarge,
+                ),
               ),
               const SizedBox(height: 6),
               VerbGrid(selected: _verbs, onToggle: _toggleVerb),
@@ -590,8 +598,9 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
                 const SizedBox(height: 8),
                 Text(
                   _error!,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.error),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
                 ),
               ],
               const SizedBox(height: 20),

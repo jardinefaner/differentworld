@@ -23,8 +23,7 @@ import 'package:differentworld/shared/widgets/shell_back_action.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show LogicalKeyboardKey, SystemNavigator;
+import 'package:flutter/services.dart' show LogicalKeyboardKey, SystemNavigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 

@@ -15,8 +15,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// back is one tap in Settings → Preferences. Orthogonal to the wide-screen
 /// time-grid (`scheduleTimeGridProvider`): the deck is the phone / single-
 /// cohort present surface, the grid/matrix is the wide-screen planning glance.
-final scheduleDeckProvider =
-    AsyncNotifierProvider<ScheduleDeckNotifier, bool>(ScheduleDeckNotifier.new);
+final scheduleDeckProvider = AsyncNotifierProvider<ScheduleDeckNotifier, bool>(
+  ScheduleDeckNotifier.new,
+);
 
 class ScheduleDeckNotifier extends AsyncNotifier<bool> {
   static const _kKey = 'settings.schedule_deck';

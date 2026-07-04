@@ -8,30 +8,30 @@ import 'package:flutter_test/flutter_test.dart';
 const _game = OddOneOutGame();
 
 Map<String, dynamic> _seed() => {
-      'rounds': [
-        {
-          'cards': [
-            {'image': 'a.png', 'label': 'apple'},
-            {'image': 'b.png', 'label': 'banana'},
-            {'image': 'c.png', 'label': 'cherry'},
-            {'image': 'ball.png', 'label': 'ball'},
-          ],
-          'answer': 3,
-        },
-        {
-          'cards': [
-            {'image': 'dog.png', 'label': 'dog'},
-            {'image': 'cat.png', 'label': 'cat'},
-            {'image': 'cow.png', 'label': 'cow'},
-            {'image': 'car.png', 'label': 'car'},
-          ],
-          'answer': 3,
-        },
+  'rounds': [
+    {
+      'cards': [
+        {'image': 'a.png', 'label': 'apple'},
+        {'image': 'b.png', 'label': 'banana'},
+        {'image': 'c.png', 'label': 'cherry'},
+        {'image': 'ball.png', 'label': 'ball'},
       ],
-      'i': 0,
-      'r': false,
-      'd': false,
-    };
+      'answer': 3,
+    },
+    {
+      'cards': [
+        {'image': 'dog.png', 'label': 'dog'},
+        {'image': 'cat.png', 'label': 'cat'},
+        {'image': 'cow.png', 'label': 'cow'},
+        {'image': 'car.png', 'label': 'car'},
+      ],
+      'answer': 3,
+    },
+  ],
+  'i': 0,
+  'r': false,
+  'd': false,
+};
 
 Map<String, dynamic> _do(Map<String, dynamic> s, GameIntent i) =>
     _game.reduce(s, i, const {});

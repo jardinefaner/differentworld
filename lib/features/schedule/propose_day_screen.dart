@@ -109,7 +109,8 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
         final ok = await confirmDestructive(
           context,
           title: '${group.name} already has ${existing.length} blocks today',
-          message: 'Add the drafted day on top? You can delete extras in the '
+          message:
+              'Add the drafted day on top? You can delete extras in the '
               'schedule afterwards.',
           confirmLabel: 'Add anyway',
         );
@@ -176,7 +177,8 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
         body: EmptyState(
           icon: Icons.lock_outline,
           title: 'Drafting a day is a lead task',
-          message: 'Your director or a lead teacher sets the day. Ask them to '
+          message:
+              'Your director or a lead teacher sets the day. Ask them to '
               'draft one.',
         ),
       );
@@ -327,7 +329,8 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
                           child: FilledButton.icon(
                             onPressed: (group == null || busy)
                                 ? null
-                                : () => unawaited(_use(spaceId, proposed, group)),
+                                : () =>
+                                      unawaited(_use(spaceId, proposed, group)),
                             icon: busy
                                 ? const SizedBox(
                                     width: 18,

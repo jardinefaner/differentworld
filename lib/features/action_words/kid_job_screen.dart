@@ -65,17 +65,19 @@ class _KidJobScreenState extends ConsumerState<KidJobScreen>
     // Defer through a microtask (not a sync write): initState runs during the
     // parent route's build phase and AppShell watches kidModeProvider, so a
     // sync write trips Riverpod's "modified during build" assertion.
-    unawaited(Future.microtask(() {
-      if (!mounted) return;
-      try {
-        ref.read(kidModeProvider.notifier).enter();
-        ref.read(kidModeLockedRouteProvider.notifier).pin(_lockedRoute);
-      } on Object catch (e, st) {
-        if (kDebugMode) {
-          debugPrint('[kid-job] enter failed: $e\n$st');
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        try {
+          ref.read(kidModeProvider.notifier).enter();
+          ref.read(kidModeLockedRouteProvider.notifier).pin(_lockedRoute);
+        } on Object catch (e, st) {
+          if (kDebugMode) {
+            debugPrint('[kid-job] enter failed: $e\n$st');
+          }
         }
-      }
-    }));
+      }),
+    );
   }
 
   @override
@@ -104,7 +106,9 @@ class _KidJobScreenState extends ConsumerState<KidJobScreen>
     _toggling.add(verbId);
     unawaited(HapticFeedback.mediumImpact());
     try {
-      await ref.read(actionWordsActionsProvider).toggleDone(
+      await ref
+          .read(actionWordsActionsProvider)
+          .toggleDone(
             subjectId: subject.id,
             groupId: subject.groupId,
             date: todayKey(),

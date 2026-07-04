@@ -42,7 +42,9 @@ class _PictureLibraryScreenState extends ConsumerState<PictureLibraryScreen> {
       // died silently ("nothing after I pick"). Now it surfaces.
       final picked = await ref.read(photoServiceProvider).pickPhoto(source);
       if (kDebugMode) {
-        debugPrint('[pics] source=$source picked=${picked?.path} mounted=$mounted');
+        debugPrint(
+          '[pics] source=$source picked=${picked?.path} mounted=$mounted',
+        );
       }
       if (picked == null) {
         messenger?.showSnackBar(
@@ -248,8 +250,9 @@ class _Body extends ConsumerWidget {
             child: Text(
               'Shared with your whole team · saved offline, uploads when online.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
@@ -263,11 +266,11 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const ContentHeader(
-        title: 'Your pictures',
-        subtitle:
-            'These play in Reveal the Picture — kids guess as the grid lifts. '
-            'Tap one to rename or remove.',
-      );
+    title: 'Your pictures',
+    subtitle:
+        'These play in Reveal the Picture — kids guess as the grid lifts. '
+        'Tap one to rename or remove.',
+  );
 }
 
 class _PictureTile extends StatelessWidget {
@@ -385,7 +388,10 @@ class _TileMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_horiz, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      icon: Icon(
+        Icons.more_horiz,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       tooltip: 'Picture options',
       onSelected: (v) => v == 'rename' ? onRename() : onRemove(),
       itemBuilder: (_) => const [
@@ -416,7 +422,11 @@ class _AddTile extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           else
-            Icon(Icons.add_a_photo_outlined, size: 30, color: scheme.onSurfaceVariant),
+            Icon(
+              Icons.add_a_photo_outlined,
+              size: 30,
+              color: scheme.onSurfaceVariant,
+            ),
           const SizedBox(height: 7),
           Text(
             busy ? 'Adding…' : 'Add pictures',
@@ -481,8 +491,9 @@ class _MixToggle extends ConsumerWidget {
           mix
               ? 'Your pictures play alongside the built-in set.'
               : 'Only your pictures play.',
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: scheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),

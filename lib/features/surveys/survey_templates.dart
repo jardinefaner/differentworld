@@ -41,7 +41,8 @@ enum SurveyQuestionKind {
 /// Language toggle for survey presentation + TTS playback.
 enum SurveyLanguage {
   en('en', 'English', 'EN'),
-  es('es', 'Español', 'ES');
+  es('es', 'Español', 'ES')
+  ;
 
   const SurveyLanguage(this.code, this.displayName, this.short);
   final String code;
@@ -129,8 +130,7 @@ class SurveyTemplate {
   final List<SurveyQuestion> questions;
 
   /// Real (non-practice) questions — used for completion progress.
-  Iterable<SurveyQuestion> get scored =>
-      questions.where((q) => !q.isPractice);
+  Iterable<SurveyQuestion> get scored => questions.where((q) => !q.isPractice);
 }
 
 /// Registered survey templates. Add new ones here; the route + list
@@ -140,7 +140,8 @@ abstract final class SurveyTemplates {
     id: 'basecamp_2025_26',
     title: 'BASECamp Student Survey',
     year: '2025–26',
-    subtitle: 'TK–3rd grade. Read each line out loud, '
+    subtitle:
+        'TK–3rd grade. Read each line out loud, '
         'kid picks a smiley.',
     questions: _basecampQuestions,
   );
@@ -152,7 +153,8 @@ abstract final class SurveyTemplates {
     id: 'basecamp_4_6_2024_25',
     title: 'BASECamp Student Survey · 4th–6th',
     year: '2024–25',
-    subtitle: '4th–6th grade. Kid reads + answers on their own. '
+    subtitle:
+        '4th–6th grade. Kid reads + answers on their own. '
         '5-point scales (strongly disagree → strongly agree, '
         'not like me → exactly like me).',
     questions: _basecamp46Questions,
@@ -196,7 +198,8 @@ const _basecampQuestions = <SurveyQuestion>[
     key: 'friends_help',
     kind: SurveyQuestionKind.agree3,
     prompt: 'I have friends here who help me if I am having a hard time.',
-    promptEs: 'Tengo amigos aquí que me ayudan si estoy pasando por un mal momento.',
+    promptEs:
+        'Tengo amigos aquí que me ayudan si estoy pasando por un mal momento.',
   ),
   SurveyQuestion(
     key: 'fun_learning',
@@ -234,7 +237,8 @@ const _basecampQuestions = <SurveyQuestion>[
     key: 'activities',
     kind: SurveyQuestionKind.multiselect,
     prompt: 'Check any of the activities you did this year in BASECamp.',
-    promptEs: 'Marca cualquiera de las actividades que hiciste este año en BASECamp.',
+    promptEs:
+        'Marca cualquiera de las actividades que hiciste este año en BASECamp.',
     options: [
       // Wave 145 + 149: full "Did you...?" questions in both languages.
       SurveyOption(
@@ -285,23 +289,27 @@ const _basecampQuestions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'asked_questions',
     kind: SurveyQuestionKind.agree3,
-    prompt: "I felt comfortable asking questions when I didn't understand "
+    prompt:
+        "I felt comfortable asking questions when I didn't understand "
         'something.',
     promptEs: 'Me sentí cómodo haciendo preguntas cuando no entendía algo.',
   ),
   SurveyQuestion(
     key: 'tried_healthy_food',
     kind: SurveyQuestionKind.agree3,
-    prompt: 'Because of BASECamp, I tried new food choices that '
+    prompt:
+        'Because of BASECamp, I tried new food choices that '
         'were healthy for me.',
     promptEs: 'Por BASECamp, probé nuevas comidas que eran saludables para mí.',
   ),
   SurveyQuestion(
     key: 'more_physical_activity',
     kind: SurveyQuestionKind.agree3,
-    prompt: 'Because of BASECamp, I participate in more physical activity '
+    prompt:
+        'Because of BASECamp, I participate in more physical activity '
         '& movement (like sports, capoeira, etc.)',
-    promptEs: 'Por BASECamp, participo en más actividad física y movimiento '
+    promptEs:
+        'Por BASECamp, participo en más actividad física y movimiento '
         '(como deportes, capoeira, etc.).',
   ),
 
@@ -309,9 +317,11 @@ const _basecampQuestions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'something_learned_health',
     kind: SurveyQuestionKind.text,
-    prompt: 'At BASECamp this year, something I learned about being '
+    prompt:
+        'At BASECamp this year, something I learned about being '
         'healthy is…',
-    promptEs: 'En BASECamp este año, algo que aprendí sobre estar saludable es…',
+    promptEs:
+        'En BASECamp este año, algo que aprendí sobre estar saludable es…',
   ),
 ];
 
@@ -363,7 +373,8 @@ const _basecamp46Questions = <SurveyQuestion>[
     key: 'p46_teachers_kind',
     kind: SurveyQuestionKind.agree5,
     prompt: 'My BASECamp teachers are kind to me and the other kids.',
-    promptEs: 'Mis maestros de BASECamp son amables conmigo y con los demás niños.',
+    promptEs:
+        'Mis maestros de BASECamp son amables conmigo y con los demás niños.',
   ),
   SurveyQuestion(
     key: 'p46_teachers_name',
@@ -398,7 +409,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_help_others',
     kind: SurveyQuestionKind.agree5,
-    prompt: 'I tried to help others when they are not as good as me at '
+    prompt:
+        'I tried to help others when they are not as good as me at '
         'something.',
     promptEs:
         'Traté de ayudar a otros cuando no eran tan buenos como yo en algo.',
@@ -406,7 +418,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_compromise',
     kind: SurveyQuestionKind.agree5,
-    prompt: "I compromised with others when we didn't want the same "
+    prompt:
+        "I compromised with others when we didn't want the same "
         "thing. (I worked it out with others when we didn't want the "
         'same thing.)',
     promptEs:
@@ -416,7 +429,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_food_healthy',
     kind: SurveyQuestionKind.agree5,
-    prompt: 'Because of being here this year, I tried new food choices '
+    prompt:
+        'Because of being here this year, I tried new food choices '
         'that were healthy for me.',
     promptEs:
         'Por estar aquí este año, probé nuevas comidas que eran saludables '
@@ -425,7 +439,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_physical_activity',
     kind: SurveyQuestionKind.agree5,
-    prompt: 'Because of being here this year, I participated in more '
+    prompt:
+        'Because of being here this year, I participated in more '
         'physical activity and movement.',
     promptEs:
         'Por estar aquí este año, participé en más actividad física '
@@ -436,7 +451,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_healthy_learned',
     kind: SurveyQuestionKind.text,
-    prompt: 'At BASECamp this year, something I learned about being '
+    prompt:
+        'At BASECamp this year, something I learned about being '
         'healthy is…',
     promptEs:
         'En BASECamp este año, algo que aprendí sobre estar saludable es…',
@@ -459,8 +475,7 @@ const _basecamp46Questions = <SurveyQuestion>[
       SurveyOption(
         key: 'act_invite_friend',
         label: 'Asked my friends to participate in an activity with me',
-        labelEs:
-            'Invité a mis amigos a participar en una actividad conmigo',
+        labelEs: 'Invité a mis amigos a participar en una actividad conmigo',
       ),
       SurveyOption(
         key: 'act_line_leader',
@@ -470,8 +485,7 @@ const _basecamp46Questions = <SurveyQuestion>[
       SurveyOption(
         key: 'act_choose_group',
         label: 'Chose a group activity for everyone to do',
-        labelEs:
-            'Elegí una actividad de grupo para que todos la hicieran',
+        labelEs: 'Elegí una actividad de grupo para que todos la hicieran',
       ),
       SurveyOption(
         key: 'act_help_bad_day',
@@ -499,7 +513,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_emotion_self',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I could tell when I was '
+    prompt:
+        'In the Auditorium this year… I could tell when I was '
         'feeling happy, sad, angry, or scared.',
     promptEs:
         'En el Auditorio este año… Sabía cuando me sentía feliz, '
@@ -508,7 +523,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_mood_affect',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I could tell when my mood '
+    prompt:
+        'In the Auditorium this year… I could tell when my mood '
         'was affecting how I acted or talked to others.',
     promptEs:
         'En el Auditorio este año… Sabía cuando mi estado de ánimo '
@@ -517,7 +533,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_fix_mistakes',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… When I made mistakes, I '
+    prompt:
+        'In the Auditorium this year… When I made mistakes, I '
         'tried to fix things.',
     promptEs:
         'En el Auditorio este año… Cuando cometía errores, '
@@ -526,7 +543,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_kept_trying',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: "In the Auditorium this year… If I couldn't do something "
+    prompt:
+        "In the Auditorium this year… If I couldn't do something "
         'the first time, I kept trying.',
     promptEs:
         'En el Auditorio este año… Si no podía hacer algo la primera '
@@ -535,7 +553,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_care_feelings',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I care about other '
+    prompt:
+        'In the Auditorium this year… I care about other '
         "people's feelings.",
     promptEs:
         'En el Auditorio este año… Me importan los sentimientos '
@@ -544,7 +563,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_learned_different',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I learned about people who '
+    prompt:
+        'In the Auditorium this year… I learned about people who '
         'were different than me.',
     promptEs:
         'En el Auditorio este año… Aprendí sobre personas que eran '
@@ -553,7 +573,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_read_others',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I could tell when others '
+    prompt:
+        'In the Auditorium this year… I could tell when others '
         'were feeling happy, sad, angry, or scared.',
     promptEs:
         'En el Auditorio este año… Sabía cuando los demás se sentían '
@@ -562,7 +583,8 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_future_choices',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I thought about how my '
+    prompt:
+        'In the Auditorium this year… I thought about how my '
         'choices might affect me later on.',
     promptEs:
         'En el Auditorio este año… Pensé en cómo mis decisiones '
@@ -571,15 +593,16 @@ const _basecamp46Questions = <SurveyQuestion>[
   SurveyQuestion(
     key: 'p46_made_plans',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I made plans before I took '
+    prompt:
+        'In the Auditorium this year… I made plans before I took '
         'action.',
-    promptEs:
-        'En el Auditorio este año… Hacía planes antes de actuar.',
+    promptEs: 'En el Auditorio este año… Hacía planes antes de actuar.',
   ),
   SurveyQuestion(
     key: 'p46_ask_help',
     kind: SurveyQuestionKind.likeMe5,
-    prompt: 'In the Auditorium this year… I asked for help when I '
+    prompt:
+        'In the Auditorium this year… I asked for help when I '
         "didn't know what to do.",
     promptEs:
         'En el Auditorio este año… Pedí ayuda cuando no sabía '

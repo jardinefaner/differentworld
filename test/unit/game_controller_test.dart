@@ -82,18 +82,20 @@ void main() {
       expect(c.state['q'], 'round-2', reason: 'each replay is a new round');
     });
 
-    test('without a reseed, reset replays the same content via the reducer',
-        () {
-      final c = LocalGameController(
-        initial: {'i': 3, 'count': 7, 'q': 'fixed'},
-        reduce: _counterReduce,
-      );
-      addTearDown(c.dispose);
+    test(
+      'without a reseed, reset replays the same content via the reducer',
+      () {
+        final c = LocalGameController(
+          initial: {'i': 3, 'count': 7, 'q': 'fixed'},
+          reduce: _counterReduce,
+        );
+        addTearDown(c.dispose);
 
-      c.send(GameIntent.reset);
-      expect(c.state['q'], 'fixed', reason: 'same content kept (seed games)');
-      expect(c.state['i'], 0, reason: 'the reducer still zeroes indices');
-    });
+        c.send(GameIntent.reset);
+        expect(c.state['q'], 'fixed', reason: 'same content kept (seed games)');
+        expect(c.state['i'], 0, reason: 'the reducer still zeroes indices');
+      },
+    );
 
     test('the reducer is pure — it never mutates the input state', () {
       final initial = {'i': 0, 'count': 0};

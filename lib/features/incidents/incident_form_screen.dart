@@ -107,7 +107,9 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
           break;
         }
       }
-      await ref.read(entryActionsProvider).createIncident(
+      await ref
+          .read(entryActionsProvider)
+          .createIncident(
             subjectId: _subjectId!,
             groupId: subject?.groupId,
             text: narrative,
@@ -334,7 +336,8 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
               children: [
                 const ContentHeader(
                   title: 'Log an incident',
-                  subtitle: 'A bump, a conflict, an illness — the structured '
+                  subtitle:
+                      'A bump, a conflict, an illness — the structured '
                       'record families and licensing can rely on.',
                 ),
                 topSelectors,

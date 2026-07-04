@@ -34,12 +34,14 @@ class LiveEntitiesNotifier extends AsyncNotifier<bool> {
   }
 }
 
-final liveEntitiesProvider =
-    AsyncNotifierProvider<LiveEntitiesNotifier, bool>(LiveEntitiesNotifier.new);
+final liveEntitiesProvider = AsyncNotifierProvider<LiveEntitiesNotifier, bool>(
+  LiveEntitiesNotifier.new,
+);
 
 /// Resolved ON state for a cheap sync read inside `build()`. Defaults to ON
 /// even while the pref loads, so entities are live from the first frame.
-bool liveEntitiesOn(WidgetRef ref) => ref.watch(liveEntitiesProvider).value ?? true;
+bool liveEntitiesOn(WidgetRef ref) =>
+    ref.watch(liveEntitiesProvider).value ?? true;
 
 /// The on-device name → [EntityRef] index, built from the LOCAL roster the
 /// viewer can already see. PII never leaves the device — this is just the
@@ -55,16 +57,21 @@ final entityIndexProvider = Provider<List<EntityMatchTerm>>((ref) {
   final terms = <EntityMatchTerm>[];
 
   // ── children ──
-  final subjects = ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
+  final subjects =
+      ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
   final subjectFirstCounts = <String, int>{};
   for (final s in subjects) {
     final fn = s.firstName.trim().toLowerCase();
-    if (fn.isNotEmpty) subjectFirstCounts[fn] = (subjectFirstCounts[fn] ?? 0) + 1;
+    if (fn.isNotEmpty) {
+      subjectFirstCounts[fn] = (subjectFirstCounts[fn] ?? 0) + 1;
+    }
   }
   for (final s in subjects) {
     final first = s.firstName.trim();
-    final full =
-        [first, s.lastName.trim()].where((p) => p.isNotEmpty).join(' ');
+    final full = [
+      first,
+      s.lastName.trim(),
+    ].where((p) => p.isNotEmpty).join(' ');
     final ref0 = EntityRef(
       kind: EntityKind.subject,
       id: s.id,
@@ -111,22 +118,45 @@ final entityIndexProvider = Provider<List<EntityMatchTerm>>((ref) {
       final n = name(x).trim();
       if (n.length >= 2) {
         terms.add(
-          EntityMatchTerm(text: n, ref: EntityRef(kind: kind, id: id(x), label: n)),
+          EntityMatchTerm(
+            text: n,
+            ref: EntityRef(kind: kind, id: id(x), label: n),
+          ),
         );
       }
     }
   }
 
-  addThings(ref.watch(groupsProvider).value ?? const <Group>[],
-      EntityKind.group, (g) => g.id, (g) => g.name);
-  addThings(ref.watch(activitiesProvider).value ?? const <Activity>[],
-      EntityKind.activity, (a) => a.id, (a) => a.name);
-  addThings(ref.watch(locationsProvider).value ?? const <Location>[],
-      EntityKind.location, (l) => l.id, (l) => l.name);
-  addThings(ref.watch(vehiclesProvider).value ?? const <Vehicle>[],
-      EntityKind.vehicle, (v) => v.id, (v) => v.name);
-  addThings(ref.watch(curriculumWorldsProvider).value ?? const <CurriculumWorld>[],
-      EntityKind.world, (w) => w.id, (w) => w.name);
+  addThings(
+    ref.watch(groupsProvider).value ?? const <Group>[],
+    EntityKind.group,
+    (g) => g.id,
+    (g) => g.name,
+  );
+  addThings(
+    ref.watch(activitiesProvider).value ?? const <Activity>[],
+    EntityKind.activity,
+    (a) => a.id,
+    (a) => a.name,
+  );
+  addThings(
+    ref.watch(locationsProvider).value ?? const <Location>[],
+    EntityKind.location,
+    (l) => l.id,
+    (l) => l.name,
+  );
+  addThings(
+    ref.watch(vehiclesProvider).value ?? const <Vehicle>[],
+    EntityKind.vehicle,
+    (v) => v.id,
+    (v) => v.name,
+  );
+  addThings(
+    ref.watch(curriculumWorldsProvider).value ?? const <CurriculumWorld>[],
+    EntityKind.world,
+    (w) => w.id,
+    (w) => w.name,
+  );
 
   // ── roles (proper-noun gated: "the Builder role") ──
   for (final deck in roleDecks) {

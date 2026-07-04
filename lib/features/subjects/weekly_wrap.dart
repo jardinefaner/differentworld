@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/features/action_words/summer_book.dart' show scrubOtherNames;
+import 'package:differentworld/features/action_words/summer_book.dart'
+    show scrubOtherNames;
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
@@ -42,12 +43,10 @@ Future<void> castWeeklyWrap(
     ).future,
   );
   final weekAgo = DateTime.now().subtract(const Duration(days: 7));
-  final week =
-      all.where((e) {
-        final at = DateTime.tryParse(e.recordedAt)?.toLocal();
-        return at != null && at.isAfter(weekAgo);
-      }).toList()
-        ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+  final week = all.where((e) {
+    final at = DateTime.tryParse(e.recordedAt)?.toLocal();
+    return at != null && at.isAfter(weekAgo);
+  }).toList()..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
   if (week.isEmpty) {
     messenger?.showSnackBar(

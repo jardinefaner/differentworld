@@ -14,12 +14,12 @@ typedef SurveyResponsesKey = ({String spaceId, String templateId});
 // ignore: specify_nonobvious_property_types
 final surveyResponsesProvider = StreamProvider.autoDispose
     .family<List<SurveyResponse>, SurveyResponsesKey>((ref, key) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.surveysDao.watchForTemplate(
-    spaceId: key.spaceId,
-    templateId: key.templateId,
-  );
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.surveysDao.watchForTemplate(
+        spaceId: key.spaceId,
+        templateId: key.templateId,
+      );
+    });
 
 /// Wave 135: per-program catalog of identity-picker options.
 /// `dimension` is one of 'age_band' / 'grade' / 'school'. Empty list
@@ -30,14 +30,16 @@ typedef SurveyPickerOptionsKey = ({String spaceId, String dimension});
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
 final surveyPickerOptionsProvider = StreamProvider.autoDispose
-    .family<List<SurveyPickerOption>, SurveyPickerOptionsKey>(
-        (ref, key) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.surveysDao.watchPickerOptions(
-    spaceId: key.spaceId,
-    dimension: key.dimension,
-  );
-});
+    .family<List<SurveyPickerOption>, SurveyPickerOptionsKey>((
+      ref,
+      key,
+    ) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.surveysDao.watchPickerOptions(
+        spaceId: key.spaceId,
+        dimension: key.dimension,
+      );
+    });
 
 /// Wave 138: the in-progress survey response by id. The survey-take
 /// screen generates a fresh UUID in initState and watches this stream
@@ -48,9 +50,9 @@ final surveyPickerOptionsProvider = StreamProvider.autoDispose
 // ignore: specify_nonobvious_property_types
 final surveyResponseByIdProvider = StreamProvider.autoDispose
     .family<SurveyResponse?, String>((ref, id) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.surveysDao.watchById(id);
-});
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.surveysDao.watchById(id);
+    });
 
 /// Status discriminator for `survey_responses.status`.
 class SurveyResponseStatus {
@@ -63,9 +65,7 @@ class SurveyResponseStatus {
 /// `SurveyActions.upsert` round-trips it to the DB as the JSONB blob.
 class SurveyAnswers {
   SurveyAnswers([Map<String, dynamic>? raw])
-      : _raw = raw == null
-            ? <String, dynamic>{}
-            : Map<String, dynamic>.from(raw);
+    : _raw = raw == null ? <String, dynamic>{} : Map<String, dynamic>.from(raw);
 
   factory SurveyAnswers.fromJson(String? json) {
     if (json == null || json.isEmpty) return SurveyAnswers();

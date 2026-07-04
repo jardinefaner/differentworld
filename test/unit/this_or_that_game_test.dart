@@ -65,7 +65,11 @@ void main() {
     });
 
     test('reset resets everything', () {
-      final r = def.reduce(st(i: 5, r: true, d: true), GameIntent.reset, const {});
+      final r = def.reduce(
+        st(i: 5, r: true, d: true),
+        GameIntent.reset,
+        const {},
+      );
       expect(r['i'], 0);
       expect(r['r'], isFalse);
       expect(r['d'], isFalse);
@@ -84,11 +88,14 @@ void main() {
       }
     });
 
-    test('the reducer preserves the content payload (key for the live path)', () {
-      final r = def.reduce(st(), GameIntent.next, const {});
-      expect(r['pairs'], st()['pairs'], reason: 'pairs ride the broadcast');
-      expect(r['n'], 8);
-    });
+    test(
+      'the reducer preserves the content payload (key for the live path)',
+      () {
+        final r = def.reduce(st(), GameIntent.next, const {});
+        expect(r['pairs'], st()['pairs'], reason: 'pairs ride the broadcast');
+        expect(r['n'], 8);
+      },
+    );
 
     test('the reducer is pure — it does not mutate the input', () {
       final input = st(i: 1);

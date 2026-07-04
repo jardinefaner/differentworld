@@ -11,10 +11,10 @@ class RhymeState {
   const RhymeState({this.index = 0, this.found = 0, this.words = const []});
 
   factory RhymeState.fromMap(Map<String, dynamic> m) => RhymeState(
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        found: (m['f'] as num?)?.toInt() ?? 0,
-        words: [for (final w in (m['words'] as List? ?? const [])) w.toString()],
-      );
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    found: (m['f'] as num?)?.toInt() ?? 0,
+    words: [for (final w in (m['words'] as List? ?? const [])) w.toString()],
+  );
 
   final int index;
   final int found;
@@ -33,8 +33,7 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
   String get title => 'Rhyme Time';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.teal);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.teal);
 
   @override
   String? get liveRoute => '/live/rhyme-time';
@@ -81,8 +80,11 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(RhymeState s) =>
-      {GameIntent.tally, GameIntent.next, GameIntent.reset};
+  Set<GameIntent> activeIntents(RhymeState s) => {
+    GameIntent.tally,
+    GameIntent.next,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, RhymeState s) {
@@ -115,10 +117,9 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
     BuildContext context,
     RhymeState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) =>
-      tallyControls(
-        send: send,
-        tallyLabel: 'Someone rhymed it!',
-        nextLabel: 'New word',
-      );
+  ) => tallyControls(
+    send: send,
+    tallyLabel: 'Someone rhymed it!',
+    nextLabel: 'New word',
+  );
 }

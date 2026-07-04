@@ -12,11 +12,11 @@ void main() {
   group('RhymeTimeGame', () {
     const game = RhymeTimeGame();
     Map<String, dynamic> stateAt({int i = 0, int f = 0, int n = 3}) => {
-          'i': i,
-          'f': f,
-          'n': n,
-          'words': [for (var k = 0; k < n; k++) 'word$k'],
-        };
+      'i': i,
+      'f': f,
+      'n': n,
+      'words': [for (var k = 0; k < n; k++) 'word$k'],
+    };
 
     test('tally counts a rhyme', () {
       final r = game.reduce(stateAt(f: 2), GameIntent.tally, const {});
@@ -62,15 +62,15 @@ void main() {
   group('LetterWordsGame', () {
     const game = LetterWordsGame();
     Map<String, dynamic> stateAt({int i = 0, int f = 0}) => {
-          'i': i,
-          'f': f,
-          'n': 3,
-          'rounds': [
-            ['A', 'animals'],
-            ['B', 'foods'],
-            ['C', 'colors'],
-          ],
-        };
+      'i': i,
+      'f': f,
+      'n': 3,
+      'rounds': [
+        ['A', 'animals'],
+        ['B', 'foods'],
+        ['C', 'colors'],
+      ],
+    };
 
     test('tally counts a word', () {
       expect(game.reduce(stateAt(f: 1), GameIntent.tally, const {})['f'], 2);

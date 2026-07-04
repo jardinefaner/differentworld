@@ -90,7 +90,7 @@ class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
               title: 'No incidents logged',
               message: viewer.canObserve
                   ? 'When something happens — a bump, a conflict, an '
-                      'illness — log it here so there’s a record.'
+                        'illness — log it here so there’s a record.'
                   : 'Incidents logged by staff will appear here.',
               action: viewer.canObserve
                   ? FilledButton.icon(
@@ -102,8 +102,7 @@ class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
             );
           }
 
-          final needsCount =
-              incidents.where((i) => !i.parentNotified).length;
+          final needsCount = incidents.where((i) => !i.parentNotified).length;
           final filtered = _filter == _IncidentFilter.needsFollowUp
               ? incidents.where((i) => !i.parentNotified).toList()
               : incidents;

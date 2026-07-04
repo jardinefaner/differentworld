@@ -111,8 +111,9 @@ class TripLocationActions {
   /// pin for [blockId]. No-ops if the address can't be geocoded (empty /
   /// no result / offline).
   Future<void> resolveDestinationCoords(String blockId, String address) async {
-    final coords =
-        await _ref.read(tripLocationServiceProvider).geocodeAddress(address);
+    final coords = await _ref
+        .read(tripLocationServiceProvider)
+        .geocodeAddress(address);
     if (coords == null) return;
     final db = await _ref.read(appDatabaseProvider.future);
     await db.tripsDao.setDestinationCoords(blockId, coords.lat, coords.lng);

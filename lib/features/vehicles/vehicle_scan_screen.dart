@@ -96,7 +96,8 @@ class _VehicleScanScreenState extends State<VehicleScanScreen> {
         body: EmptyState(
           icon: Icons.qr_code_scanner_outlined,
           title: 'Scan on your phone',
-          message: 'QR scanning needs a device camera. Open Different World '
+          message:
+              'QR scanning needs a device camera. Open Different World '
               'on a phone or tablet to scan a vehicle code — or pick the '
               'vehicle from the list to check it out here.',
         ),

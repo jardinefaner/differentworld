@@ -62,12 +62,13 @@ class EmptyState extends StatelessWidget {
               SizedBox(height: isWide ? 12 : 8),
               Text(
                 message!,
-                style: (isWide
-                        ? theme.textTheme.bodyMedium
-                        : theme.textTheme.bodySmall)
-                    ?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style:
+                    (isWide
+                            ? theme.textTheme.bodyMedium
+                            : theme.textTheme.bodySmall)
+                        ?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                 textAlign: TextAlign.center,
               ),
             ],

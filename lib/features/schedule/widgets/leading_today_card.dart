@@ -75,8 +75,7 @@ class LeadingTodayCard extends ConsumerWidget {
     );
     final activities =
         ref.watch(allActivitiesProvider).value ?? const <Activity>[];
-    final locations =
-        ref.watch(locationsProvider).value ?? const <Location>[];
+    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
 
     return blocksAsync.maybeWhen(
       data: (blocks) {
@@ -117,8 +116,9 @@ class LeadingTodayCard extends ConsumerWidget {
                       ),
                       Icon(
                         Icons.chevron_right,
-                        color: scheme.onTertiaryContainer
-                            .withValues(alpha: 0.7),
+                        color: scheme.onTertiaryContainer.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ],
                   ),
@@ -164,22 +164,22 @@ class _LeadingRow extends ConsumerWidget {
         ? null
         : activities.where((a) => a.id == block.activityId).firstOrNull;
     final loc = block.locationOverrideId != null
-        ? locations
-            .where((l) => l.id == block.locationOverrideId)
-            .firstOrNull
+        ? locations.where((l) => l.id == block.locationOverrideId).firstOrNull
         : activity?.defaultLocationId == null
-            ? null
-            : locations
-                .where((l) => l.id == activity!.defaultLocationId)
-                .firstOrNull;
+        ? null
+        : locations
+              .where((l) => l.id == activity!.defaultLocationId)
+              .firstOrNull;
 
     final isCurrent = !now.isBefore(start) && now.isBefore(end);
     final isPast = now.isAfter(end);
 
-    final fg = scheme.onTertiaryContainer
-        .withValues(alpha: isPast ? 0.55 : 1.0);
-    final timeFg = scheme.onTertiaryContainer
-        .withValues(alpha: isPast ? 0.5 : 0.85);
+    final fg = scheme.onTertiaryContainer.withValues(
+      alpha: isPast ? 0.55 : 1.0,
+    );
+    final timeFg = scheme.onTertiaryContainer.withValues(
+      alpha: isPast ? 0.5 : 0.85,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -205,58 +205,60 @@ class _LeadingRow extends ConsumerWidget {
                   ),
                 ),
               ),
-          if (isCurrent) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 5,
-                vertical: 1,
-              ),
-              decoration: BoxDecoration(
-                color: scheme.onTertiaryContainer.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'NOW',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onTertiaryContainer,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                  fontSize: 9,
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  loc == null
-                      ? (activity?.name ??
-                          (block.kind == BlockKind.breakBlock ? 'Break' : '—'))
-                      : '${activity?.name ?? "—"} · ${loc.name}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w600,
-                    decoration: isPast ? TextDecoration.lineThrough : null,
+              if (isCurrent) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                // Pat persona — when the viewer is on this block only
-                // because they're covering, label the row so they
-                // know they're picking up someone else's plan.
-                if (block.leadSubstituteMemberId != null &&
-                    block.leadMemberId != null &&
-                    block.leadMemberId != block.leadSubstituteMemberId)
-                  _CoveringBadge(
-                    originalLeadId: block.leadMemberId!,
-                    color: timeFg,
+                  decoration: BoxDecoration(
+                    color: scheme.onTertiaryContainer.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(4),
                   ),
+                  child: Text(
+                    'NOW',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
               ],
-            ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      loc == null
+                          ? (activity?.name ??
+                                (block.kind == BlockKind.breakBlock
+                                    ? 'Break'
+                                    : '—'))
+                          : '${activity?.name ?? "—"} · ${loc.name}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w600,
+                        decoration: isPast ? TextDecoration.lineThrough : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // Pat persona — when the viewer is on this block only
+                    // because they're covering, label the row so they
+                    // know they're picking up someone else's plan.
+                    if (block.leadSubstituteMemberId != null &&
+                        block.leadMemberId != null &&
+                        block.leadMemberId != block.leadSubstituteMemberId)
+                      _CoveringBadge(
+                        originalLeadId: block.leadMemberId!,
+                        color: timeFg,
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

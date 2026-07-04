@@ -39,8 +39,9 @@ const String kPictureKind = 'picture';
 /// The current space's own authored pictures, newest first. Plain (keepAlive)
 /// like `bankedContentProvider` next door — the set is small and app-wide, so
 /// the Drift watch stays warm for both the library screen and the game seed.
-final customPicturesProvider =
-    StreamProvider<List<CustomPicture>>((ref) async* {
+final customPicturesProvider = StreamProvider<List<CustomPicture>>((
+  ref,
+) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
   if (spaceId == null) {
@@ -48,7 +49,10 @@ final customPicturesProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  await for (final rows in db.contentBankDao.watchOwnByKind(spaceId, kPictureKind)) {
+  await for (final rows in db.contentBankDao.watchOwnByKind(
+    spaceId,
+    kPictureKind,
+  )) {
     yield [
       for (final r in rows)
         if (_decode(r.payload) case final Map<String, Object?> p)
@@ -74,8 +78,9 @@ Map<String, Object?>? _decode(String raw) {
 /// own pictures. ON by default (the game still has plenty to play before any
 /// custom pictures are added); OFF = only the space's pictures play. Per-device
 /// (SharedPreferences) for v1 — the mix is a play preference, not shared state.
-final gridMixEmojiProvider =
-    AsyncNotifierProvider<GridMixEmojiNotifier, bool>(GridMixEmojiNotifier.new);
+final gridMixEmojiProvider = AsyncNotifierProvider<GridMixEmojiNotifier, bool>(
+  GridMixEmojiNotifier.new,
+);
 
 class GridMixEmojiNotifier extends AsyncNotifier<bool> {
   static const _kKey = 'games.grid_reveal.mix_emoji';
@@ -93,8 +98,9 @@ class GridMixEmojiNotifier extends AsyncNotifier<bool> {
   }
 }
 
-final customPictureActionsProvider =
-    Provider<CustomPictureActions>(CustomPictureActions.new);
+final customPictureActionsProvider = Provider<CustomPictureActions>(
+  CustomPictureActions.new,
+);
 
 class CustomPictureActions {
   CustomPictureActions(this._ref);
@@ -113,7 +119,9 @@ class CustomPictureActions {
       throw StateError('No Space — join a program before adding pictures.');
     }
     final id = _uuid.v4();
-    final path = await _ref.read(photoServiceProvider).uploadOnly(
+    final path = await _ref
+        .read(photoServiceProvider)
+        .uploadOnly(
           entityKind: 'custom_picture',
           entityId: id,
           picked: picked,

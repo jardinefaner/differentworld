@@ -11,17 +11,16 @@ Activity _activity(
   String name,
   List<String> verbs, {
   bool archived = false,
-}) =>
-    Activity(
-      id: 'a-$name',
-      spaceId: 's1',
-      name: name,
-      isOutdoor: 0,
-      capabilities: jsonEncode({'action_verbs': verbs}),
-      archivedAt: archived ? '2026-06-01T00:00:00Z' : null,
-      createdAt: '2026-06-06T00:00:00Z',
-      updatedAt: '2026-06-06T00:00:00Z',
-    );
+}) => Activity(
+  id: 'a-$name',
+  spaceId: 's1',
+  name: name,
+  isOutdoor: 0,
+  capabilities: jsonEncode({'action_verbs': verbs}),
+  archivedAt: archived ? '2026-06-01T00:00:00Z' : null,
+  createdAt: '2026-06-06T00:00:00Z',
+  updatedAt: '2026-06-06T00:00:00Z',
+);
 
 void main() {
   group('activityVerbs', () {

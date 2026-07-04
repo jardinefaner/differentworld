@@ -53,7 +53,12 @@ void main() {
       );
       final back = decodePhaseWindows(encodePhaseWindows(camp));
       expect(
-        [back.arrivalStart, back.programStart, back.pickupStart, back.closedStart],
+        [
+          back.arrivalStart,
+          back.programStart,
+          back.pickupStart,
+          back.closedStart,
+        ],
         [540, 570, 930, 960],
       );
     });

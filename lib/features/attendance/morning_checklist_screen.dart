@@ -75,8 +75,10 @@ class _MorningChecklistScreenState
   String get _isoDate => todayKey();
 
   Future<void> _markAllPresentEverywhere(
-    List<({Group group, List<Subject> subjects, List<AttendanceRecord> records})>
-        sections,
+    List<
+      ({Group group, List<Subject> subjects, List<AttendanceRecord> records})
+    >
+    sections,
   ) async {
     unawaited(HapticFeedback.mediumImpact());
     final actions = ref.read(attendanceActionsProvider);
@@ -144,13 +146,10 @@ class _MorningChecklistScreenState
         : sections.fold<int>(0, (acc, s) {
             final marked = s.records.map((r) => r.subjectId).toSet();
             return acc +
-                s.subjects
-                    .where((sub) => !marked.contains(sub.id))
-                    .length;
+                s.subjects.where((sub) => !marked.contains(sub.id)).length;
           });
-    final canBulk = sections != null &&
-        sections.isNotEmpty &&
-        totalUnmarked > 0;
+    final canBulk =
+        sections != null && sections.isNotEmpty && totalUnmarked > 0;
     final scheme = Theme.of(context).colorScheme;
 
     return EdgeScaffold(
@@ -160,9 +159,7 @@ class _MorningChecklistScreenState
           // error tint + "Tap again · N kids"; second tap fires. Auto-
           // disarms after 4 seconds via _armBulk.
           Material(
-            color: _armed
-                ? scheme.error
-                : scheme.primaryContainer,
+            color: _armed ? scheme.error : scheme.primaryContainer,
             shape: const StadiumBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -197,9 +194,7 @@ class _MorningChecklistScreenState
                       const SizedBox(width: 6),
                       Text(
                         'Tap again · $totalUnmarked',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
+                        style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: scheme.onError,
                               fontWeight: FontWeight.w700,
@@ -257,43 +252,43 @@ typedef _Section = ({
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final _morningChecklistProvider =
-    Provider.autoDispose.family<AsyncValue<List<_Section>>, String>(
-  (ref, date) {
-    final groupsAsync = ref.watch(groupsProvider);
-    if (groupsAsync.isLoading) return const AsyncValue.loading();
-    if (groupsAsync.hasError) {
-      return AsyncError(groupsAsync.error!, groupsAsync.stackTrace!);
-    }
-    final groups = groupsAsync.value ?? const <Group>[];
-    if (groups.isEmpty) return const AsyncValue.data([]);
+final _morningChecklistProvider = Provider.autoDispose
+    .family<AsyncValue<List<_Section>>, String>(
+      (ref, date) {
+        final groupsAsync = ref.watch(groupsProvider);
+        if (groupsAsync.isLoading) return const AsyncValue.loading();
+        if (groupsAsync.hasError) {
+          return AsyncError(groupsAsync.error!, groupsAsync.stackTrace!);
+        }
+        final groups = groupsAsync.value ?? const <Group>[];
+        if (groups.isEmpty) return const AsyncValue.data([]);
 
-    final sections = <_Section>[];
-    var anyLoading = false;
-    for (final g in groups) {
-      final subs = ref.watch(subjectsInGroupProvider(g.id));
-      final recs = ref.watch(
-        attendanceForDayProvider((groupId: g.id, date: date)),
-      );
-      if (subs.isLoading || recs.isLoading) {
-        anyLoading = true;
-        continue;
-      }
-      final subjects = subs.value ?? const <Subject>[];
-      if (subjects.isEmpty) continue; // skip empty rooms
-      sections.add((
-        group: g,
-        subjects: subjects,
-        records: recs.value ?? const <AttendanceRecord>[],
-      ));
-    }
-    // Refuse to expose a partial list — the "Mark all present everywhere"
-    // FAB would otherwise miss the classrooms still loading. Once
-    // everything is in, emit the full set.
-    if (anyLoading) return const AsyncValue.loading();
-    return AsyncValue.data(sections);
-  },
-);
+        final sections = <_Section>[];
+        var anyLoading = false;
+        for (final g in groups) {
+          final subs = ref.watch(subjectsInGroupProvider(g.id));
+          final recs = ref.watch(
+            attendanceForDayProvider((groupId: g.id, date: date)),
+          );
+          if (subs.isLoading || recs.isLoading) {
+            anyLoading = true;
+            continue;
+          }
+          final subjects = subs.value ?? const <Subject>[];
+          if (subjects.isEmpty) continue; // skip empty rooms
+          sections.add((
+            group: g,
+            subjects: subjects,
+            records: recs.value ?? const <AttendanceRecord>[],
+          ));
+        }
+        // Refuse to expose a partial list — the "Mark all present everywhere"
+        // FAB would otherwise miss the classrooms still loading. Once
+        // everything is in, emit the full set.
+        if (anyLoading) return const AsyncValue.loading();
+        return AsyncValue.data(sections);
+      },
+    );
 
 class _ChecklistList extends ConsumerWidget {
   const _ChecklistList({
@@ -323,8 +318,9 @@ class _ChecklistList extends ConsumerWidget {
           if (AttendanceStatus.fromDb(r.status) != null) r.subjectId,
       };
       totalKids += s.subjects.length;
-      totalUnmarked +=
-          s.subjects.where((sub) => !markedIds.contains(sub.id)).length;
+      totalUnmarked += s.subjects
+          .where((sub) => !markedIds.contains(sub.id))
+          .length;
       final keep = filter == _Filter.unmarked
           ? s.subjects.any((sub) => !markedIds.contains(sub.id))
           : s.subjects.isNotEmpty;
@@ -360,20 +356,16 @@ class _ChecklistList extends ConsumerWidget {
                   '$rooms ${rooms == 1 ? 'classroom' : 'classrooms'} · '
                   '$kids ${kids == 1 ? 'kid' : 'kids'} accounted for.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Nice work.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -420,8 +412,7 @@ class _ChecklistList extends ConsumerWidget {
             ),
           ),
         ),
-        for (final s in filteredSections)
-          _buildSectionSliver(context, ref, s),
+        for (final s in filteredSections) _buildSectionSliver(context, ref, s),
         const SliverToBoxAdapter(child: SizedBox(height: 96)),
       ],
     );
@@ -567,12 +558,16 @@ class _ChecklistRow extends ConsumerWidget {
       record: record,
       onChangeStatus: (next) async {
         if (next == null) {
-          await ref.read(attendanceActionsProvider).clearStatus(
+          await ref
+              .read(attendanceActionsProvider)
+              .clearStatus(
                 subjectId: subject.id,
                 date: date,
               );
         } else {
-          await ref.read(attendanceActionsProvider).setStatus(
+          await ref
+              .read(attendanceActionsProvider)
+              .setStatus(
                 groupId: groupId,
                 subjectId: subject.id,
                 date: date,

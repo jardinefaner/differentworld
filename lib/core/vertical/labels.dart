@@ -193,8 +193,7 @@ abstract class _VerticalLabelPresets {
 
 /// Convenience accessor for the catalog of vertical presets — used
 /// by the program-settings vertical picker.
-List<VerticalLabels> get allVerticalPresets =>
-    _VerticalLabelPresets.allPresets;
+List<VerticalLabels> get allVerticalPresets => _VerticalLabelPresets.allPresets;
 
 /// The active vertical's label set. Reads
 /// `space.capabilities['vertical']` off the signed-in Space row and
@@ -208,11 +207,11 @@ List<VerticalLabels> get allVerticalPresets =>
 /// rebuild.
 final Provider<VerticalLabels> verticalLabelsProvider =
     Provider<VerticalLabels>((ref) {
-  final space = ref.watch(currentSpaceProvider).value;
-  if (space == null) return _VerticalLabelPresets.childcare;
-  final key = space.caps.getString(SpaceCaps.vertical);
-  return _VerticalLabelPresets.forKey(key ?? 'childcare');
-});
+      final space = ref.watch(currentSpaceProvider).value;
+      if (space == null) return _VerticalLabelPresets.childcare;
+      final key = space.caps.getString(SpaceCaps.vertical);
+      return _VerticalLabelPresets.forKey(key ?? 'childcare');
+    });
 
 /// Cheap accessor for when you don't want the full provider plumbing —
 /// e.g. inside a static `_labels` helper. Returns the same childcare

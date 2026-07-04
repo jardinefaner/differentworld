@@ -47,8 +47,11 @@ void main() {
       'fallback',
     ]) {
       for (final tool in toolsForRole(role)) {
-        expect(tool.route.startsWith('/'), isTrue,
-            reason: '${tool.label} route must be absolute');
+        expect(
+          tool.route.startsWith('/'),
+          isTrue,
+          reason: '${tool.label} route must be absolute',
+        );
       }
     }
   });

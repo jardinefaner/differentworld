@@ -197,8 +197,8 @@ ContextLead? computeContextLead({
       final prog = arrival;
       final line = (prog != null && prog.total > 0)
           ? (prog.allIn
-              ? 'All ${prog.total} checked in — nice work.'
-              : '${prog.inBuilding} of ${prog.total} in · ${prog.stillOut} to go')
+                ? 'All ${prog.total} checked in — nice work.'
+                : '${prog.inBuilding} of ${prog.total} in · ${prog.stillOut} to go')
           : 'Check $kids in as they arrive.';
       return ContextLead(
         eyebrow: 'RIGHT NOW',
@@ -318,8 +318,9 @@ final contextLeadProvider = Provider.autoDispose<ContextLead?>((ref) {
   final world = ref.watch(currentWorldProvider);
   final labels = ref.watch(verticalLabelsProvider);
   // Headcount only matters (and only loads) during arrival.
-  final prog =
-      phase == DayPhase.arrival ? ref.watch(arrivalProgressProvider).value : null;
+  final prog = phase == DayPhase.arrival
+      ? ref.watch(arrivalProgressProvider).value
+      : null;
   return computeContextLead(
     isLogger: viewer.isDailyLogger,
     phase: phase,

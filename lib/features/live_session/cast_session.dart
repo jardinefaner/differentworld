@@ -155,7 +155,8 @@ class CastSession {
     if (def == null) return state;
     final mapped = _intentByName(intent);
     if (mapped == null) return state;
-    final gameWire = (state['state'] as Map?)?.cast<String, dynamic>() ??
+    final gameWire =
+        (state['state'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     return <String, dynamic>{
       'game': id,

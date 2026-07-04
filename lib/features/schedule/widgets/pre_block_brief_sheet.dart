@@ -46,8 +46,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
     final blockAsync = ref.watch(_blockByIdProvider(blockId));
     final activities =
         ref.watch(allActivitiesProvider).value ?? const <Activity>[];
-    final locations =
-        ref.watch(locationsProvider).value ?? const <Location>[];
+    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
 
     return blockAsync.when(
       loading: () => const SizedBox(
@@ -72,23 +71,19 @@ class PreBlockBriefSheet extends ConsumerWidget {
         final end = DateTime.parse(block.endAt).toLocal();
         final activity = block.activityId == null
             ? null
-            : activities
-                .where((a) => a.id == block.activityId)
-                .firstOrNull;
+            : activities.where((a) => a.id == block.activityId).firstOrNull;
         final loc = block.locationOverrideId != null
             ? locations
-                .where((l) => l.id == block.locationOverrideId)
-                .firstOrNull
+                  .where((l) => l.id == block.locationOverrideId)
+                  .firstOrNull
             : (activity?.defaultLocationId == null
-                ? null
-                : locations
-                    .where((l) => l.id == activity!.defaultLocationId)
-                    .firstOrNull);
+                  ? null
+                  : locations
+                        .where((l) => l.id == activity!.defaultLocationId)
+                        .firstOrNull);
 
-        final subjectsAsync =
-            ref.watch(subjectsInGroupProvider(block.groupId));
-        final subjects =
-            subjectsAsync.value ?? const <Subject>[];
+        final subjectsAsync = ref.watch(subjectsInGroupProvider(block.groupId));
+        final subjects = subjectsAsync.value ?? const <Subject>[];
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -200,8 +195,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
                       final allergies = s.allergies?.trim() ?? '';
                       final hasAllergy = allergies.isNotEmpty;
                       return Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
                             PersonAvatar(
@@ -211,22 +205,20 @@ class PreBlockBriefSheet extends ConsumerWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     '${s.firstName} ${s.lastName}',
-                                    style:
-                                        theme.textTheme.bodyMedium,
+                                    style: theme.textTheme.bodyMedium,
                                   ),
                                   if (hasAllergy)
                                     Text(
                                       'Allergy: $allergies',
                                       style: theme.textTheme.bodySmall
                                           ?.copyWith(
-                                        color: scheme.error,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                            color: scheme.error,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                 ],
                               ),
@@ -252,8 +244,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: scheme.tertiaryContainer
-                        .withValues(alpha: 0.7),
+                    color: scheme.tertiaryContainer.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -270,8 +261,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
                           children: [
                             Text(
                               'Supplies',
-                              style: theme.textTheme.labelSmall
-                                  ?.copyWith(
+                              style: theme.textTheme.labelSmall?.copyWith(
                                 color: scheme.onTertiaryContainer,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.4,
@@ -333,9 +323,8 @@ class PreBlockBriefSheet extends ConsumerWidget {
 /// Watches a single schedule block by id. Lives inline because the
 /// brief sheet is the only consumer.
 // ignore: specify_nonobvious_property_types
-final _blockByIdProvider =
-    StreamProvider.autoDispose.family<ScheduleBlock?, String>(
-        (ref, id) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.scheduleDao.watchById(id);
-});
+final _blockByIdProvider = StreamProvider.autoDispose
+    .family<ScheduleBlock?, String>((ref, id) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.scheduleDao.watchById(id);
+    });

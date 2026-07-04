@@ -186,7 +186,7 @@ class SurveyQuestionPage extends StatelessWidget {
   final SurveyQuestion question;
   final SurveyAnswers answers;
   final void Function(SurveyAnswers next, {required bool autoAdvance})
-      onAnswered;
+  onAnswered;
 
   /// Wave 149: which translation to render. Drives both the prompt
   /// text on screen and the strings inside the input widgets (e.g.
@@ -224,85 +224,95 @@ class SurveyQuestionPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-          if (question.isPractice)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _PracticeBadge(theme: theme, label: strings.practiceBadge),
-            ),
-          // Wave 131: prompt is tappable for replay. Wrapped in a
-          // Semantics with a hint so screen readers announce the
-          // tap target. Visual hint = subtle volume icon inline
-          // when onReplayTts is wired.
-          Semantics(
-            label: promptText,
-            hint: onReplayTts == null ? null : strings.tapToHearAgain,
-            button: onReplayTts != null,
-            child: InkWell(
-              onTap: onReplayTts,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        promptText,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineSmall,
+                      if (question.isPractice)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _PracticeBadge(
+                            theme: theme,
+                            label: strings.practiceBadge,
+                          ),
+                        ),
+                      // Wave 131: prompt is tappable for replay. Wrapped in a
+                      // Semantics with a hint so screen readers announce the
+                      // tap target. Visual hint = subtle volume icon inline
+                      // when onReplayTts is wired.
+                      Semantics(
+                        label: promptText,
+                        hint: onReplayTts == null
+                            ? null
+                            : strings.tapToHearAgain,
+                        button: onReplayTts != null,
+                        child: InkWell(
+                          onTap: onReplayTts,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    promptText,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.headlineSmall,
+                                  ),
+                                ),
+                                if (onReplayTts != null) ...[
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.volume_up_outlined,
+                                    size: 20,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    if (onReplayTts != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.volume_up_outlined,
-                        size: 20,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          switch (question.kind) {
-            SurveyQuestionKind.agree3 => Agree3Row(
-                question: question,
-                answers: answers,
-                variant: variant,
-                onAnswered: (next) => onAnswered(next, autoAdvance: true),
-              ),
-            SurveyQuestionKind.agree5 => Scale5Row(
-                question: question,
-                answers: answers,
-                labels: language == SurveyLanguage.es
-                    ? Scale5Sets.agreeLabelsEs
-                    : Scale5Sets.agreeLabelsEn,
-                emoji: Scale5Sets.agreeEmoji,
-                onAnswered: (next) => onAnswered(next, autoAdvance: true),
-              ),
-            SurveyQuestionKind.likeMe5 => Scale5Row(
-                question: question,
-                answers: answers,
-                labels: language == SurveyLanguage.es
-                    ? Scale5Sets.likeMeLabelsEs
-                    : Scale5Sets.likeMeLabelsEn,
-                emoji: Scale5Sets.likeMeEmoji,
-                onAnswered: (next) => onAnswered(next, autoAdvance: true),
-              ),
-            SurveyQuestionKind.multiselect => MultiselectList(
-                question: question,
-                answers: answers,
-                variant: variant,
-                onAnswered: (next) => onAnswered(next, autoAdvance: false),
-              ),
-            SurveyQuestionKind.text => TextAnswer(
-                question: question,
-                answers: answers,
-                onAnswered: (next) => onAnswered(next, autoAdvance: false),
-              ),
-          },
+                      const SizedBox(height: 32),
+                      switch (question.kind) {
+                        SurveyQuestionKind.agree3 => Agree3Row(
+                          question: question,
+                          answers: answers,
+                          variant: variant,
+                          onAnswered: (next) =>
+                              onAnswered(next, autoAdvance: true),
+                        ),
+                        SurveyQuestionKind.agree5 => Scale5Row(
+                          question: question,
+                          answers: answers,
+                          labels: language == SurveyLanguage.es
+                              ? Scale5Sets.agreeLabelsEs
+                              : Scale5Sets.agreeLabelsEn,
+                          emoji: Scale5Sets.agreeEmoji,
+                          onAnswered: (next) =>
+                              onAnswered(next, autoAdvance: true),
+                        ),
+                        SurveyQuestionKind.likeMe5 => Scale5Row(
+                          question: question,
+                          answers: answers,
+                          labels: language == SurveyLanguage.es
+                              ? Scale5Sets.likeMeLabelsEs
+                              : Scale5Sets.likeMeLabelsEn,
+                          emoji: Scale5Sets.likeMeEmoji,
+                          onAnswered: (next) =>
+                              onAnswered(next, autoAdvance: true),
+                        ),
+                        SurveyQuestionKind.multiselect => MultiselectList(
+                          question: question,
+                          answers: answers,
+                          variant: variant,
+                          onAnswered: (next) =>
+                              onAnswered(next, autoAdvance: false),
+                        ),
+                        SurveyQuestionKind.text => TextAnswer(
+                          question: question,
+                          answers: answers,
+                          onAnswered: (next) =>
+                              onAnswered(next, autoAdvance: false),
+                        ),
+                      },
                     ],
                   ),
                 ),
@@ -400,9 +410,7 @@ class SurveyCloseoutPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    allAnswered
-                        ? strings.allDoneBody
-                        : strings.almostThereBody,
+                    allAnswered ? strings.allDoneBody : strings.almostThereBody,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -415,8 +423,7 @@ class SurveyCloseoutPage extends StatelessWidget {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.check_circle_outline),
                     label: Text(strings.finish),
@@ -493,71 +500,73 @@ class SurveyOptionYesNoPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Wave 145: parent prompt subtitle dropped. Option labels
-          // are now full "Did you...?" questions, so the parent
-          // "Check any of the activities you did this year" is
-          // redundant + confusing alongside a self-contained
-          // question. The option label IS the main prompt.
-          //
-          // The option label is the main text of the page — tappable
-          // to replay the TTS.
-          Semantics(
-            label: optionText,
-            hint: onReplayTts == null ? null : strings.tapToHearAgain,
-            button: onReplayTts != null,
-            child: InkWell(
-              onTap: onReplayTts,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        optionText,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineSmall,
+                    children: [
+                      // Wave 145: parent prompt subtitle dropped. Option labels
+                      // are now full "Did you...?" questions, so the parent
+                      // "Check any of the activities you did this year" is
+                      // redundant + confusing alongside a self-contained
+                      // question. The option label IS the main prompt.
+                      //
+                      // The option label is the main text of the page — tappable
+                      // to replay the TTS.
+                      Semantics(
+                        label: optionText,
+                        hint: onReplayTts == null
+                            ? null
+                            : strings.tapToHearAgain,
+                        button: onReplayTts != null,
+                        child: InkWell(
+                          onTap: onReplayTts,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    optionText,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.headlineSmall,
+                                  ),
+                                ),
+                                if (onReplayTts != null) ...[
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.volume_up_outlined,
+                                    size: 20,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    if (onReplayTts != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.volume_up_outlined,
-                        size: 20,
-                        color: theme.colorScheme.primary,
+                      const SizedBox(height: 32),
+                      // Big yes / no smiley pair. Larger than the inline
+                      // _MultiOptionRow used to be — each option is its own
+                      // page now so we can give the choice the visual presence
+                      // of a single agree3 question.
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _BigYesNoButton(
+                            label: language == SurveyLanguage.es ? 'No' : 'No',
+                            variant: variant,
+                            expression: ChibiExpression.sad,
+                            selected: !isYes,
+                            onTap: onPickNo,
+                          ),
+                          _BigYesNoButton(
+                            label: language == SurveyLanguage.es ? 'Sí' : 'Yes',
+                            variant: variant,
+                            expression: ChibiExpression.happy,
+                            selected: isYes,
+                            onTap: onPickYes,
+                          ),
+                        ],
                       ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          // Big yes / no smiley pair. Larger than the inline
-          // _MultiOptionRow used to be — each option is its own
-          // page now so we can give the choice the visual presence
-          // of a single agree3 question.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _BigYesNoButton(
-                label: language == SurveyLanguage.es ? 'No' : 'No',
-                variant: variant,
-                expression: ChibiExpression.sad,
-                selected: !isYes,
-                onTap: onPickNo,
-              ),
-              _BigYesNoButton(
-                label: language == SurveyLanguage.es ? 'Sí' : 'Yes',
-                variant: variant,
-                expression: ChibiExpression.happy,
-                selected: isYes,
-                onTap: onPickYes,
-              ),
-            ],
-          ),
                     ],
                   ),
                 ),
@@ -696,7 +705,7 @@ class AboutYouPage extends StatefulWidget {
 
   /// Called when "+" is tapped and the user submits a new label.
   final Future<void> Function(String dimension, String label)
-      onAddIdentityOption;
+  onAddIdentityOption;
 
   /// Tapping Start. Null disables the button (when any of the four
   /// picks is still empty).
@@ -999,8 +1008,8 @@ class _VoiceTilesGrid extends StatelessWidget {
                           v.gender == 'F'
                               ? Icons.face_3_outlined
                               : v.gender == 'M'
-                                  ? Icons.face_outlined
-                                  : Icons.face_6_outlined,
+                              ? Icons.face_outlined
+                              : Icons.face_6_outlined,
                           color: previewing == v.id
                               ? theme.colorScheme.onPrimary
                               : theme.colorScheme.onSecondaryContainer,

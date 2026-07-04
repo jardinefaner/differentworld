@@ -20,7 +20,11 @@ class CardTile extends StatelessWidget {
       fit: fit,
       gaplessPlayback: true,
       errorBuilder: (_, _, _) => const Center(
-        child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 48),
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: Colors.white24,
+          size: 48,
+        ),
       ),
     );
   }

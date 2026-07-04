@@ -11,15 +11,20 @@ void main() {
   const game = MathQuizGame();
 
   Map<String, dynamic> stateAt({int i = 0, bool r = false, bool d = false}) => {
-        'i': i,
-        'r': r,
-        'd': d,
-        'n': 2,
-        'qs': [
-          {'m': 'choose', 'p': '2 + 3', 'a': 5, 'c': [5, 4, 6, 7]},
-          {'m': 'trueFalse', 'p': '2 + 2 = 5', 'st': false},
-        ],
-      };
+    'i': i,
+    'r': r,
+    'd': d,
+    'n': 2,
+    'qs': [
+      {
+        'm': 'choose',
+        'p': '2 + 3',
+        'a': 5,
+        'c': [5, 4, 6, 7],
+      },
+      {'m': 'trueFalse', 'p': '2 + 2 = 5', 'st': false},
+    ],
+  };
 
   test('reveal shows the answer', () {
     expect(game.reduce(stateAt(), GameIntent.reveal, const {})['r'], isTrue);
@@ -34,7 +39,11 @@ void main() {
   });
 
   test('reset replays from the start', () {
-    final r = game.reduce(stateAt(i: 1, r: true, d: true), GameIntent.reset, const {});
+    final r = game.reduce(
+      stateAt(i: 1, r: true, d: true),
+      GameIntent.reset,
+      const {},
+    );
     expect(r['i'], 0);
     expect(r['r'], isFalse);
     expect(r['d'], isFalse);
@@ -53,8 +62,12 @@ void main() {
 
   test('single-button flow: reveal → next → reset', () {
     expect(game.activeIntents(game.decode(stateAt())), {GameIntent.reveal});
-    expect(game.activeIntents(game.decode(stateAt(r: true))), {GameIntent.next});
-    expect(game.activeIntents(game.decode(stateAt(d: true))), {GameIntent.reset});
+    expect(game.activeIntents(game.decode(stateAt(r: true))), {
+      GameIntent.next,
+    });
+    expect(game.activeIntents(game.decode(stateAt(d: true))), {
+      GameIntent.reset,
+    });
   });
 
   test('initialState generates a serialized round', () {

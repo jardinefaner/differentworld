@@ -89,8 +89,7 @@ class InsightsScreen extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(
                   title: 'Insights',
-                  subtitle:
-                      'Questions the system is surfacing from your data',
+                  subtitle: 'Questions the system is surfacing from your data',
                 ),
               );
               if (!isWide) {
@@ -255,8 +254,9 @@ class _SeverityGroup extends StatelessWidget {
             child: Text(
               'All clear.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant
-                    .withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.7,
+                ),
                 fontStyle: FontStyle.italic,
               ),
             ),

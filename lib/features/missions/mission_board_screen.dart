@@ -89,7 +89,8 @@ class _MissionBoardScreenState extends ConsumerState<MissionBoardScreen> {
     final theme = Theme.of(context);
     final missionsAsync = ref.watch(missionsProvider);
     final doneIds = ref.watch(_doneMissionIdsTodayProvider);
-    final roles = ref.watch(activeRolesTodayProvider).value ?? const <ActiveRole>[];
+    final roles =
+        ref.watch(activeRolesTodayProvider).value ?? const <ActiveRole>[];
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
     // (no per-screen toggle). When on, the board re-lays the SAME items as
     // bento tiles (2-up on a phone) over the same providers; off keeps the
@@ -114,15 +115,17 @@ class _MissionBoardScreenState extends ConsumerState<MissionBoardScreen> {
         data: (missions) {
           final activeMissions = missions.where((m) => m.isActive == 1).toList()
             ..sort((a, b) => a.sort.compareTo(b.sort));
-          final pendingMissions =
-              activeMissions.where((m) => !doneIds.contains(m.id)).toList();
+          final pendingMissions = activeMissions
+              .where((m) => !doneIds.contains(m.id))
+              .toList();
           final pendingRoles = roles.where((r) => !r.done).toList();
 
           if (activeMissions.isEmpty && roles.isEmpty) {
             return EmptyState(
               icon: Icons.dashboard_customize_outlined,
               title: 'Nothing on the board',
-              message: 'Add missions (in Settings) or tap + to add a role — '
+              message:
+                  'Add missions (in Settings) or tap + to add a role — '
                   'they’ll show here as big buttons you clear to zero.',
               action: FilledButton.icon(
                 onPressed: _openRolePicker,
@@ -149,19 +152,18 @@ class _MissionBoardScreenState extends ConsumerState<MissionBoardScreen> {
                 label: r.name,
                 complete: () =>
                     ref.read(roleBoardActionsProvider).setDone(r, done: true),
-                onRemove: () =>
-                    ref.read(roleBoardActionsProvider).remove(r),
+                onRemove: () => ref.read(roleBoardActionsProvider).remove(r),
               ),
           ];
-          final doneCount = (activeMissions.length - pendingMissions.length) +
+          final doneCount =
+              (activeMissions.length - pendingMissions.length) +
               (roles.length - pendingRoles.length);
 
           return ResponsivePage(
             children: [
               ContentHeader(
                 title: 'Today’s board',
-                subtitle:
-                    items.isEmpty ? 'All done' : '${items.length} to go',
+                subtitle: items.isEmpty ? 'All done' : '${items.length} to go',
               ),
               if (items.isEmpty)
                 _TasksZero(doneCount: doneCount)
@@ -226,8 +228,8 @@ class _Board extends StatelessWidget {
         final cols = c.maxWidth >= 720
             ? 4
             : c.maxWidth >= 480
-                ? 3
-                : 2;
+            ? 3
+            : 2;
         return GridView.count(
           crossAxisCount: cols,
           shrinkWrap: true,
@@ -407,7 +409,8 @@ class _RolePickerSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final onBoard = {
-      for (final r in ref.watch(activeRolesTodayProvider).value ?? const <ActiveRole>[])
+      for (final r
+          in ref.watch(activeRolesTodayProvider).value ?? const <ActiveRole>[])
         if (!r.done) r.name,
     };
     return SafeArea(
@@ -417,8 +420,10 @@ class _RolePickerSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const GlassDragHandle(),
-            Text('Add a role to today’s board',
-                style: theme.textTheme.titleLarge),
+            Text(
+              'Add a role to today’s board',
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             Flexible(
               child: GridView.count(
@@ -481,8 +486,11 @@ class _RolePick extends StatelessWidget {
               children: [
                 Text(role.emoji, style: const TextStyle(fontSize: 34)),
                 if (added)
-                  Icon(Icons.check_circle,
-                      size: 16, color: theme.colorScheme.primary),
+                  Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
               ],
             ),
             const SizedBox(height: 2),

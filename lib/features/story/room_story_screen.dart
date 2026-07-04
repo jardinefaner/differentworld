@@ -46,7 +46,8 @@ class RoomStoryScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.auto_stories_outlined,
               title: 'The room’s story starts here',
-              message: 'Observations, worlds, missions, and photos from '
+              message:
+                  'Observations, worlds, missions, and photos from '
                   'across the room land here, growing day by day.',
             );
           }

@@ -41,7 +41,8 @@ Future<Uint8List> buildVehicleCheckoutQrPdf({
   String kind = VehicleLogKind.checkout,
 }) async {
   final doc = pw.Document(
-    title: '${vehicle.name} — Check ${kind == VehicleLogKind.checkout ? 'out' : 'in'} QR',
+    title:
+        '${vehicle.name} — Check ${kind == VehicleLogKind.checkout ? 'out' : 'in'} QR',
     creator: 'Different World',
   );
 
@@ -140,7 +141,8 @@ Future<void> printVehicleCheckoutQr({
 }) async {
   final bytes = await buildVehicleCheckoutQrPdf(vehicle: vehicle, kind: kind);
   await emitPdfBytes(
-    name: '${vehicle.name} — Check '
+    name:
+        '${vehicle.name} — Check '
         '${kind == VehicleLogKind.checkout ? 'out' : 'in'} QR',
     bytes: bytes,
   );

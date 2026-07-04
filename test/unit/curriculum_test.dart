@@ -60,8 +60,18 @@ void main() {
 
     test('is the 10-week journey, weeks 1..10 unique', () {
       expect(worlds.length, 10);
-      expect(worlds.map((w) => w.week).toList(),
-          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      expect(worlds.map((w) => w.week).toList(), [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+      ]);
       expect(worlds.first.id, 'me');
       expect(worlds.last.id, 'us');
     });
@@ -70,10 +80,8 @@ void main() {
       final facetIds = kWorldFacets.map((f) => f.id).toSet();
       for (final w in worlds) {
         for (final id in facetIds) {
-          expect(w.facets[id], isNotNull,
-              reason: '${w.id} missing facet $id');
-          expect(w.facets[id], isNotEmpty,
-              reason: '${w.id} empty facet $id');
+          expect(w.facets[id], isNotNull, reason: '${w.id} missing facet $id');
+          expect(w.facets[id], isNotEmpty, reason: '${w.id} empty facet $id');
         }
       }
     });
@@ -82,8 +90,11 @@ void main() {
       for (final w in worlds) {
         expect(w.featuredVerbs, isNotEmpty, reason: '${w.id} has no verbs');
         for (final id in w.featuredVerbs) {
-          expect(verbById(id), isNotNull,
-              reason: '${w.id} references unknown verb "$id"');
+          expect(
+            verbById(id),
+            isNotNull,
+            reason: '${w.id} references unknown verb "$id"',
+          );
         }
       }
     });

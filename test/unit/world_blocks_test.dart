@@ -55,7 +55,9 @@ void main() {
     late List<WorldBlock> worlds;
 
     setUpAll(() {
-      final raw = File('assets/curriculum/world_blocks.json').readAsStringSync();
+      final raw = File(
+        'assets/curriculum/world_blocks.json',
+      ).readAsStringSync();
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
       worlds = [
         for (final b in decoded['worlds'] as List)
@@ -65,8 +67,18 @@ void main() {
 
     test('is ten weekly worlds, weeks 1..10 unique', () {
       expect(worlds.length, 10);
-      expect(worlds.map((w) => w.week).toList(),
-          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      expect(worlds.map((w) => w.week).toList(), [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+      ]);
       expect(worlds.first.id, 'me');
       expect(worlds.last.id, 'us');
     });
@@ -233,12 +245,17 @@ void main() {
     });
 
     test('past week 10 → not active', () {
-      expect(programDayFor(monday, monday.add(const Duration(days: 70))), isNull);
+      expect(
+        programDayFor(monday, monday.add(const Duration(days: 70))),
+        isNull,
+      );
     });
 
     test('before the start date → not active', () {
-      expect(programDayFor(monday, monday.subtract(const Duration(days: 1))),
-          isNull);
+      expect(
+        programDayFor(monday, monday.subtract(const Duration(days: 1))),
+        isNull,
+      );
     });
 
     test('every active weekday lands a valid 1..50 day in the right world', () {

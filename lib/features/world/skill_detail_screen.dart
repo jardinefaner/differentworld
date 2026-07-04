@@ -105,7 +105,8 @@ class _Arc extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: [
             ContentHeader(
-              title: '${verb?.emoji ?? ''} ${verb?.label ?? ''} · ${skill.name}',
+              title:
+                  '${verb?.emoji ?? ''} ${verb?.label ?? ''} · ${skill.name}',
               subtitle: arc.isEmpty
                   ? '$firstName · not measured yet'
                   : '$firstName · ${arc.reps} ${arc.reps == 1 ? 'rep' : 'reps'}',
@@ -162,7 +163,12 @@ class _Arc extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              _DeltaCard(skill: skill, arc: arc, firstName: firstName, fmt: fmt),
+              _DeltaCard(
+                skill: skill,
+                arc: arc,
+                firstName: firstName,
+                fmt: fmt,
+              ),
               const SizedBox(height: 18),
             ],
             FilledButton.icon(

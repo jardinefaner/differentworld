@@ -58,19 +58,23 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
     // Resolve selected guardian rows → emails.
     final guardianRows = <Guardian>[];
     for (final gid in _selectedGuardianIds) {
-      final rows = await (db.select(db.guardians)
-            ..where((g) => g.id.equals(gid))
-            ..limit(1))
-          .get();
+      final rows =
+          await (db.select(db.guardians)
+                ..where((g) => g.id.equals(gid))
+                ..limit(1))
+              .get();
       if (rows.isNotEmpty) guardianRows.add(rows.first);
     }
 
-    final recipients = <({
-      String email,
-      String? label,
-      String? guardianId,
-      String kind,
-    })>[];
+    final recipients =
+        <
+          ({
+            String email,
+            String? label,
+            String? guardianId,
+            String kind,
+          })
+        >[];
     for (final g in guardianRows) {
       final email = g.email;
       if (email == null || email.isEmpty) continue;
@@ -299,10 +303,10 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
 // existing `guardiansForSubjectProvider` (in a different feature
 // folder, pulls in more deps).
 // ignore: specify_nonobvious_property_types
-final _guardiansForSubjectShortProvider =
-    StreamProvider.autoDispose.family<List<Guardian>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.guardiansDao.watchForSubject(subjectId);
-  },
-);
+final _guardiansForSubjectShortProvider = StreamProvider.autoDispose
+    .family<List<Guardian>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.guardiansDao.watchForSubject(subjectId);
+      },
+    );

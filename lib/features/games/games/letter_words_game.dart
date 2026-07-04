@@ -18,13 +18,13 @@ class LetterWordsState {
   });
 
   factory LetterWordsState.fromMap(Map<String, dynamic> m) => LetterWordsState(
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        found: (m['f'] as num?)?.toInt() ?? 0,
-        rounds: [
-          for (final r in (m['rounds'] as List? ?? const []))
-            [for (final x in (r as List)) x.toString()],
-        ],
-      );
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    found: (m['f'] as num?)?.toInt() ?? 0,
+    rounds: [
+      for (final r in (m['rounds'] as List? ?? const []))
+        [for (final x in (r as List)) x.toString()],
+    ],
+  );
 
   final int index;
   final int found;
@@ -53,8 +53,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   String get title => 'Letter Words';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.amber);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
   String? get liveRoute => '/live/starts-with';
@@ -117,8 +116,11 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(LetterWordsState s) =>
-      {GameIntent.tally, GameIntent.next, GameIntent.reset};
+  Set<GameIntent> activeIntents(LetterWordsState s) => {
+    GameIntent.tally,
+    GameIntent.next,
+    GameIntent.reset,
+  };
 
   @override
   Widget buildStage(BuildContext context, LetterWordsState s) {
@@ -166,10 +168,9 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
     BuildContext context,
     LetterWordsState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) =>
-      tallyControls(
-        send: send,
-        tallyLabel: 'Someone said it',
-        nextLabel: 'New letter',
-      );
+  ) => tallyControls(
+    send: send,
+    tallyLabel: 'Someone said it',
+    nextLabel: 'New letter',
+  );
 }

@@ -10,31 +10,32 @@ typedef MessageThreadKey = ({String subjectId, String guardianId});
 
 /// Stream of messages in a single thread, oldest first.
 // ignore: specify_nonobvious_property_types
-final messageThreadProvider =
-    StreamProvider.autoDispose.family<List<Message>, MessageThreadKey>(
-  (ref, key) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.messagesDao.watchThread(
-      subjectId: key.subjectId,
-      guardianId: key.guardianId,
+final messageThreadProvider = StreamProvider.autoDispose
+    .family<List<Message>, MessageThreadKey>(
+      (ref, key) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.messagesDao.watchThread(
+          subjectId: key.subjectId,
+          guardianId: key.guardianId,
+        );
+      },
     );
-  },
-);
 
 /// All messages for a subject (any guardian) — staff side per-kid view.
 // ignore: specify_nonobvious_property_types
-final messagesForSubjectProvider =
-    StreamProvider.autoDispose.family<List<Message>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.messagesDao.watchAllForSubject(subjectId);
-  },
-);
+final messagesForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Message>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.messagesDao.watchAllForSubject(subjectId);
+      },
+    );
 
 /// All messages this guardian is on, newest first. Empty for staff.
 // ignore: specify_nonobvious_property_types
-final myGuardianMessagesProvider =
-    StreamProvider.autoDispose<List<Message>>((ref) async* {
+final myGuardianMessagesProvider = StreamProvider.autoDispose<List<Message>>((
+  ref,
+) async* {
   final viewer = ref.watch(viewerProvider);
   if (viewer is! GuardianViewer) {
     yield const <Message>[];
@@ -50,11 +51,12 @@ final myGuardianMessagesProvider =
 final unreadMessagesCountProvider = Provider<int>((ref) {
   final viewer = ref.watch(viewerProvider);
   if (viewer is GuardianViewer) {
-    final all = ref.watch(myGuardianMessagesProvider).value ??
-        const <Message>[];
+    final all =
+        ref.watch(myGuardianMessagesProvider).value ?? const <Message>[];
     return all
         .where(
-            (m) => m.senderKind == MessageSenderKind.staff && m.readAt == null)
+          (m) => m.senderKind == MessageSenderKind.staff && m.readAt == null,
+        )
         .length;
   }
   final spaceId = viewer.spaceId;
@@ -62,20 +64,21 @@ final unreadMessagesCountProvider = Provider<int>((ref) {
   final allAsync = ref.watch(_messagesInSpaceProvider(spaceId));
   final all = allAsync.value ?? const <Message>[];
   return all
-      .where((m) =>
-          m.senderKind == MessageSenderKind.guardian && m.readAt == null)
+      .where(
+        (m) => m.senderKind == MessageSenderKind.guardian && m.readAt == null,
+      )
       .length;
 });
 
 // Private — only used for the unread-count derivation above.
 // ignore: specify_nonobvious_property_types
-final _messagesInSpaceProvider =
-    StreamProvider.autoDispose.family<List<Message>, String>(
-  (ref, spaceId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.messagesDao.watchInSpace(spaceId);
-  },
-);
+final _messagesInSpaceProvider = StreamProvider.autoDispose
+    .family<List<Message>, String>(
+      (ref, spaceId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.messagesDao.watchInSpace(spaceId);
+      },
+    );
 
 /// A staff-side digest of unread family-sent messages — one row per
 /// (subject, guardian) thread that has at least one unread message,
@@ -98,8 +101,8 @@ final unreadThreadsForStaffProvider = Provider<List<UnreadThread>>((ref) {
   if (viewer is GuardianViewer) return const <UnreadThread>[];
   final spaceId = viewer.spaceId;
   if (spaceId == null) return const <UnreadThread>[];
-  final all = ref.watch(_messagesInSpaceProvider(spaceId)).value ??
-      const <Message>[];
+  final all =
+      ref.watch(_messagesInSpaceProvider(spaceId)).value ?? const <Message>[];
   // Group by (subjectId, guardianId). Only count guardian-sent + unread.
   final byThread = <String, _ThreadAccum>{};
   for (final m in all) {
@@ -222,5 +225,4 @@ class MessageActions {
   }
 }
 
-final messageActionsProvider =
-    Provider<MessageActions>(MessageActions.new);
+final messageActionsProvider = Provider<MessageActions>(MessageActions.new);

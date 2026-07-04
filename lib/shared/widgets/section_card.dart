@@ -115,12 +115,13 @@ class SectionCard extends StatelessWidget {
     final radius = BorderRadius.circular(borderRadius);
     final bg = switch (tone) {
       SectionCardTone.neutral => scheme.surfaceContainerHighest,
-      SectionCardTone.featured =>
-        scheme.primaryContainer.withValues(alpha: 0.45),
-      SectionCardTone.danger =>
-        scheme.errorContainer.withValues(alpha: 0.45),
-      SectionCardTone.success =>
-        scheme.tertiaryContainer.withValues(alpha: 0.5),
+      SectionCardTone.featured => scheme.primaryContainer.withValues(
+        alpha: 0.45,
+      ),
+      SectionCardTone.danger => scheme.errorContainer.withValues(alpha: 0.45),
+      SectionCardTone.success => scheme.tertiaryContainer.withValues(
+        alpha: 0.5,
+      ),
     };
     final onContainer = switch (tone) {
       SectionCardTone.neutral => scheme.onSurface,

@@ -10,16 +10,16 @@ const _game = MemoryMatchGame();
 
 // A 4-card board = two pairs: 0&2 = apple, 1&3 = ball.
 Map<String, dynamic> _seed() => {
-      'cards': [
-        {'image': 'a.png', 'label': 'apple', 'pair': 'apple'}, // 0
-        {'image': 'b.png', 'label': 'ball', 'pair': 'ball'}, // 1
-        {'image': 'a.png', 'label': 'apple', 'pair': 'apple'}, // 2
-        {'image': 'b.png', 'label': 'ball', 'pair': 'ball'}, // 3
-      ],
-      'flipped': const <int>[],
-      'matched': const <int>[],
-      'd': false,
-    };
+  'cards': [
+    {'image': 'a.png', 'label': 'apple', 'pair': 'apple'}, // 0
+    {'image': 'b.png', 'label': 'ball', 'pair': 'ball'}, // 1
+    {'image': 'a.png', 'label': 'apple', 'pair': 'apple'}, // 2
+    {'image': 'b.png', 'label': 'ball', 'pair': 'ball'}, // 3
+  ],
+  'flipped': const <int>[],
+  'matched': const <int>[],
+  'd': false,
+};
 
 Map<String, dynamic> _pick(Map<String, dynamic> s, int cell) =>
     _game.reduce(s, GameIntent.pick, {'cell': cell});
@@ -90,24 +90,27 @@ void main() {
       expect(_game.decode(s).flipped, isEmpty);
     });
 
-    test('reset reshuffles, clears state, and keeps the same pairs face-down', () {
-      var s = _seed();
-      s = _pick(s, 0);
-      s = _pick(s, 2); // a match
-      s = _game.reduce(s, GameIntent.reset, const {});
-      final st = _game.decode(s);
-      expect(st.matched, isEmpty);
-      expect(st.flipped, isEmpty);
-      expect(st.done, isFalse);
-      expect(st.cards.length, 4);
-      // The deck is preserved (same multiset of pair keys) — a reshuffle, not a
-      // re-deal of different cards.
-      final pairs = st.cards.map((c) => c.pair).toList()..sort();
-      expect(pairs, ['apple', 'apple', 'ball', 'ball']);
-      for (var i = 0; i < 4; i++) {
-        expect(st.statusOf(i), MemoryCellStatus.down);
-      }
-    });
+    test(
+      'reset reshuffles, clears state, and keeps the same pairs face-down',
+      () {
+        var s = _seed();
+        s = _pick(s, 0);
+        s = _pick(s, 2); // a match
+        s = _game.reduce(s, GameIntent.reset, const {});
+        final st = _game.decode(s);
+        expect(st.matched, isEmpty);
+        expect(st.flipped, isEmpty);
+        expect(st.done, isFalse);
+        expect(st.cards.length, 4);
+        // The deck is preserved (same multiset of pair keys) — a reshuffle, not a
+        // re-deal of different cards.
+        final pairs = st.cards.map((c) => c.pair).toList()..sort();
+        expect(pairs, ['apple', 'apple', 'ball', 'ball']);
+        for (var i = 0; i < 4; i++) {
+          expect(st.statusOf(i), MemoryCellStatus.down);
+        }
+      },
+    );
 
     test('out-of-range pick is ignored', () {
       final s = _pick(_seed(), 99);

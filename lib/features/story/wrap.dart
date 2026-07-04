@@ -86,8 +86,9 @@ StoryWrap buildWrap({
             ? '🌟 ${day.worldName ?? 'a new world'}'
             : '${w.emoji} ${w.name}';
         if (seenWorld.add(label)) worlds.add(label);
-        final practiced =
-            day.done.isNotEmpty ? day.done : day.verbPicks.toSet();
+        final practiced = day.done.isNotEmpty
+            ? day.done
+            : day.verbPicks.toSet();
         for (final v in practiced) {
           verbCounts[v] = (verbCounts[v] ?? 0) + 1;
         }
@@ -102,15 +103,15 @@ StoryWrap buildWrap({
     }
   }
 
-  final topVerbs = (verbCounts.keys.toList()
-        ..sort((a, b) {
-          final byCount = verbCounts[b]!.compareTo(verbCounts[a]!);
-          return byCount != 0 ? byCount : a.compareTo(b);
-        }))
-      .take(3)
-      .map((id) => verbById(id)?.label.toLowerCase())
-      .whereType<String>()
-      .toList();
+  final topVerbs =
+      (verbCounts.keys.toList()..sort((a, b) {
+            final byCount = verbCounts[b]!.compareTo(verbCounts[a]!);
+            return byCount != 0 ? byCount : a.compareTo(b);
+          }))
+          .take(3)
+          .map((id) => verbById(id)?.label.toLowerCase())
+          .whereType<String>()
+          .toList();
 
   final momentCount = momentsFrom(inWindow).length;
 
@@ -126,9 +127,11 @@ StoryWrap buildWrap({
     lines.add('Did ${_joinAnd(missions)}.');
   }
   if (momentCount > 0) {
-    lines.add(momentCount == 1
-        ? '1 moment captured.'
-        : '$momentCount moments captured.');
+    lines.add(
+      momentCount == 1
+          ? '1 moment captured.'
+          : '$momentCount moments captured.',
+    );
   }
   if (highlights.isNotEmpty) {
     lines.add('Highlights: ${highlights.map((h) => '“$h”').join(' · ')}');

@@ -26,8 +26,9 @@ class MissionsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<Mission?> watchById(String id) {
-    return (select(missions)..where((m) => m.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      missions,
+    )..where((m) => m.id.equals(id))).watchSingleOrNull();
   }
 
   /// Count for [spaceId] — used to decide whether to offer the starter set.
@@ -108,8 +109,9 @@ class MissionsDao extends DatabaseAccessor<AppDatabase>
         builds: builds == null ? const Value.absent() : Value(builds),
         rules: rules == null ? const Value.absent() : Value(rules),
         actions: actions == null ? const Value.absent() : Value(actions),
-        evidenceKind:
-            evidenceKind == null ? const Value.absent() : Value(evidenceKind),
+        evidenceKind: evidenceKind == null
+            ? const Value.absent()
+            : Value(evidenceKind),
         minAge: minAge == null ? const Value.absent() : Value(minAge),
         maxAge: maxAge == null ? const Value.absent() : Value(maxAge),
         updatedAt: Value(now),

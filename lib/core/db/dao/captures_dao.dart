@@ -26,8 +26,8 @@ class CapturesDao extends DatabaseAccessor<AppDatabase>
           ..where((c) => c.spaceId.equals(spaceId) & c.status.equals('open'))
           ..orderBy([
             (c) => OrderingTerm(
-                  expression: c.createdAt,
-                ),
+              expression: c.createdAt,
+            ),
           ]))
         .watch();
   }
@@ -40,16 +40,15 @@ class CapturesDao extends DatabaseAccessor<AppDatabase>
           ..where((c) => c.spaceId.equals(spaceId))
           ..orderBy([
             (c) => OrderingTerm(
-                  expression: c.createdAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: c.createdAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
 
   Future<Capture?> findById(String id) {
-    return (select(captures)..where((c) => c.id.equals(id)))
-        .getSingleOrNull();
+    return (select(captures)..where((c) => c.id.equals(id))).getSingleOrNull();
   }
 
   /// Insert a fresh capture and return its id. The sheet calls this

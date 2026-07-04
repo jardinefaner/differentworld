@@ -43,11 +43,13 @@ class _WrapSheetState extends ConsumerState<WrapSheet> {
     final entries = widget.subjectId == null
         ? ref.watch(spaceMomentsProvider).value ?? const <Entry>[]
         : ref
-                .watch(entriesForSubjectProvider(
-                  (subjectId: widget.subjectId!, kind: null),
-                ))
-                .value ??
-            const <Entry>[];
+                  .watch(
+                    entriesForSubjectProvider(
+                      (subjectId: widget.subjectId!, kind: null),
+                    ),
+                  )
+                  .value ??
+              const <Entry>[];
 
     final now = DateTime.now();
     final cutoff = _week

@@ -30,8 +30,9 @@ DateTime startDateForWeek(int week, DateTime now) {
 /// the Book's week-by-week grouping of a child's moments.
 final programStartDateProvider = Provider<DateTime?>((ref) {
   final raw = ref.watch(
-    currentSpaceProvider
-        .select((s) => s.value?.caps.getString(SpaceCaps.programStartDate)),
+    currentSpaceProvider.select(
+      (s) => s.value?.caps.getString(SpaceCaps.programStartDate),
+    ),
   );
   return raw == null ? null : DateTime.tryParse(raw);
 });
@@ -40,8 +41,9 @@ final programStartDateProvider = Provider<DateTime?>((ref) {
 /// cap. Null when the journey isn't set up / active.
 final currentCurriculumWeekProvider = Provider<int?>((ref) {
   final raw = ref.watch(
-    currentSpaceProvider
-        .select((s) => s.value?.caps.getString(SpaceCaps.programStartDate)),
+    currentSpaceProvider.select(
+      (s) => s.value?.caps.getString(SpaceCaps.programStartDate),
+    ),
   );
   final start = raw == null ? null : DateTime.tryParse(raw);
   return curriculumWeekFor(start, DateTime.now());
@@ -66,7 +68,8 @@ class WorldScheduleActions {
   WorldScheduleActions(this._ref);
   final Ref _ref;
 
-  String _isoDate(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
+  String _isoDate(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
@@ -88,5 +91,6 @@ class WorldScheduleActions {
   }
 }
 
-final worldScheduleActionsProvider =
-    Provider<WorldScheduleActions>(WorldScheduleActions.new);
+final worldScheduleActionsProvider = Provider<WorldScheduleActions>(
+  WorldScheduleActions.new,
+);

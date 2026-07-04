@@ -53,7 +53,9 @@ void main() {
   });
 
   test('an out-of-range size is clamped', () async {
-    SharedPreferences.setMockInitialValues({'poster.options.v1': '{"size": 99}'});
+    SharedPreferences.setMockInitialValues({
+      'poster.options.v1': '{"size": 99}',
+    });
     final o = await PosterPrefs.load();
     expect(o.size, 5);
   });

@@ -175,16 +175,15 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                               '"discuss", or "celebrate".',
                         )
                       : bento
-                          ? _bentoGrid(tools)
-                          : ListView.builder(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 4, 16, 96),
-                              itemCount: tools.length,
-                              itemBuilder: (context, i) => _ToolTile(
-                                tool: tools[i],
-                                onTap: () => _open(tools[i]),
-                              ),
-                            ),
+                      ? _bentoGrid(tools)
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                          itemCount: tools.length,
+                          itemBuilder: (context, i) => _ToolTile(
+                            tool: tools[i],
+                            onTap: () => _open(tools[i]),
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -358,9 +357,7 @@ class _ToolGridCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      runnable
-                          ? Icons.play_arrow_rounded
-                          : Icons.chevron_right,
+                      runnable ? Icons.play_arrow_rounded : Icons.chevron_right,
                       size: 16,
                       color: accent,
                     ),

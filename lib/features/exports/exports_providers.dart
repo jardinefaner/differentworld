@@ -12,8 +12,9 @@ import 'package:uuid/uuid.dart';
 
 /// All exports in the signed-in user's space (non-archived).
 // ignore: specify_nonobvious_property_types
-final exportsInSpaceProvider =
-    StreamProvider.autoDispose<List<Export>>((ref) async* {
+final exportsInSpaceProvider = StreamProvider.autoDispose<List<Export>>((
+  ref,
+) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
   if (spaceId == null) {
@@ -26,13 +27,13 @@ final exportsInSpaceProvider =
 
 /// Exports for a specific subject — the "Sent reports" surface.
 // ignore: specify_nonobvious_property_types
-final exportsForSubjectProvider =
-    StreamProvider.autoDispose.family<List<Export>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.exportsDao.watchForSubject(subjectId);
-  },
-);
+final exportsForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Export>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.exportsDao.watchForSubject(subjectId);
+      },
+    );
 
 /// Minimal record carrying just what the Family Today "Recent
 /// reports" card needs to render + open a PDF. We don't reconstruct
@@ -80,46 +81,48 @@ typedef ReceivedExport = ({
 // ignore: specify_nonobvious_property_types
 final myReceivedExportsProvider =
     FutureProvider.autoDispose<List<ReceivedExport>>((ref) async {
-  final viewer = ref.watch(viewerProvider);
-  if (viewer is! GuardianViewer) {
-    return const <ReceivedExport>[];
-  }
-  final supabase = Supabase.instance.client;
-  // PostgREST `!inner` filters on a related table while still
-  // selecting the parent. The nested column filter ensures the join
-  // is gated by the recipient row's guardian_id — exactly the rows
-  // RLS would have permitted anyway, but the explicit filter keeps
-  // the planner happy and the response small. We also select
-  // `read_at` off the inner row to drive the "Seen" badge.
-  final rows = await supabase
-      .from('exports')
-      .select('id, subject_id, sent_at, storage_path, '
-          'export_recipients!inner(guardian_id, read_at)')
-      .eq('export_recipients.guardian_id', viewer.guardian.id)
-      .eq('status', 'sent')
-      .order('sent_at', ascending: false)
-      .limit(10);
-  return [
-    for (final r in rows)
-      (
-        id: r['id'] as String,
-        subjectId: r['subject_id'] as String?,
-        sentAt: r['sent_at'] as String?,
-        storagePath: r['storage_path'] as String?,
-        // `export_recipients` is returned as a list (one element after
-        // the !inner filter on my guardian_id); read_at lives on that
-        // row. Null if the guardian hasn't opened it yet.
-        myReadAt: () {
-          final recipients = r['export_recipients'];
-          if (recipients is List && recipients.isNotEmpty) {
-            final first = recipients.first;
-            if (first is Map) return first['read_at'] as String?;
-          }
-          return null;
-        }(),
-      ),
-  ];
-});
+      final viewer = ref.watch(viewerProvider);
+      if (viewer is! GuardianViewer) {
+        return const <ReceivedExport>[];
+      }
+      final supabase = Supabase.instance.client;
+      // PostgREST `!inner` filters on a related table while still
+      // selecting the parent. The nested column filter ensures the join
+      // is gated by the recipient row's guardian_id — exactly the rows
+      // RLS would have permitted anyway, but the explicit filter keeps
+      // the planner happy and the response small. We also select
+      // `read_at` off the inner row to drive the "Seen" badge.
+      final rows = await supabase
+          .from('exports')
+          .select(
+            'id, subject_id, sent_at, storage_path, '
+            'export_recipients!inner(guardian_id, read_at)',
+          )
+          .eq('export_recipients.guardian_id', viewer.guardian.id)
+          .eq('status', 'sent')
+          .order('sent_at', ascending: false)
+          .limit(10);
+      return [
+        for (final r in rows)
+          (
+            id: r['id'] as String,
+            subjectId: r['subject_id'] as String?,
+            sentAt: r['sent_at'] as String?,
+            storagePath: r['storage_path'] as String?,
+            // `export_recipients` is returned as a list (one element after
+            // the !inner filter on my guardian_id); read_at lives on that
+            // row. Null if the guardian hasn't opened it yet.
+            myReadAt: () {
+              final recipients = r['export_recipients'];
+              if (recipients is List && recipients.isNotEmpty) {
+                final first = recipients.first;
+                if (first is Map) return first['read_at'] as String?;
+              }
+              return null;
+            }(),
+          ),
+      ];
+    });
 
 /// Stamp the signed-in guardian's `read_at` on an export. Called from
 /// the Family Today received-reports card the moment the parent taps
@@ -143,13 +146,13 @@ Future<void> markReceivedExportRead({
 
 /// One export's recipient list (for an audit detail view).
 // ignore: specify_nonobvious_property_types
-final exportRecipientsProvider =
-    StreamProvider.autoDispose.family<List<ExportRecipient>, String>(
-  (ref, exportId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.exportsDao.watchRecipientsFor(exportId);
-  },
-);
+final exportRecipientsProvider = StreamProvider.autoDispose
+    .family<List<ExportRecipient>, String>(
+      (ref, exportId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.exportsDao.watchRecipientsFor(exportId);
+      },
+    );
 
 /// Recipient kind for `export_recipients.kind`.
 class ExportRecipientKind {
@@ -180,8 +183,7 @@ class ExportActions {
     String? note,
   }) async {
     final viewer = _ref.read(viewerProvider);
-    final spaceId =
-        viewer.requireSpaceId(action: 'create an export');
+    final spaceId = viewer.requireSpaceId(action: 'create an export');
     final db = await _ref.read(appDatabaseProvider.future);
     final id = _uuid.v4();
 
@@ -204,7 +206,9 @@ class ExportActions {
     //    namespace by space so RLS / signed URLs scope cleanly.
     final supabase = Supabase.instance.client;
     final path = '$spaceId/$id.$format';
-    await supabase.storage.from('exports').uploadBinary(
+    await supabase.storage
+        .from('exports')
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(
@@ -228,14 +232,17 @@ class ExportActions {
   /// (defaults).
   Future<void> markSent({
     required String exportId,
-    required List<({
-      String kind,
-      String? guardianId,
-      String? memberId,
-      String? externalLabel,
-      String? externalEmail,
-      String channel,
-    })> recipients,
+    required List<
+      ({
+        String kind,
+        String? guardianId,
+        String? memberId,
+        String? externalLabel,
+        String? externalEmail,
+        String channel,
+      })
+    >
+    recipients,
   }) async {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.requireSpaceId(action: 'send an export');
@@ -270,8 +277,10 @@ class ExportActions {
   /// Generate a short-lived signed URL for the export's bytes.
   /// Returns null if the export has no stored path yet (still a
   /// draft).
-  Future<String?> downloadUrl(String exportId,
-      {int expiresInSeconds = 600}) async {
+  Future<String?> downloadUrl(
+    String exportId, {
+    int expiresInSeconds = 600,
+  }) async {
     final db = await _ref.read(appDatabaseProvider.future);
     final row = await db.exportsDao.findById(exportId);
     if (row == null || row.storagePath == null) return null;
@@ -285,8 +294,10 @@ class ExportActions {
   /// link, just minted with a 7-day expiry by default. UI labels this
   /// as the "Copy link" affordance for parents who don't have email
   /// or for asynchronous channels.
-  Future<String?> shareableLink(String exportId,
-      {int expiresInSeconds = 7 * 24 * 60 * 60}) {
+  Future<String?> shareableLink(
+    String exportId, {
+    int expiresInSeconds = 7 * 24 * 60 * 60,
+  }) {
     return downloadUrl(exportId, expiresInSeconds: expiresInSeconds);
   }
 
@@ -300,12 +311,15 @@ class ExportActions {
   /// per-recipient failures.
   Future<List<({String email, bool ok})>> sendByEmail({
     required String exportId,
-    required List<({
-      String email,
-      String? label,
-      String? guardianId,
-      String kind, // 'guardian' | 'member' | 'external'
-    })> recipients,
+    required List<
+      ({
+        String email,
+        String? label,
+        String? guardianId,
+        String kind, // 'guardian' | 'member' | 'external'
+      })
+    >
+    recipients,
   }) async {
     final supabase = Supabase.instance.client;
     try {
@@ -372,10 +386,9 @@ class SessionExpiredException implements Exception {
 }
 
 String _contentTypeFor(String format) => switch (format) {
-      'pdf' => 'application/pdf',
-      'csv' => 'text/csv',
-      _ => 'application/octet-stream',
-    };
+  'pdf' => 'application/pdf',
+  'csv' => 'text/csv',
+  _ => 'application/octet-stream',
+};
 
-final exportActionsProvider =
-    Provider<ExportActions>(ExportActions.new);
+final exportActionsProvider = Provider<ExportActions>(ExportActions.new);

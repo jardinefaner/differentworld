@@ -57,7 +57,11 @@ const _defaultCheckout = <VehiclePhotoShot>[
     hint: 'Whole front in frame',
     required: true,
   ),
-  VehiclePhotoShot(key: 'rear', label: 'Rear of the vehicle', hint: 'Whole rear in frame'),
+  VehiclePhotoShot(
+    key: 'rear',
+    label: 'Rear of the vehicle',
+    hint: 'Whole rear in frame',
+  ),
   VehiclePhotoShot(
     key: 'odometer',
     label: 'Odometer',
@@ -65,7 +69,11 @@ const _defaultCheckout = <VehiclePhotoShot>[
     required: true,
   ),
   VehiclePhotoShot(key: 'fuel', label: 'Fuel gauge', hint: 'Needle readable'),
-  VehiclePhotoShot(key: 'cabin_ready', label: 'Cabin ready', hint: 'Seats + belts ready'),
+  VehiclePhotoShot(
+    key: 'cabin_ready',
+    label: 'Cabin ready',
+    hint: 'Seats + belts ready',
+  ),
 ];
 
 const _defaultCheckin = <VehiclePhotoShot>[
@@ -77,7 +85,11 @@ const _defaultCheckin = <VehiclePhotoShot>[
   ),
   VehiclePhotoShot(key: 'fuel', label: 'Fuel gauge', hint: 'Needle readable'),
   emptyCabinShot,
-  VehiclePhotoShot(key: 'damage', label: 'Any new damage', hint: 'Skip if none — or photograph it'),
+  VehiclePhotoShot(
+    key: 'damage',
+    label: 'Any new damage',
+    hint: 'Skip if none — or photograph it',
+  ),
 ];
 
 /// Built-in defaults for a kind (a copy of the const list).
@@ -108,8 +120,7 @@ List<VehiclePhotoShot> shotsFor(String capabilitiesJson, String kind) {
     shots = defaultShotsFor(kind);
   }
   // Safety floor: check-in always includes the empty-cabin shot.
-  if (kind == 'checkin' &&
-      !shots.any((s) => s.key == emptyCabinShot.key)) {
+  if (kind == 'checkin' && !shots.any((s) => s.key == emptyCabinShot.key)) {
     shots = [...shots, emptyCabinShot];
   }
   return shots;
@@ -125,7 +136,9 @@ String withPhotoShots(
   Map<String, dynamic> caps;
   try {
     final decoded = jsonDecode(capabilitiesJson);
-    caps = decoded is Map ? decoded.cast<String, dynamic>() : <String, dynamic>{};
+    caps = decoded is Map
+        ? decoded.cast<String, dynamic>()
+        : <String, dynamic>{};
   } on Object {
     caps = <String, dynamic>{};
   }

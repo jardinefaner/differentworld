@@ -17,12 +17,17 @@ void main() {
       expect(curriculumWeekFor(now.subtract(const Duration(days: 7)), now), 2);
       expect(curriculumWeekFor(now.subtract(const Duration(days: 13)), now), 2);
       expect(curriculumWeekFor(now.subtract(const Duration(days: 14)), now), 3);
-      expect(curriculumWeekFor(now.subtract(const Duration(days: 63)), now), 10);
+      expect(
+        curriculumWeekFor(now.subtract(const Duration(days: 63)), now),
+        10,
+      );
     });
 
     test('past week 10 → not active', () {
-      expect(curriculumWeekFor(now.subtract(const Duration(days: 70)), now),
-          isNull);
+      expect(
+        curriculumWeekFor(now.subtract(const Duration(days: 70)), now),
+        isNull,
+      );
     });
 
     test('before the start date → not active', () {
@@ -40,8 +45,11 @@ void main() {
     test('jumping to week N makes now land in week N', () {
       for (var week = 1; week <= 10; week++) {
         final start = startDateForWeek(week, now);
-        expect(curriculumWeekFor(start, now), week,
-            reason: 'week $week did not round-trip');
+        expect(
+          curriculumWeekFor(start, now),
+          week,
+          reason: 'week $week did not round-trip',
+        );
       }
     });
   });

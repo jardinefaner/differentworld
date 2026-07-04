@@ -7,24 +7,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// see all rooms regardless).
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final assignmentsForMemberProvider =
-    StreamProvider.autoDispose.family<List<GroupMember>, String>(
-  (ref, memberId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.groupMembersDao.watchForMember(memberId);
-  },
-);
+final assignmentsForMemberProvider = StreamProvider.autoDispose
+    .family<List<GroupMember>, String>(
+      (ref, memberId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.groupMembersDao.watchForMember(memberId);
+      },
+    );
 
 /// Reactive list of every member assigned to a classroom. Used by
 /// the Group detail screen's staff section.
 // ignore: specify_nonobvious_property_types
-final assignmentsForGroupProvider =
-    StreamProvider.autoDispose.family<List<GroupMember>, String>(
-  (ref, groupId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.groupMembersDao.watchForGroup(groupId);
-  },
-);
+final assignmentsForGroupProvider = StreamProvider.autoDispose
+    .family<List<GroupMember>, String>(
+      (ref, groupId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.groupMembersDao.watchForGroup(groupId);
+      },
+    );
 
 class GroupAssignmentActions {
   GroupAssignmentActions(this._ref);
@@ -56,5 +56,6 @@ class GroupAssignmentActions {
   }
 }
 
-final groupAssignmentActionsProvider =
-    Provider<GroupAssignmentActions>(GroupAssignmentActions.new);
+final groupAssignmentActionsProvider = Provider<GroupAssignmentActions>(
+  GroupAssignmentActions.new,
+);

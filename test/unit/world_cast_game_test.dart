@@ -114,8 +114,9 @@ void main() {
   });
 
   group('the receiver renders the stage (what the room sees)', () {
-    testWidgets('title slide shows the world; advancing shows the question',
-        (tester) async {
+    testWidgets('title slide shows the world; advancing shows the question', (
+      tester,
+    ) async {
       // The stage targets a TV / projector, not a phone — size the test
       // surface accordingly so the big hero text isn't overflow-clipped.
       tester.view.physicalSize = const Size(1600, 1000);
@@ -127,14 +128,14 @@ void main() {
       var wire = worldCastSeed(space);
 
       Future<void> pump() => tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: Builder(
-                  builder: (ctx) => game.buildStage(ctx, game.decode(wire)),
-                ),
-              ),
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) => game.buildStage(ctx, game.decode(wire)),
             ),
-          );
+          ),
+        ),
+      );
 
       await pump();
       expect(find.text('World of Space'), findsOneWidget);

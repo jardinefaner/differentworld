@@ -17,7 +17,8 @@ enum DayBlockKind {
   free('🧸', 'Free play', 'on_site', 0.9),
   transition('🔁', 'Transition', 'on_site', 0.4),
   pickup('👋', 'Pickup', 'on_site', 0.18),
-  fieldTrip('🚌', 'Field trip', 'field_trip', 0.9);
+  fieldTrip('🚌', 'Field trip', 'field_trip', 0.9)
+  ;
 
   const DayBlockKind(this.emoji, this.label, this.scheduleKind, this.energy);
   final String emoji;
@@ -56,12 +57,12 @@ class DayBlock {
   });
 
   factory DayBlock.fromJson(Map<String, dynamic> j) => DayBlock(
-        id: (j['id'] as String?) ?? const Uuid().v4(),
-        label: (j['label'] as String?) ?? '',
-        minutes: (j['minutes'] as num?)?.toInt() ?? 15,
-        kind: DayBlockKind.fromName(j['kind'] as String?),
-        energy: (j['energy'] as num?)?.toDouble(),
-      );
+    id: (j['id'] as String?) ?? const Uuid().v4(),
+    label: (j['label'] as String?) ?? '',
+    minutes: (j['minutes'] as num?)?.toInt() ?? 15,
+    kind: DayBlockKind.fromName(j['kind'] as String?),
+    energy: (j['energy'] as num?)?.toDouble(),
+  );
 
   final String id;
   final String label;
@@ -76,22 +77,21 @@ class DayBlock {
     int? minutes,
     DayBlockKind? kind,
     double? energy,
-  }) =>
-      DayBlock(
-        id: id,
-        label: label ?? this.label,
-        minutes: minutes ?? this.minutes,
-        kind: kind ?? this.kind,
-        energy: energy ?? this.energy,
-      );
+  }) => DayBlock(
+    id: id,
+    label: label ?? this.label,
+    minutes: minutes ?? this.minutes,
+    kind: kind ?? this.kind,
+    energy: energy ?? this.energy,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'label': label,
-        'minutes': minutes,
-        'kind': kind.name,
-        if (energy != null) 'energy': energy,
-      };
+    'id': id,
+    'label': label,
+    'minutes': minutes,
+    'kind': kind.name,
+    if (energy != null) 'energy': energy,
+  };
 }
 
 /// A packed block: a [DayBlock] with its DERIVED clock window, in minutes
@@ -124,15 +124,15 @@ class DayTemplate {
   });
 
   factory DayTemplate.fromJson(Map<String, dynamic> j) => DayTemplate(
-        id: (j['id'] as String?) ?? const Uuid().v4(),
-        name: (j['name'] as String?) ?? 'Day',
-        startMinute: (j['start'] as num?)?.toInt() ?? 9 * 60,
-        endMinute: (j['end'] as num?)?.toInt() ?? 15 * 60,
-        blocks: [
-          for (final b in (j['blocks'] as List? ?? const []))
-            if (b is Map<String, dynamic>) DayBlock.fromJson(b),
-        ],
-      );
+    id: (j['id'] as String?) ?? const Uuid().v4(),
+    name: (j['name'] as String?) ?? 'Day',
+    startMinute: (j['start'] as num?)?.toInt() ?? 9 * 60,
+    endMinute: (j['end'] as num?)?.toInt() ?? 15 * 60,
+    blocks: [
+      for (final b in (j['blocks'] as List? ?? const []))
+        if (b is Map<String, dynamic>) DayBlock.fromJson(b),
+    ],
+  );
 
   /// A sensible starter so "New template" isn't a blank canvas — an
   /// afterschool-shaped afternoon the director can reshape.
@@ -203,7 +203,11 @@ class DayTemplate {
         ),
         b('Snack', 15, DayBlockKind.meal),
         b('Photo rotation', photo, DayBlockKind.activity),
-        b(world.isEmpty ? 'Make' : 'Make · $world', make, DayBlockKind.activity),
+        b(
+          world.isEmpty ? 'Make' : 'Make · $world',
+          make,
+          DayBlockKind.activity,
+        ),
         b('Outdoor play', outdoor, DayBlockKind.outdoor),
         b('Pack up & pickup', 15, DayBlockKind.pickup),
       ],
@@ -249,22 +253,21 @@ class DayTemplate {
     int? startMinute,
     int? endMinute,
     List<DayBlock>? blocks,
-  }) =>
-      DayTemplate(
-        id: id,
-        name: name ?? this.name,
-        startMinute: startMinute ?? this.startMinute,
-        endMinute: endMinute ?? this.endMinute,
-        blocks: blocks ?? this.blocks,
-      );
+  }) => DayTemplate(
+    id: id,
+    name: name ?? this.name,
+    startMinute: startMinute ?? this.startMinute,
+    endMinute: endMinute ?? this.endMinute,
+    blocks: blocks ?? this.blocks,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'start': startMinute,
-        'end': endMinute,
-        'blocks': [for (final b in blocks) b.toJson()],
-      };
+    'id': id,
+    'name': name,
+    'start': startMinute,
+    'end': endMinute,
+    'blocks': [for (final b in blocks) b.toJson()],
+  };
 }
 
 /// Encode/decode the whole library to/from the JSON string we stash on the

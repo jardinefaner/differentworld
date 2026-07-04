@@ -371,8 +371,9 @@ class _RulesSection extends ConsumerWidget {
         _Label(text: 'The rules of this world', accent: accent),
         for (final rule in rulesForWorld(world.id))
           _RuleLine(text: rule.text, accent: accent),
-        for (final rule in ref.watch(addedWorldRulesProvider(world.id)).value ??
-            const <({String id, String text})>[])
+        for (final rule
+            in ref.watch(addedWorldRulesProvider(world.id)).value ??
+                const <({String id, String text})>[])
           _RuleLine(
             text: rule.text,
             accent: accent,
@@ -776,8 +777,10 @@ class _RuleLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(added ? '+  ' : '•  ',
-              style: TextStyle(color: accent, height: 1.4)),
+          Text(
+            added ? '+  ' : '•  ',
+            style: TextStyle(color: accent, height: 1.4),
+          ),
           Expanded(
             child: Text(
               text,
@@ -835,7 +838,8 @@ Future<void> _deleteAddedRule(
   final ok = await confirmDestructive(
     context,
     title: 'Delete this rule?',
-    message: "It'll be removed from this world's bible for your room. "
+    message:
+        "It'll be removed from this world's bible for your room. "
         "The world's own rules stay.",
   );
   if (!ok) return;

@@ -16,8 +16,7 @@ part 'surveys_dao.g.dart';
 /// `lib/features/surveys/survey_templates.dart`; only the *answers*
 /// land in the DB, keyed by question_key inside the `answers` JSONB.
 @DriftAccessor(tables: [SurveyResponses, SurveyPickerOptions])
-class SurveysDao extends DatabaseAccessor<AppDatabase>
-    with _$SurveysDaoMixin {
+class SurveysDao extends DatabaseAccessor<AppDatabase> with _$SurveysDaoMixin {
   SurveysDao(super.attachedDatabase);
 
   /// All responses in the space for one template — used by the
@@ -29,15 +28,13 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
   }) {
     return (select(surveyResponses)
           ..where(
-            (r) =>
-                r.spaceId.equals(spaceId) &
-                r.templateId.equals(templateId),
+            (r) => r.spaceId.equals(spaceId) & r.templateId.equals(templateId),
           )
           ..orderBy([
             (r) => OrderingTerm(
-                  expression: r.updatedAt,
-                  mode: OrderingMode.desc,
-                ),
+              expression: r.updatedAt,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -48,13 +45,15 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
   /// far. On a fresh launch the row doesn't exist yet (returns null)
   /// — the screen flushes its first autosave to create it.
   Stream<SurveyResponse?> watchById(String id) {
-    return (select(surveyResponses)..where((r) => r.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      surveyResponses,
+    )..where((r) => r.id.equals(id))).watchSingleOrNull();
   }
 
   Future<SurveyResponse?> findById(String id) {
-    return (select(surveyResponses)..where((r) => r.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      surveyResponses,
+    )..where((r) => r.id.equals(id))).getSingleOrNull();
   }
 
   /// Wave 138: upsert by `id`. Used by the take-screen autosave +
@@ -100,8 +99,9 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
       );
       return id;
     }
-    await (update(surveyResponses)..where((r) => r.id.equals(existing.id)))
-        .write(
+    await (update(
+      surveyResponses,
+    )..where((r) => r.id.equals(existing.id))).write(
       SurveyResponsesCompanion(
         status: Value(status),
         answers: Value(answersJson),
@@ -166,14 +166,14 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
     // dimension. The server-side unique(space_id, dimension, label)
     // constraint also guards against a race; we check locally first
     // to avoid a wasted insert.
-    final existing = await (select(surveyPickerOptions)
-          ..where(
-            (o) =>
-                o.spaceId.equals(spaceId) &
-                o.dimension.equals(dimension) &
-                o.label.equals(trimmed),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (select(surveyPickerOptions)..where(
+              (o) =>
+                  o.spaceId.equals(spaceId) &
+                  o.dimension.equals(dimension) &
+                  o.label.equals(trimmed),
+            ))
+            .getSingleOrNull();
     if (existing != null) return existing.id;
     await into(surveyPickerOptions).insert(
       SurveyPickerOptionsCompanion.insert(

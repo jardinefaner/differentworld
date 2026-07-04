@@ -14,7 +14,10 @@ abstract final class CardRounds {
 
   /// Up to [n] this-or-that pairs (Image-or-That). No card appears twice.
   static List<(PictureCard, PictureCard)> pairs(
-      List<PictureCard> deck, int n, int seed) {
+    List<PictureCard> deck,
+    int n,
+    int seed,
+  ) {
     final pool = [...deck]..shuffle(Random(seed));
     final out = <(PictureCard, PictureCard)>[];
     for (var i = 0; i + 1 < pool.length && out.length < n; i += 2) {
@@ -27,14 +30,17 @@ abstract final class CardRounds {
   /// odd one. Null when the deck lacks a category with ≥3 cards plus a second
   /// non-empty category.
   static ({List<PictureCard> options, int answer})? oddOneOut(
-      List<PictureCard> deck, int seed) {
+    List<PictureCard> deck,
+    int seed,
+  ) {
     final r = Random(seed);
     final byCat = byCategory(deck);
     final big = byCat.entries.where((e) => e.value.length >= 3).toList();
     if (big.isEmpty) return null;
     final main = big[r.nextInt(big.length)];
-    final otherCats =
-        byCat.entries.where((e) => e.key != main.key && e.value.isNotEmpty).toList();
+    final otherCats = byCat.entries
+        .where((e) => e.key != main.key && e.value.isNotEmpty)
+        .toList();
     if (otherCats.isEmpty) return null;
     final three = ([...main.value]..shuffle(r)).take(3).toList();
     final oddCat = otherCats[r.nextInt(otherCats.length)];
@@ -46,7 +52,10 @@ abstract final class CardRounds {
   /// A set of [n] cards with one removed — What's Missing. `shown` has [n];
   /// `missing` is not in `shown`.
   static ({List<PictureCard> shown, PictureCard missing}) whatsMissing(
-      List<PictureCard> deck, int n, int seed) {
+    List<PictureCard> deck,
+    int n,
+    int seed,
+  ) {
     final pool = ([...deck]..shuffle(Random(seed))).take(n + 1).toList();
     final missing = pool.removeLast();
     return (shown: pool, missing: missing);

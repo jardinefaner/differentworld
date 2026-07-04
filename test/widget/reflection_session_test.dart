@@ -11,7 +11,9 @@ import 'package:go_router/go_router.dart';
 Widget _host() {
   final router = GoRouter(
     initialLocation: '/',
-    routes: [GoRoute(path: '/', builder: (_, _) => const ReflectionSessionScreen())],
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const ReflectionSessionScreen()),
+    ],
   );
   return ProviderScope(
     overrides: [
@@ -66,8 +68,8 @@ void main() {
     await tester.pump();
 
     FilledButton saveButton() => tester.widget<FilledButton>(
-          find.widgetWithText(FilledButton, 'Save reflection'),
-        );
+      find.widgetWithText(FilledButton, 'Save reflection'),
+    );
 
     // Past the threshold → can't save until a face is chosen.
     expect(saveButton().onPressed, isNull);

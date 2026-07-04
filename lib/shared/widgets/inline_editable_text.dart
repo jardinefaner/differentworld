@@ -118,7 +118,8 @@ class _InlineEditableTextState extends State<InlineEditableText> {
     _ctl = TextEditingController(text: _displayValue);
     _focus = FocusNode()..addListener(_onFocusChange);
     _dim = OverlayEntry(
-      builder: (_) => _DimAround(fieldKey: _fieldKey, onDismiss: _commitAndExit),
+      builder: (_) =>
+          _DimAround(fieldKey: _fieldKey, onDismiss: _commitAndExit),
     );
     overlay.insert(_dim!);
     setState(() => _editing = true);
@@ -202,7 +203,8 @@ class _InlineEditableTextState extends State<InlineEditableText> {
     }
 
     final isEmpty = _displayValue.trim().isEmpty;
-    final placeholderStyle = widget.placeholderStyle ??
+    final placeholderStyle =
+        widget.placeholderStyle ??
         baseStyle?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           fontStyle: FontStyle.italic,
@@ -234,8 +236,9 @@ class _InlineEditableTextState extends State<InlineEditableText> {
                 child: Icon(
                   Icons.edit_outlined,
                   size: 14,
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
               ),
             ],
@@ -320,25 +323,25 @@ class _DimAroundState extends State<_DimAround>
     final alpha = _peak * _fade;
 
     Widget band({required bool above}) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onDismiss,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                // Dark at the screen edge, feathering to transparent as
-                // it approaches the lit band.
-                begin: above ? Alignment.topCenter : Alignment.bottomCenter,
-                end: above ? Alignment.bottomCenter : Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: alpha),
-                  Colors.black.withValues(alpha: alpha),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.65, 1.0],
-              ),
-            ),
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onDismiss,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            // Dark at the screen edge, feathering to transparent as
+            // it approaches the lit band.
+            begin: above ? Alignment.topCenter : Alignment.bottomCenter,
+            end: above ? Alignment.bottomCenter : Alignment.topCenter,
+            colors: [
+              Colors.black.withValues(alpha: alpha),
+              Colors.black.withValues(alpha: alpha),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.65, 1.0],
           ),
-        );
+        ),
+      ),
+    );
 
     // RepaintBoundary isolates the gradient repaint from the route
     // content underneath during the fade / keyboard-track frames.

@@ -9,15 +9,14 @@ ActionWordsDay _day(
   String? note,
   String? word,
   String? worldName,
-}) =>
-    ActionWordsDay(
-      entry: null,
-      verbPicks: picks,
-      done: const {},
-      note: note,
-      wordOfDay: word,
-      worldName: worldName,
-    );
+}) => ActionWordsDay(
+  entry: null,
+  verbPicks: picks,
+  done: const {},
+  note: note,
+  wordOfDay: word,
+  worldName: worldName,
+);
 
 void main() {
   group('buildParentMessage', () {

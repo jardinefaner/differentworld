@@ -13,8 +13,10 @@ TextStyle entityInlineTextStyle(
   TextStyle? base,
 }) {
   final tint = readableEntityTint(kind.accent, Theme.of(context).brightness);
-  return (base ?? const TextStyle())
-      .copyWith(color: tint, fontWeight: FontWeight.w500);
+  return (base ?? const TextStyle()).copyWith(
+    color: tint,
+    fontWeight: FontWeight.w500,
+  );
 }
 
 /// A STRUCTURED entity reference — a place that already knows the id (a roster
@@ -48,8 +50,12 @@ class EntityLink extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!liveEntitiesOn(ref)) {
-      return Text(entity.label,
-          style: style, maxLines: maxLines, overflow: overflow);
+      return Text(
+        entity.label,
+        style: style,
+        maxLines: maxLines,
+        overflow: overflow,
+      );
     }
     final theme = Theme.of(context);
     final accent = entity.kind.accent;

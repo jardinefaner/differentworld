@@ -116,9 +116,7 @@ class _PinEntryDialogState extends State<_PinEntryDialog>
           // Subtle horizontal shake on wrong PIN. Eased so the
           // movement reads as "no" rather than "loading."
           final offsetX = _shake.isAnimating
-              ? 8 *
-                  (1 - _shake.value) *
-                  (_shake.value * 8 % 2 < 1 ? 1 : -1)
+              ? 8 * (1 - _shake.value) * (_shake.value * 8 % 2 < 1 ? 1 : -1)
               : 0.0;
           return Transform.translate(
             offset: Offset(offsetX, 0),

@@ -81,7 +81,8 @@ class PersonAvatar extends ConsumerWidget {
     // Path-or-null gate. We don't even subscribe to the signed-URL
     // provider when there's nothing to resolve — saves Supabase calls
     // for the (very common) initials-only case.
-    final hasPhoto = photoUrl != null &&
+    final hasPhoto =
+        photoUrl != null &&
         photoUrl!.isNotEmpty &&
         !photoUrl!.startsWith('pending:');
     final signedAsync = hasPhoto

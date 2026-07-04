@@ -5,8 +5,7 @@ part 'groups_dao.g.dart';
 
 /// Classrooms — the per-space grouping for kids and staff assignment.
 @DriftAccessor(tables: [Groups])
-class GroupsDao extends DatabaseAccessor<AppDatabase>
-    with _$GroupsDaoMixin {
+class GroupsDao extends DatabaseAccessor<AppDatabase> with _$GroupsDaoMixin {
   GroupsDao(super.attachedDatabase);
 
   Stream<List<Group>> watchInSpace(String spaceId) {
@@ -17,8 +16,7 @@ class GroupsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<Group?> watchById(String id) {
-    return (select(groups)..where((g) => g.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(groups)..where((g) => g.id.equals(id))).watchSingleOrNull();
   }
 
   Future<void> create({

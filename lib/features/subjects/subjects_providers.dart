@@ -16,8 +16,7 @@ import 'package:uuid/uuid.dart';
 /// DB is ready.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final subjectsInGroupProvider =
-    StreamProvider.family<List<Subject>, String>(
+final subjectsInGroupProvider = StreamProvider.family<List<Subject>, String>(
   (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
     yield* db.subjectsDao.watchInGroup(groupId);
@@ -88,12 +87,12 @@ final subjectsInSpaceProvider = StreamProvider<List<Subject>>((ref) async* {
 /// Single Subject by id. Powers the subject detail screen.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final subjectByIdProvider =
-    StreamProvider.autoDispose.family<Subject?, String>(
+final subjectByIdProvider = StreamProvider.autoDispose.family<Subject?, String>(
   (ref, id) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* (db.select(db.subjects)..where((s) => s.id.equals(id)))
-        .watchSingleOrNull();
+    yield* (db.select(
+      db.subjects,
+    )..where((s) => s.id.equals(id))).watchSingleOrNull();
   },
 );
 
@@ -101,17 +100,17 @@ final subjectByIdProvider =
 /// by the subject detail "30-day strip" and any future analytics.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final attendanceHistoryForSubjectProvider =
-    StreamProvider.autoDispose.family<List<AttendanceRecord>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* (db.select(db.attendanceRecords)
-          ..where((a) => a.subjectId.equals(subjectId))
-          ..orderBy([(a) => OrderingTerm.desc(a.date)])
-          ..limit(60))
-        .watch();
-  },
-);
+final attendanceHistoryForSubjectProvider = StreamProvider.autoDispose
+    .family<List<AttendanceRecord>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* (db.select(db.attendanceRecords)
+              ..where((a) => a.subjectId.equals(subjectId))
+              ..orderBy([(a) => OrderingTerm.desc(a.date)])
+              ..limit(60))
+            .watch();
+      },
+    );
 
 class SubjectActions {
   SubjectActions(this._ref);
@@ -195,9 +194,9 @@ class SubjectCapActions {
     String? value,
   ) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final s = await (db.select(db.subjects)
-          ..where((row) => row.id.equals(subjectId)))
-        .getSingleOrNull();
+    final s = await (db.select(
+      db.subjects,
+    )..where((row) => row.id.equals(subjectId))).getSingleOrNull();
     if (s == null) return;
     // Empty string = clear, same as null. Stops the JSONB bag from
     // accumulating `"": ""` rows when the form is wiped.
@@ -215,14 +214,15 @@ class SubjectCapActions {
     required bool value,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final s = await (db.select(db.subjects)
-          ..where((row) => row.id.equals(subjectId)))
-        .getSingleOrNull();
+    final s = await (db.select(
+      db.subjects,
+    )..where((row) => row.id.equals(subjectId))).getSingleOrNull();
     if (s == null) return;
     final caps = s.caps.setting(key, value);
     await db.subjectsDao.updateCapabilities(subjectId, caps.toJson());
   }
 }
 
-final subjectCapActionsProvider =
-    Provider<SubjectCapActions>(SubjectCapActions.new);
+final subjectCapActionsProvider = Provider<SubjectCapActions>(
+  SubjectCapActions.new,
+);

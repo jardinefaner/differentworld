@@ -34,8 +34,7 @@ class ProgressReportScreen extends ConsumerStatefulWidget {
       _ProgressReportScreenState();
 }
 
-class _ProgressReportScreenState
-    extends ConsumerState<ProgressReportScreen> {
+class _ProgressReportScreenState extends ConsumerState<ProgressReportScreen> {
   // Lookback for attendance + observations. Default 30 days — wide
   // enough for a parent-teacher conference snapshot, narrow enough
   // that the report doesn't balloon into a year-in-review document.
@@ -43,8 +42,7 @@ class _ProgressReportScreenState
 
   @override
   Widget build(BuildContext context) {
-    final subjectAsync =
-        ref.watch(subjectByIdProvider(widget.subjectId));
+    final subjectAsync = ref.watch(subjectByIdProvider(widget.subjectId));
     final viewer = ref.watch(viewerProvider);
     final space = viewer.space;
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
@@ -55,8 +53,7 @@ class _ProgressReportScreenState
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () =>
-              ref.invalidate(subjectByIdProvider(widget.subjectId)),
+          onRetry: () => ref.invalidate(subjectByIdProvider(widget.subjectId)),
         ),
         data: (subject) {
           if (subject == null) {
@@ -69,24 +66,24 @@ class _ProgressReportScreenState
               .where((g) => g.id == subject.groupId)
               .map((g) => g.name)
               .firstOrNull;
-          final observations = ref
-                  .watch(entriesForSubjectProvider(
-                    (subjectId: subject.id, kind: EntryKind.observation),
-                  ))
+          final observations =
+              ref
+                  .watch(
+                    entriesForSubjectProvider(
+                      (subjectId: subject.id, kind: EntryKind.observation),
+                    ),
+                  )
                   .value ??
               const <Entry>[];
-          final attendance = ref
-                  .watch(attendanceForSubjectProvider(subject.id))
-                  .value ??
+          final attendance =
+              ref.watch(attendanceForSubjectProvider(subject.id)).value ??
               const <AttendanceRecord>[];
 
           final cutoff = DateTime.now().subtract(Duration(days: _windowDays));
-          final recentObs = observations
-              .where((e) {
-                final dt = DateTime.tryParse(e.recordedAt);
-                return dt != null && dt.isAfter(cutoff);
-              })
-              .toList();
+          final recentObs = observations.where((e) {
+            final dt = DateTime.tryParse(e.recordedAt);
+            return dt != null && dt.isAfter(cutoff);
+          }).toList();
           final summary = _summarizeAttendance(attendance, _windowDays);
 
           // Wave 138: surveys are anonymous now — they no longer
@@ -111,7 +108,8 @@ class _ProgressReportScreenState
           // before they generate / send. Saves the "send empty report
           // on a kid who was absent all week" mistake.
           final observationCount = recentObs.length;
-          final attendanceDays = summary.present +
+          final attendanceDays =
+              summary.present +
               summary.absent +
               summary.late +
               summary.earlyPickup +
@@ -164,8 +162,7 @@ class _ProgressReportScreenState
                       // dropdown, all four options visible at once.
                       _WindowSegmented(
                         days: _windowDays,
-                        onChanged: (d) =>
-                            setState(() => _windowDays = d),
+                        onChanged: (d) => setState(() => _windowDays = d),
                       ),
                       const SizedBox(height: 10),
                       // Two actions: the canonical "OS share / print"
@@ -185,8 +182,7 @@ class _ProgressReportScreenState
                           const SizedBox(width: 8),
                           Expanded(
                             child: FilledButton.icon(
-                              onPressed: () =>
-                                  _emailGuardiansDirectly(data),
+                              onPressed: () => _emailGuardiansDirectly(data),
                               icon: const Icon(Icons.mail_outline),
                               label: const Text('Email guardian'),
                             ),
@@ -276,7 +272,8 @@ class _ProgressReportScreenState
         //    AirDrop, email, Save to Files, print, whatever.
         await Printing.sharePdf(
           bytes: bytes,
-          filename: 'progress-${data.subject.firstName.toLowerCase()}-'
+          filename:
+              'progress-${data.subject.firstName.toLowerCase()}-'
               '${data.generatedAt.toIso8601String().substring(0, 10)}.pdf',
         );
         // 3. Mark sent with channel = 'manual' — we don't know

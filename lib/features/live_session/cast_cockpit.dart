@@ -55,11 +55,13 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     // if we're already casting it). Deferred off the build phase: the chrome
     // pill watches this provider, and writing a watched provider mid-build is
     // the "modified provider while the widget tree was building" trap.
-    unawaited(Future.microtask(() {
-      if (mounted) {
-        ref.read(castSessionProvider.notifier).start(widget.code);
-      }
-    }));
+    unawaited(
+      Future.microtask(() {
+        if (mounted) {
+          ref.read(castSessionProvider.notifier).start(widget.code);
+        }
+      }),
+    );
   }
 
   @override
@@ -300,7 +302,7 @@ class _Launcher extends StatelessWidget {
 
   /// Cast a deck-seeded card game (Name It, Odd One Out, …) with its seed.
   final Future<void> Function(GameDefinition<dynamic> def, CardSeed seed)?
-      onCastCard;
+  onCastCard;
 
   @override
   Widget build(BuildContext context) {
@@ -790,7 +792,7 @@ class _CockpitHeader extends StatelessWidget {
                       child: Text(
                         peers > 0
                             ? '$label · code $code · $peers '
-                                '${peers == 1 ? 'screen' : 'screens'}'
+                                  '${peers == 1 ? 'screen' : 'screens'}'
                             : '$label · your code $code — add a screen',
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -810,9 +812,14 @@ class _CockpitHeader extends StatelessWidget {
           ),
           TextButton.icon(
             onPressed: onStop,
-            icon: const Icon(Icons.stop_circle_outlined,
-                color: Colors.redAccent),
-            label: const Text('Stop', style: TextStyle(color: Colors.redAccent)),
+            icon: const Icon(
+              Icons.stop_circle_outlined,
+              color: Colors.redAccent,
+            ),
+            label: const Text(
+              'Stop',
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
           TextButton.icon(
             onPressed: onLeave,

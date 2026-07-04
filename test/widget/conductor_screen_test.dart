@@ -12,14 +12,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 Subject _subject(String id, String first, String last) => Subject(
-      id: id,
-      spaceId: 'space-1',
-      firstName: first,
-      lastName: last,
-      capabilities: '{}',
-      createdAt: '2026-06-06T00:00:00Z',
-      updatedAt: '2026-06-06T00:00:00Z',
-    );
+  id: id,
+  spaceId: 'space-1',
+  firstName: first,
+  lastName: last,
+  capabilities: '{}',
+  createdAt: '2026-06-06T00:00:00Z',
+  updatedAt: '2026-06-06T00:00:00Z',
+);
 
 Future<void> _pump(WidgetTester tester, List<Subject> subjects) async {
   tester.view.physicalSize = const Size(1200 * 2, 1600 * 2);
@@ -58,8 +58,9 @@ Future<void> _pump(WidgetTester tester, List<Subject> subjects) async {
 }
 
 void main() {
-  testWidgets('shows the week actions + a roster of book links',
-      (tester) async {
+  testWidgets('shows the week actions + a roster of book links', (
+    tester,
+  ) async {
     await _pump(tester, [
       _subject('s1', 'Leah', 'M'),
       _subject('s2', 'Marcus', 'B'),

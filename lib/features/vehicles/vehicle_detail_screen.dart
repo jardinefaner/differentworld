@@ -53,62 +53,62 @@ class VehicleDetailScreen extends ConsumerWidget {
     return RouteTitle(
       title: vehicleName,
       child: EdgeScaffold(
-      backFallbackRoute: '/vehicles',
-      actions: [
-        // Primary verb (check out / check in) stays inline; the edit /
-        // QR / photo-checklist verbs collapse into "⋯" on a phone. The
-        // sync indicator sits outside the menu — it's a status, not an
-        // action.
-        OverflowActions([
-          if (vehicleAsync.value != null && canDrive)
-            EdgeAction(
-              icon: isOut
-                  ? Icons.assignment_turned_in_outlined
-                  : Icons.key_outlined,
-              label: isOut ? 'Check in' : 'Check out',
-              isPrimary: true,
-              onPressed: () => context.push(
-                '/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
+        backFallbackRoute: '/vehicles',
+        actions: [
+          // Primary verb (check out / check in) stays inline; the edit /
+          // QR / photo-checklist verbs collapse into "⋯" on a phone. The
+          // sync indicator sits outside the menu — it's a status, not an
+          // action.
+          OverflowActions([
+            if (vehicleAsync.value != null && canDrive)
+              EdgeAction(
+                icon: isOut
+                    ? Icons.assignment_turned_in_outlined
+                    : Icons.key_outlined,
+                label: isOut ? 'Check in' : 'Check out',
+                isPrimary: true,
+                onPressed: () => context.push(
+                  '/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
+                ),
               ),
-            ),
-          if (canEdit && vehicleAsync.value != null)
-            EdgeAction(
-              icon: Icons.qr_code_2_outlined,
-              label: 'Print check-out QR',
-              onPressed: () => unawaited(
-                printVehicleCheckoutQr(vehicle: vehicleAsync.value!),
+            if (canEdit && vehicleAsync.value != null)
+              EdgeAction(
+                icon: Icons.qr_code_2_outlined,
+                label: 'Print check-out QR',
+                onPressed: () => unawaited(
+                  printVehicleCheckoutQr(vehicle: vehicleAsync.value!),
+                ),
               ),
-            ),
-          if (canEdit && vehicleAsync.value != null)
-            EdgeAction(
-              icon: Icons.add_a_photo_outlined,
-              label: 'Photo checklist',
-              onPressed: () =>
-                  context.push('/vehicles/$vehicleId/photo-checklist'),
-            ),
-          if (canEdit && vehicleAsync.value != null)
-            EdgeAction(
-              icon: Icons.edit_outlined,
-              label: 'Edit',
-              onPressed: () => context.push('/vehicles/$vehicleId/edit'),
-            ),
-        ]),
-        const SyncStatusIndicator(),
-      ],
-      body: vehicleAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (_, _) => const ErrorState(title: 'Could not load vehicle'),
-        data: (v) {
-          if (v == null) {
-            return const EmptyState(
-              icon: Icons.directions_car_outlined,
-              title: 'Vehicle not found',
-            );
-          }
-          return _VehicleBody(vehicle: v, canDrive: canDrive);
-        },
+            if (canEdit && vehicleAsync.value != null)
+              EdgeAction(
+                icon: Icons.add_a_photo_outlined,
+                label: 'Photo checklist',
+                onPressed: () =>
+                    context.push('/vehicles/$vehicleId/photo-checklist'),
+              ),
+            if (canEdit && vehicleAsync.value != null)
+              EdgeAction(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onPressed: () => context.push('/vehicles/$vehicleId/edit'),
+              ),
+          ]),
+          const SyncStatusIndicator(),
+        ],
+        body: vehicleAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (_, _) => const ErrorState(title: 'Could not load vehicle'),
+          data: (v) {
+            if (v == null) {
+              return const EmptyState(
+                icon: Icons.directions_car_outlined,
+                title: 'Vehicle not found',
+              );
+            }
+            return _VehicleBody(vehicle: v, canDrive: canDrive);
+          },
+        ),
       ),
-    ),
     );
   }
 }
@@ -399,10 +399,12 @@ class _IssueChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isUnsafe = status == InspectionStatus.unsafe;
-    final color =
-        isUnsafe ? theme.colorScheme.error : theme.colorScheme.tertiary;
-    final onColor =
-        isUnsafe ? theme.colorScheme.onError : theme.colorScheme.onTertiary;
+    final color = isUnsafe
+        ? theme.colorScheme.error
+        : theme.colorScheme.tertiary;
+    final onColor = isUnsafe
+        ? theme.colorScheme.onError
+        : theme.colorScheme.onTertiary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -435,8 +437,11 @@ class _LogRow extends ConsumerWidget {
         : DateFormat.MMMd().add_jm().format(dt.toLocal());
     final isCheckout = log.kind == VehicleLogKind.checkout;
     final worst = InspectionResults.fromJson(log.items).worst;
-    final photos = ref
-            .watch(attachmentsForEntityProvider((kind: 'vehicle_log', id: log.id)))
+    final photos =
+        ref
+            .watch(
+              attachmentsForEntityProvider((kind: 'vehicle_log', id: log.id)),
+            )
             .value ??
         const <Attachment>[];
 
@@ -519,37 +524,42 @@ class _LogRow extends ConsumerWidget {
   }
 
   void _viewPhoto(BuildContext context, Attachment a) {
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if ((a.caption ?? '').isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  a.caption!,
-                  style: Theme.of(context).textTheme.titleMedium,
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if ((a.caption ?? '').isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    a.caption!,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 420),
+                child: PersonPhotoNetwork(
+                  urlOrPath: a.url,
+                  fit: BoxFit.contain,
                 ),
               ),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 420),
-              child: PersonPhotoNetwork(urlOrPath: a.url, fit: BoxFit.contain),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }

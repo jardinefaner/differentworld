@@ -120,10 +120,12 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     // before the microtask runs. (Only writes when the seed is non-empty;
     // an empty seed needs no clear since the provider is already empty.)
     if (seed.isNotEmpty) {
-      unawaited(Future.microtask(() {
-        if (!mounted) return;
-        ref.read(omniboxQueryProvider.notifier).set(seed);
-      }));
+      unawaited(
+        Future.microtask(() {
+          if (!mounted) return;
+          ref.read(omniboxQueryProvider.notifier).set(seed);
+        }),
+      );
     }
   }
 
@@ -256,7 +258,7 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     final draftGroup = draftGroups.isEmpty
         ? null
         : (draftGroups.where((g) => g.id == _draftGroupId).firstOrNull ??
-            draftGroups.first);
+              draftGroups.first);
     // Composing INTO the shared schedule is a write — gate it on the same
     // capability the schedule's "+ Block" uses, so a teacher without schedule
     // rights just sees the note fallback (never a block they can't actually add).
@@ -372,7 +374,8 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
       final start = intent.start;
       final end = start.add(const Duration(minutes: 60));
       final now = DateTime.now();
-      final sameDay = start.year == now.year &&
+      final sameDay =
+          start.year == now.year &&
           start.month == now.month &&
           start.day == now.day;
       final whenLabel = sameDay
@@ -406,7 +409,9 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
         } on Object catch (e) {
           if (kDebugMode) debugPrint('[compose-add] $e');
           messenger?.showSnackBar(
-            const SnackBar(content: Text('Could not add the block. Try again.')),
+            const SnackBar(
+              content: Text('Could not add the block. Try again.'),
+            ),
           );
         }
       }());
@@ -1030,7 +1035,9 @@ class _CaptureHeroCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      muted ? Icons.sticky_note_2_outlined : Icons.bolt_outlined,
+                      muted
+                          ? Icons.sticky_note_2_outlined
+                          : Icons.bolt_outlined,
                       size: muted ? 16 : 18,
                       color: fgSoft,
                     ),
@@ -1053,10 +1060,11 @@ class _CaptureHeroCard extends StatelessWidget {
                         trimmed.isEmpty ? 'Start typing a thought…' : trimmed,
                         maxLines: muted ? 2 : 5,
                         overflow: TextOverflow.ellipsis,
-                        style: (muted
-                                ? theme.textTheme.bodyMedium
-                                : theme.textTheme.bodyLarge)
-                            ?.copyWith(color: fg, height: 1.3),
+                        style:
+                            (muted
+                                    ? theme.textTheme.bodyMedium
+                                    : theme.textTheme.bodyLarge)
+                                ?.copyWith(color: fg, height: 1.3),
                       ),
                     ),
                     if (muted) ...[

@@ -30,9 +30,7 @@ class Viewer {
   });
 
   /// Empty viewer — signed out, or member not yet synced.
-  const Viewer.empty()
-      : member = null,
-        space = null;
+  const Viewer.empty() : member = null, space = null;
 
   final Member? member;
   final Space? space;
@@ -62,11 +60,9 @@ class Viewer {
   // Capability accessors
   // ---------------------------------------------------------------------
 
-  Capabilities get memberCaps =>
-      member?.caps ?? const Capabilities.empty();
+  Capabilities get memberCaps => member?.caps ?? const Capabilities.empty();
 
-  Capabilities get spaceCaps =>
-      space?.caps ?? const Capabilities.empty();
+  Capabilities get spaceCaps => space?.caps ?? const Capabilities.empty();
 
   /// Generic accessor. Prefer the named helpers below for readability.
   bool can(String cap) => memberCaps.getBool(cap);
@@ -172,8 +168,7 @@ class Viewer {
   /// Can edit a specific member (themselves OR a director can edit
   /// anyone). Used to gate the photo-change tap + role editor in
   /// MemberDetailScreen.
-  bool canEditMember(Member other) =>
-      isDirector || other.id == member?.id;
+  bool canEditMember(Member other) => isDirector || other.id == member?.id;
 
   /// Can edit the authorized-pickup list for a specific subject.
   /// Default: any staff with [canAuthorizePickup]; guardians of the
@@ -193,12 +188,10 @@ class Viewer {
       feature(SpaceCaps.featureMealLogging, fallback: true);
   bool get featureNapLogging =>
       feature(SpaceCaps.featureNapLogging, fallback: true);
-  bool get featureDiaperLogging =>
-      feature(SpaceCaps.featureDiaperLogging);
+  bool get featureDiaperLogging => feature(SpaceCaps.featureDiaperLogging);
   bool get featureIncidentReports =>
       feature(SpaceCaps.featureIncidentReports, fallback: true);
-  bool get featureMedicationLog =>
-      feature(SpaceCaps.featureMedicationLog);
+  bool get featureMedicationLog => feature(SpaceCaps.featureMedicationLog);
   bool get featureFieldTrips => feature(SpaceCaps.featureFieldTrips);
   bool get featureFamilyLogin => feature(SpaceCaps.featureFamilyLogin);
   bool get featureBilling => feature(SpaceCaps.featureBilling);
@@ -241,8 +234,7 @@ final viewerProvider = Provider<Viewer>((ref) {
     // — the `by_guardian` PowerSync stream keeps it warm. Full
     // `Subject` rows for these IDs are fetched per-screen via
     // `familyChildrenProvider` (PostgREST) in family_providers.dart.
-    final ids =
-        ref.watch(myChildSubjectIdsProvider).value ?? const <String>[];
+    final ids = ref.watch(myChildSubjectIdsProvider).value ?? const <String>[];
     return GuardianViewer(
       guardian: guardian,
       childSubjectIds: ids,
@@ -317,8 +309,7 @@ class GuardianViewer extends Viewer {
 
   /// Per-subject visibility check. Family widgets call this to ensure
   /// they're not rendering data about another family's child.
-  bool canSeeSubject(String subjectId) =>
-      childSubjectIds.contains(subjectId);
+  bool canSeeSubject(String subjectId) => childSubjectIds.contains(subjectId);
 
   /// Guardian can edit pickup for their own children.
   @override
