@@ -1281,7 +1281,7 @@ class _TypeChips extends StatelessWidget {
         for (var i = 0; i < kinds.length; i++) ...[
           if (i > 0) const SizedBox(width: 7),
           Expanded(
-            child: _TypeChip(
+            child: _PillChip(
               label: switch (kinds[i]) {
                 BlockKind.fieldTrip => 'Trip',
                 BlockKind.breakBlock => 'Break',
@@ -1290,6 +1290,9 @@ class _TypeChips extends StatelessWidget {
               },
               selected: kinds[i] == selected,
               onTap: () => onChanged(kinds[i]),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+              unselectedWeight: FontWeight.w500,
+              ellipsize: true,
             ),
           ),
         ],
@@ -1298,16 +1301,26 @@ class _TypeChips extends StatelessWidget {
   }
 }
 
-class _TypeChip extends StatelessWidget {
-  const _TypeChip({
+/// The shared selectable pill chip behind the type + duration pickers — a
+/// primary-filled pill when selected, a quiet container otherwise. [ellipsize]
+/// keeps a width-constrained label (the type row's Expanded cells) to one
+/// centered line; the duration chips size to their label instead.
+class _PillChip extends StatelessWidget {
+  const _PillChip({
     required this.label,
     required this.selected,
     required this.onTap,
+    required this.padding,
+    this.unselectedWeight = FontWeight.w600,
+    this.ellipsize = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final EdgeInsetsGeometry padding;
+  final FontWeight unselectedWeight;
+  final bool ellipsize;
 
   @override
   Widget build(BuildContext context) {
@@ -1324,15 +1337,15 @@ class _TypeChip extends StatelessWidget {
           child: Center(
             widthFactor: 1,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+              padding: padding,
               child: Text(
                 label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                textAlign: ellipsize ? TextAlign.center : null,
+                maxLines: ellipsize ? 1 : null,
+                overflow: ellipsize ? TextOverflow.ellipsis : null,
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight: selected ? FontWeight.w600 : unselectedWeight,
                 ),
               ),
             ),
@@ -1380,54 +1393,13 @@ class _DurationChips extends StatelessWidget {
           ),
         ),
         for (final p in presets)
-          _DurChip(
+          _PillChip(
             label: _fmt(p),
             selected: p == durationMin,
             onTap: () => onPick(p),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           ),
       ],
-    );
-  }
-}
-
-class _DurChip extends StatelessWidget {
-  const _DurChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Material(
-      color: selected ? scheme.primary : scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Center(
-            widthFactor: 1,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

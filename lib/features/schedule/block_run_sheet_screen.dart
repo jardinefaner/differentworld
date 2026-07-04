@@ -388,11 +388,20 @@ class BlockRunSheetScreen extends ConsumerWidget {
           ),
         ),
         // Notify families — open the daily recap composer for this cohort
-        // (the existing send-the-family-their-child's-day surface).
+        // (the existing send-the-family-their-child's-day surface). The
+        // trip's "Arrived safe" / "Heading back" note rides that flow.
         BentoTile(
           id: 'trip-notify',
           span: const BentoSpan(phone: 1),
-          child: _TripNotifyTile(onTap: () => _openRecap(context)),
+          child: _SimpleToolTile(
+            icon: Icons.outgoing_mail,
+            title: 'Notify families',
+            subtitle: '“Arrived safe” · “Heading back”',
+            semanticLabel:
+                'Notify families — send the cohort a quick update like '
+                'arrived safe or heading back',
+            onTap: () => _openRecap(context),
+          ),
         ),
         BentoTile(
           id: 'trip-prep',
@@ -1023,9 +1032,7 @@ class _WhoseTurnTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final roster =
-        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
-        const <Subject>[];
+    final roster = _rosterOf(ref, block.groupId);
     final shots =
         ref.watch(attachmentsForBlockProvider(block.id)).value ??
         const <Attachment>[];
@@ -1049,22 +1056,10 @@ class _WhoseTurnTile extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              BentoModuleIcon(
-                icon: Icons.groups_outlined,
-                tint: scheme.secondary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Whose turn',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          _TileHeader(
+            icon: Icons.groups_outlined,
+            tint: scheme.secondary,
+            title: 'Whose turn',
           ),
           const SizedBox(height: 12),
           Text.rich(
@@ -1262,20 +1257,64 @@ class _ReviewTile extends ConsumerWidget {
   }
 }
 
+/// The shared tile header — a [BentoModuleIcon] + a bold one-line title. Every
+/// run-sheet tile opens with this row; the icon tint (and optionally the title
+/// color) is the only thing that varies per tile.
+class _TileHeader extends StatelessWidget {
+  const _TileHeader({
+    required this.icon,
+    required this.tint,
+    required this.title,
+    this.titleColor,
+  });
+
+  final IconData icon;
+  final Color tint;
+  final String title;
+  final Color? titleColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        BentoModuleIcon(icon: icon, tint: tint),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: titleColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// A plain neutral tool tile — an icon, a title, and a one-line subtitle, the
-/// whole card tapping its action. Used for Cast + Capture.
+/// whole card tapping its action. Used for Cast + Capture + the trip tools.
+/// [semanticLabel] overrides the default "$title — $subtitle" announcement;
+/// [footer] appends extra lines under the subtitle (e.g. the trip-prep roster
+/// count).
 class _SimpleToolTile extends StatelessWidget {
   const _SimpleToolTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.semanticLabel,
+    this.footer = const <Widget>[],
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final String? semanticLabel;
+  final List<Widget> footer;
 
   @override
   Widget build(BuildContext context) {
@@ -1285,23 +1324,14 @@ class _SimpleToolTile extends StatelessWidget {
       background: scheme.surfaceContainerHighest,
       foreground: scheme.onSurface,
       onTap: onTap,
-      semanticLabel: '$title — $subtitle',
+      semanticLabel: semanticLabel ?? '$title — $subtitle',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              BentoModuleIcon(icon: icon, tint: scheme.surfaceContainerLow),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          _TileHeader(
+            icon: icon,
+            tint: scheme.surfaceContainerLow,
+            title: title,
           ),
           const SizedBox(height: 12),
           Text(
@@ -1310,26 +1340,28 @@ class _SimpleToolTile extends StatelessWidget {
               color: scheme.onSurfaceVariant,
             ),
           ),
+          ...footer,
         ],
       ),
     );
   }
 }
 
-/// "You'll need" — an INFO tile, NOT tappable: a dashed-outline quiet card
-/// carrying the session's materials line. Reads as reference, not an action, so
-/// it never looks like a dead-tap button.
-class _NeedsTile extends StatelessWidget {
-  const _NeedsTile({required this.text});
+/// The shared "You'll need" INFO shell — a quiet outlined card (NOT tappable)
+/// with the checklist header, wrapping whatever content the caller supplies.
+/// Reads as reference, not an action, so it never looks like a dead-tap button.
+class _YoullNeedShell extends StatelessWidget {
+  const _YoullNeedShell({required this.semanticLabel, required this.child});
 
-  final String text;
+  final String semanticLabel;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Semantics(
-      label: "You'll need: $text",
+      label: semanticLabel,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -1340,33 +1372,38 @@ class _NeedsTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  BentoModuleIcon(
-                    icon: Icons.checklist_outlined,
-                    tint: scheme.surfaceContainerHighest,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      "You'll need",
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              _TileHeader(
+                icon: Icons.checklist_outlined,
+                tint: scheme.surfaceContainerHighest,
+                title: "You'll need",
+                titleColor: scheme.onSurfaceVariant,
               ),
               const SizedBox(height: 12),
-              Text(
-                text,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
+              child,
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "You'll need" — an INFO tile carrying the session's materials line.
+class _NeedsTile extends StatelessWidget {
+  const _NeedsTile({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return _YoullNeedShell(
+      semanticLabel: "You'll need: $text",
+      child: Text(
+        text,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
         ),
       ),
     );
@@ -1419,73 +1456,39 @@ class _SuppliesTile extends ConsumerWidget {
         ? "You'll need: $fallback"
         : "You'll need: ${names.join(', ')}";
 
-    return Semantics(
-      label: semantic,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  BentoModuleIcon(
-                    icon: Icons.checklist_outlined,
-                    tint: scheme.surfaceContainerHighest,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
+    return _YoullNeedShell(
+      semanticLabel: semantic,
+      child: names.isEmpty
+          ? Text(
+              fallback,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            )
+          : Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final n in names)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: scheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     child: Text(
-                      "You'll need",
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                      n,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.onSecondaryContainer,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (names.isEmpty)
-                Text(
-                  fallback,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                )
-              else
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final n in names)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: scheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          n,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: scheme.onSecondaryContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
+              ],
+            ),
     );
   }
 }
@@ -1504,54 +1507,25 @@ class _TripPrepTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final roster =
-        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
-        const <Subject>[];
-    final n = roster.length;
+    final n = _rosterOf(ref, block.groupId).length;
 
-    return BentoModule(
-      background: scheme.surfaceContainerHighest,
-      foreground: scheme.onSurface,
+    return _SimpleToolTile(
+      icon: Icons.fact_check_outlined,
+      title: 'Trip prep',
+      subtitle: 'Headcount · slips · vehicles',
       onTap: onTap,
       semanticLabel: 'Trip prep — headcount, permission slips, and vehicles',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              BentoModuleIcon(
-                icon: Icons.fact_check_outlined,
-                tint: scheme.surfaceContainerLow,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Trip prep',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+      footer: [
+        if (n > 0) ...[
+          const SizedBox(height: 3),
           Text(
-            'Headcount · slips · vehicles',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            n == 1 ? '1 child on the roster' : '$n children on the roster',
+            style: theme.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
           ),
-          if (n > 0) ...[
-            const SizedBox(height: 3),
-            Text(
-              n == 1 ? '1 child on the roster' : '$n children on the roster',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -1569,49 +1543,16 @@ class _TripHeadcountTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final roster =
-        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
-        const <Subject>[];
-    final n = roster.length;
+    final n = _rosterOf(ref, block.groupId).length;
     final kidsLabel = n == 1 ? '1 kid' : '$n kids';
 
-    return BentoModule(
-      background: scheme.surfaceContainerHighest,
-      foreground: scheme.onSurface,
+    return _SimpleToolTile(
+      icon: Icons.groups_2_outlined,
+      title: 'Count heads',
+      subtitle: '$kidsLabel · at leaving · arrived · before back',
       onTap: onTap,
       semanticLabel:
           'Count heads — $kidsLabel, at leaving, arrived, and before back',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              BentoModuleIcon(
-                icon: Icons.groups_2_outlined,
-                tint: scheme.surfaceContainerLow,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Count heads',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '$kidsLabel · at leaving · arrived · before back',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -1631,9 +1572,7 @@ class _TripEmergencyTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final roster =
-        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
-        const <Subject>[];
+    final roster = _rosterOf(ref, block.groupId);
     // {k} = roster kids with a non-empty allergy OR medical-conditions note.
     // Allergies ride their own `subjects.allergies` column; medical conditions
     // live in the caps bag (SubjectCaps.medicalConditions).
@@ -1654,22 +1593,10 @@ class _TripEmergencyTile extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              BentoModuleIcon(
-                icon: Icons.emergency_outlined,
-                tint: scheme.error,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Emergency',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          _TileHeader(
+            icon: Icons.emergency_outlined,
+            tint: scheme.error,
+            title: 'Emergency',
           ),
           const SizedBox(height: 12),
           Text(
@@ -1684,56 +1611,10 @@ class _TripEmergencyTile extends ConsumerWidget {
   }
 }
 
-/// "Notify families" — opens the daily RECAP composer for the cohort, the
-/// existing "send each family their child's day" surface. The trip's
-/// "Arrived safe" / "Heading back" note rides that flow.
-class _TripNotifyTile extends StatelessWidget {
-  const _TripNotifyTile({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return BentoModule(
-      background: scheme.surfaceContainerHighest,
-      foreground: scheme.onSurface,
-      onTap: onTap,
-      semanticLabel:
-          'Notify families — send the cohort a quick update like '
-          'arrived safe or heading back',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              BentoModuleIcon(
-                icon: Icons.outgoing_mail,
-                tint: scheme.surfaceContainerLow,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Notify families',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '“Arrived safe” · “Heading back”',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+/// The live roster for a cohort — the shared `subjectsInGroupProvider` watch
+/// every trip tile leans on, empty until the stream delivers.
+List<Subject> _rosterOf(WidgetRef ref, String groupId) {
+  return ref.watch(subjectsInGroupProvider(groupId)).value ?? const <Subject>[];
 }
 
 /// True when a subject carries any allergy or medical-conditions note. Drives
