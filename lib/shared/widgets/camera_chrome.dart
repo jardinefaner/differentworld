@@ -99,6 +99,15 @@ mixin CameraSessionMixin<T extends StatefulWidget> on State<T> {
     unawaited(c?.dispose());
   }
 
+  /// Safety net: releases the controller even if a host forgets to call
+  /// [disposeCamera] in its own dispose (a leaked controller keeps the OS
+  /// camera open). Idempotent — hosts that already call it are unaffected.
+  @override
+  void dispose() {
+    disposeCamera();
+    super.dispose();
+  }
+
   Future<void> switchCamera() async {
     camLens = camLens == CameraLensDirection.back
         ? CameraLensDirection.front
@@ -119,6 +128,153 @@ mixin CameraSessionMixin<T extends StatefulWidget> on State<T> {
     } on Object catch (_) {
       // Lens doesn't support it — the icon still reflects intent.
     }
+  }
+
+  /// The flash-cycle + lens-flip button pair every camera top bar carries.
+  /// A min-size inner Row, so it inlines into the host bar's Row unchanged.
+  Widget camFlashFlipButtons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CamCapButton(
+          icon: camFlash == FlashMode.off
+              ? Icons.flash_off
+              : camFlash == FlashMode.auto
+              ? Icons.flash_auto
+              : Icons.flash_on,
+          active: camFlash != FlashMode.off,
+          tooltip: 'Flash',
+          onTap: () => unawaited(cycleFlash()),
+        ),
+        const SizedBox(width: 8),
+        CamCapButton(
+          icon: Icons.cameraswitch_outlined,
+          tooltip: 'Flip camera',
+          onTap: () => unawaited(switchCamera()),
+        ),
+      ],
+    );
+  }
+
+  /// The not-ready body for a camera surface: denied (with a retry that
+  /// re-runs [initCamera]), unavailable, or the initializing spinner.
+  /// [deniedMessage] names what the camera is FOR on this screen.
+  Widget camStatusFallback({required String deniedMessage}) {
+    switch (camStatus) {
+      case CamStatus.denied:
+        return CamMessage(
+          icon: Icons.no_photography_outlined,
+          title: 'Camera access needed',
+          message: deniedMessage,
+          actionLabel: 'Try again',
+          onAction: () {
+            setState(() => camStatus = CamStatus.initializing);
+            unawaited(initCamera());
+          },
+        );
+      case CamStatus.unavailable:
+        return const CamMessage(
+          icon: Icons.videocam_off_outlined,
+          title: 'No camera here',
+          message: 'This device has no camera available.',
+        );
+      case CamStatus.initializing:
+      case CamStatus.ready:
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        );
+    }
+  }
+}
+
+/// Cover-fit camera preview: fills the surface, cropping overflow. The
+/// inner SizedBox swaps the (landscape) sensor preview dimensions so the
+/// portrait feed scales correctly inside the FittedBox.
+class CamCoverPreview extends StatelessWidget {
+  const CamCoverPreview(this.controller, {super.key});
+
+  final CameraController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = controller.value.previewSize;
+    if (size == null) return const ColoredBox(color: Colors.black);
+    return ClipRect(
+      child: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: size.height,
+            height: size.width,
+            child: CameraPreview(controller),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The black-to-transparent gradient scrim behind a camera control bar,
+/// including the SafeArea for the matching screen edge. The host supplies
+/// its own inner padding (bar layouts differ per screen).
+class CamScrim extends StatelessWidget {
+  const CamScrim.top({required this.child, super.key}) : _top = true;
+  const CamScrim.bottom({required this.child, super.key}) : _top = false;
+
+  final Widget child;
+  final bool _top;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: _top ? Alignment.topCenter : Alignment.bottomCenter,
+          end: _top ? Alignment.bottomCenter : Alignment.topCenter,
+          colors: const [Colors.black87, Colors.transparent],
+        ),
+      ),
+      child: SafeArea(top: _top, bottom: !_top, child: child),
+    );
+  }
+}
+
+/// The bottom control row of a camera surface: two fixed-width side slots
+/// flanking the centered shutter, with the standard 24/10/24/20 padding.
+/// Fixed-width slots (not Expanded) keep the shutter optically centered
+/// whatever the side content is.
+class CamShutterRow extends StatelessWidget {
+  const CamShutterRow({
+    required this.busy,
+    required this.onShoot,
+    this.left,
+    this.right,
+    this.slotWidth = 64,
+    super.key,
+  });
+
+  final bool busy;
+  final VoidCallback onShoot;
+  final Widget? left;
+  final Widget? right;
+  final double slotWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
+      child: Row(
+        children: [
+          SizedBox(width: slotWidth, child: left),
+          Expanded(
+            child: Center(
+              child: CamShutterButton(busy: busy, onTap: onShoot),
+            ),
+          ),
+          SizedBox(width: slotWidth, child: right),
+        ],
+      ),
+    );
   }
 }
 

@@ -908,7 +908,7 @@ class _PhotographyRunnerScreenState
                     }
                   },
                   onTapUp: (d) => unawaited(_focusAt(d.localPosition, size)),
-                  child: _preview(c),
+                  child: CamCoverPreview(c),
                 ),
                 if (_focusPoint != null) _FocusRing(point: _focusPoint!),
                 Positioned(top: 0, left: 0, right: 0, child: _topBar()),
@@ -918,184 +918,103 @@ class _PhotographyRunnerScreenState
           },
         );
       case CamStatus.denied:
-        return CamMessage(
-          icon: Icons.no_photography_outlined,
-          title: 'Camera access needed',
-          message: 'Allow the camera so you can take photos.',
-          actionLabel: 'Try again',
-          onAction: () {
-            setState(() => camStatus = CamStatus.initializing);
-            unawaited(initCamera());
-          },
-        );
       case CamStatus.unavailable:
-        return const CamMessage(
-          icon: Icons.videocam_off_outlined,
-          title: 'No camera here',
-          message: 'This device has no camera available.',
-        );
       case CamStatus.initializing:
       case CamStatus.ready:
-        return const Center(
-          child: CircularProgressIndicator(color: Colors.white),
+        return camStatusFallback(
+          deniedMessage: 'Allow the camera so you can take photos.',
         );
     }
   }
 
-  Widget _preview(CameraController c) {
-    final size = c.value.previewSize;
-    if (size == null) return const ColoredBox(color: Colors.black);
-    return ClipRect(
-      child: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: size.height,
-            height: size.width,
-            child: CameraPreview(c),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _topBar() {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.black87, Colors.transparent],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 12, 24),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: widget.isTurn
-                    ? _TurnBanner(
-                        name: widget.turnSubjectName ?? 'Their',
-                        prompt: widget.prompt,
-                        countdown: _formatCountdown(_secondsLeft),
-                        urgent: _secondsLeft <= 30,
-                      )
-                    : _MissionBanner(prompt: widget.prompt),
-              ),
+    return CamScrim.top(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 12, 24),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: widget.isTurn
+                  ? _TurnBanner(
+                      name: widget.turnSubjectName ?? 'Their',
+                      prompt: widget.prompt,
+                      countdown: _formatCountdown(_secondsLeft),
+                      urgent: _secondsLeft <= 30,
+                    )
+                  : _MissionBanner(prompt: widget.prompt),
+            ),
+            const SizedBox(width: 8),
+            camFlashFlipButtons(),
+            // Opt-in kid lock. Once locked, the button stays in the bar as
+            // the visible "locked" cue (filled amber lock). A kid CAN tap it,
+            // but it CANNOT unlock — instead it surfaces the staff-exit
+            // guidance (no silent no-op, per the interaction rules). The
+            // only real way out is the hidden staff 5-tap corner. The camera
+            // keeps running regardless.
+            //
+            // Hidden in a timed turn: the lock auto-engages and the
+            // `_LockedChip` already shows the state, so a manual toggle is
+            // redundant noise on a child's locked turn.
+            if (!widget.isTurn) ...[
               const SizedBox(width: 8),
               CamCapButton(
-                icon: camFlash == FlashMode.off
-                    ? Icons.flash_off
-                    : camFlash == FlashMode.auto
-                    ? Icons.flash_auto
-                    : Icons.flash_on,
-                active: camFlash != FlashMode.off,
-                tooltip: 'Flash',
-                onTap: () => unawaited(cycleFlash()),
+                icon: _locked ? Icons.lock : Icons.lock_open_outlined,
+                active: _locked,
+                tooltip: _locked
+                    ? 'Locked — staff exit only'
+                    : 'Hand to the kids',
+                onTap: _locked ? _hintStaffExit : _engageKidLock,
               ),
-              const SizedBox(width: 8),
-              CamCapButton(
-                icon: Icons.cameraswitch_outlined,
-                tooltip: 'Flip camera',
-                onTap: () => unawaited(switchCamera()),
-              ),
-              // Opt-in kid lock. Once locked, the button stays in the bar as
-              // the visible "locked" cue (filled amber lock). A kid CAN tap it,
-              // but it CANNOT unlock — instead it surfaces the staff-exit
-              // guidance (no silent no-op, per the interaction rules). The
-              // only real way out is the hidden staff 5-tap corner. The camera
-              // keeps running regardless.
-              //
-              // Hidden in a timed turn: the lock auto-engages and the
-              // `_LockedChip` already shows the state, so a manual toggle is
-              // redundant noise on a child's locked turn.
-              if (!widget.isTurn) ...[
-                const SizedBox(width: 8),
-                CamCapButton(
-                  icon: _locked ? Icons.lock : Icons.lock_open_outlined,
-                  active: _locked,
-                  tooltip: _locked
-                      ? 'Locked — staff exit only'
-                      : 'Hand to the kids',
-                  onTap: _locked ? _hintStaffExit : _engageKidLock,
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 
   Widget _bottomBar() {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Colors.black87, Colors.transparent],
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_shots.isNotEmpty) _filmstripRow(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
-              child: Row(
-                children: [
-                  // Left slot: a non-interactive shot count in a turn (balances
-                  // the row); empty in the plain studio.
-                  SizedBox(
-                    width: 64,
-                    child: widget.isTurn
-                        ? Center(
-                            child: Text(
-                              '${_shots.length}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: CamShutterButton(busy: _shooting, onTap: _shoot),
+    return CamScrim.bottom(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_shots.isNotEmpty) _filmstripRow(),
+          CamShutterRow(
+            busy: _shooting,
+            onShoot: _shoot,
+            // Left slot: a non-interactive shot count in a turn (balances
+            // the row); empty in the plain studio.
+            left: widget.isTurn
+                ? Center(
+                    child: Text(
+                      '${_shots.length}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  )
+                : null,
+            // Right slot: the kid-tappable "Done" ends the plain studio
+            // session. HIDDEN in a turn — a turn ends on the buzzer or a
+            // staff corner-unlock, never a kid tap, so a child can't cut
+            // their own time short or escape into the curate flow.
+            right: widget.isTurn
+                ? null
+                : TextButton(
+                    onPressed: _finishShooting,
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  // Right slot: the kid-tappable "Done" ends the plain studio
-                  // session. HIDDEN in a turn — a turn ends on the buzzer or a
-                  // staff corner-unlock, never a kid tap, so a child can't cut
-                  // their own time short or escape into the curate flow.
-                  SizedBox(
-                    width: 64,
-                    child: widget.isTurn
-                        ? null
-                        : TextButton(
-                            onPressed: _finishShooting,
-                            child: const Text(
-                              'Done',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

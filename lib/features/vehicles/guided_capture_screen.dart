@@ -140,23 +140,9 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
       body: switch (camStatus) {
         CamStatus.ready when cameraController?.value.isInitialized ?? false =>
           _cameraView(context),
-        CamStatus.denied => CamMessage(
-          icon: Icons.no_photography_outlined,
-          title: 'Camera access needed',
-          message: 'Allow the camera to take the required vehicle photos.',
-          actionLabel: 'Try again',
-          onAction: () {
-            setState(() => camStatus = CamStatus.initializing);
-            unawaited(initCamera());
-          },
-        ),
-        CamStatus.unavailable => const CamMessage(
-          icon: Icons.videocam_off_outlined,
-          title: 'No camera here',
-          message: 'This device has no camera available.',
-        ),
-        _ => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
+        _ => camStatusFallback(
+          deniedMessage:
+              'Allow the camera to take the required vehicle photos.',
         ),
       },
     );
@@ -167,188 +153,123 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
     return Stack(
       fit: StackFit.expand,
       children: [
-        _preview(c),
+        CamCoverPreview(c),
         Positioned(top: 0, left: 0, right: 0, child: _topBar()),
         Positioned(bottom: 0, left: 0, right: 0, child: _bottomBar()),
       ],
     );
   }
 
-  Widget _preview(CameraController c) {
-    final size = c.value.previewSize;
-    if (size == null) return const ColoredBox(color: Colors.black);
-    return ClipRect(
-      child: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: size.height,
-            height: size.width,
-            child: CameraPreview(c),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _topBar() {
     final total = _shots.length;
     final captured = _captured.containsKey(_shot.key);
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.black87, Colors.transparent],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 6, 8, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return CamScrim.top(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Expanded(
+                  child: Text(
+                    '$_capturedCount of $total captured',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                camFlashFlipButtons(),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+              child: Row(
                 children: [
-                  IconButton(
-                    tooltip: 'Close',
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                  if (captured)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 8, top: 2),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.greenAccent,
+                      ),
+                    ),
                   Expanded(
-                    child: Text(
-                      '$_capturedCount of $total captured',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  CamCapButton(
-                    icon: camFlash == FlashMode.off
-                        ? Icons.flash_off
-                        : camFlash == FlashMode.auto
-                        ? Icons.flash_auto
-                        : Icons.flash_on,
-                    active: camFlash != FlashMode.off,
-                    tooltip: 'Flash',
-                    onTap: () => unawaited(cycleFlash()),
-                  ),
-                  const SizedBox(width: 8),
-                  CamCapButton(
-                    icon: Icons.cameraswitch_outlined,
-                    tooltip: 'Flip camera',
-                    onTap: () => unawaited(switchCamera()),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
-                child: Row(
-                  children: [
-                    if (captured)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 8, top: 2),
-                        child: Icon(
-                          Icons.check_circle,
-                          color: Colors.greenAccent,
-                        ),
-                      ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _shot.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          if (_shot.hint.isNotEmpty)
-                            Text(
-                              _shot.hint,
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (_shot.required)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Required',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 11,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _shot.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
+                        if (_shot.hint.isNotEmpty)
+                          Text(
+                            _shot.hint,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (_shot.required)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
                       ),
-                  ],
-                ),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Required',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _bottomBar() {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Colors.black87, Colors.transparent],
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _slotStrip(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
-              child: Row(
-                children: [
-                  const SizedBox(width: 72),
-                  Expanded(
-                    child: Center(
-                      child: CamShutterButton(busy: _shooting, onTap: _shoot),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 72,
-                    child: TextButton(
-                      onPressed: _allRequiredDone ? _done : null,
-                      child: Text(
-                        'Done',
-                        style: TextStyle(
-                          color: _allRequiredDone
-                              ? Colors.white
-                              : Colors.white38,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+    return CamScrim.bottom(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _slotStrip(),
+          CamShutterRow(
+            busy: _shooting,
+            onShoot: _shoot,
+            slotWidth: 72,
+            right: TextButton(
+              onPressed: _allRequiredDone ? _done : null,
+              child: Text(
+                'Done',
+                style: TextStyle(
+                  color: _allRequiredDone ? Colors.white : Colors.white38,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
