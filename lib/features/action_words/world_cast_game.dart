@@ -1,5 +1,6 @@
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/widgets/present_stage.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:flutter/material.dart';
@@ -180,12 +181,19 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
       case 'title':
         return _Title(m: m);
       case 'q':
-        return _Big(label: 'The question', big: '“${m['text']}”');
+        return PresentBigText(
+          label: 'The question',
+          big: '“${m['text']}”',
+          displayFont: false,
+          shrinkWrap: true,
+        );
       case 'watch':
-        return _Big(
+        return PresentBigText(
           label: 'Watch · ${m['min']} min',
           big: '${m['title']}',
           sub: '→ ${m['after']}',
+          displayFont: false,
+          shrinkWrap: true,
         );
       case 'verbs':
         return _Lines(
@@ -243,49 +251,6 @@ class _Title extends StatelessWidget {
             fontStyle: FontStyle.italic,
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _Big extends StatelessWidget {
-  const _Big({required this.label, required this.big, this.sub});
-  final String label;
-  final String big;
-  final String? sub;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 20,
-            letterSpacing: 4,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          big,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 44,
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-          ),
-        ),
-        if (sub != null) ...[
-          const SizedBox(height: 20),
-          Text(
-            sub!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 26),
-          ),
-        ],
       ],
     );
   }

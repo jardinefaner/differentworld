@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -94,8 +93,10 @@ class SlidePresentScreen extends ConsumerStatefulWidget {
   ConsumerState<SlidePresentScreen> createState() => _SlidePresentScreenState();
 }
 
-class _SlidePresentScreenState extends ConsumerState<SlidePresentScreen> {
-  late final CastImmersive _immersive;
+class _SlidePresentScreenState extends ConsumerState<SlidePresentScreen>
+    with CastImmersiveScreenState<SlidePresentScreen> {
+  // Immersive enter/exit (the chrome trap + lockstep OS call) comes from
+  // [CastImmersiveScreenState].
   late final PageController _page;
   late int _index;
 
@@ -107,22 +108,10 @@ class _SlidePresentScreenState extends ConsumerState<SlidePresentScreen> {
     final lastIndex = widget.slides.isEmpty ? 0 : widget.slides.length - 1;
     _index = widget.initialIndex.clamp(0, lastIndex);
     _page = PageController(initialPage: _index);
-    _immersive = ref.read(castImmersiveProvider.notifier);
-    unawaited(
-      Future.microtask(() {
-        if (!mounted) return;
-        _immersive.enter();
-        unawaited(
-          SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-        );
-      }),
-    );
   }
 
   @override
   void dispose() {
-    _immersive.exit();
-    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     _page.dispose();
     super.dispose();
   }

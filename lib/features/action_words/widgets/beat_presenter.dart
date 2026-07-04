@@ -5,6 +5,7 @@ import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/present_timer.dart';
+import 'package:differentworld/features/action_words/widgets/present_stage.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
@@ -218,184 +219,170 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
       return const Scaffold(backgroundColor: Colors.black);
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.alphaBlend(accent.withValues(alpha: 0.45), Colors.black),
-              Colors.black,
-            ],
+    return PresentStageScaffold(
+      accent: accent,
+      child: Stack(
+        children: [
+          PageView.builder(
+            // Stable keys: the timer pill is a conditional Stack child,
+            // so every sibling needs a key or Flutter matches by position
+            // and poisons Element identity when the pill appears (the
+            // house rule — see CLAUDE.md "Stack children without keys").
+            key: const ValueKey('bp-pageview'),
+            controller: _page,
+            itemCount: beats.length,
+            onPageChanged: (i) {
+              if (!mounted) return;
+              unawaited(HapticFeedback.selectionClick());
+              setState(() => _index = i);
+              widget.onBeatChanged?.call(i);
+            },
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 40,
+                vertical: 56,
+              ),
+              child: _BeatSlide(
+                beat: beats[i],
+                accent: accent,
+                emoji: widget.emoji,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              PageView.builder(
-                // Stable keys: the timer pill is a conditional Stack child,
-                // so every sibling needs a key or Flutter matches by position
-                // and poisons Element identity when the pill appears (the
-                // house rule — see CLAUDE.md "Stack children without keys").
-                key: const ValueKey('bp-pageview'),
-                controller: _page,
-                itemCount: beats.length,
-                onPageChanged: (i) {
-                  if (!mounted) return;
-                  unawaited(HapticFeedback.selectionClick());
-                  setState(() => _index = i);
-                  widget.onBeatChanged?.call(i);
-                },
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 56,
-                  ),
-                  child: _BeatSlide(
-                    beat: beats[i],
-                    accent: accent,
-                    emoji: widget.emoji,
+          // Tap zones: left third = back, right third = forward. Redundant
+          // with the visible controls below, for quick advance anywhere.
+          Positioned.fill(
+            key: const ValueKey('bp-tapzones'),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    // Opaque, or a childless GestureDetector hit-tests
+                    // nothing and the tap falls through to the PageView.
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _go(-1),
                   ),
                 ),
+                const Spacer(),
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _go(1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Close — top-right. On the LAST beat this IS finishing, so it
+          // routes through the handoff (a teacher who reaches the close
+          // beat and taps X gets "what's next", not a dead exit). On any
+          // earlier beat it's a plain bail-out — they're not done.
+          Positioned(
+            key: const ValueKey('bp-close'),
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white70),
+              onPressed: () {
+                if (_index >= _count - 1) {
+                  _finish();
+                } else {
+                  unawaited(Navigator.of(context).maybePop());
+                }
+              },
+            ),
+          ),
+          // Fullscreen — top-left, WEB ONLY. Native already hides the
+          // system bars via immersiveSticky; on web the browser chrome
+          // stays unless the Fullscreen API is invoked from a tap. This is
+          // the "view it fullscreen on the TV" control when casting from a
+          // laptop tab.
+          if (webFullscreenSupported)
+            Positioned(
+              key: const ValueKey('bp-fullscreen'),
+              top: 8,
+              left: 8,
+              child: IconButton(
+                tooltip: 'Fullscreen',
+                icon: const Icon(Icons.fullscreen, color: Colors.white70),
+                onPressed: () => unawaited(toggleWebFullscreen()),
               ),
-              // Tap zones: left third = back, right third = forward. Redundant
-              // with the visible controls below, for quick advance anywhere.
-              Positioned.fill(
-                key: const ValueKey('bp-tapzones'),
-                child: Row(
+            ),
+          // The cast timer — top-centre, room-readable, tap to clear.
+          if (_remaining != null)
+            Positioned(
+              key: const ValueKey('bp-timer'),
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(child: _timerPill()),
+            ),
+          // Staff "your move" guidance — the conductor's score. Sits just
+          // above the controls; ignores pointers so the tap-to-advance
+          // zones still fire through it. (A future two-device cast keeps
+          // it off the room screen entirely; for now it's bottom chrome.)
+          if (widget.showGuidance && beatGuidance(beats[_index]).isNotEmpty)
+            Positioned(
+              key: const ValueKey('bp-guidance'),
+              left: 8,
+              right: 8,
+              bottom: 58,
+              child: _GuidanceCard(
+                text: beatGuidance(beats[_index]),
+                nextLabel: _index < _count - 1
+                    ? beatKindShortLabel(beats[_index + 1].kind)
+                    : null,
+              ),
+            ),
+          // Control bar — timer · ‹ index/dots › · jump-to-beat.
+          Positioned(
+            key: const ValueKey('bp-controls'),
+            left: 8,
+            right: 8,
+            bottom: 10,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        // Opaque, or a childless GestureDetector hit-tests
-                        // nothing and the tap falls through to the PageView.
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _go(-1),
-                      ),
-                    ),
-                    const Spacer(),
-                    Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _go(1),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Close — top-right. On the LAST beat this IS finishing, so it
-              // routes through the handoff (a teacher who reaches the close
-              // beat and taps X gets "what's next", not a dead exit). On any
-              // earlier beat it's a plain bail-out — they're not done.
-              Positioned(
-                key: const ValueKey('bp-close'),
-                top: 8,
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () {
-                    if (_index >= _count - 1) {
-                      _finish();
-                    } else {
-                      unawaited(Navigator.of(context).maybePop());
-                    }
-                  },
-                ),
-              ),
-              // Fullscreen — top-left, WEB ONLY. Native already hides the
-              // system bars via immersiveSticky; on web the browser chrome
-              // stays unless the Fullscreen API is invoked from a tap. This is
-              // the "view it fullscreen on the TV" control when casting from a
-              // laptop tab.
-              if (webFullscreenSupported)
-                Positioned(
-                  key: const ValueKey('bp-fullscreen'),
-                  top: 8,
-                  left: 8,
-                  child: IconButton(
-                    tooltip: 'Fullscreen',
-                    icon: const Icon(Icons.fullscreen, color: Colors.white70),
-                    onPressed: () => unawaited(toggleWebFullscreen()),
-                  ),
-                ),
-              // The cast timer — top-centre, room-readable, tap to clear.
-              if (_remaining != null)
-                Positioned(
-                  key: const ValueKey('bp-timer'),
-                  top: 8,
-                  left: 0,
-                  right: 0,
-                  child: Center(child: _timerPill()),
-                ),
-              // Staff "your move" guidance — the conductor's score. Sits just
-              // above the controls; ignores pointers so the tap-to-advance
-              // zones still fire through it. (A future two-device cast keeps
-              // it off the room screen entirely; for now it's bottom chrome.)
-              if (widget.showGuidance && beatGuidance(beats[_index]).isNotEmpty)
-                Positioned(
-                  key: const ValueKey('bp-guidance'),
-                  left: 8,
-                  right: 8,
-                  bottom: 58,
-                  child: _GuidanceCard(
-                    text: beatGuidance(beats[_index]),
-                    nextLabel: _index < _count - 1
-                        ? beatKindShortLabel(beats[_index + 1].kind)
-                        : null,
-                  ),
-                ),
-              // Control bar — timer · ‹ index/dots › · jump-to-beat.
-              Positioned(
-                key: const ValueKey('bp-controls'),
-                left: 8,
-                right: 8,
-                bottom: 10,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _autoPlayCtrl(),
-                        const SizedBox(width: 4),
-                        _ctrl(
-                          Icons.timer_outlined,
-                          'Set a timer',
-                          () => unawaited(_pickTimer()),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _ctrl(Icons.chevron_left, 'Previous', () => _go(-1)),
-                        const SizedBox(width: 4),
-                        _progress(),
-                        const SizedBox(width: 4),
-                        _ctrl(Icons.chevron_right, 'Next', () => _go(1)),
-                      ],
-                    ),
+                    _autoPlayCtrl(),
+                    const SizedBox(width: 4),
                     _ctrl(
-                      Icons.list,
-                      'Jump to a beat',
-                      () => unawaited(_pickBeat()),
+                      Icons.timer_outlined,
+                      'Set a timer',
+                      () => unawaited(_pickTimer()),
                     ),
                   ],
                 ),
-              ),
-              // The "what's next" handoff — covers the run when it ends. Last
-              // in the Stack so it sits over everything; keyed so it appearing
-              // can't poison the Element identity of the keyed siblings above
-              // (the house rule — see CLAUDE.md "Stack children without keys").
-              if (_handoffOpen && widget.onFinished != null)
-                Positioned.fill(
-                  key: const ValueKey('bp-handoff'),
-                  child: widget.onFinished!(context, _dismissHandoff),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ctrl(Icons.chevron_left, 'Previous', () => _go(-1)),
+                    const SizedBox(width: 4),
+                    _progress(),
+                    const SizedBox(width: 4),
+                    _ctrl(Icons.chevron_right, 'Next', () => _go(1)),
+                  ],
                 ),
-            ],
+                _ctrl(
+                  Icons.list,
+                  'Jump to a beat',
+                  () => unawaited(_pickBeat()),
+                ),
+              ],
+            ),
           ),
-        ),
+          // The "what's next" handoff — covers the run when it ends. Last
+          // in the Stack so it sits over everything; keyed so it appearing
+          // can't poison the Element identity of the keyed siblings above
+          // (the house rule — see CLAUDE.md "Stack children without keys").
+          if (_handoffOpen && widget.onFinished != null)
+            Positioned.fill(
+              key: const ValueKey('bp-handoff'),
+              child: widget.onFinished!(context, _dismissHandoff),
+            ),
+        ],
       ),
     );
   }

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// True while a cast PRESENTATION surface is on screen — the Receiver (the
@@ -19,3 +22,40 @@ class CastImmersive extends Notifier<bool> {
 final castImmersiveProvider = NotifierProvider<CastImmersive, bool>(
   CastImmersive.new,
 );
+
+/// The *single correct lifecycle* for a fullscreen present/cast surface,
+/// as a mixin: enter cast-immersive (app chrome hidden) + OS
+/// `immersiveSticky` on mount, restore both on dispose.
+///
+/// Cache the notifier in `initState` (never touch `ref` in `dispose`) — the
+/// cast pattern. The provider write is deferred out of the build phase via a
+/// `mounted`-guarded microtask (the chrome trap — see CLAUDE.md), and the
+/// immersive OS call stays INSIDE the same microtask so the two stay in
+/// lockstep: if the screen pops before the microtask drains, dispose's
+/// `exit()` + `edgeToEdge` already ran and we must NOT re-enter.
+mixin CastImmersiveScreenState<T extends ConsumerStatefulWidget>
+    on ConsumerState<T> {
+  late final CastImmersive _immersive;
+
+  @override
+  void initState() {
+    super.initState();
+    _immersive = ref.read(castImmersiveProvider.notifier);
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        _immersive.enter();
+        unawaited(
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+        );
+      }),
+    );
+  }
+
+  @override
+  void dispose() {
+    _immersive.exit();
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    super.dispose();
+  }
+}
