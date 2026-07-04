@@ -1,0 +1,6 @@
+# Mechanical, whole-repo changes that should not pollute git blame.
+# Use with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub's blame view picks this file up automatically.)
+
+# style: dart format the whole codebase (412 files)
+1a877e64e609abfe56a4520ff9abb6d95370df0f

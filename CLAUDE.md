@@ -1686,6 +1686,7 @@ auto-clear, so treat older timestamps as possibly-already-addressed.
 ```sh
 flutter analyze                    # must be clean before declaring done
 flutter test                       # widget + unit
+dart format lib test tool integration_test   # whole repo formatted 2026-07-04; keep it that way
 flutter run -d chrome --web-port=3000   # web (port matches Supabase Site URL)
 flutter run -d <device>            # mobile / desktop
 
@@ -1890,6 +1891,9 @@ it — don't codify a rule a reviewer asserted without confirming it).
 For substantive changes:
 - `flutter analyze` — "No issues found"
 - `flutter test` — all passing
+- `dart format` on the files you touched — the whole repo was formatted in
+  one mechanical pass (commit `1a877e6`, listed in `.git-blame-ignore-revs`);
+  don't let new code drift back off the formatter
 - UI changes: exercised in a browser, or stated as not yet exercised
 - Sync / lifecycle changes: Flutter Preflight (stop-hook reminds once per
   session)
