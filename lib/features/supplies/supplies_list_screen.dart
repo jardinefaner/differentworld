@@ -7,6 +7,7 @@ import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/supplies/supplies_grouping.dart';
 import 'package:differentworld/features/supplies/supplies_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -364,85 +365,47 @@ class _SupplyGridCard extends StatelessWidget {
       ?qtyLabel,
       if (loc != 'No location set') loc,
     ].join(' · ');
-    final content = Padding(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+    return CatalogCard(
+      leading: Row(
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: low
-                    ? scheme.errorContainer
-                    : scheme.surfaceContainerLow,
-                child: Icon(
-                  Icons.inventory_2_outlined,
-                  color: low
-                      ? scheme.onErrorContainer
-                      : scheme.onSurfaceVariant,
-                ),
-              ),
-              // The "Low" signal stays a chip (color + label, never color
-              // alone — the no-color-only rule).
-              if (low) ...[
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: scheme.errorContainer,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'Low',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: scheme.onErrorContainer,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            supply.name,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: low
+                ? scheme.errorContainer
+                : scheme.surfaceContainerLow,
+            child: Icon(
+              Icons.inventory_2_outlined,
+              color: low ? scheme.onErrorContainer : scheme.onSurfaceVariant,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+          // The "Low" signal stays a chip (color + label, never color
+          // alone — the no-color-only rule).
+          if (low) ...[
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: scheme.errorContainer,
+                borderRadius: BorderRadius.circular(999),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              child: Text(
+                'Low',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onErrorContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ],
       ),
-    );
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: canEdit
-          ? InkWell(
-              onTap: () => unawaited(
-                context.push('/settings/supplies/${supply.id}/edit'),
-              ),
-              child: content,
+      title: supply.name,
+      subtitle: subtitle,
+      onTap: canEdit
+          ? () => unawaited(
+              context.push('/settings/supplies/${supply.id}/edit'),
             )
-          : content,
+          : null,
     );
   }
 }

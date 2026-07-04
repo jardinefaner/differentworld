@@ -2,6 +2,7 @@ import 'package:differentworld/features/pickup/pickup_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
+import 'package:differentworld/shared/widgets/form_save_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -117,16 +118,10 @@ class _PickupPersonEditScreenState extends State<PickupPersonEditScreen> {
           ),
           const SizedBox(height: 24),
           // Disabled until there's a name — no silent no-op tap.
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _name,
-            builder: (context, value, _) {
-              final canSave = value.text.trim().isNotEmpty;
-              return FilledButton.icon(
-                onPressed: canSave ? _save : null,
-                icon: const Icon(Icons.check),
-                label: Text(isEdit ? 'Save' : 'Add'),
-              );
-            },
+          FormSaveButton(
+            requiredField: _name,
+            onSave: _save,
+            label: isEdit ? 'Save' : 'Add',
           ),
         ],
       ),

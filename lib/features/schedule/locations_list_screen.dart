@@ -5,6 +5,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -149,7 +150,7 @@ class _LocationsBentoGrid extends StatelessWidget {
 }
 
 /// The grid-cell form of a location — the same identity + subtitle as
-/// [_LocationTile], packed into a compact tappable card so it fits a fixed
+/// [_LocationTile], packed into the shared [CatalogCard] so it fits a fixed
 /// grid cell (a `ListTile` does not). Same edit tap, gated on [canEdit].
 class _LocationGridCard extends StatelessWidget {
   const _LocationGridCard({
@@ -164,7 +165,6 @@ class _LocationGridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
     final isOutdoor = location.isOutdoor == 1;
     final cap = location.capacity;
     final subtitle = [
@@ -172,59 +172,26 @@ class _LocationGridCard extends StatelessWidget {
       if (isOutdoor) 'outdoor',
       if (location.notes != null && location.notes!.isNotEmpty) location.notes!,
     ].join(' · ');
-    final content = Padding(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: isOutdoor
-                ? scheme.tertiaryContainer
-                : scheme.surfaceContainerLow,
-            child: Icon(
-              isOutdoor ? Icons.park_outlined : Icons.home_work_outlined,
-              color: isOutdoor
-                  ? scheme.onTertiaryContainer
-                  : scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            location.name,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
+    return CatalogCard(
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundColor: isOutdoor
+            ? scheme.tertiaryContainer
+            : scheme.surfaceContainerLow,
+        child: Icon(
+          isOutdoor ? Icons.park_outlined : Icons.home_work_outlined,
+          color: isOutdoor
+              ? scheme.onTertiaryContainer
+              : scheme.onSurfaceVariant,
+        ),
       ),
-    );
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: canEdit
-          ? InkWell(
-              onTap: () => unawaited(
-                context.push('/settings/locations/${location.id}/edit'),
-              ),
-              child: content,
+      title: location.name,
+      subtitle: subtitle,
+      onTap: canEdit
+          ? () => unawaited(
+              context.push('/settings/locations/${location.id}/edit'),
             )
-          : content,
+          : null,
     );
   }
 }
