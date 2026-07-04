@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/action_words/widgets/mini_accent_label.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/toolkit/toolkit_pdf.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -92,12 +93,12 @@ Future<void> showJourneyDaySheet(
                 ),
               ],
               const SizedBox(height: 18),
-              _FocusLabel(text: 'Today’s focus', accent: accent),
+              MiniAccentLabel(text: 'Today’s focus', accent: accent),
               const SizedBox(height: 6),
               Text(journeyDay.focus, style: theme.textTheme.bodyMedium),
               if (wallQuestion != null) ...[
                 const SizedBox(height: 18),
-                _FocusLabel(text: 'On the wall', accent: accent),
+                MiniAccentLabel(text: 'On the wall', accent: accent),
                 const SizedBox(height: 6),
                 Container(
                   width: double.infinity,
@@ -116,7 +117,7 @@ Future<void> showJourneyDaySheet(
                 ),
               ],
               const SizedBox(height: 18),
-              _FocusLabel(text: 'The room', accent: accent),
+              MiniAccentLabel(text: 'The room', accent: accent),
               const SizedBox(height: 6),
               _FocusDetailRow(icon: Icons.chair_outlined, text: block.room),
               const SizedBox(height: 8),
@@ -129,7 +130,10 @@ Future<void> showJourneyDaySheet(
               ),
               if (block.words.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                _FocusLabel(text: 'The words of this world', accent: accent),
+                MiniAccentLabel(
+                  text: 'The words of this world',
+                  accent: accent,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -361,24 +365,6 @@ class _BoundaryCallout extends StatelessWidget {
           const SizedBox(height: 6),
           Text(text, style: theme.textTheme.bodyMedium),
         ],
-      ),
-    );
-  }
-}
-
-class _FocusLabel extends StatelessWidget {
-  const _FocusLabel({required this.text, required this.accent});
-  final String text;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: accent,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.6,
       ),
     );
   }

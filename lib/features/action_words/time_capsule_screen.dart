@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/time_capsule.dart';
+import 'package:differentworld/features/action_words/widgets/composer_sheet_body.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -288,74 +289,58 @@ class _BurySheetState extends ConsumerState<_BurySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Bury a time capsule', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _text,
-                autofocus: true,
-                minLines: 2,
-                maxLines: 6,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'A message to the future — what do you hope?',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  // Dismiss the keyboard intentionally before the picker
-                  // dialog steals focus (interaction rule #5).
-                  FocusScope.of(context).unfocus();
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _until,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 400)),
-                    helpText: 'Open the capsule on',
-                  );
-                  if (picked != null && mounted) {
-                    setState(() => _until = picked);
-                  }
-                },
-                icon: const Icon(Icons.event, size: 18),
-                label: Text('Opens ${DateFormat.yMMMMd().format(_until)}'),
-              ),
-              const SizedBox(height: 18),
-              FilledButton(
-                onPressed: () async {
-                  final text = _text.text.trim();
-                  if (text.isEmpty) return;
-                  final nav = Navigator.of(context);
-                  await ref
-                      .read(entryActionsProvider)
-                      .createTimeCapsule(
-                        text: text,
-                        sealedUntil: _until,
-                      );
-                  if (!mounted) return;
-                  nav.pop();
-                },
-                child: const Text('Seal it'),
-              ),
-            ],
+    return ComposerSheetBody(
+      title: 'Bury a time capsule',
+      children: [
+        TextField(
+          controller: _text,
+          autofocus: true,
+          minLines: 2,
+          maxLines: 6,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            hintText: 'A message to the future — what do you hope?',
+            border: OutlineInputBorder(),
           ),
         ),
-      ),
+        const SizedBox(height: 14),
+        OutlinedButton.icon(
+          onPressed: () async {
+            // Dismiss the keyboard intentionally before the picker
+            // dialog steals focus (interaction rule #5).
+            FocusScope.of(context).unfocus();
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: _until,
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(const Duration(days: 400)),
+              helpText: 'Open the capsule on',
+            );
+            if (picked != null && mounted) {
+              setState(() => _until = picked);
+            }
+          },
+          icon: const Icon(Icons.event, size: 18),
+          label: Text('Opens ${DateFormat.yMMMMd().format(_until)}'),
+        ),
+        const SizedBox(height: 18),
+        FilledButton(
+          onPressed: () async {
+            final text = _text.text.trim();
+            if (text.isEmpty) return;
+            final nav = Navigator.of(context);
+            await ref
+                .read(entryActionsProvider)
+                .createTimeCapsule(
+                  text: text,
+                  sealedUntil: _until,
+                );
+            if (!mounted) return;
+            nav.pop();
+          },
+          child: const Text('Seal it'),
+        ),
+      ],
     );
   }
 }

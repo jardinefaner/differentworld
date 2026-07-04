@@ -412,48 +412,19 @@ class _TagSheetState extends ConsumerState<_TagSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              VerbGrid(selected: _selected, onToggle: _toggle),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Senses', style: theme.textTheme.labelLarge),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final s in Sense.values)
-                    FilterChip(
-                      label: Text('${s.emoji} ${s.label}'),
-                      selected: _senses.contains(s),
-                      onSelected: (_) => setState(() {
-                        if (!_senses.remove(s)) _senses.add(s);
-                      }),
-                    ),
-                ],
+              _VerbSensePickers(
+                verbs: _selected,
+                onToggleVerb: _toggle,
+                senses: _senses,
+                onToggleSense: (s) => setState(() {
+                  if (!_senses.remove(s)) _senses.add(s);
+                }),
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check),
-                    label: const Text('Save tags'),
-                  ),
-                ],
+              _SheetActions(
+                saving: _saving,
+                onSave: _save,
+                saveLabel: 'Save tags',
               ),
             ],
           ),
@@ -573,26 +544,13 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
                 ),
               ),
               const SizedBox(height: 6),
-              VerbGrid(selected: _verbs, onToggle: _toggleVerb),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Senses', style: theme.textTheme.labelLarge),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final s in Sense.values)
-                    FilterChip(
-                      label: Text('${s.emoji} ${s.label}'),
-                      selected: _senses.contains(s),
-                      onSelected: (_) => setState(() {
-                        if (!_senses.remove(s)) _senses.add(s);
-                      }),
-                    ),
-                ],
+              _VerbSensePickers(
+                verbs: _verbs,
+                onToggleVerb: _toggleVerb,
+                senses: _senses,
+                onToggleSense: (s) => setState(() {
+                  if (!_senses.remove(s)) _senses.add(s);
+                }),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
@@ -604,31 +562,98 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
                 ),
               ],
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check),
-                    label: const Text('Create'),
-                  ),
-                ],
+              _SheetActions(
+                saving: _saving,
+                onSave: _save,
+                saveLabel: 'Create',
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The shared verb + senses pickers of the tag / new-activity sheets: the
+/// 3-word [VerbGrid] plus the senses filter chips.
+class _VerbSensePickers extends StatelessWidget {
+  const _VerbSensePickers({
+    required this.verbs,
+    required this.onToggleVerb,
+    required this.senses,
+    required this.onToggleSense,
+  });
+  final Set<String> verbs;
+  final ValueChanged<String> onToggleVerb;
+  final Set<Sense> senses;
+  final ValueChanged<Sense> onToggleSense;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        VerbGrid(selected: verbs, onToggle: onToggleVerb),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text('Senses', style: theme.textTheme.labelLarge),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final s in Sense.values)
+              FilterChip(
+                label: Text('${s.emoji} ${s.label}'),
+                selected: senses.contains(s),
+                onSelected: (_) => onToggleSense(s),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Cancel + save row shared by the tag / new-activity sheets, with the
+/// in-button saving spinner.
+class _SheetActions extends StatelessWidget {
+  const _SheetActions({
+    required this.saving,
+    required this.onSave,
+    required this.saveLabel,
+  });
+  final bool saving;
+  final VoidCallback onSave;
+  final String saveLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        const SizedBox(width: 8),
+        FilledButton.icon(
+          onPressed: saving ? null : onSave,
+          icon: saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.check),
+          label: Text(saveLabel),
+        ),
+      ],
     );
   }
 }

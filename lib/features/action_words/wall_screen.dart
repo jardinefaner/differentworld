@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/wall.dart';
+import 'package:differentworld/features/action_words/widgets/composer_sheet_body.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -351,68 +352,52 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Add to the wall', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final t in WallNoteType.values)
-                    ChoiceChip(
-                      label: Text('${t.emoji} ${t.label}'),
-                      selected: _type == t,
-                      onSelected: (_) => setState(() => _type = t),
-                    ),
-                ],
+    return ComposerSheetBody(
+      title: 'Add to the wall',
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final t in WallNoteType.values)
+              ChoiceChip(
+                label: Text('${t.emoji} ${t.label}'),
+                selected: _type == t,
+                onSelected: (_) => setState(() => _type = t),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _text,
-                autofocus: true,
-                minLines: 2,
-                maxLines: 5,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  hintText: _type.prompt,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () async {
-                  final text = _text.text.trim();
-                  if (text.isEmpty) return;
-                  final nav = Navigator.of(context);
-                  await ref
-                      .read(entryActionsProvider)
-                      .createWallNote(
-                        text: text,
-                        worldId: widget.worldId,
-                        noteType: _type.name,
-                      );
-                  if (!mounted) return;
-                  nav.pop();
-                },
-                child: const Text('Pin it'),
-              ),
-            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _text,
+          autofocus: true,
+          minLines: 2,
+          maxLines: 5,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: _type.prompt,
+            border: const OutlineInputBorder(),
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: () async {
+            final text = _text.text.trim();
+            if (text.isEmpty) return;
+            final nav = Navigator.of(context);
+            await ref
+                .read(entryActionsProvider)
+                .createWallNote(
+                  text: text,
+                  worldId: widget.worldId,
+                  noteType: _type.name,
+                );
+            if (!mounted) return;
+            nav.pop();
+          },
+          child: const Text('Pin it'),
+        ),
+      ],
     );
   }
 }

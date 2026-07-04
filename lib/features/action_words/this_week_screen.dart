@@ -4,13 +4,11 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/journey_day_sheet.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
-import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/widgets/world_sections.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
-import 'package:differentworld/features/entities/entity_link.dart';
-import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -90,7 +88,7 @@ class _FortnightSection extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label(text: 'This week, day by day', accent: accent),
+        SectionLabel(text: 'This week, day by day', accent: accent),
         for (var i = 0; i < block.days.length; i++)
           JourneyDayRow(
             day: block.days[i].day,
@@ -128,11 +126,11 @@ class _LiveWorld extends ConsumerWidget {
     final hero = _Hero(world: world, accent: accent);
     final actions = _ActionsRow(world: world, accent: accent);
     final fortnight = _FortnightSection(accent: accent);
-    final verbs = _VerbsSection(world: world, accent: accent);
+    final verbs = WorldVerbsSection(world: world, accent: accent);
     final rules = _RulesSection(world: world, accent: accent);
     final watchDo = world.videos.isEmpty
         ? null
-        : _WatchDoSection(world: world, accent: accent);
+        : WorldWatchDoSection(world: world, accent: accent);
     // This world's Big Thinking game(s) — play → name → bridge → question.
     final thinking = thinkingGamesForWeek(
       ref.watch(thinkingGamesProvider).value ?? const [],
@@ -316,43 +314,6 @@ class _ActionsRow extends StatelessWidget {
   }
 }
 
-/// This week's featured verbs as compact chips, under a label.
-class _VerbsSection extends StatelessWidget {
-  const _VerbsSection({required this.world, required this.accent});
-  final CurriculumWorld world;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Label(text: 'This week’s verbs', accent: accent),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final id in world.featuredVerbs)
-              if (verbById(id) case final v?)
-                EntityChipTap(
-                  entity: EntityRef(
-                    kind: EntityKind.verb,
-                    id: v.id,
-                    label: v.label,
-                  ),
-                  child: Chip(
-                    label: Text('${v.emoji} ${v.label}'),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 /// The world's bible — authored rules + any the room added, plus "Add a rule".
 class _RulesSection extends ConsumerWidget {
   const _RulesSection({required this.world, required this.accent});
@@ -368,7 +329,7 @@ class _RulesSection extends ConsumerWidget {
         // The world's rules — the authored ones (every kid hears all three;
         // their verbs decide which is theirs) PLUS any the ROOM added (the
         // "add a rule" mechanic; docs/VISION.md). The bible is extensible.
-        _Label(text: 'The rules of this world', accent: accent),
+        SectionLabel(text: 'The rules of this world', accent: accent),
         for (final rule in rulesForWorld(world.id))
           _RuleLine(text: rule.text, accent: accent),
         for (final rule
@@ -395,65 +356,6 @@ class _RulesSection extends ConsumerWidget {
   }
 }
 
-/// Today's Watch → Do videos + the screen-time guidance line.
-class _WatchDoSection extends StatelessWidget {
-  const _WatchDoSection({required this.world, required this.accent});
-  final CurriculumWorld world;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Label(text: 'Watch → Do', accent: accent),
-        for (final v in world.videos)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 2),
-                  child: Icon(Icons.play_circle_outline, size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${v.title}  ·  ${v.minutes} min',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        '→ ${v.after}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 6),
-        Text(
-          kScreenTimeRules.first,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// This world's Big Thinking game(s) — play → name → bridge → question.
 class _BigThinkingSection extends StatelessWidget {
   const _BigThinkingSection({required this.games, required this.accent});
@@ -467,7 +369,7 @@ class _BigThinkingSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label(text: 'Big thinking', accent: accent),
+        SectionLabel(text: 'Big thinking', accent: accent),
         for (final g in games)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -521,7 +423,7 @@ class _ActivitiesSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label(text: 'Activities', accent: accent),
+        SectionLabel(text: 'Activities', accent: accent),
         for (final a in world.activities)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
@@ -603,25 +505,6 @@ Future<void> _moreActions(BuildContext context, CurriculumWorld world) {
       ),
     ),
   );
-}
-
-class _Label extends StatelessWidget {
-  const _Label({required this.text, required this.accent});
-  final String text;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: Theme.of(
-          context,
-        ).textTheme.labelLarge?.copyWith(color: accent, letterSpacing: 0.4),
-      ),
-    );
-  }
 }
 
 class _NotLive extends StatelessWidget {

@@ -8,6 +8,7 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/journey_day_sheet.dart';
 import 'package:differentworld/features/action_words/program_hub_bento_setting.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/widgets/mini_accent_label.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/entities/entity_link.dart';
 import 'package:differentworld/features/entities/entity_ref.dart';
@@ -288,7 +289,7 @@ class _TwoLayers extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MiniLabel(text: 'The world you’re living in', accent: accent),
+        MiniAccentLabel(text: 'The world you’re living in', accent: accent),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -304,7 +305,7 @@ class _TwoLayers extends StatelessWidget {
         ),
         if (verbs.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _MiniLabel(text: 'This week’s focus', accent: accent),
+          MiniAccentLabel(text: 'This week’s focus', accent: accent),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -337,7 +338,7 @@ class _JourneyAhead extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MiniLabel(
+        MiniAccentLabel(
           text: 'The journey',
           accent: theme.colorScheme.onSurfaceVariant,
         ),
@@ -457,7 +458,7 @@ class _ChildrenArcs extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MiniLabel(
+        MiniAccentLabel(
           text: 'The children · tap for their day',
           accent: theme.colorScheme.onSurfaceVariant,
         ),
@@ -505,24 +506,6 @@ class _ChildArcRow extends StatelessWidget {
       subtitle: subtitle,
       trailing: const Icon(Icons.chevron_right),
       onTap: () => unawaited(context.push('/subjects/${subject.id}/day')),
-    );
-  }
-}
-
-class _MiniLabel extends StatelessWidget {
-  const _MiniLabel({required this.text, required this.accent});
-  final String text;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: accent,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.6,
-      ),
     );
   }
 }
@@ -877,7 +860,7 @@ class _ChildrenArcsGrid extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MiniLabel(
+        MiniAccentLabel(
           text: 'The children · tap for their day',
           accent: scheme.onSurfaceVariant,
         ),

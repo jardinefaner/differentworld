@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:differentworld/features/action_words/summer_book.dart';
+import 'package:differentworld/features/action_words/week_header_pdf.dart';
 import 'package:differentworld/shared/print/pdf_output.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -109,28 +110,10 @@ pw.Widget _cover(SummerBook book) {
 
 List<pw.Widget> _weekSection(SummerBookWeek w) {
   final color = PdfColor.fromInt(w.color.toARGB32());
-  final header = pw.Container(
-    padding: const pw.EdgeInsets.only(bottom: 6),
-    decoration: pw.BoxDecoration(
-      border: pw.Border(bottom: pw.BorderSide(color: color, width: 3)),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'WEEK ${w.week}',
-          style: const pw.TextStyle(
-            fontSize: 9,
-            letterSpacing: 2,
-            color: PdfColors.grey600,
-          ),
-        ),
-        pw.Text(
-          _ascii(w.worldName),
-          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-        ),
-      ],
-    ),
+  final header = weekHeaderPdf(
+    color: color,
+    week: w.week,
+    name: _ascii(w.worldName),
   );
 
   // A quiet or away week renders as one warm line under the header — never an
