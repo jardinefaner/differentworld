@@ -609,8 +609,8 @@ of the SQL.
 - `created_at` (timestamptz)
 **RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); non-PII game prompts — broad read is intentional. AI rows are inserted server-side with the service role (bypasses RLS). ES256 workaround in effect (see CLAUDE.md).
 **Sync rule**: rides TWO streams — `by_space` delivers per-space crowd rows (`WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`); `global_content` auto-subscribes and delivers all global rows (`WHERE space_id IS NULL`). This is the second multi-stream table after `guardians`/`messages`/etc. in `by_guardian`. Growing the bank = adding seed migrations through Claude Code — the seed migration is the kid-safety review (content is plain SQL, human-readable before it ships; see `docs/CONTENT_BANK.md §1.3`). Dashboard deploy required after adding this table.
-**Consumers**: [ActivityRuntime](FEATURES.md#activityruntime) — seven single-device screens read `bankedContentProvider` (`this_or_that`, `letter_words`, `as_if`, `riddles`, `fact_or_fib`, `story_starters`, `rhyme_time`); written via `ContentBankDao.bankCrowdItem` for crowd-grown items. Live multi-device activities (Charades, live This-or-That) intentionally bypass this table and use the curated Dart floor only.
-**Last verified**: 2026-06-01
+**Consumers**: [ActivityRuntime](FEATURES.md#activityruntime) — seven single-device screens read `bankedContentProvider` (`this_or_that`, `letter_words`, `as_if`, `riddles`, `fact_or_fib`, `story_starters`, `rhyme_time`); written via `ContentBankDao.bankCrowdItem` for crowd-grown items. [GameContent](FEATURES.md#gamecontent) — staff-authored `kind='picture'` rows (payload `{image,label}`, bytes in Storage) read via `ContentBankDao.watchOwnByKind`; played by the grid-reveal game. Live multi-device activities (Charades, live This-or-That) intentionally bypass this table and use the curated Dart floor only.
+**Last verified**: 2026-07-04
 
 ---
 

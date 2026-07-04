@@ -437,6 +437,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## GameContent
+**Path**: `lib/features/game_content/`
+**Purpose**: The staff-authored picture library — upload, name, and remove your own photos, and "Reveal the Picture" plays them (single-device + cast).
+**Personas served**: All staff (author the library); the whole room plays the game seeded from it.
+**Discovery surfaces**:
+- Routes: `/games/pictures`
+- Omnibox: yes — "Game pictures" (page category; keywords: pictures, photos, reveal the picture, grid game, upload pictures, custom pictures, game content)
+- Slash: none
+- Drawer: no
+- Settings: yes — "Game pictures" row in the Resources group
+**Capabilities**: None — open to all signed-in members. Space-scoped: any staffer in the space can add / rename / remove its pictures.
+**Data**: [content_items](SCHEMA.md#content_items) (`kind='picture'`, `payload={image,label}` — rides the content bank, no new table). Bytes live in the private `person-photos` bucket (binary-media rule): the row carries only the Storage path, or a `pending:<id>` token while an offline upload waits; renders via signed URLs.
+**Surfaces**:
+- *Picture library* — `lib/features/game_content/picture_library_screen.dart`. Camera-or-gallery upload → name → grid of the space's pictures; tap to rename or remove; pending shots show an "uploading…" state.
+- *Model + providers* — `lib/features/game_content/custom_pictures.dart`. `CustomPicture`, `customPicturesProvider` (Drift watch on the bank, newest first), `gridMixEmojiProvider` (per-device toggle: mix the 28 built-in emoji in with the space's pictures; ON by default).
+**Depends on**: Photos (`PhotoService` upload + offline queue, signed-URL render), the content bank (`ContentBankDao`).
+**Consumed by**: the grid-reveal game (`lib/features/games/games/grid_reveal_screen.dart`) — "Reveal the Picture" seeds from the library, single-device + cast.
+**Last verified**: 2026-07-04
+
+---
+
 ## Groups
 **Path**: `lib/features/groups/`
 **Purpose**: Classrooms / cohorts. Roster, age band, capabilities, staffing.
@@ -1382,7 +1403,7 @@ _Run 2026-07-04 (chore/dedup-wave — shared widget extraction)_ — no unresolv
 - New feature-scoped widget extractions (`lib/features/action_words/widgets/kid_lock_shell.dart`, `kid_progress_dots.dart`, `thinking_game_blocks.dart`, `composer_sheet_body.dart`, `mini_accent_label.dart`, `world_sections.dart`, `present_stage.dart`; `lib/features/photos/widgets/attachment_photo_thumb.dart`; `lib/features/groups/widgets/group_chip_row.dart`, `group_picker_sheet.dart`) are internal decompositions of existing screens into sub-widgets. No FEATURES.md path references pointed to the old inlined code.
 - `lib/features/voice/dictation_mixin.dart`, `lib/features/live_session/cast_stage_chrome.dart`, `lib/features/curricula/beat_kind_style.dart` — extracted mixins/helpers. Functional behavior unchanged; FEATURES.md surface descriptions (Voice, LiveSession, Curricula) remain accurate.
 - `lib/shared/widgets/camera_chrome.dart` — modified (was already in `lib/shared/widgets/`; the dedup extracted common camera UI there). Already a shared widget; no path reference updated.
-- **Pre-existing gaps (not introduced by this refactor)**: `lib/features/games/`, `lib/features/game_content/`, `lib/features/activity_forge/`, `lib/features/dev_flags/`, `lib/features/identity/`, `lib/features/launch/`, `lib/features/runtime/` have no FEATURES.md sections. `game_content` is the most notable gap: it has active discovery surfaces (`page.game-pictures` omnibox entry → `/games/pictures`; "Game pictures" `ListTile` in Settings Resources group). These gaps predate this refactor; flagged for a future dedicated run.
+- **Pre-existing gaps (not introduced by this refactor)**: `lib/features/games/`, `lib/features/activity_forge/`, `lib/features/dev_flags/`, `lib/features/identity/`, `lib/features/launch/`, `lib/features/runtime/` have no FEATURES.md sections — these appear to be internal framework/infrastructure folders with no user-facing discovery surfaces of their own. `lib/features/game_content/` was the one gap WITH live discovery surfaces; **resolved 2026-07-04** — see the [GameContent](#gamecontent) section.
 - SCHEMA.md: no changes — no migrations, no new tables, no sync-rule changes.
 - Cross-link reconcile: none — no (feature → table) or (table → feature) links affected.
 
