@@ -9,6 +9,7 @@ import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
+import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_lobby.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -285,7 +286,12 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
         if (custom != null)
           _CustomLiveBar(child: custom)
         else
-          _LiveControls<S>(def: _def, wire: _wire, onIntent: c.send),
+          GameIntentBar(
+            def: _def,
+            wire: _wire,
+            onIntent: c.send,
+            withSafeArea: true,
+          ),
       ],
     );
   }
@@ -322,87 +328,6 @@ class _CustomLiveBar extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: child,
-        ),
-      ),
-    );
-  }
-}
-
-/// The live control bar — dark-themed for the big screen / the phone remote,
-/// rendered from the game's *active* [GameIntent]s so it fits any game shape
-/// (reveal: Back·Reveal·Next; tally: +1·New; done: Again).
-class _LiveControls<S> extends StatelessWidget {
-  const _LiveControls({
-    required this.def,
-    required this.wire,
-    required this.onIntent,
-  });
-
-  final GameDefinition<S> def;
-  final Map<String, dynamic> wire;
-  final void Function(GameIntent) onIntent;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = def.activeIntents(def.decode(wire));
-    final index = (wire['i'] as num?)?.toInt() ?? 0;
-    final total = (wire['n'] as num?)?.toInt() ?? 0;
-    final done = wire['d'] == true;
-    final revealed = wire['r'] == true;
-
-    final buttons = <Widget>[
-      if (active.contains(GameIntent.back))
-        IconButton.filledTonal(
-          onPressed: () => onIntent(GameIntent.back),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
-        ),
-      if (active.contains(GameIntent.reveal))
-        FilledButton.tonalIcon(
-          onPressed: () => onIntent(GameIntent.reveal),
-          icon: Icon(revealed ? Icons.visibility_off : Icons.lightbulb_outline),
-          label: Text(def.revealLabel(revealed: revealed)),
-        ),
-      if (active.contains(GameIntent.tally))
-        FilledButton.tonalIcon(
-          onPressed: () => onIntent(GameIntent.tally),
-          icon: const Icon(Icons.add),
-          label: const Text('+1'),
-        ),
-      if (active.contains(GameIntent.next))
-        FilledButton.icon(
-          onPressed: () => onIntent(GameIntent.next),
-          icon: const Icon(Icons.arrow_forward),
-          label: const Text('Next'),
-        ),
-      if (active.contains(GameIntent.reset))
-        FilledButton.icon(
-          onPressed: () => onIntent(GameIntent.reset),
-          icon: const Icon(Icons.replay),
-          label: const Text('Again'),
-        ),
-    ];
-
-    return Material(
-      color: Colors.white.withValues(alpha: 0.06),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              if (wire['n'] != null)
-                Text(
-                  done ? 'Done' : '${index + 1} / $total',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              const Spacer(),
-              for (final b in buttons) ...[b, const SizedBox(width: 8)],
-            ],
-          ),
         ),
       ),
     );

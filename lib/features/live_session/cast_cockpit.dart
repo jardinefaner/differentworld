@@ -16,6 +16,7 @@ import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
+import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -595,101 +596,10 @@ class _Driving extends StatelessWidget {
           ),
         ),
         if (custom != null)
-          _Bar(child: custom)
+          CastBar(child: custom)
         else
-          _CastControls(def: def, wire: wire, onIntent: send),
+          GameIntentBar(def: def, wire: wire, onIntent: send),
       ],
-    );
-  }
-}
-
-/// The standard control bar, built from the game's *active* intents — same
-/// vocabulary the single-device + live bars use (Back · Reveal · +1 · Next ·
-/// Again), so it fits any game shape.
-class _CastControls extends StatelessWidget {
-  const _CastControls({
-    required this.def,
-    required this.wire,
-    required this.onIntent,
-  });
-
-  final GameDefinition<dynamic> def;
-  final Map<String, dynamic> wire;
-  final void Function(GameIntent, [Map<String, dynamic>]) onIntent;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = def.activeIntents(def.decode(wire));
-    final index = (wire['i'] as num?)?.toInt() ?? 0;
-    final total = (wire['n'] as num?)?.toInt() ?? 0;
-    final done = wire['d'] == true;
-    final revealed = wire['r'] == true;
-
-    final buttons = <Widget>[
-      if (active.contains(GameIntent.back))
-        IconButton.filledTonal(
-          onPressed: () => onIntent(GameIntent.back),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
-        ),
-      if (active.contains(GameIntent.reveal))
-        FilledButton.tonalIcon(
-          onPressed: () => onIntent(GameIntent.reveal),
-          icon: Icon(revealed ? Icons.visibility_off : Icons.lightbulb_outline),
-          label: Text(def.revealLabel(revealed: revealed)),
-        ),
-      if (active.contains(GameIntent.tally))
-        FilledButton.tonalIcon(
-          onPressed: () => onIntent(GameIntent.tally),
-          icon: const Icon(Icons.add),
-          label: const Text('+1'),
-        ),
-      if (active.contains(GameIntent.next))
-        FilledButton.icon(
-          onPressed: () => onIntent(GameIntent.next),
-          icon: const Icon(Icons.arrow_forward),
-          label: const Text('Next'),
-        ),
-      if (active.contains(GameIntent.reset))
-        FilledButton.icon(
-          onPressed: () => onIntent(GameIntent.reset),
-          icon: const Icon(Icons.replay),
-          label: const Text('Again'),
-        ),
-    ];
-
-    return _Bar(
-      child: Row(
-        children: [
-          if (wire['n'] != null)
-            Text(
-              done ? 'Done' : '${index + 1} / $total',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          const Spacer(),
-          for (final b in buttons) ...[b, const SizedBox(width: 8)],
-        ],
-      ),
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  const _Bar({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.06),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: child,
-      ),
     );
   }
 }

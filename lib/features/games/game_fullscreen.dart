@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -146,7 +147,10 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (widget.joinCode != null)
-                                _CodeChip(code: widget.joinCode!),
+                                CastCodeChip(
+                                  code: widget.joinCode!,
+                                  margin: const EdgeInsets.only(right: 8),
+                                ),
                               IconButton(
                                 tooltip: 'Exit fullscreen',
                                 onPressed: () => Navigator.of(context).pop(),
@@ -199,47 +203,6 @@ class _Fade extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         opacity: visible ? 1 : 0,
         child: child,
-      ),
-    );
-  }
-}
-
-class _CodeChip extends StatelessWidget {
-  const _CodeChip({required this.code});
-
-  final String code;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'CODE  ',
-            style: TextStyle(
-              color: Colors.white54,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-              fontSize: 12,
-            ),
-          ),
-          Text(
-            code,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              letterSpacing: 3,
-            ),
-          ),
-        ],
       ),
     );
   }

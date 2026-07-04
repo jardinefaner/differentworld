@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
+import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
@@ -174,7 +175,7 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
                   padding: const EdgeInsets.all(8),
                   child: Row(
                     children: [
-                      if (gameId != null) _CodeChip(code: widget.code),
+                      if (gameId != null) CastCodeChip(code: widget.code),
                       const Spacer(),
                       IconButton(
                         tooltip: _fullscreen ? 'Exit fullscreen' : 'Fullscreen',
@@ -218,48 +219,6 @@ class _Fade extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         opacity: visible ? 1 : 0,
         child: child,
-      ),
-    );
-  }
-}
-
-/// The join code, shown in the revealed controls so a late phone can still
-/// join while something's already cast.
-class _CodeChip extends StatelessWidget {
-  const _CodeChip({required this.code});
-
-  final String code;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'CODE  ',
-            style: TextStyle(
-              color: Colors.white54,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-              fontSize: 12,
-            ),
-          ),
-          Text(
-            code,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              letterSpacing: 3,
-            ),
-          ),
-        ],
       ),
     );
   }
