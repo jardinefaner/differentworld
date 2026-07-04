@@ -215,16 +215,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
   ) {
     if (state.done) {
-      return Row(
-        children: [
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: () => send(GameIntent.reset),
-            icon: const Icon(Icons.replay),
-            label: const Text('Play again'),
-          ),
-        ],
-      );
+      return playAgainControls(send);
     }
     return Row(
       children: [

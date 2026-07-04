@@ -122,6 +122,39 @@ abstract final class GameStage {
     );
   }
 
+  /// The shared end-of-round RECAP — emoji · light headline · muted caption,
+  /// centered. The wrap beat the reveal games (Riddles, Fact or Fib) share.
+  static Widget recap(
+    BuildContext context, {
+    required String emoji,
+    required String title,
+    required String caption,
+  }) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(caption, style: const TextStyle(color: Colors.white60)),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// THE score atom — a big accent number + a muted caption ("FOUND", "3 / 8").
   /// The shared counter for every game that keeps a tally.
   static Widget counter(

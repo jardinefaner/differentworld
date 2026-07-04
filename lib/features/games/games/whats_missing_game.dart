@@ -155,16 +155,7 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
   Widget buildStage(BuildContext context, WhatsMissingState s) {
     final round = s.current;
     if (round == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text(
-            'No cards yet.\nAdd a deck to play.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white60, fontSize: 18),
-          ),
-        ),
-      );
+      return const DeckEmptyStage();
     }
     return _MissingStage(round: round, phase: s.phase, accent: vibe.accent);
   }

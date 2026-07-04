@@ -241,3 +241,108 @@ abstract class GameDefinition<S> {
   /// runner routes the write here (crowd-grow + a growth-book entry).
   CaptureSpec? get capture => null;
 }
+
+/// The shared advance/back/reveal/reset reducer for the picture-DECK games
+/// (Name It, Odd One Out) — the `i/d/r` state machine over a list of items
+/// stashed under [itemsKey] (`'cards'`, `'rounds'`), with the total derived
+/// from that list's length. Reveal SHOWS (no toggle); Back un-dones. Only
+/// games whose reducer matches this byte-for-byte should delegate here —
+/// ones with extra beats (phases, tallies, twists) keep their own.
+Map<String, dynamic> deckReduce(
+  Map<String, dynamic> state,
+  GameIntent intent, {
+  required String itemsKey,
+}) {
+  final s = Map<String, dynamic>.from(state);
+  final n = (s[itemsKey] as List? ?? const []).length;
+  final i = (s['i'] as num?)?.toInt() ?? 0;
+  switch (intent) {
+    case GameIntent.next:
+      if (i < n - 1) {
+        s['i'] = i + 1;
+        s['r'] = false;
+      } else {
+        s['d'] = true;
+      }
+    case GameIntent.back:
+      if (i > 0) {
+        s['i'] = i - 1;
+        s['r'] = false;
+        s['d'] = false;
+      }
+    case GameIntent.reveal:
+      s['r'] = true;
+    case GameIntent.reset:
+      s['i'] = 0;
+      s['r'] = false;
+      s['d'] = false;
+    case GameIntent.pick:
+    case GameIntent.tally:
+    case GameIntent.capture:
+    case GameIntent.submit:
+      break;
+  }
+  return s;
+}
+
+/// The shared reducer for the REVEAL-template games (Riddles, Fact or Fib)
+/// — `i/n/d/r` with the total carried under `'n'`, a TOGGLING reveal
+/// (guarded while done), and Back stepping out of the done recap. Only
+/// games whose reducer matches this byte-for-byte should delegate here
+/// (This-or-That's reveal toggles even when done, so it keeps its own).
+Map<String, dynamic> revealDeckReduce(
+  Map<String, dynamic> state,
+  GameIntent intent,
+) {
+  final s = Map<String, dynamic>.from(state);
+  final i = (s['i'] as num?)?.toInt() ?? 0;
+  final n = (s['n'] as num?)?.toInt() ?? 1;
+  final done = s['d'] == true;
+  switch (intent) {
+    case GameIntent.reveal:
+      if (!done) s['r'] = !(s['r'] == true);
+    case GameIntent.next:
+      if (done) break;
+      if (i >= n - 1) {
+        s['d'] = true;
+      } else {
+        s['i'] = i + 1;
+        s['r'] = false;
+      }
+    case GameIntent.back:
+      if (done) {
+        s['d'] = false;
+      } else if (i > 0) {
+        s['i'] = i - 1;
+        s['r'] = false;
+      }
+    case GameIntent.reset:
+      s['i'] = 0;
+      s['r'] = false;
+      s['d'] = false;
+    case GameIntent.pick:
+    case GameIntent.tally:
+    case GameIntent.capture:
+    case GameIntent.submit:
+      break;
+  }
+  return s;
+}
+
+/// The shared done-state control row — a right-aligned "Play again" that
+/// sends [GameIntent.reset]. For games that override [GameDefinition.buildControls]
+/// and land on the standard wrap beat (Charades, Story Starters).
+Widget playAgainControls(
+  void Function(GameIntent intent, [Map<String, dynamic> args]) send,
+) {
+  return Row(
+    children: [
+      const Spacer(),
+      FilledButton.icon(
+        onPressed: () => send(GameIntent.reset),
+        icon: const Icon(Icons.replay),
+        label: const Text('Play again'),
+      ),
+    ],
+  );
+}

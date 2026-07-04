@@ -29,3 +29,24 @@ class CardTile extends StatelessWidget {
     );
   }
 }
+
+/// The shared "no deck loaded" stage for the picture-deck games (Name It,
+/// Odd One Out, What's Missing) — shown until the wrapper screen seeds the
+/// wire-state with cards.
+class DeckEmptyStage extends StatelessWidget {
+  const DeckEmptyStage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(32),
+        child: Text(
+          'No cards yet.\nAdd a deck to play.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white60, fontSize: 18),
+        ),
+      ),
+    );
+  }
+}

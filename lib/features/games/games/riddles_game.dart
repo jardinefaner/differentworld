@@ -68,41 +68,7 @@ class RiddlesGame extends GameDefinition<RiddleState> {
     Map<String, dynamic> state,
     GameIntent intent,
     Map<String, dynamic> args,
-  ) {
-    final s = Map<String, dynamic>.from(state);
-    final i = (s['i'] as num?)?.toInt() ?? 0;
-    final n = (s['n'] as num?)?.toInt() ?? 1;
-    final done = s['d'] == true;
-    switch (intent) {
-      case GameIntent.reveal:
-        if (!done) s['r'] = !(s['r'] == true);
-      case GameIntent.next:
-        if (done) break;
-        if (i >= n - 1) {
-          s['d'] = true;
-        } else {
-          s['i'] = i + 1;
-          s['r'] = false;
-        }
-      case GameIntent.back:
-        if (done) {
-          s['d'] = false;
-        } else if (i > 0) {
-          s['i'] = i - 1;
-          s['r'] = false;
-        }
-      case GameIntent.reset:
-        s['i'] = 0;
-        s['r'] = false;
-        s['d'] = false;
-      case GameIntent.pick:
-      case GameIntent.tally:
-      case GameIntent.capture:
-      case GameIntent.submit:
-        break;
-    }
-    return s;
-  }
+  ) => revealDeckReduce(state, intent);
 
   @override
   Set<GameIntent> activeIntents(RiddleState s) {
@@ -117,7 +83,12 @@ class RiddlesGame extends GameDefinition<RiddleState> {
   @override
   Widget buildStage(BuildContext context, RiddleState s) {
     if (s.done) {
-      return _Recap(count: s.items.length);
+      return GameStage.recap(
+        context,
+        emoji: '🧠',
+        title: 'Nice riddling!',
+        caption: '${s.items.length} riddles, together.',
+      );
     }
     final (prompt, answer) = s.current;
     return GameStage.frame(
@@ -171,42 +142,6 @@ class _AnswerCard extends StatelessWidget {
           color: revealed ? AppColors.onAccent(accent) : Colors.white24,
           fontSize: revealed ? 28 : 36,
           fontWeight: revealed ? FontWeight.w500 : FontWeight.w400,
-        ),
-      ),
-    );
-  }
-}
-
-class _Recap extends StatelessWidget {
-  const _Recap({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🧠', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 16),
-            Text(
-              'Nice riddling!',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '$count riddles, together.',
-              style: const TextStyle(color: Colors.white60),
-            ),
-          ],
         ),
       ),
     );

@@ -96,38 +96,7 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
     Map<String, dynamic> state,
     GameIntent intent,
     Map<String, dynamic> args,
-  ) {
-    final s = Map<String, dynamic>.from(state);
-    final n = (s['rounds'] as List? ?? const <dynamic>[]).length;
-    final i = (s['i'] as num?)?.toInt() ?? 0;
-    switch (intent) {
-      case GameIntent.next:
-        if (i < n - 1) {
-          s['i'] = i + 1;
-          s['r'] = false;
-        } else {
-          s['d'] = true;
-        }
-      case GameIntent.back:
-        if (i > 0) {
-          s['i'] = i - 1;
-          s['r'] = false;
-          s['d'] = false;
-        }
-      case GameIntent.reveal:
-        s['r'] = true;
-      case GameIntent.reset:
-        s['i'] = 0;
-        s['r'] = false;
-        s['d'] = false;
-      case GameIntent.pick:
-      case GameIntent.tally:
-      case GameIntent.capture:
-      case GameIntent.submit:
-        break;
-    }
-    return s;
-  }
+  ) => deckReduce(state, intent, itemsKey: 'rounds');
 
   @override
   Set<GameIntent> activeIntents(OddOneOutState s) => {
@@ -140,16 +109,7 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
   Widget buildStage(BuildContext context, OddOneOutState s) {
     final round = s.current;
     if (round == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text(
-            'No cards yet.\nAdd a deck to play.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white60, fontSize: 18),
-          ),
-        ),
-      );
+      return const DeckEmptyStage();
     }
     return _OddStage(round: round, revealed: s.revealed, accent: vibe.accent);
   }
