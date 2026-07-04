@@ -4,12 +4,11 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/verb_voice.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/widgets/kid_lock_shell.dart';
+import 'package:differentworld/features/action_words/widgets/kid_progress_dots.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
-import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
-import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
-import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,10 +21,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// It locks into kid mode on mount (AppShell strips the omnibox bar, drawer,
 /// and top chrome; the router pins the URL so system-back / browser-back can't
 /// drift to a staff surface) and only a staff 5-tap-corner + optional PIN
-/// unlocks it — the same hardening survey-take uses. Picks save through the
-/// existing `ActionWordsActions.setPicks` (one `action_words` entry per
-/// subject/day); the revealed world stays hidden until the closing ceremony,
-/// exactly like the teacher path.
+/// unlocks it — the same hardening survey-take uses; the machinery lives in
+/// [KidLockShell]. Picks save through the existing
+/// `ActionWordsActions.setPicks` (one `action_words` entry per subject/day);
+/// the revealed world stays hidden until the closing ceremony, exactly like
+/// the teacher path.
 class ActionWordsKidScreen extends ConsumerStatefulWidget {
   const ActionWordsKidScreen({required this.subjectId, super.key});
 
@@ -37,66 +37,23 @@ class ActionWordsKidScreen extends ConsumerStatefulWidget {
 }
 
 class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, KidLockShell<ActionWordsKidScreen> {
   final Set<String> _selected = {};
   // On-device voiceover so a pre-reader can HEAR each word. Owned here:
   // stopped in dispose. See verb_voice.dart.
   final VerbVoice _voice = VerbVoice();
   bool _saving = false;
   bool _saved = false;
-  bool _staffUnlocked = false;
-
-  // Hidden staff-exit: five quick taps in the top-left corner, each within
-  // _staffTapWindow of the last, so a kid mashing the corner can't accumulate.
-  int _staffTapCount = 0;
-  Timer? _staffTapReset;
-  bool _exitDialogOpen = false;
-  static const _staffTapTarget = 5;
-  static const _staffTapWindow = Duration(milliseconds: 800);
-
-  String get _lockedRoute => '/action-words/pick/${widget.subjectId}';
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    // Defer through a microtask (not a sync write): initState runs during the
-    // parent route's build phase and AppShell watches kidModeProvider, so a
-    // sync write trips Riverpod's "modified during build" assertion.
-    unawaited(
-      Future.microtask(() {
-        if (!mounted) return;
-        try {
-          ref.read(kidModeProvider.notifier).enter();
-          ref.read(kidModeLockedRouteProvider.notifier).pin(_lockedRoute);
-        } on Object catch (e, st) {
-          if (kDebugMode) {
-            debugPrint('[action-words-kid] enter failed: $e\n$st');
-          }
-        }
-      }),
-    );
-  }
+  String get kidLockRoute => '/action-words/pick/${widget.subjectId}';
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    // Re-engage the lock if the OS resurrected the Activity without rebuilding
-    // the tree (initState wouldn't fire again on resume).
-    if (state == AppLifecycleState.resumed && mounted) {
-      ref.read(kidModeProvider.notifier).enter();
-      if (_staffUnlocked) setState(() => _staffUnlocked = false);
-    }
-  }
+  String get kidLockDebugTag => 'action-words-kid';
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     unawaited(_voice.stop());
-    ref.read(kidModeProvider.notifier).exit();
-    ref.read(kidModeLockedRouteProvider.notifier).pin(null);
-    _staffTapReset?.cancel();
-    _staffTapReset = null;
     super.dispose();
   }
 
@@ -154,77 +111,10 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
     }
   }
 
-  Future<void> _onStaffCornerTap() async {
-    _staffTapCount += 1;
-    _staffTapReset?.cancel();
-    if (_staffTapCount >= _staffTapTarget) {
-      _staffTapCount = 0;
-      _staffTapReset = null;
-      // Re-entrancy guard: a second 5-tap burst while the PIN dialog is open
-      // (a kid hammering the corner during staff entry) must not stack a
-      // second dialog.
-      if (_exitDialogOpen) return;
-      _exitDialogOpen = true;
-      try {
-        final result = await showKidModeExitDialog(context, ref);
-        if (!mounted) return;
-        switch (result) {
-          case KidModeExitResult.unlocked:
-          case KidModeExitResult.noPinConfigured:
-            setState(() => _staffUnlocked = true);
-            ref.read(kidModeLockedRouteProvider.notifier).pin(null);
-            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-              const SnackBar(content: Text('Unlocked. Press back to exit.')),
-            );
-          case KidModeExitResult.cancelled:
-            break;
-        }
-      } finally {
-        _exitDialogOpen = false;
-      }
-      return;
-    }
-    _staffTapReset = Timer(_staffTapWindow, () {
-      _staffTapCount = 0;
-      _staffTapReset = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final subject = ref.watch(subjectByIdProvider(widget.subjectId)).value;
-    final inKidMode = ref.watch(kidModeProvider);
-    final blockPop = inKidMode && !_staffUnlocked;
-
-    return PopScope(
-      canPop: !blockPop,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          const SnackBar(
-            content: Text('Hand the device back to a teacher to exit.'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
-      child: EdgeScaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(child: _body(subject)),
-            // Hidden staff-corner (top-left, no content overlap).
-            Positioned(
-              top: 0,
-              left: 0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _onStaffCornerTap,
-                child: const SizedBox(width: 56, height: 56),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return buildKidLockShell(body: _body(subject));
   }
 
   Widget _body(Subject? subject) {
@@ -270,7 +160,7 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
                 ],
               ),
               const SizedBox(height: 12),
-              _ProgressDots(filled: _selected.length, total: kPicksPerDay),
+              KidProgressDots(filled: _selected.length, total: kPicksPerDay),
             ],
           ),
         ),
@@ -309,40 +199,6 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
             ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// Three big dots that fill as words are picked — a kid-legible progress meter.
-class _ProgressDots extends StatelessWidget {
-  const _ProgressDots({required this.filled, required this.total});
-  final int filled;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < total; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i < filled ? scheme.primary : Colors.transparent,
-                border: Border.all(
-                  color: i < filled ? scheme.primary : scheme.outline,
-                  width: 2.5,
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
