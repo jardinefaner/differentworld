@@ -1,4 +1,5 @@
 import 'package:differentworld/features/action_words/thinking_games.dart';
+import 'package:differentworld/features/action_words/widgets/thinking_game_blocks.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 
@@ -52,9 +53,9 @@ class _ThinkingGameSheet extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 18),
-            _Beat(label: '1 · Play it', body: game.play),
-            _Beat(label: '2 · Name it', body: game.name),
-            const _Label('3 · Where else'),
+            ThinkingBeat(label: '1 · Play it', body: game.play),
+            ThinkingBeat(label: '2 · Name it', body: game.name),
+            const ThinkingBeatLabel('3 · Where else'),
             for (final b in game.bridge)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -70,77 +71,8 @@ class _ThinkingGameSheet extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '4 · THE QUESTION',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onTertiaryContainer.withValues(
-                        alpha: 0.7,
-                      ),
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '“${game.question}”',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onTertiaryContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ThinkingQuestionCard(question: game.question),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Beat extends StatelessWidget {
-  const _Beat({required this.label, required this.body});
-  final String label;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Label(label),
-          Text(body, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        text.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary,
-          letterSpacing: 1,
         ),
       ),
     );

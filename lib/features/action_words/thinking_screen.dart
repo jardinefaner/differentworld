@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/thinking_games.dart';
+import 'package:differentworld/features/action_words/widgets/thinking_game_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -186,9 +187,9 @@ class _GameCard extends ConsumerWidget {
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Beat(label: '1 · Play it', body: game.play, accent: theme),
-          _Beat(label: '2 · Name it', body: game.name, accent: theme),
-          const _Label('3 · Where else'),
+          ThinkingBeat(label: '1 · Play it', body: game.play),
+          ThinkingBeat(label: '2 · Name it', body: game.name),
+          const ThinkingBeatLabel('3 · Where else'),
           for (final b in game.bridge)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -207,36 +208,7 @@ class _GameCard extends ConsumerWidget {
             ),
           const SizedBox(height: 6),
           // The question — the one with no answer.
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.tertiaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '4 · THE QUESTION',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer.withValues(
-                      alpha: 0.7,
-                    ),
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '“${game.question}”',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ThinkingQuestionCard(question: game.question),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
@@ -271,47 +243,6 @@ class _GameCard extends ConsumerWidget {
         );
     messenger.showSnackBar(
       SnackBar(content: Text('Posted to ${world.name}’s Wall')),
-    );
-  }
-}
-
-class _Beat extends StatelessWidget {
-  const _Beat({required this.label, required this.body, required this.accent});
-  final String label;
-  final String body;
-  final ThemeData accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Label(label),
-          Text(body, style: accent.textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        text.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary,
-          letterSpacing: 1,
-        ),
-      ),
     );
   }
 }
