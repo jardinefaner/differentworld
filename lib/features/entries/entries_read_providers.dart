@@ -192,32 +192,45 @@ final momentsForBlockProvider = StreamProvider.autoDispose
 
 /// Every observation in the signed-in user's program, scoped to what
 /// the viewer can see (director: all; teacher: only entries in
-/// classrooms they're assigned to). Newest first.
-///
-/// The non-director path joins two Drift streams (entries + my
-/// assignments) directly via `Rx.combineLatest2` rather than going
-/// through `groupsProvider` — Riverpod 3 removed `.stream` so
-/// composing provider streams is no longer the easy path. Raw Drift
-/// streams stay reactive the same way.
+/// classrooms they're assigned to — see [entriesScopedToViewer]).
+/// Newest first.
 final observationsInSpaceProvider = StreamProvider<List<Entry>>((ref) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
-  final memberId = viewer.memberId;
   if (spaceId == null) {
     yield const [];
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  final entries = db.entriesDao.watchInSpace(
-    spaceId: spaceId,
-    kind: EntryKind.observation,
+  yield* entriesScopedToViewer(
+    db: db,
+    viewer: viewer,
+    entries: db.entriesDao.watchInSpace(
+      spaceId: spaceId,
+      kind: EntryKind.observation,
+    ),
   );
-  if (viewer.seesAllClassrooms || memberId == null) {
-    yield* entries;
-    return;
-  }
+});
+
+/// Scope an [entries] stream to what [viewer] can see: a viewer who sees all
+/// classrooms (director) — or one with no member row — gets the stream as-is;
+/// a teacher gets only entries in cohorts they're assigned to (space-level
+/// rows with no group always pass). The shared visibility tail of
+/// [observationsInSpaceProvider] and story's `spaceMomentsProvider`.
+///
+/// Joins two raw Drift streams via `Rx.combineLatest2` rather than going
+/// through `groupsProvider` — Riverpod 3 removed `.stream` so composing
+/// provider streams is no longer the easy path. Raw Drift streams stay
+/// reactive the same way.
+Stream<List<Entry>> entriesScopedToViewer({
+  required AppDatabase db,
+  required Viewer viewer,
+  required Stream<List<Entry>> entries,
+}) {
+  final memberId = viewer.memberId;
+  if (viewer.seesAllClassrooms || memberId == null) return entries;
   final assignments = db.groupMembersDao.watchForMember(memberId);
-  yield* Rx.combineLatest2<List<Entry>, List<GroupMember>, List<Entry>>(
+  return Rx.combineLatest2<List<Entry>, List<GroupMember>, List<Entry>>(
     entries,
     assignments,
     (entryList, assigns) {
@@ -227,7 +240,7 @@ final observationsInSpaceProvider = StreamProvider<List<Entry>>((ref) async* {
           .toList(growable: false);
     },
   );
-});
+}
 
 typedef SubjectEntriesKey = ({String subjectId, String? kind});
 

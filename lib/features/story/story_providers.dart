@@ -4,36 +4,23 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/moment.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rxdart/rxdart.dart';
 
 /// Every moment in the program (any kind), scoped to what the viewer can
 /// see (director: all; teacher: only their cohorts) — the substrate for
-/// the room Story. Same visibility shape as `observationsInSpaceProvider`,
-/// but all kinds.
+/// the room Story. Same visibility shape as `observationsInSpaceProvider`
+/// (shared via [entriesScopedToViewer]), but all kinds.
 final spaceMomentsProvider = StreamProvider<List<Entry>>((ref) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
-  final memberId = viewer.memberId;
   if (spaceId == null) {
     yield const [];
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  final entries = db.entriesDao.watchAllInSpace(spaceId: spaceId);
-  if (viewer.seesAllClassrooms || memberId == null) {
-    yield* entries;
-    return;
-  }
-  final assignments = db.groupMembersDao.watchForMember(memberId);
-  yield* Rx.combineLatest2<List<Entry>, List<GroupMember>, List<Entry>>(
-    entries,
-    assignments,
-    (entryList, assigns) {
-      final ids = assigns.map((a) => a.groupId).toSet();
-      return entryList
-          .where((e) => e.groupId == null || ids.contains(e.groupId))
-          .toList(growable: false);
-    },
+  yield* entriesScopedToViewer(
+    db: db,
+    viewer: viewer,
+    entries: db.entriesDao.watchAllInSpace(spaceId: spaceId),
   );
 });
 

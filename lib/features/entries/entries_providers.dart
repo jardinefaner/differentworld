@@ -62,26 +62,48 @@ class EntryActions {
       scheduleBlockId: scheduleBlockId,
       id: id,
     );
-    if (photoUrls.isNotEmpty) {
-      final attachments = _ref.read(attachmentActionsProvider);
-      for (var i = 0; i < photoUrls.length; i++) {
-        await attachments.add(
-          id: i < photoIds.length ? photoIds[i] : null,
-          entityKind: 'entry',
-          entityId: entryId,
-          url: photoUrls[i],
-          sortOrder: i,
-          // Tag the attachment rows the same way the entry is tagged, so a new
-          // observation photo is directly block/child-queryable (the migration
-          // backfilled only EXISTING rows). subjectId → this photo is OF this
-          // child (family-side canSeeSubject gating uses it); scheduleBlockId →
-          // it flows to the block's recap.
-          subjectId: subjectId,
-          scheduleBlockId: scheduleBlockId,
-        );
-      }
-    }
+    // Tag the attachment rows the same way the entry is tagged, so a new
+    // observation photo is directly block/child-queryable (the migration
+    // backfilled only EXISTING rows). subjectId → this photo is OF this
+    // child (family-side canSeeSubject gating uses it); scheduleBlockId →
+    // it flows to the block's recap.
+    await _attachPhotos(
+      entryId: entryId,
+      photoUrls: photoUrls,
+      photoIds: photoIds,
+      subjectId: subjectId,
+      scheduleBlockId: scheduleBlockId,
+    );
     return entryId;
+  }
+
+  /// Persist [photoUrls] as ordered `attachments` rows (entity_kind:
+  /// 'entry') on [entryId] — the shared tail of every photo-bearing
+  /// mutator. [photoIds] (aligned by index) pins each attachment's id;
+  /// REQUIRED for offline correctness when a url is a `pending:` token
+  /// (see [createObservation]'s doc). [subjectId] / [scheduleBlockId]
+  /// tag the rows when the capture context knows them; null is identical
+  /// to omitting the optional params on [AttachmentActions.add].
+  Future<void> _attachPhotos({
+    required String entryId,
+    required List<String> photoUrls,
+    required List<String> photoIds,
+    String? subjectId,
+    String? scheduleBlockId,
+  }) async {
+    if (photoUrls.isEmpty) return;
+    final attachments = _ref.read(attachmentActionsProvider);
+    for (var i = 0; i < photoUrls.length; i++) {
+      await attachments.add(
+        id: i < photoIds.length ? photoIds[i] : null,
+        entityKind: 'entry',
+        entityId: entryId,
+        url: photoUrls[i],
+        sortOrder: i,
+        subjectId: subjectId,
+        scheduleBlockId: scheduleBlockId,
+      );
+    }
   }
 
   /// Create a WORK SAMPLE (docs/VISION.md "writing their answers on paper,
@@ -117,18 +139,11 @@ class EntryActions {
       detailsJson: jsonEncode(details),
       id: id,
     );
-    if (photoUrls.isNotEmpty) {
-      final attachments = _ref.read(attachmentActionsProvider);
-      for (var i = 0; i < photoUrls.length; i++) {
-        await attachments.add(
-          id: i < photoIds.length ? photoIds[i] : null,
-          entityKind: 'entry',
-          entityId: entryId,
-          url: photoUrls[i],
-          sortOrder: i,
-        );
-      }
-    }
+    await _attachPhotos(
+      entryId: entryId,
+      photoUrls: photoUrls,
+      photoIds: photoIds,
+    );
     return entryId;
   }
 
@@ -252,18 +267,11 @@ class EntryActions {
       }),
       id: id,
     );
-    if (photoUrls.isNotEmpty) {
-      final attachments = _ref.read(attachmentActionsProvider);
-      for (var i = 0; i < photoUrls.length; i++) {
-        await attachments.add(
-          id: i < photoIds.length ? photoIds[i] : null,
-          entityKind: 'entry',
-          entityId: entryId,
-          url: photoUrls[i],
-          sortOrder: i,
-        );
-      }
-    }
+    await _attachPhotos(
+      entryId: entryId,
+      photoUrls: photoUrls,
+      photoIds: photoIds,
+    );
     return entryId;
   }
 
@@ -299,18 +307,11 @@ class EntryActions {
         detailsJson: draft.toDetailsJson(),
       );
     }
-    if (photoUrls.isNotEmpty) {
-      final attachments = _ref.read(attachmentActionsProvider);
-      for (var i = 0; i < photoUrls.length; i++) {
-        await attachments.add(
-          id: i < photoIds.length ? photoIds[i] : null,
-          entityKind: 'entry',
-          entityId: entryId,
-          url: photoUrls[i],
-          sortOrder: i,
-        );
-      }
-    }
+    await _attachPhotos(
+      entryId: entryId,
+      photoUrls: photoUrls,
+      photoIds: photoIds,
+    );
     return entryId;
   }
 
@@ -341,18 +342,11 @@ class EntryActions {
       }),
       id: id,
     );
-    if (photoUrls.isNotEmpty) {
-      final attachments = _ref.read(attachmentActionsProvider);
-      for (var i = 0; i < photoUrls.length; i++) {
-        await attachments.add(
-          id: i < photoIds.length ? photoIds[i] : null,
-          entityKind: 'entry',
-          entityId: entryId,
-          url: photoUrls[i],
-          sortOrder: i,
-        );
-      }
-    }
+    await _attachPhotos(
+      entryId: entryId,
+      photoUrls: photoUrls,
+      photoIds: photoIds,
+    );
     return entryId;
   }
 
@@ -592,49 +586,22 @@ class EntryActions {
     String? milestone,
     String? spell,
     String? ally,
-  }) async {
-    final db = await _ref.read(appDatabaseProvider.future);
-    final rows = await db.entriesDao
-        .watchForSubject(subjectId: subjectId, kind: EntryKind.weekLog)
-        .first;
-    Entry? existing;
-    var details = <String, dynamic>{'week': week};
-    for (final e in rows) {
-      Map<String, dynamic> d;
-      try {
-        final decoded = jsonDecode(e.details);
-        d = decoded is Map<String, dynamic> ? decoded : const {};
-      } on FormatException {
-        d = const {};
-      }
-      if ((d['week'] as num?)?.toInt() == week) {
-        existing = e;
-        details = Map<String, dynamic>.of(d);
-        break;
-      }
-    }
-    details['week'] = week;
-    if (milestone != null) details['milestone'] = milestone.trim();
-    if (spell != null) details['spell'] = spell.trim();
-    if (ally != null) details['ally'] = ally.trim();
-    if (existing != null) {
-      await db.entriesDao.updateDetails(
-        id: existing.id,
-        detailsJson: jsonEncode(details),
-      );
-    } else {
-      await _create(
-        kind: EntryKind.weekLog,
-        subjectId: subjectId,
-        groupId: groupId,
-        detailsJson: jsonEncode(details),
-      );
-    }
-  }
+  }) => _upsertSubjectWeek(
+    subjectId: subjectId,
+    week: week,
+    groupId: groupId,
+    kind: EntryKind.weekLog,
+    mutate: (d) {
+      if (milestone != null) d['milestone'] = milestone.trim();
+      if (spell != null) d['spell'] = spell.trim();
+      if (ally != null) d['ally'] = ally.trim();
+      return d;
+    },
+  );
 
   /// Upsert the single (subject, week) row of [kind], applying [mutate] to its
-  /// details map. The read-modify-write that setWeekLog hand-rolls — shared by
-  /// the per-child weekly intention + project (docs/VISION.md 2026-06-19).
+  /// details map — shared by the week log, the per-child weekly intention, and
+  /// the project (docs/VISION.md 2026-06-19).
   Future<void> _upsertSubjectWeek({
     required String subjectId,
     required int week,
