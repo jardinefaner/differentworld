@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:differentworld/features/vehicles/vehicle_photo_shots.dart';
+import 'package:differentworld/shared/widgets/camera_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 /// One captured photo, tied to the shot it satisfies.
 class CapturedShot {
@@ -44,17 +44,9 @@ class GuidedCaptureScreen extends StatefulWidget {
   State<GuidedCaptureScreen> createState() => _GuidedCaptureScreenState();
 }
 
-enum _CamStatus { initializing, ready, denied, unavailable }
-
 class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
-    with WidgetsBindingObserver {
-  CameraController? _controller;
-  _CamStatus _cam = _CamStatus.initializing;
-  bool _initInFlight = false;
+    with WidgetsBindingObserver, CameraSessionMixin {
   bool _shooting = false;
-
-  CameraLensDirection _lens = CameraLensDirection.back;
-  FlashMode _flash = FlashMode.off;
 
   /// Captures keyed by shot key (null = not yet taken).
   final Map<String, CapturedShot> _captured = {};
@@ -71,84 +63,24 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    unawaited(_initCamera());
+    unawaited(initCamera());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      _disposeCamera();
+      disposeCamera();
     } else if (state == AppLifecycleState.resumed) {
-      unawaited(_initCamera());
+      unawaited(initCamera());
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _disposeCamera();
+    disposeCamera();
     super.dispose();
-  }
-
-  Future<void> _initCamera() async {
-    if (_initInFlight || _controller != null) return;
-    _initInFlight = true;
-    try {
-      final status = await Permission.camera.request();
-      if (!status.isGranted) {
-        if (mounted) setState(() => _cam = _CamStatus.denied);
-        return;
-      }
-      final cams = await availableCameras();
-      if (cams.isEmpty) {
-        if (mounted) setState(() => _cam = _CamStatus.unavailable);
-        return;
-      }
-      final cam = cams.firstWhere(
-        (c) => c.lensDirection == _lens,
-        orElse: () => cams.first,
-      );
-      final controller = CameraController(
-        cam,
-        ResolutionPreset.high,
-        enableAudio: false,
-      );
-      await controller.initialize();
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      try {
-        await controller.setFlashMode(_flash);
-      } on Object catch (_) {
-        // Some lenses don't support flash — ignore.
-      }
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      setState(() {
-        _controller = controller;
-        _cam = _CamStatus.ready;
-      });
-    } on Object catch (_) {
-      if (mounted) setState(() => _cam = _CamStatus.unavailable);
-    } finally {
-      _initInFlight = false;
-    }
-  }
-
-  void _disposeCamera() {
-    final c = _controller;
-    _controller = null;
-    // Reset the in-flight guard too: if we backgrounded DURING init (the
-    // permission dialog was up, _controller still null), leaving this true
-    // would make the resume-time _initCamera early-return forever — camera
-    // stuck on the spinner. The init's own `if (!mounted)` guards already
-    // dispose a controller that finishes after we're gone.
-    _initInFlight = false;
-    unawaited(c?.dispose());
   }
 
   /// After a capture, jump to the next un-captured shot (search forward,
@@ -164,7 +96,7 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
   }
 
   Future<void> _shoot() async {
-    final c = _controller;
+    final c = cameraController;
     if (c == null ||
         !c.value.isInitialized ||
         c.value.isTakingPicture ||
@@ -194,26 +126,6 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
     }
   }
 
-  Future<void> _switchCamera() async {
-    _lens = _lens == CameraLensDirection.back
-        ? CameraLensDirection.front
-        : CameraLensDirection.back;
-    _disposeCamera();
-    setState(() => _cam = _CamStatus.initializing);
-    await _initCamera();
-  }
-
-  Future<void> _cycleFlash() async {
-    const order = [FlashMode.off, FlashMode.auto, FlashMode.always];
-    final next = order[(order.indexOf(_flash) + 1) % order.length];
-    setState(() => _flash = next);
-    final c = _controller;
-    if (c == null || !c.value.isInitialized) return;
-    try {
-      await c.setFlashMode(next);
-    } on Object catch (_) {}
-  }
-
   void _done() {
     final ordered = <CapturedShot>[
       for (final s in _shots) ?_captured[s.key],
@@ -225,20 +137,20 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: switch (_cam) {
-        _CamStatus.ready when _controller?.value.isInitialized ?? false =>
+      body: switch (camStatus) {
+        CamStatus.ready when cameraController?.value.isInitialized ?? false =>
           _cameraView(context),
-        _CamStatus.denied => _Message(
+        CamStatus.denied => CamMessage(
           icon: Icons.no_photography_outlined,
           title: 'Camera access needed',
           message: 'Allow the camera to take the required vehicle photos.',
           actionLabel: 'Try again',
           onAction: () {
-            setState(() => _cam = _CamStatus.initializing);
-            unawaited(_initCamera());
+            setState(() => camStatus = CamStatus.initializing);
+            unawaited(initCamera());
           },
         ),
-        _CamStatus.unavailable => const _Message(
+        CamStatus.unavailable => const CamMessage(
           icon: Icons.videocam_off_outlined,
           title: 'No camera here',
           message: 'This device has no camera available.',
@@ -251,7 +163,7 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
   }
 
   Widget _cameraView(BuildContext context) {
-    final c = _controller!;
+    final c = cameraController!;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -313,21 +225,21 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
                       ),
                     ),
                   ),
-                  _CapButton(
-                    icon: _flash == FlashMode.off
+                  CamCapButton(
+                    icon: camFlash == FlashMode.off
                         ? Icons.flash_off
-                        : _flash == FlashMode.auto
+                        : camFlash == FlashMode.auto
                         ? Icons.flash_auto
                         : Icons.flash_on,
-                    active: _flash != FlashMode.off,
+                    active: camFlash != FlashMode.off,
                     tooltip: 'Flash',
-                    onTap: () => unawaited(_cycleFlash()),
+                    onTap: () => unawaited(cycleFlash()),
                   ),
                   const SizedBox(width: 8),
-                  _CapButton(
+                  CamCapButton(
                     icon: Icons.cameraswitch_outlined,
                     tooltip: 'Flip camera',
-                    onTap: () => unawaited(_switchCamera()),
+                    onTap: () => unawaited(switchCamera()),
                   ),
                 ],
               ),
@@ -414,7 +326,7 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
                   const SizedBox(width: 72),
                   Expanded(
                     child: Center(
-                      child: _Shutter(busy: _shooting, onTap: _shoot),
+                      child: CamShutterButton(busy: _shooting, onTap: _shoot),
                     ),
                   ),
                   SizedBox(
@@ -486,130 +398,6 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _CapButton extends StatelessWidget {
-  const _CapButton({
-    required this.icon,
-    required this.onTap,
-    required this.tooltip,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final String tooltip;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: active
-                ? Colors.amberAccent.withValues(alpha: 0.85)
-                : Colors.black.withValues(alpha: 0.4),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: active ? Colors.black : Colors.white,
-            size: 22,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Shutter extends StatelessWidget {
-  const _Shutter({required this.busy, required this.onTap});
-
-  final bool busy;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: busy ? null : onTap,
-      child: Container(
-        width: 76,
-        height: 76,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 4),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: busy ? Colors.white54 : Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Message extends StatelessWidget {
-  const _Message({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white38, size: 56),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70),
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
-            ],
-          ],
-        ),
       ),
     );
   }

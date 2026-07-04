@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:differentworld/shared/widgets/camera_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -288,10 +289,7 @@ class _MultiShotCameraState extends State<MultiShotCamera>
                           onRemove: _removeAt,
                         ),
                       const SizedBox(height: 16),
-                      _ShutterButton(
-                        busy: _busy,
-                        onPressed: _snap,
-                      ),
+                      CamShutterButton(busy: _busy, onTap: _snap),
                     ],
                   ),
                 ),
@@ -300,44 +298,6 @@ class _MultiShotCameraState extends State<MultiShotCamera>
           ],
         );
       },
-    );
-  }
-}
-
-class _ShutterButton extends StatelessWidget {
-  const _ShutterButton({required this.busy, required this.onPressed});
-
-  final bool busy;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Take photo',
-      child: GestureDetector(
-        onTap: busy ? null : onPressed,
-        child: Container(
-          width: 76,
-          height: 76,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 4),
-          ),
-          child: Center(
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: busy
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
