@@ -278,18 +278,6 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
     final caps = Capabilities.fromJson(subject.capabilities);
     final fullName = '${subject.firstName} ${subject.lastName}';
     final groupId = subject.groupId;
-    final groupAsync = groupId == null
-        ? const AsyncValue<Group?>.data(null)
-        : ref.watch(_groupForDetailProvider(groupId));
-    final ageLine = _ageLine(subject.dob);
-    final entriesAsync = ref.watch(
-      entriesForSubjectProvider(
-        (subjectId: subject.id, kind: EntryKind.observation),
-      ),
-    );
-
-    final entries = entriesAsync.value ?? const <Entry>[];
-    final totalObservations = entries.length;
     // Per-child incident history — gated on the program feature + view
     // permission (matches the incident log screen's NoAccess gate).
     final showIncidents =
@@ -319,50 +307,7 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
           ),
 
         // Identity row.
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Row(
-            children: [
-              PersonAvatar(
-                name: fullName,
-                photoUrl: subject.photoUrl,
-                radius: 36,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(fullName, style: theme.textTheme.headlineSmall),
-                    if (ageLine != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        ageLine,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                    if (groupAsync.value != null) ...[
-                      const SizedBox(height: 2),
-                      EntityLink(
-                        entity: EntityRef(
-                          kind: EntityKind.group,
-                          id: groupAsync.value!.id,
-                          label: groupAsync.value!.name,
-                        ),
-                        padded: false,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        _IdentityRow(subject: subject),
 
         // Different World — the persistent in-world self (docs/WORLD.md).
         Padding(
@@ -439,68 +384,7 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
           ),
         if (viewer.canObserve && groupId != null) const _SectionGap(),
 
-        Padding(
-          key: _observationsKey,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Row(
-            children: [
-              Text('Observations', style: theme.textTheme.titleSmall),
-              const Spacer(),
-              Text(
-                entriesAsync.value == null ? '' : '$totalObservations',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        entriesAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: LinearProgressIndicator(),
-          ),
-          error: (_, _) => Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Text(
-              'Could not load observations.',
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-          data: (entries) {
-            if (entries.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: Text(
-                  'No observations yet.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              );
-            }
-            return Column(
-              children: [
-                for (final e in entries.take(10))
-                  SubjectObservationItem(entry: e),
-                if (entries.length > 10)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/observations'),
-                        icon: const Icon(Icons.unfold_more, size: 16),
-                        label: Text(
-                          'View all ${entries.length}',
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
+        _ObservationsFeed(subjectId: subject.id, headerKey: _observationsKey),
 
         // Per-child incident history (gated). Sits between Observations
         // and Attendance — a child's safety record at a glance.
@@ -617,17 +501,6 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
     final caps = Capabilities.fromJson(subject.capabilities);
     final fullName = '${subject.firstName} ${subject.lastName}';
     final groupId = subject.groupId;
-    final groupAsync = groupId == null
-        ? const AsyncValue<Group?>.data(null)
-        : ref.watch(_groupForDetailProvider(groupId));
-    final ageLine = _ageLine(subject.dob);
-    final entriesAsync = ref.watch(
-      entriesForSubjectProvider(
-        (subjectId: subject.id, kind: EntryKind.observation),
-      ),
-    );
-    final entries = entriesAsync.value ?? const <Entry>[];
-    final totalObservations = entries.length;
     final showIncidents =
         viewer.featureIncidentReports &&
         (viewer.canObserve || viewer.canManageSpace);
@@ -668,50 +541,7 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
         ),
 
         // Identity row — full-width page header, not a tile.
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Row(
-            children: [
-              PersonAvatar(
-                name: fullName,
-                photoUrl: subject.photoUrl,
-                radius: 36,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(fullName, style: theme.textTheme.headlineSmall),
-                    if (ageLine != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        ageLine,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                    if (groupAsync.value != null) ...[
-                      const SizedBox(height: 2),
-                      EntityLink(
-                        entity: EntityRef(
-                          kind: EntityKind.group,
-                          id: groupAsync.value!.id,
-                          label: groupAsync.value!.name,
-                        ),
-                        padded: false,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        _IdentityRow(subject: subject, topPadding: 12),
 
         // The grid IS the phone-density win: today's status + world self
         // tile 2-up.
@@ -751,65 +581,7 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
 
         // Observations feed — full-width (text + photo heavy).
         const _SectionGap(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Row(
-            children: [
-              Text('Observations', style: theme.textTheme.titleSmall),
-              const Spacer(),
-              Text(
-                entriesAsync.value == null ? '' : '$totalObservations',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        entriesAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: LinearProgressIndicator(),
-          ),
-          error: (_, _) => Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Text(
-              'Could not load observations.',
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-          data: (entries) {
-            if (entries.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: Text(
-                  'No observations yet.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              );
-            }
-            return Column(
-              children: [
-                for (final e in entries.take(10))
-                  SubjectObservationItem(entry: e),
-                if (entries.length > 10)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/observations'),
-                        icon: const Icon(Icons.unfold_more, size: 16),
-                        label: Text('View all ${entries.length}'),
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
+        _ObservationsFeed(subjectId: subject.id),
 
         // Per-child incident history (self-suppressing) — full-width.
         if (showIncidents) ...[
@@ -882,22 +654,168 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
       ],
     );
   }
+}
 
-  static String? _ageLine(String? dobIso) {
-    if (dobIso == null || dobIso.isEmpty) return null;
-    final dob = DateTime.tryParse(dobIso);
-    if (dob == null) return null;
-    final now = DateTime.now();
-    var years = now.year - dob.year;
-    var months = now.month - dob.month;
-    if (now.day < dob.day) months -= 1;
-    if (months < 0) {
-      years -= 1;
-      months += 12;
-    }
-    if (years <= 0) return '$months months';
-    if (months == 0) return '$years years';
-    return '$years yr $months mo';
+String? _ageLine(String? dobIso) {
+  if (dobIso == null || dobIso.isEmpty) return null;
+  final dob = DateTime.tryParse(dobIso);
+  if (dob == null) return null;
+  final now = DateTime.now();
+  var years = now.year - dob.year;
+  var months = now.month - dob.month;
+  if (now.day < dob.day) months -= 1;
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  if (years <= 0) return '$months months';
+  if (months == 0) return '$years years';
+  return '$years yr $months mo';
+}
+
+/// The avatar + name + age + group-link header row — ONE copy shared by the
+/// flat and bento bodies (they only differ by top padding).
+class _IdentityRow extends ConsumerWidget {
+  const _IdentityRow({required this.subject, this.topPadding = 16});
+
+  final Subject subject;
+  final double topPadding;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final fullName = '${subject.firstName} ${subject.lastName}';
+    final groupId = subject.groupId;
+    final groupAsync = groupId == null
+        ? const AsyncValue<Group?>.data(null)
+        : ref.watch(_groupForDetailProvider(groupId));
+    final ageLine = _ageLine(subject.dob);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, topPadding, 16, 16),
+      child: Row(
+        children: [
+          PersonAvatar(name: fullName, photoUrl: subject.photoUrl, radius: 36),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(fullName, style: theme.textTheme.headlineSmall),
+                if (ageLine != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    ageLine,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                if (groupAsync.value != null) ...[
+                  const SizedBox(height: 2),
+                  EntityLink(
+                    entity: EntityRef(
+                      kind: EntityKind.group,
+                      id: groupAsync.value!.id,
+                      label: groupAsync.value!.name,
+                    ),
+                    padded: false,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "Observations" header (with live count) + the feed itself — ONE copy
+/// shared by both bodies. `headerKey` is the flat body's scroll-TOC anchor.
+class _ObservationsFeed extends ConsumerWidget {
+  const _ObservationsFeed({required this.subjectId, this.headerKey});
+
+  final String subjectId;
+  final Key? headerKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final entriesAsync = ref.watch(
+      entriesForSubjectProvider(
+        (subjectId: subjectId, kind: EntryKind.observation),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          key: headerKey,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Row(
+            children: [
+              Text('Observations', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              Text(
+                entriesAsync.value == null
+                    ? ''
+                    : '${entriesAsync.value!.length}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        entriesAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: LinearProgressIndicator(),
+          ),
+          error: (_, _) => Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              'Could not load observations.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+          data: (entries) {
+            if (entries.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Text(
+                  'No observations yet.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: [
+                for (final e in entries.take(10))
+                  SubjectObservationItem(entry: e),
+                if (entries.length > 10)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => context.push('/observations'),
+                        icon: const Icon(Icons.unfold_more, size: 16),
+                        label: Text('View all ${entries.length}'),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 }
 
