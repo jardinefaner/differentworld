@@ -189,61 +189,20 @@ class _RevealPageState extends ConsumerState<_RevealPage>
               child: Column(
                 children: [
                   const Spacer(),
-                  Text(
-                    '$firstName was',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: gold,
-                      fontSize: 18,
-                      letterSpacing: 1,
-                    ),
+                  // The shared reveal visual: "{name} was [badge] today", the
+                  // sensory BecomeStrip + the verb LENS (both hidden while the
+                  // fresh case is busy naming).
+                  _RevealVisual(
+                    firstName: firstName,
+                    match: match,
+                    freshName: freshName,
+                    verbPicks: isFresh
+                        ? const <String>[]
+                        : widget.day.verbPicks,
+                    glow: _glow,
+                    gold: gold,
+                    showBecome: !isFresh,
                   ),
-                  const SizedBox(height: 16),
-                  if (match != null)
-                    _GlowingBadge(
-                      glow: _glow,
-                      gold: gold,
-                      child: WorldBadge(
-                        match: match,
-                        freshName: freshName,
-                        emojiSize: 104,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'today',
-                    style: TextStyle(color: gold.withValues(alpha: 0.8)),
-                  ),
-                  // How to BECOME it — the sensory embodiment. Shown once
-                  // it's a known/named world (the fresh case is busy naming).
-                  if (match != null && !isFresh) ...[
-                    const SizedBox(height: 24),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 360),
-                      child: BecomeStrip(match: match, accent: gold),
-                    ),
-                  ],
-                  // THE LENS — same world, but the kid's three verbs shaped
-                  // HOW they did it. The personalization made visible.
-                  if (!isFresh && widget.day.verbPicks.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      '$firstName’s way today',
-                      style: TextStyle(
-                        color: gold.withValues(alpha: 0.8),
-                        fontSize: 13,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 360),
-                      child: VerbLensStrip(
-                        verbIds: widget.day.verbPicks,
-                        accent: gold,
-                      ),
-                    ),
-                  ],
                   if (isFresh) ...[
                     const SizedBox(height: 24),
                     // Let the teacher/kid name the brand-new world.

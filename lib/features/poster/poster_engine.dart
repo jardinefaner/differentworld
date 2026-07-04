@@ -614,21 +614,7 @@ List<Uint8List> _renderPosterTilesSync(
       // slice. Builds the full canvas once (less common path).
       final canvasW = pageW * cols;
       final canvasH = pageH * rows;
-      final canvas = img.Image(width: canvasW, height: canvasH);
-      img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
-      final (pl, pt, pw0, ph0) = posterContainPlacement(
-        src.width.toDouble(),
-        src.height.toDouble(),
-        canvasW.toDouble(),
-        canvasH.toDouble(),
-      );
-      final scaled = img.copyResize(
-        src,
-        width: pw0.round().clamp(1, canvasW),
-        height: ph0.round().clamp(1, canvasH),
-        interpolation: img.Interpolation.average,
-      );
-      img.compositeImage(canvas, scaled, dstX: pl.round(), dstY: pt.round());
+      final canvas = _containOnWhite(src, canvasW, canvasH);
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < cols; col++) {
           final tile = img.copyCrop(
@@ -960,22 +946,29 @@ Uint8List _renderPosterImageSync(
         interpolation: img.Interpolation.average,
       );
     case PosterFit.whole:
-      final canvas = img.Image(width: canvasW, height: canvasH);
-      img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
-      final (pl, pt, pw0, ph0) = posterContainPlacement(
-        src.width.toDouble(),
-        src.height.toDouble(),
-        canvasW.toDouble(),
-        canvasH.toDouble(),
-      );
-      final scaled = img.copyResize(
-        src,
-        width: pw0.round().clamp(1, canvasW),
-        height: ph0.round().clamp(1, canvasH),
-        interpolation: img.Interpolation.average,
-      );
-      img.compositeImage(canvas, scaled, dstX: pl.round(), dstY: pt.round());
-      out = canvas;
+      out = _containOnWhite(src, canvasW, canvasH);
   }
   return Uint8List.fromList(img.encodePng(out));
+}
+
+/// Compose [src] contained + centered on a white `canvasW × canvasH` canvas
+/// (the PosterFit.whole path, shared by the tile slicer and the preview
+/// renderer).
+img.Image _containOnWhite(img.Image src, int canvasW, int canvasH) {
+  final canvas = img.Image(width: canvasW, height: canvasH);
+  img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
+  final (pl, pt, pw0, ph0) = posterContainPlacement(
+    src.width.toDouble(),
+    src.height.toDouble(),
+    canvasW.toDouble(),
+    canvasH.toDouble(),
+  );
+  final scaled = img.copyResize(
+    src,
+    width: pw0.round().clamp(1, canvasW),
+    height: ph0.round().clamp(1, canvasH),
+    interpolation: img.Interpolation.average,
+  );
+  img.compositeImage(canvas, scaled, dstX: pl.round(), dstY: pt.round());
+  return canvas;
 }

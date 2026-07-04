@@ -7,6 +7,7 @@ import 'package:differentworld/features/daily/response_edit_screen.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/shared/widgets/accent_edge_card.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -266,54 +267,29 @@ class _PromptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
+    return AccentEdgeCard(
+      accent: accent,
+      eyebrow: eyebrow,
+      eyebrowIcon: icon,
       margin: margin ? const EdgeInsets.only(bottom: 14) : EdgeInsets.zero,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(16),
-          bottomRight: Radius.circular(16),
+      children: [
+        Text(
+          text,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+          ),
         ),
-        border: Border(left: BorderSide(color: accent, width: 4)),
-      ),
-      child: Column(
-        // Shrink-wrap so a bento cell (min-height / unbounded-max) doesn't try
-        // to expand a default-max Column into unbounded height (docs/GRID.md).
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: accent),
-              const SizedBox(width: 6),
-              Text(
-                eyebrow,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: onRespond,
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('Add a response'),
           ),
-          const SizedBox(height: 6),
-          Text(
-            text,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onRespond,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Add a response'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -333,65 +309,34 @@ class _MissionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(16),
-          bottomRight: Radius.circular(16),
+    return AccentEdgeCard(
+      accent: ActivityPalette.green,
+      eyebrow: 'mission of the day',
+      eyebrowIcon: Icons.flag_outlined,
+      children: [
+        Text(
+          text,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+          ),
         ),
-        border: const Border(
-          left: BorderSide(color: ActivityPalette.green, width: 4),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: saving ? null : onDone,
+            icon: saving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
+            label: const Text('We did it!'),
+          ),
         ),
-      ),
-      child: Column(
-        // Shrink-wrap for the bento cell (unbounded-max height; docs/GRID.md).
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.flag_outlined,
-                size: 18,
-                color: ActivityPalette.green,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'mission of the day',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            text,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: saving ? null : onDone,
-              icon: saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
-              label: const Text('We did it!'),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

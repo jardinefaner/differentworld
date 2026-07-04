@@ -113,36 +113,18 @@ NudgePlan _noop(List<NudgeSlot> remaining, String summary) => NudgePlan(
   summary: summary,
 );
 
-/// Compress the flexible remaining blocks to fit [availableMin]; fixed blocks
-/// (pickup / closed) keep their minutes. No-op when already inside the window.
-NudgePlan _behind(
+/// Rebuild [remaining] with per-slot minutes from [newMinutes], collecting
+/// the paired [NudgeChange] rows (order/indices unchanged). Shared by the
+/// tighten (_behind) and stretch (_ahead) plans.
+(List<NudgeSlot>, List<NudgeChange>) _resized(
   List<NudgeSlot> remaining,
-  int availableMin,
-  String endLabel,
+  int Function(int i, NudgeSlot s) newMinutes,
 ) {
-  final total = _sum(remaining);
-  if (total <= availableMin) {
-    return _noop(remaining, "You're inside the window — nothing to tighten.");
-  }
-  final fixedMin = _sum(remaining.where((s) => s.fixed));
-  final flexMin = total - fixedMin;
-  // Target for the flexible blocks so the whole day fits.
-  final flexTarget = (availableMin - fixedMin).clamp(0, flexMin);
-  final scale = flexMin == 0 ? 1.0 : flexTarget / flexMin;
-
   final out = <NudgeSlot>[];
   final changes = <NudgeChange>[];
   for (var i = 0; i < remaining.length; i++) {
     final s = remaining[i];
-    final int newMin;
-    if (s.fixed) {
-      newMin = s.minutes;
-    } else {
-      // The low bound never exceeds the high bound — a sub-5-minute block would
-      // throw RangeError on clamp(5, 3), so floor at its own duration instead.
-      final lo = s.minutes < 5 ? s.minutes : 5;
-      newMin = (s.minutes * scale).round().clamp(lo, s.minutes);
-    }
+    final newMin = newMinutes(i, s);
     out.add((
       id: s.id,
       title: s.title,
@@ -161,6 +143,33 @@ NudgePlan _behind(
       ),
     );
   }
+  return (out, changes);
+}
+
+/// Compress the flexible remaining blocks to fit [availableMin]; fixed blocks
+/// (pickup / closed) keep their minutes. No-op when already inside the window.
+NudgePlan _behind(
+  List<NudgeSlot> remaining,
+  int availableMin,
+  String endLabel,
+) {
+  final total = _sum(remaining);
+  if (total <= availableMin) {
+    return _noop(remaining, "You're inside the window — nothing to tighten.");
+  }
+  final fixedMin = _sum(remaining.where((s) => s.fixed));
+  final flexMin = total - fixedMin;
+  // Target for the flexible blocks so the whole day fits.
+  final flexTarget = (availableMin - fixedMin).clamp(0, flexMin);
+  final scale = flexMin == 0 ? 1.0 : flexTarget / flexMin;
+
+  final (out, changes) = _resized(remaining, (i, s) {
+    if (s.fixed) return s.minutes;
+    // The low bound never exceeds the high bound — a sub-5-minute block would
+    // throw RangeError on clamp(5, 3), so floor at its own duration instead.
+    final lo = s.minutes < 5 ? s.minutes : 5;
+    return (s.minutes * scale).round().clamp(lo, s.minutes);
+  });
   final saved = total - _sum(out);
   return NudgePlan(
     ordered: out,
@@ -185,29 +194,10 @@ NudgePlan _ahead(List<NudgeSlot> remaining, int availableMin) {
       'The rest is fixed — nowhere to add the extra time.',
     );
   }
-  final out = <NudgeSlot>[];
-  final changes = <NudgeChange>[];
-  for (var i = 0; i < remaining.length; i++) {
-    final s = remaining[i];
-    final newMin = i == firstFlex ? s.minutes + surplus : s.minutes;
-    out.add((
-      id: s.id,
-      title: s.title,
-      emoji: s.emoji,
-      minutes: newMin,
-      energy: s.energy,
-      fixed: s.fixed,
-    ));
-    changes.add(
-      NudgeChange(
-        slot: s,
-        oldMinutes: s.minutes,
-        newMinutes: newMin,
-        wasIndex: i,
-        nowIndex: i,
-      ),
-    );
-  }
+  final (out, changes) = _resized(
+    remaining,
+    (i, s) => i == firstFlex ? s.minutes + surplus : s.minutes,
+  );
   return NudgePlan(
     ordered: out,
     changes: changes,

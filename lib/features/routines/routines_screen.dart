@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
+import 'package:differentworld/features/groups/widgets/group_chip_row.dart';
 import 'package:differentworld/features/routines/routine_voice.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -98,21 +99,11 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
                 subtitle: 'Today’s rhythm',
               ),
             ),
-            if (groups.length > 1)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final g in groups)
-                      ChoiceChip(
-                        label: Text(g.name),
-                        selected: g.id == selected.id,
-                        onSelected: (_) => setState(() => _groupId = g.id),
-                      ),
-                  ],
-                ),
-              ),
+            GroupChipRow(
+              groups: groups,
+              selectedId: selected.id,
+              onSelected: (id) => setState(() => _groupId = id),
+            ),
             Expanded(
               child: blocksAsync.when(
                 loading: () => const LoadingSlot(),

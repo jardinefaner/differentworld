@@ -85,54 +85,28 @@ class _CrewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 2),
-                child: Text('Pick a crew', style: theme.textTheme.titleMedium),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                child: Text(
-                  'The one thing you choose — the rest of your world self is '
-                  'earned.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              for (final c in kCrews)
-                ListTile(
-                  leading: Text(c.emoji, style: const TextStyle(fontSize: 26)),
-                  title: Text(c.name),
-                  subtitle: Text(c.blurb),
-                  trailing: c.id == currentId
-                      ? Icon(
-                          Icons.check_circle,
-                          color: theme.colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () => Navigator.of(context).pop(c.id),
-                ),
-              if (currentId != null)
-                ListTile(
-                  leading: Icon(Icons.clear, color: theme.colorScheme.error),
-                  title: Text(
-                    'No crew',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  onTap: () => Navigator.of(context).pop(''),
-                ),
-            ],
+    return CapPickerSheetBody(
+      title: 'Pick a crew',
+      subtitle:
+          'The one thing you choose — the rest of your world self is '
+          'earned.',
+      titleBottomPad: 2,
+      clearLabel: currentId != null ? 'No crew' : null,
+      children: [
+        for (final c in kCrews)
+          ListTile(
+            leading: Text(c.emoji, style: const TextStyle(fontSize: 26)),
+            title: Text(c.name),
+            subtitle: Text(c.blurb),
+            trailing: c.id == currentId
+                ? Icon(
+                    Icons.check_circle,
+                    color: theme.colorScheme.primary,
+                  )
+                : null,
+            onTap: () => Navigator.of(context).pop(c.id),
           ),
-        ),
-      ),
+      ],
     );
   }
 }
@@ -241,15 +215,7 @@ class _Weather extends ConsumerWidget {
             .value ??
         const <Entry>[];
 
-    final todayKeyStr = dateKey(DateTime.now());
-    MoodReading? today;
-    for (final e in moodEntries) {
-      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
-      if (local != null && dateKey(local) == todayKeyStr) {
-        today = MoodReading.fromEntry(e);
-        break; // newest-first → first match is the latest today
-      }
-    }
+    final today = watchTodayMood(ref, subjectId);
     final log = moodReadings(moodEntries).take(14).toList().reversed.toList();
 
     return _Section(

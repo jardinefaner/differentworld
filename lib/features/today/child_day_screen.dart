@@ -518,24 +518,7 @@ class _MoodRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final moodEntries =
-        ref
-            .watch(
-              entriesForSubjectProvider(
-                (subjectId: subjectId, kind: EntryKind.mood),
-              ),
-            )
-            .value ??
-        const <Entry>[];
-    final today = todayKey();
-    MoodLevel? current;
-    for (final e in moodEntries) {
-      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
-      if (local != null && dateKey(local) == today) {
-        current = MoodReading.fromEntry(e).level;
-        break;
-      }
-    }
+    final current = watchTodayMood(ref, subjectId)?.level;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

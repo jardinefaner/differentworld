@@ -444,6 +444,37 @@ pw.Widget _heading(String t) => pw.Padding(
   ),
 );
 
+/// One "VERB — description" row of a one-page reference list.
+pw.Widget _verbRefRow(String label, String text) => pw.Padding(
+  padding: const pw.EdgeInsets.only(bottom: 10),
+  child: pw.Row(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.SizedBox(
+        width: 130,
+        child: pw.Text(
+          _ascii(label.toUpperCase()),
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+      ),
+      pw.Expanded(
+        child: pw.Text(_ascii(text), style: const pw.TextStyle(fontSize: 13)),
+      ),
+    ],
+  ),
+);
+
+/// A single letter-format reference page — heading + rows.
+pw.Page _referencePage(String heading, List<pw.Widget> rows) => pw.Page(
+  theme: pw.ThemeData.base(),
+  pageFormat: PdfPageFormat.letter,
+  margin: const pw.EdgeInsets.all(48),
+  build: (ctx) => pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [_heading(heading), ...rows],
+  ),
+);
+
 /// One-page reference: each verb's job (from the verb-roles data we built).
 Future<bool> printVerbJobReference(
   Map<String, VerbRole> roles, {
@@ -452,47 +483,16 @@ Future<bool> printVerbJobReference(
   name: 'Verb to Job reference',
   copies: copies,
   pages: () => [
-    pw.Page(
-      theme: pw.ThemeData.base(),
-      pageFormat: PdfPageFormat.letter,
-      margin: const pw.EdgeInsets.all(48),
-      build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _heading('Verb -> Job'),
-          for (final v in kVerbs)
-            if (roles[v.id] case final r?)
-              pw.Padding(
-                padding: const pw.EdgeInsets.only(bottom: 10),
-                child: pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.SizedBox(
-                      width: 130,
-                      child: pw.Text(
-                        _ascii(v.label.toUpperCase()),
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    pw.Expanded(
-                      child: pw.Text(
-                        _ascii(
-                          r.jobs.isEmpty
-                              ? r.jobTitle
-                              : '${r.jobTitle}  -  ${r.jobs.first.job}',
-                        ),
-                        style: const pw.TextStyle(fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-        ],
-      ),
-    ),
+    _referencePage('Verb -> Job', [
+      for (final v in kVerbs)
+        if (roles[v.id] case final r?)
+          _verbRefRow(
+            v.label,
+            r.jobs.isEmpty
+                ? r.jobTitle
+                : '${r.jobTitle}  -  ${r.jobs.first.job}',
+          ),
+    ]),
   ],
 );
 
@@ -501,42 +501,9 @@ Future<bool> printGestureGuide({int copies = 1}) => emitPdf(
   name: 'Verb gesture guide',
   copies: copies,
   pages: () => [
-    pw.Page(
-      theme: pw.ThemeData.base(),
-      pageFormat: PdfPageFormat.letter,
-      margin: const pw.EdgeInsets.all(48),
-      build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _heading('Verb gestures (closing game)'),
-          for (final v in kVerbs)
-            pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 10),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.SizedBox(
-                    width: 130,
-                    child: pw.Text(
-                      _ascii(v.label.toUpperCase()),
-                      style: pw.TextStyle(
-                        fontSize: 14,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  pw.Expanded(
-                    child: pw.Text(
-                      _ascii(kVerbGestures[v.id] ?? ''),
-                      style: const pw.TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    ),
+    _referencePage('Verb gestures (closing game)', [
+      for (final v in kVerbs) _verbRefRow(v.label, kVerbGestures[v.id] ?? ''),
+    ]),
   ],
 );
 

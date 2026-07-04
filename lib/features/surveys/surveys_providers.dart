@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -59,6 +60,34 @@ class SurveyResponseStatus {
   static const String draft = 'draft';
   static const String completed = 'completed';
 }
+
+/// Watch the viewer-scoped responses for [templateId] — the shared
+/// prologue of every survey screen/card. When the viewer has no space
+/// yet, resolves to an empty list instead of watching. The returned
+/// `retry` re-fires the watch (for `ErrorState.onRetry`).
+({AsyncValue<List<SurveyResponse>> responses, VoidCallback retry})
+surveyResponsesScope(WidgetRef ref, String templateId) {
+  final spaceId = ref.watch(viewerProvider).spaceId;
+  final responses = spaceId == null
+      ? const AsyncValue<List<SurveyResponse>>.data([])
+      : ref.watch(
+          surveyResponsesProvider((spaceId: spaceId, templateId: templateId)),
+        );
+  return (
+    responses: responses,
+    retry: () => ref.invalidate(
+      surveyResponsesProvider((
+        spaceId: spaceId ?? '',
+        templateId: templateId,
+      )),
+    ),
+  );
+}
+
+/// How many of [responses] are completed (one row = one anonymous
+/// response; drafts are abandoned sessions, not resumable).
+int completedSurveyCount(List<SurveyResponse> responses) =>
+    responses.where((r) => r.status == SurveyResponseStatus.completed).length;
 
 /// In-memory representation of one kid's answers. The renderer holds
 /// one of these as local state while the kid is taking the survey;

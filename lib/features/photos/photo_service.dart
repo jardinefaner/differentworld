@@ -46,11 +46,12 @@ class PhotoService {
     );
   }
 
-  /// Compress + upload + persist the URL. Call after [pickPhoto]
-  /// returned non-null. Compress runs in an Isolate so the UI thread
-  /// stays free for the spinner.
-  Future<String> uploadAndPersist({
-    required PhotoEntity entity,
+  /// Shared prologue of both upload paths: space guard, read + compress
+  /// (in an Isolate off web), and the storage path. Upload / queue /
+  /// persist behavior stays with each caller — their offline contracts
+  /// deliberately differ (deferUpload, pending: tokens, row writes).
+  Future<({Uint8List compressed, String path})> _compressAndPath({
+    required String entityKind,
     required String entityId,
     required XFile picked,
   }) async {
@@ -59,7 +60,6 @@ class PhotoService {
     if (spaceId == null) {
       throw StateError('No Space — sign in and join a program first.');
     }
-
     final bytes = await picked.readAsBytes();
     // Isolate.run isn't available on web (single-threaded); compress on
     // the main thread there. The image is already ≤1024px from the picker,
@@ -67,7 +67,25 @@ class PhotoService {
     final compressed = kIsWeb
         ? _compressSync(bytes)
         : await Isolate.run(() => _compressSync(bytes));
-    final path = '$spaceId/${entity.name}/$entityId/${_uuid.v4()}.jpg';
+    return (
+      compressed: compressed,
+      path: '$spaceId/$entityKind/$entityId/${_uuid.v4()}.jpg',
+    );
+  }
+
+  /// Compress + upload + persist the URL. Call after [pickPhoto]
+  /// returned non-null. Compress runs in an Isolate so the UI thread
+  /// stays free for the spinner.
+  Future<String> uploadAndPersist({
+    required PhotoEntity entity,
+    required String entityId,
+    required XFile picked,
+  }) async {
+    final (:compressed, :path) = await _compressAndPath(
+      entityKind: entity.name,
+      entityId: entityId,
+      picked: picked,
+    );
 
     // Online-first attempt. If Storage upload fails (network out,
     // tower switch, captive portal), fall back to the offline queue:
@@ -153,19 +171,11 @@ class PhotoService {
     required XFile picked,
     bool deferUpload = false,
   }) async {
-    final me = _ref.read(currentMemberProvider).value;
-    final spaceId = me?.spaceId;
-    if (spaceId == null) {
-      throw StateError('No Space — sign in and join a program first.');
-    }
-    final bytes = await picked.readAsBytes();
-    // Isolate.run isn't available on web (single-threaded); compress on
-    // the main thread there. The image is already ≤1024px from the picker,
-    // so it's a brief, spinner-covered step — not a hot path.
-    final compressed = kIsWeb
-        ? _compressSync(bytes)
-        : await Isolate.run(() => _compressSync(bytes));
-    final path = '$spaceId/$entityKind/$entityId/${_uuid.v4()}.jpg';
+    final (:compressed, :path) = await _compressAndPath(
+      entityKind: entityKind,
+      entityId: entityId,
+      picked: picked,
+    );
 
     // Selective sync (kid photo-turn shots): hold the bytes LOCAL and
     // upload only when the teacher marks the shot "for print". On native,

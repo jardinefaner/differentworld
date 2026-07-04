@@ -4,10 +4,12 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/widgets/group_chip_row.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/recap/recap_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/accent_edge_card.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -124,21 +126,11 @@ class _RecapComposerScreenState extends ConsumerState<RecapComposerScreen> {
                 subtitle: 'What each family will see',
               ),
             ),
-            if (groups.length > 1)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final g in groups)
-                      ChoiceChip(
-                        label: Text(g.name),
-                        selected: g.id == selected.id,
-                        onSelected: (_) => setState(() => _groupId = g.id),
-                      ),
-                  ],
-                ),
-              ),
+            GroupChipRow(
+              groups: groups,
+              selectedId: selected.id,
+              onSelected: (id) => setState(() => _groupId = id),
+            ),
             Expanded(
               child: draftAsync.when(
                 loading: () => const LoadingSlot(),
@@ -208,60 +200,42 @@ class _RoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(16),
-          bottomRight: Radius.circular(16),
-        ),
-        border: const Border(
-          left: BorderSide(color: ActivityPalette.green, width: 4),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return AccentEdgeCard(
+      accent: ActivityPalette.green,
+      eyebrow: 'what the room did',
+      eyebrowGap: 8,
+      children: [
+        if (activities.isEmpty)
           Text(
-            'what the room did',
+            'Nothing planned yet — the day’s activities will show here.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [for (final a in activities) _Chip(label: a)],
+          ),
+        if (question != null && question!.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(
+            'question of the day',
             style: theme.textTheme.labelMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 8),
-          if (activities.isEmpty)
-            Text(
-              'Nothing planned yet — the day’s activities will show here.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [for (final a in activities) _Chip(label: a)],
+          const SizedBox(height: 4),
+          Text(
+            question!,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              height: 1.2,
             ),
-          if (question != null && question!.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text(
-              'question of the day',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              question!,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-              ),
-            ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -279,65 +253,47 @@ class _PhotosCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(16),
-          bottomRight: Radius.circular(16),
-        ),
-        border: const Border(
-          left: BorderSide(color: ActivityPalette.green, width: 4),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'today’s pictures · ${urls.length}',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 72,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: urls.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, i) => GestureDetector(
-                // Opaque so the 72x72 tap stays live even before the image
-                // loads (a transparent placeholder would defer hit-testing).
-                behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    PhotoViewer.open(context, urls: urls, initialIndex: i),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    width: 72,
-                    height: 72,
-                    child: PersonPhotoNetwork(
-                      urlOrPath: urls[i],
-                      errorBuilder: (_) =>
-                          const Icon(Icons.broken_image_outlined),
-                    ),
+    return AccentEdgeCard(
+      accent: ActivityPalette.green,
+      eyebrow: 'today’s pictures · ${urls.length}',
+      eyebrowGap: 8,
+      children: [
+        SizedBox(
+          height: 72,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: urls.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, i) => GestureDetector(
+              // Opaque so the 72x72 tap stays live even before the image
+              // loads (a transparent placeholder would defer hit-testing).
+              behavior: HitTestBehavior.opaque,
+              onTap: () =>
+                  PhotoViewer.open(context, urls: urls, initialIndex: i),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: PersonPhotoNetwork(
+                    urlOrPath: urls[i],
+                    errorBuilder: (_) =>
+                        const Icon(Icons.broken_image_outlined),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Room photos go to every family; a photo of one child goes only to '
-            'their family.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Room photos go to every family; a photo of one child goes only to '
+          'their family.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

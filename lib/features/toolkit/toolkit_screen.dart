@@ -164,19 +164,7 @@ class _MobileCatalog extends StatelessWidget {
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<String> onPickTool;
 
-  List<_SearchHit> get _hits {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return const [];
-    final out = <_SearchHit>[];
-    for (final c in categories) {
-      for (final t in c.tools) {
-        if (t.searchHaystack.contains(q)) {
-          out.add(_SearchHit(category: c, tool: t));
-        }
-      }
-    }
-    return out;
-  }
+  List<_SearchHit> get _hits => _searchHits(categories, query);
 
   @override
   Widget build(BuildContext context) {
@@ -461,19 +449,7 @@ class _WideMasterPane extends StatelessWidget {
   final ValueChanged<int> onPickCategory;
   final ValueChanged<String> onPickTool;
 
-  List<_SearchHit> get _hits {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return const [];
-    final out = <_SearchHit>[];
-    for (final c in categories) {
-      for (final t in c.tools) {
-        if (t.searchHaystack.contains(q)) {
-          out.add(_SearchHit(category: c, tool: t));
-        }
-      }
-    }
-    return out;
-  }
+  List<_SearchHit> get _hits => _searchHits(categories, query);
 
   @override
   Widget build(BuildContext context) {
@@ -984,6 +960,22 @@ class _SearchHit {
   const _SearchHit({required this.category, required this.tool});
   final ToolkitCategory category;
   final ToolkitTool tool;
+}
+
+/// Case-insensitive haystack search across every tool — shared by the
+/// mobile catalog and the wide master pane.
+List<_SearchHit> _searchHits(List<ToolkitCategory> categories, String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return const [];
+  final out = <_SearchHit>[];
+  for (final c in categories) {
+    for (final t in c.tools) {
+      if (t.searchHaystack.contains(q)) {
+        out.add(_SearchHit(category: c, tool: t));
+      }
+    }
+  }
+  return out;
 }
 
 /// Flat view-model for one cell of the bento [_ToolGrid] — decouples the grid

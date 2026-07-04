@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
-import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -58,31 +57,16 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
         ),
       );
     }
-    final viewer = ref.watch(viewerProvider);
-    final spaceId = viewer.spaceId;
-    final responsesAsync = spaceId == null
-        ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(
-            surveyResponsesProvider(
-              (spaceId: spaceId, templateId: widget.templateId),
-            ),
-          );
+    final scope = surveyResponsesScope(ref, widget.templateId);
 
     return EdgeScaffold(
       backFallbackRoute: '/surveys/${widget.templateId}',
       actions: const [SyncStatusIndicator()],
-      body: responsesAsync.when(
+      body: scope.responses.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () => ref.invalidate(
-            surveyResponsesProvider(
-              (
-                spaceId: spaceId ?? '',
-                templateId: widget.templateId,
-              ),
-            ),
-          ),
+          onRetry: scope.retry,
         ),
         data: (allResponses) {
           final responses = _statusFilter == null

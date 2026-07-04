@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/shared/prefs_bool_notifier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 /// A staff-authored picture for the "Reveal the Picture" grid game. Stored as a
@@ -82,20 +82,12 @@ final gridMixEmojiProvider = AsyncNotifierProvider<GridMixEmojiNotifier, bool>(
   GridMixEmojiNotifier.new,
 );
 
-class GridMixEmojiNotifier extends AsyncNotifier<bool> {
-  static const _kKey = 'games.grid_reveal.mix_emoji';
+class GridMixEmojiNotifier extends PrefsBoolNotifier {
+  @override
+  String get prefsKey => 'games.grid_reveal.mix_emoji';
 
   @override
-  Future<bool> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_kKey) ?? true;
-  }
-
-  Future<void> set({required bool value}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kKey, value);
-    state = AsyncData(value);
-  }
+  bool get defaultValue => true;
 }
 
 final customPictureActionsProvider = Provider<CustomPictureActions>(

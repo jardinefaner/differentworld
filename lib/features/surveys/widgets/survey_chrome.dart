@@ -236,39 +236,10 @@ class SurveyQuestionPage extends StatelessWidget {
                       // Semantics with a hint so screen readers announce the
                       // tap target. Visual hint = subtle volume icon inline
                       // when onReplayTts is wired.
-                      Semantics(
-                        label: promptText,
-                        hint: onReplayTts == null
-                            ? null
-                            : strings.tapToHearAgain,
-                        button: onReplayTts != null,
-                        child: InkWell(
-                          onTap: onReplayTts,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    promptText,
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.headlineSmall,
-                                  ),
-                                ),
-                                if (onReplayTts != null) ...[
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.volume_up_outlined,
-                                    size: 20,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
+                      _TtsReplayPrompt(
+                        text: promptText,
+                        hint: strings.tapToHearAgain,
+                        onReplayTts: onReplayTts,
                       ),
                       const SizedBox(height: 32),
                       switch (question.kind) {
@@ -481,7 +452,6 @@ class SurveyOptionYesNoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final strings = SurveyStrings.of(language);
     final optionText = option.labelFor(language);
     // Variant rotates by page index across all 8 ChibiVariants. Two
@@ -509,39 +479,10 @@ class SurveyOptionYesNoPage extends StatelessWidget {
                       //
                       // The option label is the main text of the page — tappable
                       // to replay the TTS.
-                      Semantics(
-                        label: optionText,
-                        hint: onReplayTts == null
-                            ? null
-                            : strings.tapToHearAgain,
-                        button: onReplayTts != null,
-                        child: InkWell(
-                          onTap: onReplayTts,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    optionText,
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.headlineSmall,
-                                  ),
-                                ),
-                                if (onReplayTts != null) ...[
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.volume_up_outlined,
-                                    size: 20,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
+                      _TtsReplayPrompt(
+                        text: optionText,
+                        hint: strings.tapToHearAgain,
+                        onReplayTts: onReplayTts,
                       ),
                       const SizedBox(height: 32),
                       // Big yes / no smiley pair. Larger than the inline
@@ -1197,6 +1138,59 @@ class _DimensionPicker extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// The tappable "hear it again" prompt — the question/option text with an
+/// inline volume icon when TTS replay is wired, wrapped in a Semantics
+/// button so screen readers announce the tap target. Shared by the
+/// question page and the yes/no option page.
+class _TtsReplayPrompt extends StatelessWidget {
+  const _TtsReplayPrompt({
+    required this.text,
+    required this.hint,
+    required this.onReplayTts,
+  });
+
+  final String text;
+  final String hint;
+  final VoidCallback? onReplayTts;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      label: text,
+      hint: onReplayTts == null ? null : hint,
+      button: onReplayTts != null,
+      child: InkWell(
+        onTap: onReplayTts,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall,
+                ),
+              ),
+              if (onReplayTts != null) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.volume_up_outlined,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

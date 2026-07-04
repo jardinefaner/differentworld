@@ -12,6 +12,7 @@ import 'package:differentworld/features/entities/entity_link.dart';
 import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/features/settings/widgets/member_detail_sections.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -94,7 +95,7 @@ class TeamScreen extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(title: 'Team', bottomGap: 8),
               ),
-              const _SectionLabel(label: 'Members'),
+              const MemberSectionLabel(label: 'Members'),
               if (members.isEmpty)
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -592,27 +593,6 @@ class _InviteTile extends ConsumerWidget {
     if (delta.inDays >= 1) return 'Expires in ${delta.inDays}d';
     if (delta.inHours >= 1) return 'Expires in ${delta.inHours}h';
     return 'Expires in ${delta.inMinutes}m';
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(
-        label.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
   }
 }
 

@@ -1,5 +1,33 @@
 import 'package:flutter/material.dart';
 
+/// The "Keep editing / Discard" confirmation used by full-page forms
+/// that run their own pop handling (observation, incident). Resolves
+/// true when the user chooses to discard.
+Future<bool> confirmDiscardDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Keep editing'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Discard'),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
 /// Wraps a screen / sheet body in a [PopScope] that intercepts the
 /// system / scrim / drag-down dismiss when [isDirty] returns true,
 /// and shows a "Discard changes?" confirmation dialog before

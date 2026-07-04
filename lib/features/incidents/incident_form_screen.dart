@@ -5,6 +5,7 @@ import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -61,28 +62,11 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
       _subjectId != null ||
       _parentNotified;
 
-  Future<bool> _confirmDiscard() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Discard this incident?'),
-        content: const Text(
-          "You haven't saved it. Leaving will drop what you typed.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep editing'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
+  Future<bool> _confirmDiscard() => confirmDiscardDialog(
+    context,
+    title: 'Discard this incident?',
+    message: "You haven't saved it. Leaving will drop what you typed.",
+  );
 
   Future<void> _save(List<Subject> subjects) async {
     if (_saving) return;

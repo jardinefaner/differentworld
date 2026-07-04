@@ -19,6 +19,7 @@ import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
+import 'package:differentworld/features/voice/dictation_mixin.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -62,21 +63,14 @@ class OmniboxSearchScreen extends ConsumerStatefulWidget {
       _OmniboxSearchScreenState();
 }
 
-class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
+class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen>
+    with DictationMixin<OmniboxSearchScreen> {
   /// The page's own composer field. Seeded from [omniboxQueryProvider]
   /// on mount (usually empty) and mirrored back into it on every change
   /// so the result-building below reacts. Autofocused — the IME raises
   /// on mount with no cross-route focus handoff.
   final _ctrl = TextEditingController();
   final _focus = FocusNode();
-
-  /// Subscription to the Deepgram voice controller's updates. Non-null
-  /// only while a session is live; torn down on stop / dispose.
-  StreamSubscription<VoiceUpdate>? _voiceSub;
-
-  /// Mic-button UI state — the "stop" affordance shows while a dictation
-  /// session is active.
-  bool _voiceActive = false;
 
   /// Which cohort a composed draft schedules into. Null = the first cohort.
   /// Sticky across queries so a director's pick persists. Only meaningful when
@@ -90,14 +84,28 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
   /// open is a fresh State.
   bool _adding = false;
 
-  /// What the composer's text was BEFORE the user started dictating. We
-  /// restore this prefix and append the transcript so a partial existing
-  /// query isn't blown away by the voice session.
-  String _voicePrefix = '';
-
   /// Cached voice controller so `dispose()` can cancel without touching
-  /// `ref` (which is unsafe once the element is deactivated).
+  /// `ref` (which is unsafe once the element is deactivated). Resolved
+  /// from the shared singleton on first toggle; the session state
+  /// machine lives in [DictationMixin].
   DeepgramVoiceController? _voice;
+
+  @override
+  DeepgramVoiceController get dictationVoice => _voice!;
+
+  @override
+  TextEditingController get dictationField => _ctrl;
+
+  @override
+  void onDictationStarted() {
+    _focus.requestFocus();
+    // Force the IME up even if Flutter thinks focus never moved.
+    // `requestFocus()` alone is a no-op for the keyboard on Android if
+    // the framework treats focus as already-held. The user started
+    // dictation — they may also want to type alongside, so the keyboard
+    // belongs on screen.
+    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+  }
 
   @override
   void initState() {
@@ -131,8 +139,7 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
 
   @override
   void dispose() {
-    unawaited(_voiceSub?.cancel());
-    _voiceSub = null;
+    cancelDictationSub();
     unawaited(_voice?.cancel());
     _voice = null;
     _ctrl.removeListener(_onCtrlChanged);
@@ -167,61 +174,14 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
   /// Toggle the Deepgram voice session. Tap once → start recording +
   /// streaming; tap again → stop and keep the transcript. Errors surface
   /// via SnackBar. Moved here from AppShell — the mic now lives on the
-  /// search page next to its field.
+  /// search page next to its field. Writing the transcript to the
+  /// controller fires _onCtrlChanged, which mirrors it into the query
+  /// provider — so the sections update as the user dictates.
   void _toggleVoice() {
-    // The explicit type tells the analyzer the promoted result of `??`
-    // is non-nullable — without it Dart's flow analysis loses the
-    // promotion through the field assignment two lines down.
-    // ignore: omit_local_variable_types
-    final DeepgramVoiceController voice =
-        _voice ?? ref.read(deepgramVoiceProvider);
-    _voice = voice;
-    if (_voiceActive) {
-      unawaited(voice.stop());
-      return;
-    }
-    _voicePrefix = _ctrl.text;
-    setState(() => _voiceActive = true);
-    _focus.requestFocus();
-    // Force the IME up even if Flutter thinks focus never moved.
-    // `requestFocus()` alone is a no-op for the keyboard on Android if
-    // the framework treats focus as already-held. The user started
-    // dictation — they may also want to type alongside, so the keyboard
-    // belongs on screen.
-    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
-    _voiceSub = voice.updates.listen(_onVoiceUpdate);
-    unawaited(voice.start());
-  }
-
-  void _onVoiceUpdate(VoiceUpdate update) {
-    if (!mounted) return;
-    if (update.state == VoiceState.error) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      final msg = update.errorMessage ?? 'Voice dictation failed.';
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-      setState(() {});
-      return;
-    }
-    final transcript = update.transcript.trim();
-    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
-    final combined = '$_voicePrefix$glue$transcript';
-    // Writing to the controller fires _onCtrlChanged, which mirrors the
-    // live transcript into the query provider — so the sections update as
-    // the user dictates.
-    _ctrl
-      ..text = combined
-      ..selection = TextSelection.collapsed(offset: combined.length);
-
-    if (update.state == VoiceState.idle) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      setState(() {});
-    }
+    // Resolve the shared singleton lazily so `dispose()` can cancel
+    // without touching `ref`; the mixin reads it via [dictationVoice].
+    _voice ??= ref.read(deepgramVoiceProvider);
+    toggleDictation();
   }
 
   @override
@@ -515,7 +475,7 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
       focusNode: _focus,
       mode: mode,
       hasText: hasText,
-      voiceActive: _voiceActive,
+      voiceActive: voiceActive,
       onSubmit: onSubmit,
       onClear: _clearField,
       onMicTap: _toggleVoice,

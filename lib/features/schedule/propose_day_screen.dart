@@ -6,6 +6,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/widgets/day_arc_strip.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/widgets/group_picker_sheet.dart';
 import 'package:differentworld/features/schedule/day_template.dart';
 import 'package:differentworld/features/schedule/day_template_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -17,7 +18,6 @@ import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
-import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -64,31 +64,13 @@ class ProposeDayScreen extends ConsumerStatefulWidget {
 class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
   String? _groupId;
 
-  Group? _resolve(List<Group> groups) {
-    for (final g in groups) {
-      if (g.id == _groupId) return g;
-    }
-    return groups.isEmpty ? null : groups.first;
-  }
+  Group? _resolve(List<Group> groups) => resolveGroup(groups, _groupId);
 
   Future<void> _pickGroup(List<Group> groups) async {
-    final picked = await showGlassSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final g in groups)
-              ListTile(
-                title: Text(g.name),
-                trailing: g.id == _resolve(groups)?.id
-                    ? const Icon(Icons.check)
-                    : null,
-                onTap: () => Navigator.of(ctx).pop(g.id),
-              ),
-          ],
-        ),
-      ),
+    final picked = await showGroupPickerSheet(
+      context,
+      groups: groups,
+      currentId: _resolve(groups)?.id,
     );
     if (picked != null && mounted) setState(() => _groupId = picked);
   }

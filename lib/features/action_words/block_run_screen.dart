@@ -14,6 +14,7 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/curricula/today_photo_session.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/widgets/group_picker_sheet.dart';
 import 'package:differentworld/features/schedule/nudge_sheet.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -47,31 +48,13 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
   /// null = the viewer's first cohort; otherwise the chosen one.
   String? _groupId;
 
-  Group? _resolve(List<Group> groups) {
-    for (final g in groups) {
-      if (g.id == _groupId) return g;
-    }
-    return groups.isEmpty ? null : groups.first;
-  }
+  Group? _resolve(List<Group> groups) => resolveGroup(groups, _groupId);
 
   Future<void> _pickGroup(BuildContext context, List<Group> groups) async {
-    final picked = await showGlassSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final g in groups)
-              ListTile(
-                title: Text(g.name),
-                trailing: g.id == _resolve(groups)?.id
-                    ? const Icon(Icons.check)
-                    : null,
-                onTap: () => Navigator.of(ctx).pop(g.id),
-              ),
-          ],
-        ),
-      ),
+    final picked = await showGroupPickerSheet(
+      context,
+      groups: groups,
+      currentId: _resolve(groups)?.id,
     );
     if (picked != null && mounted) setState(() => _groupId = picked);
   }

@@ -8,6 +8,7 @@ import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
+import 'package:differentworld/features/voice/dictation_mixin.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -40,7 +41,8 @@ class CaptureScreen extends ConsumerStatefulWidget {
   ConsumerState<CaptureScreen> createState() => _CaptureScreenState();
 }
 
-class _CaptureScreenState extends ConsumerState<CaptureScreen> {
+class _CaptureScreenState extends ConsumerState<CaptureScreen>
+    with DictationMixin<CaptureScreen> {
   final TextEditingController _ctrl = TextEditingController();
   final FocusNode _focus = FocusNode();
 
@@ -80,10 +82,14 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   // already running on the omnibox bar. Auto-save listener still
   // catches every transcript update because dictation writes through
   // `_ctrl.text`, which triggers `_onChanged` exactly like typing.
+  // Session state machine lives in [DictationMixin].
   late final DeepgramVoiceController _voice;
-  StreamSubscription<VoiceUpdate>? _voiceSub;
-  bool _voiceActive = false;
-  String _voicePrefix = '';
+
+  @override
+  DeepgramVoiceController get dictationVoice => _voice;
+
+  @override
+  TextEditingController get dictationField => _ctrl;
 
   @override
   void initState() {
@@ -91,7 +97,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     _actions = ref.read(captureActionsProvider);
     _voice = DeepgramVoiceController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focus.requestFocus();
+      if (!mounted) return;
+      _focus.requestFocus();
+      // If autofocus lost the race, requestFocus alone won't raise the
+      // IME on Android (interaction invariant #4) — force it.
+      unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
     });
     _ctrl.addListener(_onChanged);
   }
@@ -102,8 +112,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     _ctrl.removeListener(_onChanged);
     // Tear down voice first so a late transcript can't land in
     // `_ctrl` after dispose. Then the underlying recorder / WS.
-    unawaited(_voiceSub?.cancel());
-    _voiceSub = null;
+    cancelDictationSub();
     unawaited(_voice.dispose());
     // If the user opened the screen, never typed anything meaningful,
     // attached NO photo, and navigated away — hard-delete the shell row
@@ -121,48 +130,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     _ctrl.dispose();
     _focus.dispose();
     super.dispose();
-  }
-
-  /// Toggle Deepgram dictation for the body field. Mirrors the
-  /// observation form: snapshot whatever the user typed before the
-  /// session starts, append the live transcript as it streams in.
-  /// Auto-save fires through `_onChanged` for free.
-  void _toggleVoice() {
-    if (_voiceActive) {
-      unawaited(_voice.stop());
-      return;
-    }
-    _voicePrefix = _ctrl.text;
-    setState(() => _voiceActive = true);
-    _voiceSub = _voice.updates.listen(_onVoiceUpdate);
-    unawaited(_voice.start());
-  }
-
-  void _onVoiceUpdate(VoiceUpdate update) {
-    if (!mounted) return;
-    if (update.state == VoiceState.error) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      final msg = update.errorMessage ?? 'Voice dictation failed.';
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-      setState(() {});
-      return;
-    }
-    final transcript = update.transcript.trim();
-    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
-    final combined = '$_voicePrefix$glue$transcript';
-    _ctrl
-      ..text = combined
-      ..selection = TextSelection.collapsed(offset: combined.length);
-    if (update.state == VoiceState.idle) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      setState(() {});
-    }
   }
 
   void _onChanged() {
@@ -348,21 +315,21 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
               hintText: "Drop a thought. We'll auto-save as you type.",
-              helperText: _voiceActive ? 'Listening…' : null,
+              helperText: voiceActive ? 'Listening…' : null,
               border: const OutlineInputBorder(),
               // Mic sits as the suffix so it lives next to the text it
               // dictates into. Tapping toggles a live Deepgram session;
               // the transcript appends to whatever the user typed,
               // and auto-save catches it through `_onChanged`.
               suffixIcon: IconButton(
-                tooltip: _voiceActive ? 'Stop dictation' : 'Dictate by voice',
+                tooltip: voiceActive ? 'Stop dictation' : 'Dictate by voice',
                 icon: Icon(
-                  _voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
-                  color: _voiceActive
+                  voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
+                  color: voiceActive
                       ? Theme.of(context).colorScheme.error
                       : null,
                 ),
-                onPressed: _toggleVoice,
+                onPressed: toggleDictation,
               ),
             ),
           ),

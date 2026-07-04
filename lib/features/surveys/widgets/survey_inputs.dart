@@ -5,6 +5,7 @@ import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/chibi_smiley.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
+import 'package:differentworld/features/voice/dictation_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -31,7 +32,9 @@ class Agree3Row extends StatefulWidget {
   State<Agree3Row> createState() => _Agree3RowState();
 }
 
-class _Agree3RowState extends State<Agree3Row> {
+/// The shared tap-flash state machine for the kid answer rows — haptic +
+/// a 220ms "squash" flash on the tapped cell, then commit the answer.
+mixin _TapFlash<T extends StatefulWidget> on State<T> {
   int? _tappingValue;
   Timer? _tapTimer;
 
@@ -41,7 +44,7 @@ class _Agree3RowState extends State<Agree3Row> {
     super.dispose();
   }
 
-  void _onTap(int value) {
+  void flashTap(int value, VoidCallback commit) {
     unawaited(HapticFeedback.selectionClick());
     setState(() => _tappingValue = value);
     _tapTimer?.cancel();
@@ -49,9 +52,17 @@ class _Agree3RowState extends State<Agree3Row> {
       if (!mounted) return;
       setState(() => _tappingValue = null);
     });
-    final next = SurveyAnswers.fromJson(widget.answers.toJson())
-      ..setAgree3(widget.question.key, value);
-    widget.onAnswered(next);
+    commit();
+  }
+}
+
+class _Agree3RowState extends State<Agree3Row> with _TapFlash<Agree3Row> {
+  void _onTap(int value) {
+    flashTap(value, () {
+      final next = SurveyAnswers.fromJson(widget.answers.toJson())
+        ..setAgree3(widget.question.key, value);
+      widget.onAnswered(next);
+    });
   }
 
   @override
@@ -444,15 +455,35 @@ class TextAnswer extends StatefulWidget {
   State<TextAnswer> createState() => _TextAnswerState();
 }
 
-class _TextAnswerState extends State<TextAnswer> {
+class _TextAnswerState extends State<TextAnswer>
+    with DictationMixin<TextAnswer> {
   late final TextEditingController _controller;
   Timer? _debounce;
   // Wave 134: Deepgram dictation. Local controller (not the AppShell
   // singleton) so survey-take isolation matches the observation form.
+  // Session state machine lives in [DictationMixin].
   late final DeepgramVoiceController _voice;
-  StreamSubscription<VoiceUpdate>? _voiceSub;
-  bool _voiceActive = false;
-  String _voicePrefix = '';
+
+  @override
+  DeepgramVoiceController get dictationVoice => _voice;
+
+  @override
+  TextEditingController get dictationField => _controller;
+
+  @override
+  void onDictationStarted() {
+    // Tapping the mic suffix icon can drop the field's IME on Android;
+    // keep the keyboard up so typing alongside dictation works
+    // (interaction invariant #4 — requestFocus alone doesn't show it).
+    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+  }
+
+  @override
+  void onDictationText(String combined) {
+    // Treat each transcript chunk like a typed change so autosave
+    // catches up.
+    _onChanged(combined);
+  }
 
   @override
   void initState() {
@@ -466,7 +497,7 @@ class _TextAnswerState extends State<TextAnswer> {
   @override
   void dispose() {
     _debounce?.cancel();
-    unawaited(_voiceSub?.cancel());
+    cancelDictationSub();
     unawaited(_voice.dispose());
     _controller.dispose();
     super.dispose();
@@ -481,47 +512,6 @@ class _TextAnswerState extends State<TextAnswer> {
     });
   }
 
-  void _toggleVoice() {
-    if (_voiceActive) {
-      unawaited(_voice.stop());
-      return;
-    }
-    _voicePrefix = _controller.text;
-    setState(() => _voiceActive = true);
-    _voiceSub = _voice.updates.listen(_onVoiceUpdate);
-    unawaited(_voice.start());
-  }
-
-  void _onVoiceUpdate(VoiceUpdate update) {
-    if (!mounted) return;
-    if (update.state == VoiceState.error) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      final msg = update.errorMessage ?? 'Voice dictation failed.';
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-      setState(() {});
-      return;
-    }
-    final transcript = update.transcript.trim();
-    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
-    final combined = '$_voicePrefix$glue$transcript';
-    _controller
-      ..text = combined
-      ..selection = TextSelection.collapsed(offset: combined.length);
-    // Treat each transcript chunk like a typed change so autosave
-    // catches up.
-    _onChanged(combined);
-    if (update.state == VoiceState.idle) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      setState(() {});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -529,12 +519,12 @@ class _TextAnswerState extends State<TextAnswer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          _voiceActive
+          voiceActive
               ? 'Listening… tap the mic to stop.'
               : 'Tap the mic to say it out loud, or type below.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: _voiceActive
+            color: voiceActive
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurfaceVariant,
           ),
@@ -552,12 +542,12 @@ class _TextAnswerState extends State<TextAnswer> {
             // IconButton's default 48dp insets — same pattern the
             // observation form uses.
             suffixIcon: IconButton(
-              tooltip: _voiceActive ? 'Stop dictation' : 'Dictate by voice',
+              tooltip: voiceActive ? 'Stop dictation' : 'Dictate by voice',
               icon: Icon(
-                _voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
-                color: _voiceActive ? theme.colorScheme.error : null,
+                voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
+                color: voiceActive ? theme.colorScheme.error : null,
               ),
-              onPressed: _toggleVoice,
+              onPressed: toggleDictation,
             ),
           ),
           onChanged: _onChanged,
@@ -604,27 +594,13 @@ class Scale5Row extends StatefulWidget {
   State<Scale5Row> createState() => _Scale5RowState();
 }
 
-class _Scale5RowState extends State<Scale5Row> {
-  int? _tappingValue;
-  Timer? _tapTimer;
-
-  @override
-  void dispose() {
-    _tapTimer?.cancel();
-    super.dispose();
-  }
-
+class _Scale5RowState extends State<Scale5Row> with _TapFlash<Scale5Row> {
   void _onTap(int value) {
-    unawaited(HapticFeedback.selectionClick());
-    setState(() => _tappingValue = value);
-    _tapTimer?.cancel();
-    _tapTimer = Timer(const Duration(milliseconds: 220), () {
-      if (!mounted) return;
-      setState(() => _tappingValue = null);
+    flashTap(value, () {
+      final next = SurveyAnswers.fromJson(widget.answers.toJson())
+        ..setScale5(widget.question.key, value);
+      widget.onAnswered(next);
     });
-    final next = SurveyAnswers.fromJson(widget.answers.toJson())
-      ..setScale5(widget.question.key, value);
-    widget.onAnswered(next);
   }
 
   @override

@@ -11,10 +11,9 @@
 // beat-kind map — the SlidePresentScreen (TV-dark, on the theme allowlist) is
 // where those content colours render. No `Colors.*` / hex literals belong here.
 
-import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/curricula/beat_kind_style.dart';
 import 'package:differentworld/features/curricula/session_script.dart';
 import 'package:differentworld/features/live_session/slide_present.dart';
-import 'package:flutter/material.dart';
 
 /// Build the KID-FACING room deck for [script] — one [PresentSlide] per CONTENT
 /// beat, in order. Prep / doorway / after beats are SKIPPED (they're the host's
@@ -37,7 +36,7 @@ List<PresentSlide> sessionRoomSlides(SessionScript script) {
         // Omit an empty subtitle entirely (PresentSlide treats null as "none").
         subtitle: (subtitle != null && subtitle.isNotEmpty) ? subtitle : null,
         emoji: _roomEmoji(beat.kind),
-        accent: _accentForKind(beat.kind),
+        accent: accentForBeatKind(beat.kind),
       ),
     );
   }
@@ -151,7 +150,7 @@ String _roomEyebrow(SessionBeat beat) {
   // A clock-shaped time carries its own meaning; show it. Otherwise fall back
   // to the friendly kind word so the eyebrow is never a raw "prep"/"after".
   if (_looksLikeClock(time)) return time;
-  return _kindLabel(beat.kind);
+  return beatKindLabel(beat.kind);
 }
 
 /// True when the time string reads like a clock (`"0:00"` / `"0:08–0:15"`) — a
@@ -176,43 +175,4 @@ String _roomEmoji(BeatKind kind) => switch (kind) {
   BeatKind.prep => '📦',
   BeatKind.doorway => '🚪',
   BeatKind.after => '🌙',
-};
-
-// ── Shared kind mappings (room deck + presenter agree) ─────────────────────
-
-/// One beat kind's accent — the SAME content-driven categorical colour the
-/// presenter uses ([ActivityPalette], not a theme role) so a beat's hue is
-/// consistent between the host's slide and the room deck. Mirrors
-/// `session_run_screen._accentForKind`; kept here so the room-deck builder
-/// doesn't depend on the presenter screen.
-Color _accentForKind(BeatKind kind) => switch (kind) {
-  BeatKind.hook ||
-  BeatKind.reveal ||
-  BeatKind.rules ||
-  BeatKind.closing => ActivityPalette.amber,
-  BeatKind.game => ActivityPalette.blue,
-  BeatKind.cooldown => ActivityPalette.teal,
-  BeatKind.partner => ActivityPalette.lightBlue,
-  BeatKind.frame => ActivityPalette.purple,
-  BeatKind.drawing => ActivityPalette.pink,
-  BeatKind.vocab => ActivityPalette.yellow,
-  BeatKind.prep || BeatKind.doorway || BeatKind.after => ActivityPalette.brown,
-};
-
-/// Short kind label for the eyebrow fallback (lowercase, the calm voice).
-/// Mirrors `session_run_screen._kindLabel`.
-String _kindLabel(BeatKind kind) => switch (kind) {
-  BeatKind.prep => 'prep',
-  BeatKind.hook => 'the hook',
-  BeatKind.reveal => 'the reveal',
-  BeatKind.rules => 'the rules',
-  BeatKind.game => 'game',
-  BeatKind.cooldown => 'cool down',
-  BeatKind.partner => 'partner',
-  BeatKind.frame => 'frame game',
-  BeatKind.drawing => 'drawing',
-  BeatKind.vocab => 'vocabulary',
-  BeatKind.closing => 'closing',
-  BeatKind.doorway => 'doorway',
-  BeatKind.after => 'after',
 };

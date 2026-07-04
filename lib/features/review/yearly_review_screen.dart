@@ -98,6 +98,36 @@ class YearlyReviewScreen extends ConsumerWidget {
     );
   }
 
+  /// The shared page opening — title + subtitle, then the year label —
+  /// identical in both layouts except the label's bottom padding.
+  List<Widget> _headerBlock(
+    ThemeData theme,
+    String yearLabel, {
+    required double labelBottomPad,
+  }) {
+    return [
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: ContentHeader(
+          title: 'Yearly review',
+          subtitle:
+              'A snapshot of where your program is — '
+              'and an invitation to decide what comes next.',
+        ),
+      ),
+      Padding(
+        padding: EdgeInsets.fromLTRB(20, 4, 20, labelBottomPad),
+        child: Text(
+          yearLabel,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    ];
+  }
+
   /// The default layout — one calm single-column scroll, read top to bottom
   /// like a letter.
   Widget _flatBody({
@@ -113,27 +143,7 @@ class YearlyReviewScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: ContentHeader(
-            title: 'Yearly review',
-            subtitle:
-                'A snapshot of where your program is — '
-                'and an invitation to decide what comes next.',
-          ),
-        ),
-
-        // -- Year label --------------------------------------------------
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-          child: Text(
-            yearLabel,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
+        ..._headerBlock(theme, yearLabel, labelBottomPad: 16),
 
         // -- Snapshot ----------------------------------------------------
         const _SectionHeader('Right now'),
@@ -187,25 +197,7 @@ class YearlyReviewScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: ContentHeader(
-            title: 'Yearly review',
-            subtitle:
-                'A snapshot of where your program is — '
-                'and an invitation to decide what comes next.',
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-          child: Text(
-            yearLabel,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
+        ..._headerBlock(theme, yearLabel, labelBottomPad: 12),
         // The grid carries the same 20dp gutter the flat sections use, so the
         // stat tiles + full-width banners line up with the year label above.
         Padding(

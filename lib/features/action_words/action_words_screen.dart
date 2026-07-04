@@ -550,24 +550,7 @@ class _PickMoodRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final moodEntries =
-        ref
-            .watch(
-              entriesForSubjectProvider(
-                (subjectId: subjectId, kind: EntryKind.mood),
-              ),
-            )
-            .value ??
-        const <Entry>[];
-    final todayK = dateKey(DateTime.now());
-    MoodLevel? today;
-    for (final e in moodEntries) {
-      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
-      if (local != null && dateKey(local) == todayK) {
-        today = MoodReading.fromEntry(e).level;
-        break;
-      }
-    }
+    final today = watchTodayMood(ref, subjectId)?.level;
     return Row(
       children: [
         for (final m in MoodLevel.values)

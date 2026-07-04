@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/shared/widgets/cap_picker_sheet.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,48 +84,18 @@ class _SkinSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                child: Text('Room theme', style: theme.textTheme.titleMedium),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                child: Text(
-                  'The room’s standing vibe. The weekly world sits on top.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              for (final s in kRoomSkins)
-                _SkinPreviewTile(
-                  skin: s,
-                  selected: s.id == currentId,
-                  onTap: () => Navigator.of(context).pop(s.id),
-                ),
-              if (currentId != null)
-                ListTile(
-                  leading: Icon(Icons.clear, color: theme.colorScheme.error),
-                  title: Text(
-                    'Clear theme',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  // Empty string = the caller clears the cap.
-                  onTap: () => Navigator.of(context).pop(''),
-                ),
-            ],
+    return CapPickerSheetBody(
+      title: 'Room theme',
+      subtitle: 'The room’s standing vibe. The weekly world sits on top.',
+      clearLabel: currentId != null ? 'Clear theme' : null,
+      children: [
+        for (final s in kRoomSkins)
+          _SkinPreviewTile(
+            skin: s,
+            selected: s.id == currentId,
+            onTap: () => Navigator.of(context).pop(s.id),
           ),
-        ),
-      ),
+      ],
     );
   }
 }

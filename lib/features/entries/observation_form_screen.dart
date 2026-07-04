@@ -14,14 +14,16 @@ import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
+import 'package:differentworld/features/voice/dictation_mixin.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show LogicalKeyboardKey;
+import 'package:flutter/services.dart' show LogicalKeyboardKey, SystemChannels;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -69,7 +71,8 @@ class ObservationFormScreen extends ConsumerStatefulWidget {
       _ObservationFormScreenState();
 }
 
-class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
+class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen>
+    with DictationMixin<ObservationFormScreen> {
   late final TextEditingController _textCtrl;
   String? _subjectId;
   bool _saving = false;
@@ -128,11 +131,23 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   // Constructed in initState, disposed in dispose. dispose() (not
   // cancel()) is the right teardown — it closes the broadcast stream
   // and disposes the underlying AudioRecorder; this instance won't
-  // be reused after the form closes.
+  // be reused after the form closes. Session state machine lives in
+  // [DictationMixin].
   late final DeepgramVoiceController _voice;
-  StreamSubscription<VoiceUpdate>? _voiceSub;
-  bool _voiceActive = false;
-  String _voicePrefix = '';
+
+  @override
+  DeepgramVoiceController get dictationVoice => _voice;
+
+  @override
+  TextEditingController get dictationField => _textCtrl;
+
+  @override
+  void onDictationStarted() {
+    // Tapping the mic suffix icon can drop the field's IME on Android;
+    // keep the keyboard up so typing alongside dictation works
+    // (interaction invariant #4 — requestFocus alone doesn't show it).
+    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+  }
 
   bool get _isEdit => widget.existing != null;
 
@@ -158,54 +173,10 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
     // stream + the underlying AudioRecorder — this instance won't be
     // reused), then the text controller. All unawaited; the WS /
     // recorder shut themselves down promptly anyway.
-    unawaited(_voiceSub?.cancel());
-    _voiceSub = null;
+    cancelDictationSub();
     unawaited(_voice.dispose());
     _textCtrl.dispose();
     super.dispose();
-  }
-
-  /// Toggle Deepgram dictation for the body field. Uses the FORM-
-  /// LOCAL `_voice` controller (NOT the AppShell singleton) so the
-  /// transcript stream is isolated. Same prefix-preservation pattern
-  /// as the omnibox bar: snapshot whatever the user typed before the
-  /// session starts, append the live transcript as it streams in.
-  void _toggleVoice() {
-    if (_voiceActive) {
-      unawaited(_voice.stop());
-      return;
-    }
-    _voicePrefix = _textCtrl.text;
-    setState(() => _voiceActive = true);
-    _voiceSub = _voice.updates.listen(_onVoiceUpdate);
-    unawaited(_voice.start());
-  }
-
-  void _onVoiceUpdate(VoiceUpdate update) {
-    if (!mounted) return;
-    if (update.state == VoiceState.error) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      final msg = update.errorMessage ?? 'Voice dictation failed.';
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-      setState(() {});
-      return;
-    }
-    final transcript = update.transcript.trim();
-    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
-    final combined = '$_voicePrefix$glue$transcript';
-    _textCtrl
-      ..text = combined
-      ..selection = TextSelection.collapsed(offset: combined.length);
-    if (update.state == VoiceState.idle) {
-      _voiceActive = false;
-      unawaited(_voiceSub?.cancel());
-      _voiceSub = null;
-      setState(() {});
-    }
   }
 
   /// Seeded once per form-open from the `attachmentsForEntityProvider`
@@ -246,29 +217,13 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
         !samePhotos;
   }
 
-  Future<bool> _confirmDiscard() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Discard changes?'),
-        content: const Text(
-          "You haven't saved this observation. Leaving will drop "
-          'what you typed.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep editing'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
+  Future<bool> _confirmDiscard() => confirmDiscardDialog(
+    context,
+    title: 'Discard changes?',
+    message:
+        "You haven't saved this observation. Leaving will drop "
+        'what you typed.',
+  );
 
   /// Library / single-image picker path. Camera goes through
   /// [_takeBurstFromCamera] so the user can stay in the camera
@@ -729,25 +684,23 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   labelText: 'What happened?',
-                  helperText: _voiceActive ? 'Listening…' : null,
+                  helperText: voiceActive ? 'Listening…' : null,
                   border: const OutlineInputBorder(),
                   // Mic lives as the suffix so it sits adjacent to the
                   // text the user is dictating into. Tap toggles a live
                   // Deepgram session; the transcript appends to the
                   // existing prefix so typed-then-dictated works.
                   suffixIcon: IconButton(
-                    tooltip: _voiceActive
+                    tooltip: voiceActive
                         ? 'Stop dictation'
                         : 'Dictate by voice',
                     icon: Icon(
-                      _voiceActive
-                          ? Icons.stop_circle
-                          : Icons.mic_none_outlined,
-                      color: _voiceActive
+                      voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
+                      color: voiceActive
                           ? Theme.of(context).colorScheme.error
                           : null,
                     ),
-                    onPressed: _toggleVoice,
+                    onPressed: toggleDictation,
                   ),
                 ),
               ),

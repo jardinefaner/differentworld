@@ -1,6 +1,5 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
-import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
@@ -91,19 +90,10 @@ class _SurveyTemplateCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final viewer = ref.watch(viewerProvider);
-    final spaceId = viewer.spaceId;
-    final responsesAsync = spaceId == null
-        ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(
-            surveyResponsesProvider(
-              (spaceId: spaceId, templateId: template.id),
-            ),
-          );
-    final responses = responsesAsync.value ?? const <SurveyResponse>[];
-    final completed = responses
-        .where((r) => r.status == SurveyResponseStatus.completed)
-        .length;
+    final completed = completedSurveyCount(
+      surveyResponsesScope(ref, template.id).responses.value ??
+          const <SurveyResponse>[],
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: FeatureCard(
@@ -118,30 +108,14 @@ class _SurveyTemplateCard extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: completed > 0
-                    ? scheme.primaryContainer.withValues(alpha: 0.7)
-                    : scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                // Wave 138: anonymous surveys — show only completed
-                // count (one row = one response, not one row = one
-                // kid). In-progress drafts no longer get separate
-                // billing because nobody resumes them; they're just
-                // abandoned sessions.
-                '$completed',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: scheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
+            // Wave 138: anonymous surveys — show only completed
+            // count (one row = one response, not one row = one
+            // kid). In-progress drafts no longer get separate
+            // billing because nobody resumes them; they're just
+            // abandoned sessions.
+            _CompletedChip(
+              completed: completed,
+              textColor: scheme.onPrimaryContainer,
             ),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right),
@@ -164,19 +138,10 @@ class _SurveyTemplateGridCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final viewer = ref.watch(viewerProvider);
-    final spaceId = viewer.spaceId;
-    final responsesAsync = spaceId == null
-        ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(
-            surveyResponsesProvider(
-              (spaceId: spaceId, templateId: template.id),
-            ),
-          );
-    final responses = responsesAsync.value ?? const <SurveyResponse>[];
-    final completed = responses
-        .where((r) => r.status == SurveyResponseStatus.completed)
-        .length;
+    final completed = completedSurveyCount(
+      surveyResponsesScope(ref, template.id).responses.value ??
+          const <SurveyResponse>[],
+    );
     // Use the same FeatureCard primitive as the list variant so the bento
     // grid matches the list. The completed-count chip rides as the trailing
     // badge — identical semantics to the list row (one row = one response).
@@ -189,26 +154,42 @@ class _SurveyTemplateGridCard extends ConsumerWidget {
       ),
       title: template.title,
       subtitle: '${template.year} · ${template.scored.length} questions',
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: completed > 0
-              ? scheme.primaryContainer.withValues(alpha: 0.7)
-              : scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          '$completed',
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: completed > 0
-                ? scheme.onPrimaryContainer
-                : scheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
+      trailing: _CompletedChip(
+        completed: completed,
+        textColor: completed > 0
+            ? scheme.onPrimaryContainer
+            : scheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+/// The completed-responses count chip on a template card — tinted while
+/// there's at least one completed response.
+class _CompletedChip extends StatelessWidget {
+  const _CompletedChip({required this.completed, required this.textColor});
+
+  final int completed;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: completed > 0
+            ? scheme.primaryContainer.withValues(alpha: 0.7)
+            : scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$completed',
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),
     );
@@ -241,15 +222,7 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
         ),
       );
     }
-    final viewer = ref.watch(viewerProvider);
-    final spaceId = viewer.spaceId;
-    final responsesAsync = spaceId == null
-        ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(
-            surveyResponsesProvider(
-              (spaceId: spaceId, templateId: templateId),
-            ),
-          );
+    final scope = surveyResponsesScope(ref, templateId);
 
     return RouteTitle(
       title: template.title,
@@ -263,26 +236,16 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
           ),
           const SyncStatusIndicator(),
         ],
-        body: responsesAsync.when(
+        body: scope.responses.when(
           loading: () => const LoadingSlot(),
           error: (_, _) => ErrorState(
             title: 'Could not load responses',
-            onRetry: () => ref.invalidate(
-              surveyResponsesProvider(
-                (
-                  spaceId: spaceId ?? '',
-                  templateId: templateId,
-                ),
-              ),
-            ),
+            onRetry: scope.retry,
           ),
           data: (responses) {
-            final completed = responses
-                .where((r) => r.status == SurveyResponseStatus.completed)
-                .length;
             return _TemplateLanding(
               template: template,
-              completed: completed,
+              completed: completedSurveyCount(responses),
               totalRecorded: responses.length,
             );
           },

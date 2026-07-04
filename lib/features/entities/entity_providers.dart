@@ -10,28 +10,18 @@ import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/prefs_bool_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// shared_preferences IS a direct dep; the analyzer sometimes warns spuriously
-// across the pub workspace boundary.
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Master switch for **live entities** (tap-anything + autotagging). Default
 /// ON — the user asked for this behavior; the toggle is the escape hatch if
 /// auto-detection ever over-matches. Mirrors `bento_everywhere_setting`.
-class LiveEntitiesNotifier extends AsyncNotifier<bool> {
-  static const _kKey = 'settings.live_entities';
+class LiveEntitiesNotifier extends PrefsBoolNotifier {
+  @override
+  String get prefsKey => 'settings.live_entities';
 
   @override
-  Future<bool> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_kKey) ?? true;
-  }
-
-  Future<void> set({required bool value}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kKey, value);
-    state = AsyncData(value);
-  }
+  bool get defaultValue => true;
 }
 
 final liveEntitiesProvider = AsyncNotifierProvider<LiveEntitiesNotifier, bool>(

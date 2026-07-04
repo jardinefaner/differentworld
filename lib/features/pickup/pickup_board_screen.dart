@@ -166,20 +166,7 @@ class _ReleasedRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dep = entry.departure;
-    final when = dep == null
-        ? null
-        : DateTime.tryParse(dep.recordedAt)?.toLocal();
-    final to = (dep?.body ?? '').trim();
-    final String subtitle;
-    if (entry.leftEarly) {
-      subtitle = 'Left early';
-    } else {
-      final parts = <String>[
-        if (to.isNotEmpty) 'to $to',
-        if (when != null) timeOfDay(when),
-      ];
-      subtitle = parts.isEmpty ? 'Picked up' : parts.join(' · ');
-    }
+    final subtitle = _releasedSubtitle(entry);
     return FeatureCard(
       leading: Opacity(
         opacity: 0.6,
@@ -204,24 +191,70 @@ class _ReleasedRow extends ConsumerWidget {
       // an early_pickup is an attendance fact, edited in attendance.
       trailing: canRelease && dep != null
           ? TextButton(
-              onPressed: () {
-                // Optimistic + fire-and-forget: the delete is a local
-                // Drift write, so there's no await gap that could leave a
-                // snackbar firing on a dead context.
-                final messenger = ScaffoldMessenger.of(context);
-                unawaited(HapticFeedback.selectionClick());
-                unawaited(ref.read(pickupBoardActionsProvider).undo(dep.id));
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text('${entry.fullName} back on the board'),
-                  ),
-                );
-              },
+              onPressed: () => _undoRelease(context, ref, entry, dep.id),
               child: const Text('Undo'),
             )
           : null,
     );
   }
+}
+
+/// "to Grandma · 4:12 PM" / "Left early" / "Picked up" — the released
+/// child's subtitle, shared by the row and the bento cell.
+String _releasedSubtitle(PickupBoardEntry entry) {
+  if (entry.leftEarly) return 'Left early';
+  final dep = entry.departure;
+  final when = dep == null
+      ? null
+      : DateTime.tryParse(dep.recordedAt)?.toLocal();
+  final to = (dep?.body ?? '').trim();
+  final parts = <String>[
+    if (to.isNotEmpty) 'to $to',
+    if (when != null) timeOfDay(when),
+  ];
+  return parts.isEmpty ? 'Picked up' : parts.join(' · ');
+}
+
+/// Undo a board release. Optimistic + fire-and-forget: the delete is a
+/// local Drift write, so there's no await gap that could leave a snackbar
+/// firing on a dead context.
+void _undoRelease(
+  BuildContext context,
+  WidgetRef ref,
+  PickupBoardEntry entry,
+  String departureId,
+) {
+  final messenger = ScaffoldMessenger.of(context);
+  unawaited(HapticFeedback.selectionClick());
+  unawaited(ref.read(pickupBoardActionsProvider).undo(departureId));
+  messenger.showSnackBar(
+    SnackBar(content: Text('${entry.fullName} back on the board')),
+  );
+}
+
+/// The shared 2-up bento grid shell for the pickup board — a shrink-wrapped,
+/// never-scrolling grid inside the page scroll (a pickup rush is a small
+/// bounded set). Cells differ per section via [cell]; [mainAxisExtent] grows
+/// with the text scale so an accessibility floor doesn't clip the content.
+Widget _boardGrid({
+  required List<PickupBoardEntry> entries,
+  required double mainAxisExtent,
+  required Widget Function(PickupBoardEntry e) cell,
+}) {
+  return GridView.builder(
+    shrinkWrap: true,
+    primary: false,
+    padding: EdgeInsets.zero,
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+      maxCrossAxisExtent: 180,
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      mainAxisExtent: mainAxisExtent,
+    ),
+    itemCount: entries.length,
+    itemBuilder: (_, i) => cell(entries[i]),
+  );
 }
 
 /// The bento variant of the still-here board: the SAME children, re-laid as a
@@ -238,28 +271,14 @@ class _StillHereGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      primary: false,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 180,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        // Grows with text scale so a large accessibility floor doesn't clip the
-        // name + Release button (the fixed-aspect-ratio trap).
-        mainAxisExtent: 134 + 56 * _textScale(context),
+    return _boardGrid(
+      entries: entries,
+      mainAxisExtent: 134 + 56 * _textScale(context),
+      cell: (e) => _StillHereCell(
+        key: ValueKey('pickup-here-${e.subject.id}'),
+        entry: e,
+        canRelease: canRelease,
       ),
-      itemCount: entries.length,
-      itemBuilder: (_, i) {
-        final e = entries[i];
-        return _StillHereCell(
-          key: ValueKey('pickup-here-${e.subject.id}'),
-          entry: e,
-          canRelease: canRelease,
-        );
-      },
     );
   }
 }
@@ -363,26 +382,14 @@ class _ReleasedGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      primary: false,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 180,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        mainAxisExtent: 120 + 44 * _textScale(context),
+    return _boardGrid(
+      entries: entries,
+      mainAxisExtent: 120 + 44 * _textScale(context),
+      cell: (e) => _ReleasedCell(
+        key: ValueKey('pickup-gone-${e.subject.id}'),
+        entry: e,
+        canRelease: canRelease,
       ),
-      itemCount: entries.length,
-      itemBuilder: (_, i) {
-        final e = entries[i];
-        return _ReleasedCell(
-          key: ValueKey('pickup-gone-${e.subject.id}'),
-          entry: e,
-          canRelease: canRelease,
-        );
-      },
     );
   }
 }
@@ -404,20 +411,7 @@ class _ReleasedCell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final dep = entry.departure;
-    final when = dep == null
-        ? null
-        : DateTime.tryParse(dep.recordedAt)?.toLocal();
-    final to = (dep?.body ?? '').trim();
-    final String subtitle;
-    if (entry.leftEarly) {
-      subtitle = 'Left early';
-    } else {
-      final parts = <String>[
-        if (to.isNotEmpty) 'to $to',
-        if (when != null) timeOfDay(when),
-      ];
-      subtitle = parts.isEmpty ? 'Picked up' : parts.join(' · ');
-    }
+    final subtitle = _releasedSubtitle(entry);
     return RepaintBoundary(
       child: Material(
         color: theme.colorScheme.surfaceContainerHigh,
@@ -466,20 +460,7 @@ class _ReleasedCell extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      final messenger = ScaffoldMessenger.of(context);
-                      unawaited(HapticFeedback.selectionClick());
-                      unawaited(
-                        ref.read(pickupBoardActionsProvider).undo(dep.id),
-                      );
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${entry.fullName} back on the board',
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: () => _undoRelease(context, ref, entry, dep.id),
                     child: const Text('Undo'),
                   ),
                 ),

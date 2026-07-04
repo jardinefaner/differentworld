@@ -19,6 +19,7 @@ import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
+import 'package:differentworld/features/curricula/beat_kind_style.dart';
 import 'package:differentworld/features/curricula/session_room_slides.dart';
 import 'package:differentworld/features/curricula/session_script.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
@@ -363,47 +364,8 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Kind → accent
+// Kind → accent — shared with the room deck (beat_kind_style.dart)
 // ─────────────────────────────────────────────────────────────────────────
-
-/// One beat kind's accent — a content-driven categorical colour (NOT a theme
-/// role; these are deliberately varied for at-a-glance recognition, like the
-/// activity palette). Text/icons ON this fill pick contrast via
-/// [AppColors.onAccent]; small dots/borders use it raw.
-///
-/// Mapping (per the brief): hook/reveal/rules/closing → warm amber;
-/// game → blue; cooldown → teal; partner → blue; frame → purple;
-/// drawing → pink; vocab → gold; prep/doorway/after → neutral brown.
-Color _accentForKind(BeatKind kind) => switch (kind) {
-  BeatKind.hook ||
-  BeatKind.reveal ||
-  BeatKind.rules ||
-  BeatKind.closing => ActivityPalette.amber,
-  BeatKind.game => ActivityPalette.blue,
-  BeatKind.cooldown => ActivityPalette.teal,
-  BeatKind.partner => ActivityPalette.lightBlue,
-  BeatKind.frame => ActivityPalette.purple,
-  BeatKind.drawing => ActivityPalette.pink,
-  BeatKind.vocab => ActivityPalette.yellow,
-  BeatKind.prep || BeatKind.doorway || BeatKind.after => ActivityPalette.brown,
-};
-
-/// Short kind label for the eyebrow + timeline (lowercase, the calm voice).
-String _kindLabel(BeatKind kind) => switch (kind) {
-  BeatKind.prep => 'prep',
-  BeatKind.hook => 'the hook',
-  BeatKind.reveal => 'the reveal',
-  BeatKind.rules => 'the rules',
-  BeatKind.game => 'game',
-  BeatKind.cooldown => 'cool down',
-  BeatKind.partner => 'partner',
-  BeatKind.frame => 'frame game',
-  BeatKind.drawing => 'drawing',
-  BeatKind.vocab => 'vocabulary',
-  BeatKind.closing => 'closing',
-  BeatKind.doorway => 'doorway',
-  BeatKind.after => 'after',
-};
 
 /// The leading glyph for a beat kind — decorative; the label carries meaning.
 IconData _kindIcon(BeatKind kind) => switch (kind) {
@@ -539,7 +501,7 @@ class _BeatSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final accent = _accentForKind(beat.kind);
+    final accent = accentForBeatKind(beat.kind);
 
     // The first stage cue (italic direction) — the one shown in the calm view.
     final firstCue = beat.script
@@ -857,7 +819,9 @@ class _KindEyebrow extends StatelessWidget {
     // "prep" / "after" are the untimed bookends — show the kind word only, not
     // a redundant "prep · prep".
     final isBookend = time == 'prep' || time == 'after';
-    final label = isBookend ? _kindLabel(kind) : '$time · ${_kindLabel(kind)}';
+    final label = isBookend
+        ? beatKindLabel(kind)
+        : '$time · ${beatKindLabel(kind)}';
     return Flexible(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1717,7 +1681,7 @@ class _TimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final accent = _accentForKind(beat.kind);
+    final accent = accentForBeatKind(beat.kind);
 
     return Semantics(
       button: true,
@@ -1788,8 +1752,8 @@ class _TimelineRow extends StatelessWidget {
                       const SizedBox(height: 1),
                       Text(
                         beat.time == 'prep' || beat.time == 'after'
-                            ? _kindLabel(beat.kind)
-                            : '${beat.time} · ${_kindLabel(beat.kind)}',
+                            ? beatKindLabel(beat.kind)
+                            : '${beat.time} · ${beatKindLabel(beat.kind)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
