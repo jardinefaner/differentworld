@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -7,19 +8,14 @@ import 'package:flutter/material.dart';
 /// Each phrase is a little editorial poster — words at varied sizes, weights,
 /// and slight angles. The composition is STABLE per line (seeded, so it never
 /// jitters); only the spoken word illuminates within it. Tasteful ransom-note.
-class CollageView extends StatelessWidget {
+class CollageView extends SpeakLinesView {
   const CollageView({
-    required this.lines,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.lines,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenLine> lines;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -5,19 +6,14 @@ import 'package:flutter/material.dart';
 /// Lines accumulate into the full passage — the current line brightest at the
 /// bottom, older lines receding upward and dimming. You watch the quote build,
 /// teleprompter-style. (Scroll up to revisit earlier lines.)
-class StackView extends StatelessWidget {
+class StackView extends SpeakLinesView {
   const StackView({
-    required this.lines,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.lines,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenLine> lines;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

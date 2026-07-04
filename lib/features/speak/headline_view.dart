@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -6,19 +7,14 @@ import 'package:flutter/material.dart';
 /// stacked one word per line, flush left, tight-leading, scaled to fill the
 /// frame. The Spotify-Wrapped / A24 look — best in the condensed face (Bold).
 /// High contrast: the spoken word is full white, the rest recede hard.
-class HeadlineView extends StatelessWidget {
+class HeadlineView extends SpeakLinesView {
   const HeadlineView({
-    required this.lines,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.lines,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenLine> lines;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

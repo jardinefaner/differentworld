@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -6,19 +7,14 @@ import 'package:flutter/material.dart';
 /// bleeds off the screen edges (clipped), while the rest of the phrase sits
 /// small above and below it. Maximalist, editorial. Best in the condensed
 /// face (Bold).
-class OversizedView extends StatelessWidget {
+class OversizedView extends SpeakLinesView {
   const OversizedView({
-    required this.lines,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.lines,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenLine> lines;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

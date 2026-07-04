@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -6,19 +7,14 @@ import 'package:flutter/material.dart';
 /// bright, heavier, glowing in the voice's hue — then settles back as the
 /// light moves on. Follow-the-light, and a strong reading aid (you keep the
 /// full context in view).
-class SpotlightView extends StatelessWidget {
+class SpotlightView extends SpeakWordsView {
   const SpotlightView({
-    required this.words,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.words,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenWord> words;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

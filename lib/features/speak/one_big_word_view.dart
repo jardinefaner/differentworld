@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -5,19 +6,14 @@ import 'package:flutter/material.dart';
 /// One giant word at a time, scaled to fill the frame, punching in on the beat.
 /// Pauses + periods become the rhythm (the word simply holds). High-impact —
 /// the "full-screen typography" mode.
-class OneBigWordView extends StatelessWidget {
+class OneBigWordView extends SpeakWordsView {
   const OneBigWordView({
-    required this.words,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.words,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenWord> words;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

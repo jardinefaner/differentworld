@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -7,19 +8,14 @@ import 'package:flutter/material.dart';
 /// The whole text in a fixed grid — one word per cell, each scaled to fill its
 /// cell. The grid (cols ≈ √n) is computed once; the spoken word's cell lights
 /// up in place. Architectural and very designed; the cells never move.
-class WordGridView extends StatelessWidget {
+class WordGridView extends SpeakWordsView {
   const WordGridView({
-    required this.words,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.words,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenWord> words;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

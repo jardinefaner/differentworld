@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -6,19 +7,14 @@ import 'package:flutter/material.dart';
 /// pull-quote. Uniform size + weight, so the layout is fixed; the spoken word
 /// just brightens + glows in place (colour + shadow are paint-only, so the
 /// justified lines never re-break).
-class JustifiedView extends StatelessWidget {
+class JustifiedView extends SpeakWordsView {
   const JustifiedView({
-    required this.words,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.words,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenWord> words;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {

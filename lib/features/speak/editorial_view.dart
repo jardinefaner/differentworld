@@ -1,3 +1,4 @@
+import 'package:differentworld/features/speak/speak_view_base.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:flutter/material.dart';
@@ -7,19 +8,14 @@ import 'package:flutter/material.dart';
 /// justified serif column with generous leading, and a hairline rule beneath.
 /// The spoken word is marked with a quiet accent UNDERLINE (decoration is
 /// paint-only, so the justified lines never re-break) — restraint over glow.
-class EditorialView extends StatelessWidget {
+class EditorialView extends SpeakWordsView {
   const EditorialView({
-    required this.words,
-    required this.position,
-    required this.type,
-    required this.accent,
+    required super.words,
+    required super.position,
+    required super.type,
+    required super.accent,
     super.key,
   });
-
-  final List<SpokenWord> words;
-  final Duration position;
-  final SpeakType type;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
