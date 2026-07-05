@@ -2114,6 +2114,18 @@ do / dictate. Some key invariants:
   `SystemChrome.setEnabledSystemUIMode(immersiveSticky)` on mount +
   restore `edgeToEdge` on dispose (see `cast_receiver.dart`,
   `game_fullscreen.dart`).
+  - **The `Navigator.push` variant of the same trap (audited 2026-07-05):**
+    a full-bleed `MaterialPageRoute` pushed with plain
+    `Navigator.of(context)` lands on the SHELL navigator (the ShellRoute
+    owns its own Navigator), so it renders INSIDE the shell — stale chrome
+    pills float over its top controls and it inherits the 76 dp bottom
+    reservation with the omnibox bar visible under it. Full-bleed pushes
+    must use **`Navigator.of(context, rootNavigator: true)`** to escape
+    the shell (pop/`maybePop` from inside the pushed route still works —
+    it resolves to the same root navigator). Fixed on: `photo_viewer`,
+    `multi_shot_camera`, `drawing_pad` (`showDrawingPad`), the vehicle
+    guided-capture push; `role_capture` + `game_fullscreen` were already
+    correct. Rubric item A1a enforces this.
 - **The bar lives INSIDE the body Stack** at `Positioned(bottom: 0)`,
   not in `Scaffold.bottomNavigationBar`. The bottomNavigationBar slot
   does NOT ride the keyboard inset; the body does. Routes whose forms

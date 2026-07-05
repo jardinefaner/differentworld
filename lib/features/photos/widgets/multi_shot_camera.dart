@@ -26,7 +26,9 @@ class MultiShotCamera extends StatefulWidget {
   /// captured `XFile`s, or null if the user cancelled. Empty list is
   /// also possible (opened, snapped nothing, hit Done).
   static Future<List<XFile>?> open(BuildContext context) {
-    return Navigator.of(context).push<List<XFile>>(
+    // rootNavigator: escape the app shell so the floating chrome pills +
+    // omnibox bar don't paint over the full-bleed camera (CLAUDE.md trap).
+    return Navigator.of(context, rootNavigator: true).push<List<XFile>>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => const MultiShotCamera(),

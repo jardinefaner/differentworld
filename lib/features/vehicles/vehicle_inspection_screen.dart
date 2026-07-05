@@ -212,15 +212,21 @@ class _VehicleInspectionScreenState
   /// Launch the guided camera for this kind's shot list, storing the result.
   Future<void> _takePhotos(String capabilitiesJson) async {
     final shots = shotsFor(capabilitiesJson, widget.kind);
-    final result = await Navigator.of(context).push<List<CapturedShot>>(
-      MaterialPageRoute(
-        builder: (_) => GuidedCaptureScreen(
-          shots: shots,
-          title: widget.isCheckout ? 'Check-out photos' : 'Check-in photos',
-        ),
-        fullscreenDialog: true,
-      ),
-    );
+    // rootNavigator: escape the app shell so the floating chrome pills +
+    // omnibox bar don't paint over the full-bleed camera (CLAUDE.md trap).
+    final result =
+        await Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push<List<CapturedShot>>(
+          MaterialPageRoute(
+            builder: (_) => GuidedCaptureScreen(
+              shots: shots,
+              title: widget.isCheckout ? 'Check-out photos' : 'Check-in photos',
+            ),
+            fullscreenDialog: true,
+          ),
+        );
     if (result != null && mounted) {
       setState(() {
         _captures

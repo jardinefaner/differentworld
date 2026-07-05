@@ -41,7 +41,9 @@ class PhotoViewer extends ConsumerStatefulWidget {
     List<String>? captions,
   }) {
     if (urls.isEmpty) return Future.value();
-    return Navigator.of(context).push<void>(
+    // rootNavigator: escape the app shell so the floating chrome pills +
+    // omnibox bar don't paint over the full-bleed viewer (CLAUDE.md trap).
+    return Navigator.of(context, rootNavigator: true).push<void>(
       PageRouteBuilder(
         fullscreenDialog: true,
         opaque: false,

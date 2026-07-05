@@ -36,6 +36,17 @@ Mark inapplicable items **n/a**; don't force them.
 - **A1 — Uses `EdgeScaffold`, not a raw `Scaffold`/`AppBar`.** The whole
   chrome system (floating pills, glass, chrome-inset injection) rides on
   it. Verify: the screen returns `EdgeScaffold(...)`. *Blocker.*
+- **A1a — A full-bleed surface pushed via `Navigator.push` escapes the
+  shell with `rootNavigator: true`.** Plain `Navigator.of(context)`
+  resolves to the SHELL navigator, so the pushed route renders under the
+  floating pills and above the omnibox bar's 76 dp reservation — the
+  camera/viewer gets chrome painted over it and a dead band at its foot.
+  Verify: any `fullscreenDialog`/full-bleed `MaterialPageRoute` push uses
+  `Navigator.of(context, rootNavigator: true)` (references:
+  `photo_viewer.dart`, `multi_shot_camera.dart`, `drawing_pad.dart`,
+  `role_capture.dart`, `game_fullscreen.dart`). go_router-routed
+  full-bleed screens use an immersive provider instead (see A1/CLAUDE.md).
+  *Blocker.*
 - **A2 — Top content clears the floating chrome.** Either the first
   scrollable child is a `ContentHeader`, **or** the body is wrapped in a
   `SafeArea`. EdgeScaffold injects the chrome band into

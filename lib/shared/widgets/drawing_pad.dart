@@ -340,7 +340,9 @@ Future<XFile?> showDrawingPad(
   required String title,
   String doneLabel = 'Use this drawing',
 }) {
-  return Navigator.of(context).push<XFile>(
+  // rootNavigator: escape the app shell so the floating chrome pills +
+  // omnibox bar don't paint over the full-bleed pad (CLAUDE.md trap).
+  return Navigator.of(context, rootNavigator: true).push<XFile>(
     MaterialPageRoute<XFile>(
       fullscreenDialog: true,
       builder: (_) => _DrawingPadScreen(title: title, doneLabel: doneLabel),
