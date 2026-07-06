@@ -5,6 +5,7 @@ import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +72,22 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
     _emergency = TextEditingController(
       text: caps.getString(SubjectCaps.emergencyInstructions) ?? '',
     );
+    _initialSnapshot = _snapshot();
   }
+
+  /// The seven fields joined — dirty = changed since open. Medical typing
+  /// is the highest-stakes text in the app; back must never discard it
+  /// silently (the form law; DismissGuard confirms when dirty).
+  late final String _initialSnapshot;
+  String _snapshot() => [
+    _allergies.text,
+    _medications.text,
+    _conditions.text,
+    _iep.text,
+    _docName.text,
+    _docPhone.text,
+    _emergency.text,
+  ].join('\u0000');
 
   @override
   void dispose() {
@@ -167,120 +183,123 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final s = widget.subject;
-    return EdgeScaffold(
-      body: FormBody(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        children: [
-          ContentHeader(
-            title: 'Health & medical',
-            subtitle: '${s.firstName} ${s.lastName}',
-          ),
-          TextField(
-            controller: _allergies,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Allergies',
-              hintText: 'e.g. Peanuts, dairy',
-              border: OutlineInputBorder(),
+    return DismissGuard(
+      isDirty: () => _snapshot() != _initialSnapshot,
+      child: EdgeScaffold(
+        body: FormBody(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          children: [
+            ContentHeader(
+              title: 'Health & medical',
+              subtitle: '${s.firstName} ${s.lastName}',
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _medications,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Medications',
-              hintText: 'e.g. Albuterol (as needed), EpiPen Jr',
-              border: OutlineInputBorder(),
+            TextField(
+              controller: _allergies,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Allergies',
+                hintText: 'e.g. Peanuts, dairy',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _conditions,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Medical conditions',
-              hintText: 'e.g. Asthma, type 1 diabetes',
-              border: OutlineInputBorder(),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _medications,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Medications',
+                hintText: 'e.g. Albuterol (as needed), EpiPen Jr',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _iep,
-            minLines: 2,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'IEP / 504 notes',
-              hintText:
-                  'What staff should know day-to-day. Adds an '
-                  'alert badge automatically.',
-              border: OutlineInputBorder(),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _conditions,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Medical conditions',
+                hintText: 'e.g. Asthma, type 1 diabetes',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: _docName,
-                  textCapitalization: TextCapitalization.words,
-                  // Wave 125: physician's name — parents often have
-                  // it saved in contacts. Generic `name` hint.
-                  autofillHints: const [AutofillHints.name],
-                  decoration: const InputDecoration(
-                    labelText: 'Physician name',
-                    border: OutlineInputBorder(),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _iep,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'IEP / 504 notes',
+                hintText:
+                    'What staff should know day-to-day. Adds an '
+                    'alert badge automatically.',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _docName,
+                    textCapitalization: TextCapitalization.words,
+                    // Wave 125: physician's name — parents often have
+                    // it saved in contacts. Generic `name` hint.
+                    autofillHints: const [AutofillHints.name],
+                    decoration: const InputDecoration(
+                      labelText: 'Physician name',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: _docPhone,
-                  keyboardType: TextInputType.phone,
-                  autofillHints: const [AutofillHints.telephoneNumber],
-                  decoration: const InputDecoration(
-                    labelText: 'Phone',
-                    border: OutlineInputBorder(),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _docPhone,
+                    keyboardType: TextInputType.phone,
+                    autofillHints: const [AutofillHints.telephoneNumber],
+                    decoration: const InputDecoration(
+                      labelText: 'Phone',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _emergency,
-            minLines: 2,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Emergency instructions',
-              hintText:
-                  'What to do if something happens. Different from '
-                  'general notes.',
-              border: OutlineInputBorder(),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FilledButton(
-                onPressed: _saving ? null : () => unawaited(_save()),
-                child: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _emergency,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Emergency instructions',
+                hintText:
+                    'What to do if something happens. Different from '
+                    'general notes.',
+                border: OutlineInputBorder(),
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FilledButton(
+                  onPressed: _saving ? null : () => unawaited(_save()),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Save'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -177,6 +177,11 @@ class EntriesDao extends DatabaseAccessor<AppDatabase> with _$EntriesDaoMixin {
     );
   }
 
+  /// The row as it stands — capture BEFORE delete so undo can re-insert it.
+  Future<Entry?> findById(String id) {
+    return (select(entries)..where((e) => e.id.equals(id))).getSingleOrNull();
+  }
+
   Future<void> deleteById(String id) async {
     await (delete(entries)..where((e) => e.id.equals(id))).go();
   }

@@ -267,6 +267,20 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     await (delete(scheduleBlocks)..where((b) => b.id.equals(id))).go();
   }
 
+  /// The row as it stands — capture BEFORE delete so undo can re-insert it.
+  Future<ScheduleBlock?> findById(String id) {
+    return (select(
+      scheduleBlocks,
+    )..where((b) => b.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Re-insert a previously-deleted block VERBATIM — the undo path for
+  /// `deleteWithUndo`. The stable client UUID re-creates the exact row and
+  /// PowerSync re-syncs it.
+  Future<void> restore(ScheduleBlock block) async {
+    await into(scheduleBlocks).insertOnConflictUpdate(block);
+  }
+
   /// Pat persona: director-set substitute for one cohort's blocks on
   /// a given date.
   ///

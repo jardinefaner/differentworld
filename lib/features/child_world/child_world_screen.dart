@@ -14,10 +14,12 @@ import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
 import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -38,17 +40,37 @@ class ChildWorldScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final subject = ref.watch(subjectByIdProvider(subjectId)).value;
+    final subjectAsync = ref.watch(subjectByIdProvider(subjectId));
+    // A stale deep link (or a not-yet-synced row) must NOT render a
+    // fully-populated hub for a nonexistent child — loading gets a
+    // skeleton, a missing row gets a real not-found.
+    if (subjectAsync.isLoading) {
+      return const EdgeScaffold(
+        body: LoadingSlot(variant: LoadingVariant.cards),
+      );
+    }
+    final subject = subjectAsync.value;
+    if (subject == null) {
+      return const EdgeScaffold(
+        body: EmptyState(
+          icon: Icons.public_off_outlined,
+          title: 'No child found',
+          message:
+              'This link may be old, or the child may not have '
+              'synced to this device yet.',
+        ),
+      );
+    }
     // Default to week 1 before the journey is set up, so the hub still works.
     final week = ref.watch(currentCurriculumWeekProvider) ?? 1;
-    final name = subject?.firstName ?? 'This child';
+    final name = subject.firstName;
     final key = (subjectId: subjectId, week: week);
 
     // Decal the hub with the child's room theme — subtle, over the Calm base.
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
     Group? group;
     for (final g in groups) {
-      if (g.id == subject?.groupId) {
+      if (g.id == subject.groupId) {
         group = g;
         break;
       }

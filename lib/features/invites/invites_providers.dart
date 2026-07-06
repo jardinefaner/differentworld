@@ -118,6 +118,20 @@ class InviteActions {
     await db.invitesDao.revoke(id);
   }
 
+  /// Snapshot the row BEFORE revoking so [restore] (the undo path) can
+  /// re-insert it verbatim.
+  Future<Invite?> findById(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.invitesDao.findById(id);
+  }
+
+  /// Undo a revoke — re-inserts the captured row (same id, same code,
+  /// same expiry); PowerSync re-syncs it.
+  Future<void> restore(Invite invite) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.invitesDao.restore(invite);
+  }
+
   /// Newcomer-side: redeem an invite. If `code` is null the backend
   /// matches by the signed-in user's auth.users.email (the magic path).
   ///

@@ -485,24 +485,17 @@ class _InviteTile extends ConsumerWidget {
                   icon: const Icon(Icons.more_vert),
                   onSelected: (v) async {
                     if (v != 'revoke') return;
-                    final messenger = ScaffoldMessenger.of(context);
-                    final confirmed = await confirmDestructive(
+                    // Revoke-now + Undo (the modals law) — a revoke is a
+                    // single-row delete; re-inserting restores it exactly.
+                    final actions = ref.read(inviteActionsProvider);
+                    final snapshot = await actions.findById(invite.id);
+                    if (snapshot == null || !context.mounted) return;
+                    await deleteWithUndo(
                       context,
-                      title: 'Revoke this invite?',
-                      message: email == null
-                          ? 'Code ${_formatCode(code ?? '')} will stop '
-                                'working immediately.'
-                          : '$email will no longer be able to join with '
-                                'this invite.',
-                      confirmLabel: 'Revoke',
-                    );
-                    if (!confirmed) return;
-                    await ref.read(inviteActionsProvider).revoke(invite.id);
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Invite revoked'),
-                        duration: Duration(seconds: 2),
-                      ),
+                      label: 'invite',
+                      message: 'Invite revoked',
+                      onDelete: () => actions.revoke(invite.id),
+                      onUndo: () => actions.restore(snapshot),
                     );
                   },
                   itemBuilder: (_) => [
@@ -546,24 +539,18 @@ class _InviteTile extends ConsumerWidget {
           color: theme.colorScheme.onErrorContainer,
         ),
       ),
-      confirmDismiss: (_) => confirmDestructive(
-        context,
-        title: 'Revoke this invite?',
-        message: email == null
-            ? 'Code ${_formatCode(code ?? '')} will stop working immediately.'
-            : '$email will no longer be able to join with this invite.',
-        confirmLabel: 'Revoke',
-      ),
       onDismissed: (_) async {
-        // Grab the messenger before the await so we don't deref the
-        // BuildContext after a possible unmount.
-        final messenger = ScaffoldMessenger.of(context);
-        await ref.read(inviteActionsProvider).revoke(invite.id);
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Invite revoked'),
-            duration: Duration(seconds: 2),
-          ),
+        // Revoke-now + Undo (the modals law): the swipe IS the intent —
+        // no confirm wall; undo re-inserts the same row (same code).
+        final actions = ref.read(inviteActionsProvider);
+        final snapshot = await actions.findById(invite.id);
+        if (snapshot == null || !context.mounted) return;
+        await deleteWithUndo(
+          context,
+          label: 'invite',
+          message: 'Invite revoked',
+          onDelete: () => actions.revoke(invite.id),
+          onUndo: () => actions.restore(snapshot),
         );
       },
       child: tile,

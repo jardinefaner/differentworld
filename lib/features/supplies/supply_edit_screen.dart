@@ -6,6 +6,7 @@ import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -111,7 +112,22 @@ class _SupplyEditFormState extends ConsumerState<_SupplyEditForm> {
     );
     _notes = TextEditingController(text: e?.notes ?? '');
     _locationId = e?.locationId;
+    _initialSnapshot = _snapshot();
   }
+
+  /// The typed fields + location pick, joined — dirty = changed since open
+  /// (the form law; DismissGuard confirms before back discards it).
+  late final String _initialSnapshot;
+  String _snapshot() => [
+    _name.text,
+    _category.text,
+    _quantity.text,
+    _unit.text,
+    _location.text,
+    _lowStock.text,
+    _notes.text,
+    _locationId ?? '',
+  ].join('\u0000');
 
   @override
   void dispose() {
@@ -228,129 +244,134 @@ class _SupplyEditFormState extends ConsumerState<_SupplyEditForm> {
     final validLocId = locations.any((l) => l.id == _locationId)
         ? _locationId
         : null;
-    return EdgeScaffold(
-      backFallbackRoute: '/settings/supplies',
-      actions: [
-        if (isEdit)
-          IconButton(
-            tooltip: 'Remove',
-            icon: Icon(Icons.delete_outline, color: scheme.error),
-            onPressed: _saving ? null : _delete,
-          ),
-      ],
-      body: FormBody(
-        children: [
-          ContentHeader(title: isEdit ? 'Edit supply' : 'New supply'),
-          TextField(
-            controller: _name,
-            autofocus: !isEdit,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              hintText: 'Washable markers · Construction paper',
-              border: OutlineInputBorder(),
+    return DismissGuard(
+      isDirty: () => _snapshot() != _initialSnapshot,
+      child: EdgeScaffold(
+        backFallbackRoute: '/settings/supplies',
+        actions: [
+          if (isEdit)
+            IconButton(
+              tooltip: 'Remove',
+              icon: Icon(Icons.delete_outline, color: scheme.error),
+              onPressed: _saving ? null : _delete,
             ),
-            onSubmitted: (_) => _save(),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _category,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Category (optional)',
-              hintText: 'Art · Sports · Snack',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _quantity,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    hintText: 'e.g. 12',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _unit,
-                  decoration: const InputDecoration(
-                    labelText: 'Unit',
-                    hintText: 'boxes · reams',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Location lens: link to a real Location (so it shows in that
-          // Location's inventory + the "by location" view), plus a free-text
-          // sub-spot for the fine detail.
-          DropdownButtonFormField<String?>(
-            initialValue: validLocId,
-            isExpanded: true,
-            decoration: InputDecoration(
-              labelText: locations.isEmpty
-                  ? 'Location (add Locations first)'
-                  : 'Location (optional)',
-              border: const OutlineInputBorder(),
-            ),
-            items: [
-              const DropdownMenuItem<String?>(child: Text('— None —')),
-              for (final l in locations)
-                DropdownMenuItem<String?>(value: l.id, child: Text(l.name)),
-            ],
-            onChanged: (v) => setState(() => _locationId = v),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _location,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Spot (optional)',
-              hintText: 'Cabinet B · shelf 2',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _lowStock,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Flag as low when below (optional)',
-              hintText: 'e.g. 3',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _notes,
-            minLines: 2,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Notes (optional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Disabled until there's a name — no silent no-op tap.
-          FormSaveButton(
-            requiredField: _name,
-            saving: _saving,
-            onSave: _save,
-            label: isEdit ? 'Save' : 'Add supply',
-          ),
         ],
+        body: FormBody(
+          children: [
+            ContentHeader(title: isEdit ? 'Edit supply' : 'New supply'),
+            TextField(
+              controller: _name,
+              autofocus: !isEdit,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                hintText: 'Washable markers · Construction paper',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _save(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _category,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Category (optional)',
+                hintText: 'Art · Sports · Snack',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _quantity,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                      hintText: 'e.g. 12',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _unit,
+                    decoration: const InputDecoration(
+                      labelText: 'Unit',
+                      hintText: 'boxes · reams',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Location lens: link to a real Location (so it shows in that
+            // Location's inventory + the "by location" view), plus a free-text
+            // sub-spot for the fine detail.
+            DropdownButtonFormField<String?>(
+              initialValue: validLocId,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: locations.isEmpty
+                    ? 'Location (add Locations first)'
+                    : 'Location (optional)',
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String?>(child: Text('— None —')),
+                for (final l in locations)
+                  DropdownMenuItem<String?>(value: l.id, child: Text(l.name)),
+              ],
+              onChanged: (v) => setState(() => _locationId = v),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _location,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Spot (optional)',
+                hintText: 'Cabinet B · shelf 2',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _lowStock,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Flag as low when below (optional)',
+                hintText: 'e.g. 3',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notes,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Notes (optional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Disabled until there's a name — no silent no-op tap.
+            FormSaveButton(
+              requiredField: _name,
+              saving: _saving,
+              onSave: _save,
+              label: isEdit ? 'Save' : 'Add supply',
+            ),
+          ],
+        ),
       ),
     );
   }

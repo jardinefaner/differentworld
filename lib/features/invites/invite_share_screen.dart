@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
-import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
@@ -38,26 +39,31 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
 
   Future<void> _revoke() async {
     if (_revoking) return;
-    final confirmed = await confirmDestructive(
-      context,
-      title: 'Revoke invite?',
-      message: "This invite link stops working immediately. You can't undo it.",
-      confirmLabel: 'Revoke',
-    );
-    if (!confirmed || !mounted) return;
     setState(() => _revoking = true);
     final messenger = ScaffoldMessenger.of(context);
     final goRouter = GoRouter.of(context);
     try {
-      await ref.read(inviteActionsProvider).revoke(widget.invite.id);
+      // Revoke-now + Undo (the modals law): a revoke is a single-row
+      // delete; undo re-inserts the same row (same code, same expiry).
+      final actions = ref.read(inviteActionsProvider);
+      final snapshot = await actions.findById(widget.invite.id);
+      if (snapshot == null || !mounted) return;
+      await actions.revoke(widget.invite.id);
       if (!mounted) return;
       if (goRouter.canPop()) goRouter.pop();
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Invite revoked'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: const Text('Invite revoked'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => unawaited(actions.restore(snapshot)),
+            ),
+          ),
+        );
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'invites'),

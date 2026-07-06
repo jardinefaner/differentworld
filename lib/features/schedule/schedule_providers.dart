@@ -249,6 +249,20 @@ class ScheduleActions {
     await db.scheduleDao.delete_(id);
   }
 
+  /// Snapshot the row BEFORE deleting so [restore] (the undo path) can
+  /// re-insert it verbatim.
+  Future<ScheduleBlock?> findById(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.scheduleDao.findById(id);
+  }
+
+  /// Undo a block delete — re-inserts the captured row; PowerSync
+  /// re-syncs it.
+  Future<void> restore(ScheduleBlock block) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.scheduleDao.restore(block);
+  }
+
   /// Pat persona — Director sets [substituteMemberId] as today's
   /// cover for [absentMemberId]'s blocks in [groupId]. Returns the
   /// count of blocks affected. Pass `substituteMemberId: null` to

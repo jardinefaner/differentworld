@@ -43,9 +43,19 @@ class YearlyReviewScreen extends ConsumerWidget {
       return const EdgeScaffold(body: LoadingSlot());
     }
 
-    final subjects =
-        ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
-    final groups = ref.watch(groupsProvider).value ?? const <Group>[];
+    final subjectsAsync = ref.watch(subjectsInSpaceProvider);
+    final groupsAsync = ref.watch(groupsProvider);
+    // Don't collapse LOADING into "0 children / 0 cohorts" — a year-end
+    // review rendering confident zeros mid-first-sync reads as data loss.
+    // The two core streams gate the whole snapshot; the rest degrade to 0
+    // gracefully once these are live.
+    if (subjectsAsync.isLoading || groupsAsync.isLoading) {
+      return const EdgeScaffold(
+        body: LoadingSlot(variant: LoadingVariant.cards),
+      );
+    }
+    final subjects = subjectsAsync.value ?? const <Subject>[];
+    final groups = groupsAsync.value ?? const <Group>[];
     final certs =
         ref.watch(certsInSpaceProvider).value ?? const <MemberCertification>[];
     final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];

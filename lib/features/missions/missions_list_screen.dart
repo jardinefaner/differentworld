@@ -13,6 +13,7 @@ import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -405,7 +406,24 @@ class _MissionEditSheetState extends ConsumerState<_MissionEditSheet> {
       text: e?.maxAge == null ? '' : e!.maxAge.toString(),
     );
     _evidence = MissionEvidenceKind.fromKey(e?.evidenceKind);
+    _initialSnapshot = _snapshot();
   }
+
+  /// Everything typed, joined — dirty = it changed since open. Cheap and
+  /// covers all nine fields + the evidence pick without per-field checks.
+  late final String _initialSnapshot;
+  String _snapshot() => [
+    _name.text,
+    _icon.text,
+    _tagline.text,
+    _why.text,
+    _builds.text,
+    _rules.text,
+    _actions.text,
+    _minAge.text,
+    _maxAge.text,
+    _evidence.name,
+  ].join('\u0000');
 
   @override
   void dispose() {
@@ -501,174 +519,179 @@ class _MissionEditSheetState extends ConsumerState<_MissionEditSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final insets = MediaQuery.of(context).viewInsets;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + insets.bottom),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.existing == null ? 'New mission' : 'Edit mission',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 72,
-                  child: TextField(
-                    controller: _icon,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      labelText: 'Icon',
-                      hintText: '🏀',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _name,
-                    autofocus: widget.existing == null,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      hintText: 'Equipment Manager',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _tagline,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Tagline (optional)',
-                hintText: 'Gear in, gear out, all accounted for',
-                border: OutlineInputBorder(),
+    // Nine typed fields on a sheet — a scrim tap must not silently discard
+    // them (the sheet law; DismissGuard confirms when dirty).
+    return DismissGuard(
+      isDirty: () => _snapshot() != _initialSnapshot,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + insets.bottom),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.existing == null ? 'New mission' : 'Edit mission',
+                style: theme.textTheme.titleMedium,
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _builds,
-                    decoration: const InputDecoration(
-                      labelText: 'Builds (a trait)',
-                      hintText: 'responsibility',
-                      border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 72,
+                    child: TextField(
+                      controller: _icon,
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        labelText: 'Icon',
+                        hintText: '🏀',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 80,
-                  child: TextField(
-                    controller: _minAge,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Min age',
-                      border: OutlineInputBorder(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _name,
+                      autofocus: widget.existing == null,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Name',
+                        hintText: 'Equipment Manager',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 80,
-                  child: TextField(
-                    controller: _maxAge,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Max age',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _why,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Why it matters (optional)',
-                hintText: 'Our gear lasts when someone looks after it.',
-                border: OutlineInputBorder(),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _rules,
-              minLines: 2,
-              maxLines: 6,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'The manual — how, and where things go',
-                hintText: 'Balls live in the bin by the gym door…',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _actions,
-              minLines: 3,
-              maxLines: 8,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Steps to practice — one per line',
-                hintText: 'Hand the gear out fairly\nCount it back in\n…',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('LEAVE BEHIND', style: theme.textTheme.labelMedium),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final k in MissionEvidenceKind.values)
-                  ChoiceChip(
-                    avatar: Icon(k.icon, size: 18),
-                    label: Text(k.label),
-                    selected: _evidence == k,
-                    showCheckmark: false,
-                    onSelected: (_) => setState(() => _evidence = k),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                if (widget.existing != null)
-                  TextButton.icon(
-                    onPressed: _saving ? null : _delete,
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.error,
-                    ),
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Remove'),
-                  ),
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check),
-                  label: const Text('Save'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _tagline,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Tagline (optional)',
+                  hintText: 'Gear in, gear out, all accounted for',
+                  border: OutlineInputBorder(),
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _builds,
+                      decoration: const InputDecoration(
+                        labelText: 'Builds (a trait)',
+                        hintText: 'responsibility',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 80,
+                    child: TextField(
+                      controller: _minAge,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Min age',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 80,
+                    child: TextField(
+                      controller: _maxAge,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Max age',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _why,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Why it matters (optional)',
+                  hintText: 'Our gear lasts when someone looks after it.',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _rules,
+                minLines: 2,
+                maxLines: 6,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'The manual — how, and where things go',
+                  hintText: 'Balls live in the bin by the gym door…',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _actions,
+                minLines: 3,
+                maxLines: 8,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Steps to practice — one per line',
+                  hintText: 'Hand the gear out fairly\nCount it back in\n…',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('LEAVE BEHIND', style: theme.textTheme.labelMedium),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final k in MissionEvidenceKind.values)
+                    ChoiceChip(
+                      avatar: Icon(k.icon, size: 18),
+                      label: Text(k.label),
+                      selected: _evidence == k,
+                      showCheckmark: false,
+                      onSelected: (_) => setState(() => _evidence = k),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (widget.existing != null)
+                    TextButton.icon(
+                      onPressed: _saving ? null : _delete,
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.error,
+                      ),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove'),
+                    ),
+                  const Spacer(),
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check),
+                    label: const Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

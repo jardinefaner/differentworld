@@ -6,6 +6,7 @@ import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -216,7 +217,16 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
           ),
           guardiansAsync.when(
             loading: () => const LinearProgressIndicator(),
-            error: (_, _) => const SizedBox.shrink(),
+            // On a SEND screen a silently-missing recipient list reads as
+            // "no family on file" — say what happened instead.
+            error: (_, _) => ErrorState(
+              title: 'Couldn’t load family contacts',
+              onRetry: subjectId == null
+                  ? null
+                  : () => ref.invalidate(
+                      _guardiansForSubjectShortProvider(subjectId),
+                    ),
+            ),
             data: (guardians) {
               if (guardians.isEmpty) {
                 return Text(

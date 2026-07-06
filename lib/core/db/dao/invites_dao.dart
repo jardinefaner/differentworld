@@ -58,4 +58,16 @@ class InvitesDao extends DatabaseAccessor<AppDatabase> with _$InvitesDaoMixin {
   Future<void> revoke(String id) async {
     await (delete(invites)..where((i) => i.id.equals(id))).go();
   }
+
+  /// The row as it stands — capture BEFORE revoke so undo can re-insert it.
+  Future<Invite?> findById(String id) {
+    return (select(invites)..where((i) => i.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Re-insert a previously-revoked invite VERBATIM — the undo path for
+  /// `deleteWithUndo`. The stable client UUID re-creates the exact row and
+  /// PowerSync re-syncs it (same code, same expiry).
+  Future<void> restore(Invite invite) async {
+    await into(invites).insertOnConflictUpdate(invite);
+  }
 }

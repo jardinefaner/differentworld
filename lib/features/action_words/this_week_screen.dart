@@ -718,15 +718,18 @@ Future<void> _deleteAddedRule(
   WidgetRef ref,
   String id,
 ) async {
-  final ok = await confirmDestructive(
+  // Delete-now + Undo (the modals law) — the rule is one entry row and
+  // EntriesDao.restore re-inserts it verbatim. The world's own canon rules
+  // never reach here (only `_RuleLine(added: true)` wires onDelete).
+  final actions = ref.read(entryActionsProvider);
+  final snapshot = await actions.findById(id);
+  if (snapshot == null || !context.mounted) return;
+  await deleteWithUndo(
     context,
-    title: 'Delete this rule?',
-    message:
-        "It'll be removed from this world's bible for your room. "
-        "The world's own rules stay.",
+    label: 'rule',
+    onDelete: () => actions.delete(id),
+    onUndo: () => actions.restore(snapshot),
   );
-  if (!ok) return;
-  await ref.read(entryActionsProvider).delete(id);
 }
 
 /// The one-field "add a rule" sheet. A short rule the room lives by, written

@@ -1955,19 +1955,17 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
             'remove',
           ],
           onSelect: (ctx, ref) async {
-            final ok = await confirmDestructive(
+            // Revoke-now + Undo (the modals law) — single-row delete,
+            // restore re-inserts the same code.
+            final actions = ref.read(inviteActionsProvider);
+            final snapshot = await actions.findById(inv.id);
+            if (snapshot == null || !ctx.mounted) return;
+            await deleteWithUndo(
               ctx,
-              title: 'Revoke this invite?',
-              message:
-                  'The code stops working immediately. The recipient '
-                  "won't be able to join with it.",
-              confirmLabel: 'Revoke',
-            );
-            if (!ok || !ctx.mounted) return;
-            await ref.read(inviteActionsProvider).revoke(inv.id);
-            if (!ctx.mounted) return;
-            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
-              SnackBar(content: Text('Revoked invite for $label.')),
+              label: 'invite',
+              message: 'Revoked invite for $label',
+              onDelete: () => actions.revoke(inv.id),
+              onUndo: () => actions.restore(snapshot),
             );
           },
         ),

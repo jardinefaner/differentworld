@@ -390,14 +390,18 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   Future<void> _delete() async {
     final id = widget.existing?.id;
     if (id == null) return;
-    final ok = await confirmDestructive(
-      context,
-      title: 'Delete this block?',
-      message: "It will be removed from this cohort's day.",
-    );
-    if (!ok || !mounted) return;
+    // Delete-now + Undo (the modals law): a block is a single row; undo
+    // re-inserts it verbatim.
+    final actions = ref.read(scheduleActionsProvider);
+    final snapshot = await actions.findById(id);
+    if (snapshot == null || !mounted) return;
     final goRouter = GoRouter.of(context);
-    await ref.read(scheduleActionsProvider).delete_(id);
+    await deleteWithUndo(
+      context,
+      label: 'block',
+      onDelete: () => actions.delete_(id),
+      onUndo: () => actions.restore(snapshot),
+    );
     if (!mounted) return;
     if (goRouter.canPop()) goRouter.pop();
   }

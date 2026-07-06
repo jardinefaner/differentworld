@@ -6,6 +6,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -93,10 +94,13 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
       body: SafeArea(
         child: childrenAsync.when(
           loading: () => const LoadingSlot(),
-          error: (e, _) => EmptyState(
-            icon: Icons.home_outlined,
-            title: 'Couldn’t load',
-            message: '$e',
+          // This is the one network-backed family read (PostgREST) — a
+          // guardian offline WILL land here, so it needs a retry, and the
+          // raw exception never belongs in family-facing copy.
+          error: (_, _) => ErrorState(
+            title: 'Couldn’t load your children',
+            detail: 'Check your connection and try again.',
+            onRetry: () => ref.invalidate(familyChildrenProvider),
           ),
           data: (children) {
             if (children.isEmpty) {

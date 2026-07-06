@@ -10,6 +10,7 @@ import 'package:differentworld/shared/viewer_x.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:drift/drift.dart' show Value;
@@ -73,7 +74,14 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
     _destination.text = row?.destination ?? '';
     _address.text = row?.destinationAddress ?? '';
     _notes.text = row?.notes ?? '';
+    _seededSnapshot = _snapshot();
   }
+
+  /// Dirty = the typed fields differ from what the last seed wrote —
+  /// back must not silently discard field-trip typing (the form law).
+  String _seededSnapshot = '';
+  String _snapshot() =>
+      [_destination.text, _address.text, _notes.text].join('\u0000');
 
   Future<void> _save() async {
     final viewer = ref.read(viewerProvider);
@@ -119,26 +127,29 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final dbAsync = ref.watch(appDatabaseProvider);
-    return EdgeScaffold(
-      backFallbackRoute: '/schedule',
-      body: dbAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (e, _) => ErrorState(
-          title: 'Could not load trip details',
-          onRetry: () => ref.invalidate(appDatabaseProvider),
+    return DismissGuard(
+      isDirty: () => _snapshot() != _seededSnapshot,
+      child: EdgeScaffold(
+        backFallbackRoute: '/schedule',
+        body: dbAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (e, _) => ErrorState(
+            title: 'Could not load trip details',
+            onRetry: () => ref.invalidate(appDatabaseProvider),
+          ),
+          data: (db) {
+            return StreamBuilder<TripLogistic?>(
+              stream: db.tripsDao.watchByBlockId(widget.blockId),
+              builder: (context, snap) {
+                final row = snap.data;
+                _scheduleSeed(row);
+                return row == null
+                    ? _setupView(context)
+                    : _glanceView(context, db, row);
+              },
+            );
+          },
         ),
-        data: (db) {
-          return StreamBuilder<TripLogistic?>(
-            stream: db.tripsDao.watchByBlockId(widget.blockId),
-            builder: (context, snap) {
-              final row = snap.data;
-              _scheduleSeed(row);
-              return row == null
-                  ? _setupView(context)
-                  : _glanceView(context, db, row);
-            },
-          );
-        },
       ),
     );
   }
