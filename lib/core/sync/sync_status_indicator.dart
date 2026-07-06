@@ -1,4 +1,5 @@
 import 'package:differentworld/core/sync/power_sync_provider.dart';
+import 'package:differentworld/core/sync/sync_health_sheet.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,9 @@ class SyncStatusIndicator extends ConsumerWidget {
           tooltip: tooltip,
           icon: icon,
           iconColor: color,
-          onPressed: null,
+          // Tap-through to the health readout — pending uploads, last
+          // error, what's on this device. The "is it saving?" answer.
+          onPressed: () => showSyncHealthSheet(context),
         );
       },
       loading: () => const SizedBox.shrink(),
@@ -53,7 +56,7 @@ class SyncStatusIndicator extends ConsumerWidget {
         tooltip: 'Sync error',
         icon: Icons.error_outline,
         iconColor: theme.colorScheme.error,
-        onPressed: null,
+        onPressed: () => showSyncHealthSheet(context),
       ),
     );
   }
