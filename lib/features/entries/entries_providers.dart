@@ -462,6 +462,13 @@ class EntryActions {
     await db.entriesDao.deleteById(id);
   }
 
+  /// Snapshot the row BEFORE deleting so [restore] (the undo path) can
+  /// re-insert it verbatim.
+  Future<Entry?> findById(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.entriesDao.findById(id);
+  }
+
   /// Re-insert a deleted entry verbatim — the `deleteWithUndo` undo path.
   Future<void> restore(Entry entry) async {
     final db = await _ref.read(appDatabaseProvider.future);
