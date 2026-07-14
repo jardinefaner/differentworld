@@ -22,7 +22,10 @@ void main() {
   group('SpineState', () {
     test('fresh space: all three cards pending, section visible', () {
       final s = SpineState.of(
-        _caps({SpaceCaps.onboardingSampleSubjectId: 'sam-1'}),
+        _caps({
+          SpaceCaps.onboardingStarted: true,
+          SpaceCaps.onboardingSampleSubjectId: 'sam-1',
+        }),
         groupCount: 0,
       );
       expect(s.castDone, isFalse);
@@ -34,14 +37,20 @@ void main() {
     });
 
     test('removed sample counts as seen — the card just goes', () {
-      final s = SpineState.of(_caps({}), groupCount: 0);
+      final s = SpineState.of(
+        _caps({SpaceCaps.onboardingStarted: true}),
+        groupCount: 0,
+      );
       expect(s.sampleSeen, isTrue);
       expect(s.sampleSubjectId, isNull);
     });
 
     test('room added derives from data and reveals the invites closer', () {
       final s = SpineState.of(
-        _caps({SpaceCaps.onboardingSampleSubjectId: 'sam-1'}),
+        _caps({
+          SpaceCaps.onboardingStarted: true,
+          SpaceCaps.onboardingSampleSubjectId: 'sam-1',
+        }),
         groupCount: 2,
       );
       expect(s.roomDone, isTrue);
@@ -52,6 +61,7 @@ void main() {
     test('retires only when all three + the closer are done', () {
       final almost = SpineState.of(
         _caps({
+          SpaceCaps.onboardingStarted: true,
           SpaceCaps.onboardingCastDone: true,
           SpaceCaps.onboardingSampleSeen: true,
           SpaceCaps.onboardingSampleSubjectId: 'sam-1',
@@ -61,6 +71,7 @@ void main() {
       expect(almost.allDone, isFalse); // closer still pending
       final done = SpineState.of(
         _caps({
+          SpaceCaps.onboardingStarted: true,
           SpaceCaps.onboardingCastDone: true,
           SpaceCaps.onboardingSampleSeen: true,
           SpaceCaps.onboardingSampleSubjectId: 'sam-1',
@@ -72,9 +83,16 @@ void main() {
       expect(done.visible, isFalse);
     });
 
+    test('a pre-existing program never sees a retroactive Day one', () {
+      final s = SpineState.of(_caps({}), groupCount: 3);
+      expect(s.started, isFalse);
+      expect(s.visible, isFalse);
+    });
+
     test('hide setup wins regardless of progress', () {
       final s = SpineState.of(
         _caps({
+          SpaceCaps.onboardingStarted: true,
           SpaceCaps.onboardingDismissed: true,
           SpaceCaps.onboardingSampleSubjectId: 'sam-1',
         }),

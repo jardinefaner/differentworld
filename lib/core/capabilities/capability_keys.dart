@@ -7,6 +7,11 @@ abstract class SpaceCaps {
   // ── Onboarding (the first-run starter spine on Today) ──
   // Progress flags for the self-retiring setup cards. Space-level (synced)
   // so the spine agrees across the director's devices.
+  /// Set once at seeding time and never cleared — the spine only exists
+  /// for spaces created AFTER this feature. Pre-existing programs never
+  /// see a retroactive "Day one".
+  static const onboardingStarted = 'onboarding_started';
+
   /// The id of the seeded sample child ("Sam") — null/absent once removed.
   static const onboardingSampleSubjectId = 'onboarding_sample_subject_id';
 

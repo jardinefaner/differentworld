@@ -34,6 +34,7 @@ import 'package:go_router/go_router.dart';
 /// Pure spine state — derived, unit-testable, no Riverpod.
 class SpineState {
   const SpineState({
+    required this.started,
     required this.castDone,
     required this.sampleSeen,
     required this.roomDone,
@@ -45,6 +46,7 @@ class SpineState {
   factory SpineState.of(Capabilities caps, {required int groupCount}) {
     final sampleId = caps.getString(SpaceCaps.onboardingSampleSubjectId);
     return SpineState(
+      started: caps.getBool(SpaceCaps.onboardingStarted),
       castDone: caps.getBool(SpaceCaps.onboardingCastDone),
       // A removed sample counts as seen — the card just goes.
       sampleSeen:
@@ -56,6 +58,10 @@ class SpineState {
       sampleSubjectId: (sampleId == null || sampleId.isEmpty) ? null : sampleId,
     );
   }
+
+  /// Only spaces seeded by this feature ever show the spine — a program
+  /// that predates it must not wake up to a retroactive "Day one".
+  final bool started;
 
   final bool castDone;
   final bool sampleSeen;
@@ -72,7 +78,7 @@ class SpineState {
 
   bool get allDone => castDone && sampleSeen && roomDone && !showInvitesCloser;
 
-  bool get visible => !dismissed && !allDone;
+  bool get visible => started && !dismissed && !allDone;
 }
 
 /// Per-device flag for the teacher's one-card welcome.

@@ -221,13 +221,13 @@ Future<String> seedSampleChild(
             ),
           );
     }
-    // Point the starter spine at Sam.
+    // Point the starter spine at Sam + mark this space as spine-eligible
+    // (the marker is permanent; pre-existing spaces never get the spine).
     final space = await db.spacesDao.findById(spaceId);
     if (space != null) {
-      final caps = space.caps.setting(
-        SpaceCaps.onboardingSampleSubjectId,
-        subjectId,
-      );
+      final caps = space.caps
+          .setting(SpaceCaps.onboardingStarted, true)
+          .setting(SpaceCaps.onboardingSampleSubjectId, subjectId);
       await db.spacesDao.updateCapabilities(spaceId, caps.toJson());
     }
   });
