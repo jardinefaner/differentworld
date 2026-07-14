@@ -118,7 +118,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Status**: This Week hub + world projection (Cast) + worksheets + Today card shipped (waves "week engine" + "worksheets" + "cast", commit range fbfdda3–206b108). Book screen + curriculum importer shipped (waves "the Book" + "import curriculum activities", commits 2021813 + 5d4db52). Play Today (DayRunScreen) + Big Thinking system games + thinking_screen shipped (waves feat/kid-book + feat/curriculum-activity-import, commit 1320864). ActivityArcScreen + BeatPresenter refactor shipped (wave feat/present-arc, commit b4abd80). House timer caps (`timer_presets` + `suggest_play_minutes`) shipped (batch D1 commit 2b5937a — `house_timer.dart`, program-settings tiles, injected into `buildDayRun`/`buildActivityArc`). 50-day journey content layer shipped (commits dbdd137, d91e8e4, 5df388c, af650ad — `world_blocks.json` bundle, `world_blocks.dart` models + providers, `journey_day_sheet.dart` shared sheet, `_TodaysFocusCard` on Today, `_FortnightSection` on `/this-week`, `_QuestionOfTheDayBanner` on `/wall`, wall-question-deck PDF in Printable Toolkit). Block-boundary room-prep callouts shipped (commit f4768b8 — `journey_day_sheet.dart` shows "Set up the room today" / "Hand off to the next world" on block boundary days; `JourneyDayRow` shows room-setup / flip icons on those rows). Kid-facing Action Words pick shipped (commit 247f2c9 — `action_words_kid_screen.dart` at `/action-words/pick/:subjectId`). Role-4 kid verb-job kid-mode surface shipped (`kid_job_screen.dart` at `/action-words/job/:subjectId` — the kid's picks reshape a kid-mode "do your jobs" screen; `toggleDone` write pinned by `action_words_actions_db_test.dart`). Growth arc / showcase shipped (commit 337ef4f — `growth_arc.dart` + `growth_arc_screen.dart` at `/growth/:subjectId`). Season hub shipped (commit 47b323d — `program_hub_screen.dart` at `/program`, `seasonPositionProvider` in `world_blocks.dart`, nav destination "Program" after Action Words, omnibox entry `page.program`). Run the day shipped (branch feat/day-block-run — `block_run.dart` + `block_run_screen.dart` at `/run-day` + `/run-day/present`; nav destination "Run the day" in Activities group; omnibox `page.run-day`). Routine-script editor shipped (branch feat/routine-scripts — `RoutineKind` library in `block_run.dart`, `routine_script_providers.dart` + `routine_script_editor_screen.dart` at `/routines`; `routine_scripts` cap; Settings → Resources + omnibox `page.routines`; the day-run reads overrides as the top-priority `scriptOverride`). Slide-as-launchpad shipped (branch feat/slide-launchpad — `block_actions.dart` + a host-only "use right now" action tray on the run-day `DeckOverview` cards via `actionsForBeat` / `_ActionTray`; each block surfaces its relevant app features, one tap away, reusing existing routes; the mirrored `BeatPresenter` left clean). Activity matcher verb-tagging library hookup, spell timers still deferred.
 **Depends on**: Entries (`kind='action_words'` + `kind='world_rule'` — add-a-rule mechanic), Subjects, Viewer, Spaces (program_start_date cap via world_schedule.dart; timer_presets + suggest_play_minutes caps via house_timer.dart), Activities (curriculum importer writes), Schedule (`scheduleDayForGroupProvider` — BlockRunScreen reads today's schedule_blocks via this Schedule provider to build the run-of-show deck), LiveSession (castImmersiveProvider — DayRunScreen + GrowthArcScreen + BeatPresenter use cast immersive flag), Kid mode (ActionWordsKidScreen + KidJobScreen lock via kidModeProvider + kidModeLockedRouteProvider), Photos (GrowthArcScreen reads `growthArcPhotosProvider` which reads `attachmentsForEntityProvider` for observation photos; `PersonPhotoNetwork` renders signed-URL images on `photo` beats), `flutter_tts` (VerbVoice on-device TTS for pre-reader voiceover on kid pick screen).
 **Consumed by**: Today (`_ThisWeekWorldCard` + `_TodaysFocusCard` mounted in today_sections.dart reads `currentWorldProvider` / `currentProgramDayProvider` / `todaysJourneyDayProvider` / `currentBlockProvider` / `todaysWallQuestionProvider`; also `contextLeadProvider` in `context_lead.dart` reads `currentWorldProvider`), World (character_sheet_screen.dart reads `systemThinkingGameProvider` + imports `thinking_games.dart` + `widgets/thinking_game_sheet.dart` to surface "the game under this system" on each character-sheet section; also launches `GrowthArcScreen` via `_Links` "Play their story" button and `ActionWordsKidScreen` is launched from `ActionWordsScreen._KidRow`), Settings (program_settings_screen.dart reads `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` for the timer tiles; writes via `houseTimerActionsProvider`), Toolkit (`toolkit_pdf.dart` + `print_toolkit_screen.dart` import `world_blocks.dart` for `printWallQuestionDeck` — 50 wall-question posters), ProgramHubScreen (consumes `seasonPositionProvider` + `worldBlocksProvider` + `curriculumWorldsProvider` + `actionWordsCollectionProvider` + `subjectsInSpaceProvider` — all within this same feature folder), Family (`welcome_actions.dart` reads `currentWorldProvider` for the dinner-question fact on the welcome PDF).
-**Last verified**: 2026-06-28
+**Last verified**: 2026-07-13
 
 ---
 
@@ -292,7 +292,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *"Their world" EdgeAction* — `lib/features/subjects/subject_detail_screen.dart`, line ~148. An `IconButton`-style action in the child detail screen's top chrome, label "Their world", pushes `/subjects/$subjectId/world`.
 **Depends on**: Entries (`EntryActions.setWeeklyIntention` / `setProject` / `setProjectProgress`; reads `kind='daily_response'` via `todaysAnswerProvider`), Heroes (`heroForSubjectProvider` for the day tile), Action Words (`actionWordsCollectionProvider` for the growth tile; `currentCurriculumWeekProvider` for the week key), Subjects (`subjectByIdProvider` for the child's first name).
 **Consumed by**: Subjects (subject_detail_screen.dart hosts the "Their world" EdgeAction that pushes to this route).
-**Last verified**: 2026-06-19
+**Last verified**: 2026-07-13
 
 ---
 
@@ -407,7 +407,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Send export screen* — `lib/features/exports/send_export_screen.dart`. Pick recipients (guardian checkboxes preloaded with their email + manual-entry email) and send via Edge Function, or copy a 7-day signed URL.
 **Depends on**: Entries, Subjects, Guardians, Photos (signed-URL preview of attachments).
 **Consumed by**: Family Today (Lauren / Devon / Helen / Marcus see received reports via the `_ReceivedReportsCard`, shipped 2026-05-23 in Wave 39). Direct-PostgREST read (`myReceivedExportsProvider` queries Supabase directly), NOT the local Drift mirror — guardians' `members.space_id = null` means `by_space` never delivers `exports` / `export_recipients` to them. RLS on `export_recipients` gates by recipient identity. Tap → mint a 10-min signed Storage URL → `url_launcher` → OS PDF viewer. Wave 42 added Devon-persona read tracking: opening a report stamps `export_recipients.read_at` via the `markReceivedExportRead` helper; the card then renders a "Seen" badge on already-opened rows so co-parents can tell which reports they've already worked through. Co-parent visibility ("Also seen by Lauren") still deferred — needs a sibling-recipient query shape.
-**Last verified**: 2026-05-23
+**Last verified**: 2026-07-13
 
 ---
 
@@ -433,7 +433,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *First-day welcome PDF* — `lib/features/family/welcome_pdf.dart` + `welcome_actions.dart`. `buildWelcomePdf(programName:, childFirstName:, facts:, worldName:, dinnerQuestion:, inviteUrl:, inviteCode:)` builds an offline-safe Letter PDF (built-in Helvetica — NOT `PdfGoogleFonts`; see CLAUDE.md gotcha) — program name header, "big idea" intro, this week's world + dinner question, facts (room, pickup time), guardian-app invite QR (generated on the fly via `InviteActions.createGuardianInvite` with a 30-day expiry; if that fails, the page prints without the QR). `generateFirstDayWelcome(context, ref, subjectId)` is the staff-callable action — auto-fills all fields from app data and hands the bytes to the OS print sheet via `Printing.layoutPdf`. No route; surfaced as an `EdgeAction` labelled "First-day welcome" in `subject_detail_screen.dart` (gated `viewer is! GuardianViewer`).
 **Depends on**: Subjects (PostgREST), Guardians, Messages (offline-first via `by_guardian`), Settings (shared text-size sheet), Exports (received-reports card reads `myReceivedExportsProvider`), Incidents (`Incident` model + `FamilyIncidentCard` imported for the surfaced-incidents section), Invites (guardian invite creation for QR in welcome PDF), Action Words (`currentWorldProvider` for welcome PDF facts).
 **Consumed by**: Nothing — this is a leaf lens.
-**Last verified**: 2026-06-19
+**Last verified**: 2026-07-13
 
 ---
 
@@ -583,7 +583,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Personas served**: Maya (creates + revokes staff AND guardian invites), Brianna (redeems on her phone), Lauren / Devon / Helen / Marcus (redeem as guardians).
 **Discovery surfaces**:
 - Routes: `/settings/team/invite/new`, `/settings/team/invite/:id`
-- Omnibox: yes — "Invite a teammate" (action, director-gated, routes directly to `/settings/team/invite/new`); "Invite a parent · {Child name}" (per-subject action, director-gated, routes to the subject edit screen's inline Guardians editor); "Revoke pending invite · {label}" (per-pending-invite action, director-gated, destructive-confirm before InviteActions.revoke). Keyword aliases: parent, family, mom, dad, guardian, revoke, cancel, pending
+- Omnibox: yes — "Invite a teammate" (action, director-gated, routes directly to `/settings/team/invite/new`); "Invite a parent · {Child name}" (per-subject action, director-gated, routes to the subject edit screen's inline Guardians editor); "Revoke pending invite · {label}" (per-pending-invite action, director-gated, undo-safe: snapshot + `InviteActions.revoke` + 6 s Undo snackbar, restore re-inserts same row). Keyword aliases: parent, family, mom, dad, guardian, revoke, cancel, pending
 - Slash: none
 - Drawer: no
 - Settings: no — embedded in Team / Subject detail
@@ -596,7 +596,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Deep-link listener* — `lib/features/invites/deep_link_listener.dart`. Captures `differentworld://invite/<code>` and the https fallback into `pendingInviteCodeProvider`; consumed by `home_redeem_invite_host.dart`.
 **Depends on**: Members (assigning role), Spaces, Subjects (guardian invites need a subject_id), Guardians (guardian invites create + link rows).
 **Consumed by**: Team screen (pending-invites list), Onboarding (redeem path), Subject detail (inline Guardians editor + invite-share navigation).
-**Last verified**: 2026-05-23
+**Last verified**: 2026-07-13
 
 ---
 
@@ -880,7 +880,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Yearly review screen* — `lib/features/review/yearly_review_screen.dart`. Annual reflection.
 **Depends on**: Entries, Captures, Tasks.
 **Consumed by**: Today (review prompt when due).
-**Last verified**: 2026-05-21
+**Last verified**: 2026-07-13
 
 ---
 
@@ -932,7 +932,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Trip detail screen* — `lib/features/schedule/trip_detail_screen.dart`. `/trips/:blockId`. Reached from `BlockEditScreen` when a block's kind is `field_trip`. Two moments, one screen: before setup (no `trip_logistics` row), shows a clean "Plan this trip" form — destination, address, notes — with a single Save. After setup (row exists), leads with `_TripIdentity` (a "Field trip" chip, the destination as the display headline, address and depart/return times), then a `_ReadinessBanner` showing slip readiness ("Ready to go" / "Almost ready · collect N more slips") when permission slips are required, then three `CollapsibleSection` cards — Headcount (open by default, safety-first, renders `TripHeadcountSection`), Permission slips (collapsed, with an "N / total signed" summary, unsigned kids sorted to the top), and Vehicles & drivers (collapsed, "N assigned" summary). The "Edit trip basics" form is tucked under a fourth `CollapsibleSection` (collapsed by default) so it stays accessible without dominating the run-day view. Reads `trip_logistics`, `permission_slips`, `trip_vehicles`, `subjects` (for the slip roster count).
 **Depends on**: Groups, Members, Activities, Locations, Vehicles (trip assignment), Entries (reads `schedule_block_id` back-reference for live-block capture tagging), Supplies (pack-list picker in `activity_edit_screen.dart` reads `suppliesProvider` + `activitySupplyLinksProvider`), Spaces (`day_template_providers.dart` reads and writes `spaces.capabilities` via `currentSpaceProvider` + `spaceCapActionsProvider`).
 **Consumed by**: Today (leading-today card; `contextLeadProvider` in `context_lead.dart` reads `liveBlockProvider` for the live-block path of the contextual lead), Attendance (block-context for headcounts), Captures (block-context tag), Omnibox (substitute-lead sheet invoked from the per-cohort "Cover today" entry).
-**Last verified**: 2026-06-24
+**Last verified**: 2026-07-13
 
 ---
 
@@ -958,7 +958,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Shared text-size tile / picker* — `lib/features/settings/widgets/text_size_tile.dart`. Public `TextSizeTile` + `showTextSizePicker(context, ref)` helper, reused by Family Today so guardians can reach the override without a Settings screen.
 **Depends on**: Members, Spaces (timer_presets + suggest_play_minutes + phase_windows cap writes; reads via Action Words providers), Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog, Action Words (`houseTimerActionsProvider` + `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` imported from `house_timer.dart`; `DayPhaseActions` + `dayPhaseActionsProvider` imported from `today_providers.dart`), `display_style_setting.dart` (SharedPreferences-backed `displayStyleProvider`).
 **Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode + display style), Family Today (text-size picker).
-**Last verified**: 2026-06-15
+**Last verified**: 2026-07-13
 
 ---
 
@@ -1072,7 +1072,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Mission templates* — `lib/features/missions/mission_templates.dart`. `MissionTemplate` + `missionTemplates` (11 starter jobs: Equipment Manager, Snack Helper, Cleanup Crew, Supply Keeper, Line Leader, Greeter, Library Keeper, Lights & Doors, Recycle Captain, Plant & Pet Caretaker, Peace Buddy); `MissionEvidenceKind` enum (photo/count/note/check); actions JSON codec (encode/decodeMissionActions).
 **Depends on**: Entries (`kind='mission'` completions read + written via `entriesDao`).
 **Consumed by**: Nothing in slice 1 other than Entries (completion writes). Slice 2 will add mission_assignments.
-**Last verified**: 2026-06-07
+**Last verified**: 2026-07-13
 
 ---
 
@@ -1096,7 +1096,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Supplies grouping helpers* — `lib/features/supplies/supplies_grouping.dart`. Pure functions: `supplyCategoryLabel`, `isLowStock`, `groupSuppliesByCategory`, `groupSuppliesByLocation`, `supplyLocationLabel`, `formatSupplyNumber`. No UI — consumed by the list screen.
 **Depends on**: Locations (Location lens reads `locationsProvider` for `location_id → name` resolution).
 **Consumed by**: Activities / Schedule (`activity_edit_screen.dart` imports `activity_supplies_providers.dart` and `supplies_providers.dart`; the structured "Supplies needed" picker writes `activity_supplies` rows on save).
-**Last verified**: 2026-06-01
+**Last verified**: 2026-07-13
 
 ---
 
@@ -1146,7 +1146,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Work sample capture* — `lib/features/entries/work_sample_capture.dart`. `snapWork(context, ref, {subjectId, groupId, subjectName})` — standalone async helper called from the subject-detail "Snap work" action; handles pick → offline-safe upload → `EntryActions.createWorkSample`; no new route.
 **Depends on**: Groups, Guardians, Photos, Entries (work_sample kind — `createWorkSample` + `setWorkSampleInBook` in `EntryActions`; `entriesForSubjectProvider` filtered by `EntryKind.workSample` in `WorkGallery`).
 **Consumed by**: Attendance, Entries, Exports, Family, Messages, Surveys, Incidents (`subject_detail_screen.dart` imports `subject_incidents_section.dart`; `SubjectIncidentsSection` + jump chip render in the gated Incidents section), World (subject_detail_screen imports `character_sheet_providers.dart`; `_WorldSelfTile` is the entry point for the World feature).
-**Last verified**: 2026-06-13
+**Last verified**: 2026-07-13
 
 ---
 

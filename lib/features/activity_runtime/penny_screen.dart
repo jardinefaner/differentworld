@@ -141,6 +141,9 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
               label: const Text('A penny for a thought'),
             ),
             const SizedBox(height: 12),
+            // 2 + 1 instead of 3-up: three-across squeezed the labels
+            // into mid-word wraps ("New qu/estion") on a phone
+            // (gallery-critic 2026-07-05).
             Row(
               children: [
                 Expanded(
@@ -156,17 +159,6 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _newQuestion,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('New question'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
                     onPressed: _count == 0 ? null : _startOver,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
@@ -176,6 +168,15 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _newQuestion,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('New question'),
             ),
           ],
         ),

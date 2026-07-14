@@ -2,11 +2,10 @@
 
 99 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **99.4** · minor work: 1 · ship-confident: 98
+Average: **99.6** · ship-confident: 99
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
-| 80 | minor work | `login` | -20 rendered root is a raw Scaffold, not EdgeScaffold |
 | 94 | ship-confident | `runbook` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `staff_ladder` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `themed_world` | -6 1 of loading/empty/error states missing |
@@ -54,6 +53,7 @@ Average: **99.4** · minor work: 1 · ship-confident: 98
 | 100 | ship-confident | `letters` | — |
 | 100 | ship-confident | `live_board` | — |
 | 100 | ship-confident | `locations_list` | — |
+| 100 | ship-confident | `login` | — |
 | 100 | ship-confident | `mission_board` | — |
 | 100 | ship-confident | `missions_list` | — |
 | 100 | ship-confident | `morning_checklist` | — |

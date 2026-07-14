@@ -1,5 +1,6 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/shared/widgets/dw_wordmark.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -66,7 +67,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Scaffold(
+    return EdgeScaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

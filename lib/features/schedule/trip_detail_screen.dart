@@ -116,6 +116,10 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
         );
       }
       if (!mounted) return;
+      // Reset the dirty baseline — the stream re-seed early-returns for the
+      // same row id, so without this an edit-save still reads dirty and back
+      // pops a spurious "Discard changes?" (Preflight 2026-07-13).
+      setState(() => _seededSnapshot = _snapshot());
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         const SnackBar(content: Text('Trip details saved.')),
       );

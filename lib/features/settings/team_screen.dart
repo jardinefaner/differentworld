@@ -485,17 +485,16 @@ class _InviteTile extends ConsumerWidget {
                   icon: const Icon(Icons.more_vert),
                   onSelected: (v) async {
                     if (v != 'revoke') return;
-                    // Revoke-now + Undo (the modals law) — a revoke is a
-                    // single-row delete; re-inserting restores it exactly.
+                    // Revoke-now + Undo (the modals law). The tile's row IS
+                    // the snapshot — no async lookup (an await here opens a
+                    // gap before the delete; Preflight 2026-07-13).
                     final actions = ref.read(inviteActionsProvider);
-                    final snapshot = await actions.findById(invite.id);
-                    if (snapshot == null || !context.mounted) return;
                     await deleteWithUndo(
                       context,
                       label: 'invite',
                       message: 'Invite revoked',
                       onDelete: () => actions.revoke(invite.id),
-                      onUndo: () => actions.restore(snapshot),
+                      onUndo: () => actions.restore(invite),
                     );
                   },
                   itemBuilder: (_) => [
@@ -541,16 +540,17 @@ class _InviteTile extends ConsumerWidget {
       ),
       onDismissed: (_) async {
         // Revoke-now + Undo (the modals law): the swipe IS the intent —
-        // no confirm wall; undo re-inserts the same row (same code).
+        // no confirm wall; undo re-inserts the same row (same code). The
+        // tile's row IS the snapshot — an async lookup here would open a
+        // gap after the dismiss animation in which a stream rebuild can
+        // resurrect a dismissed Dismissible (Preflight 2026-07-13).
         final actions = ref.read(inviteActionsProvider);
-        final snapshot = await actions.findById(invite.id);
-        if (snapshot == null || !context.mounted) return;
         await deleteWithUndo(
           context,
           label: 'invite',
           message: 'Invite revoked',
           onDelete: () => actions.revoke(invite.id),
-          onUndo: () => actions.restore(snapshot),
+          onUndo: () => actions.restore(invite),
         );
       },
       child: tile,

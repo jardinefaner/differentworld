@@ -28,6 +28,10 @@ final StreamProvider<int> pendingUploadCountProvider =
 /// PII-safe local row counts — proves whether this device's database has
 /// data at all (an unexpectedly-empty local DB is a re-sync problem, not
 /// a save problem).
+///
+/// ONE-SHOT at sheet-open time, deliberately not live: the sheet is a
+/// glance (the modals law), not a dashboard — reopen to refresh. Don't
+/// "fix" this into a live stream without revisiting that contract.
 final StreamProvider<(int, int, int)> _localCountsProvider =
     StreamProvider.autoDispose<(int, int, int)>((ref) async* {
       final db = await ref.watch(appDatabaseProvider.future);
@@ -160,11 +164,13 @@ class _SyncHealthSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               // Exception payloads can carry row data — full text is
-              // debug-only (no-PII law); release gets the type name.
+              // debug-only (no-PII law); release gets fixed copy (even a
+              // runtimeType could embed data if a wrapper interpolates).
               Text(
                 kDebugMode
                     ? '${uploadError ?? downloadError}'
-                    : (uploadError ?? downloadError).runtimeType.toString(),
+                    : 'A sync error occurred — reopen this sheet after '
+                          'retrying to see the latest.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

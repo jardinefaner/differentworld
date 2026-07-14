@@ -64,6 +64,9 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
             ),
           ),
         );
+      // Cold deep-link edge: with nothing to pop, the screen stays alive —
+      // re-enable the button (Preflight 2026-07-13).
+      if (mounted) setState(() => _revoking = false);
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'invites'),

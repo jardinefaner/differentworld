@@ -96,8 +96,11 @@ class RolesScreen extends ConsumerWidget {
             for (final key in roles)
               BentoTile(
                 id: 'role-$key',
-                // 2-up on phone, 2-of-4 on tablet, 2-of-6 (3-up) on desktop.
-                span: const BentoSpan(phone: 1),
+                // Full-width on phone (a role card carries a title +
+                // key chip + paragraph — 2-up squeezed the header into a
+                // RenderFlex overflow; gallery-critic 2026-07-05).
+                // 2-of-4 on tablet, 2-of-6 (3-up) on desktop.
+                span: const BentoSpan(),
                 child: _RoleCard(
                   key: ValueKey('role-card-$key'),
                   roleKey: key,
@@ -172,20 +175,23 @@ class _RoleCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  roleKey,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontFamily: 'monospace',
-                    color: scheme.onSurfaceVariant,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    roleKey,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
