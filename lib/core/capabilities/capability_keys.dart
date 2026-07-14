@@ -4,6 +4,24 @@
 library;
 
 abstract class SpaceCaps {
+  // ── Onboarding (the first-run starter spine on Today) ──
+  // Progress flags for the self-retiring setup cards. Space-level (synced)
+  // so the spine agrees across the director's devices.
+  /// The id of the seeded sample child ("Sam") — null/absent once removed.
+  static const onboardingSampleSubjectId = 'onboarding_sample_subject_id';
+
+  /// Set when the director launches a game from the starter card.
+  static const onboardingCastDone = 'onboarding_cast_done';
+
+  /// Set when the sample child's story has been opened from the card.
+  static const onboardingSampleSeen = 'onboarding_sample_seen';
+
+  /// Set when the invites closer has been visited.
+  static const onboardingInvitesDone = 'onboarding_invites_done';
+
+  /// Escape hatch: hide the starter spine without completing it.
+  static const onboardingDismissed = 'onboarding_dismissed';
+
   static const featureObservations = 'feature_observations';
   static const featureMedicationLog = 'feature_medication_log';
   static const featureFieldTrips = 'feature_field_trips';
@@ -297,6 +315,10 @@ abstract class GroupCaps {
 /// Other verticals add their own subject-intake keys under a sibling
 /// class without touching these.
 abstract class SubjectCaps {
+  /// True on the seeded demo child ("Sam") — lets surfaces badge it and
+  /// the starter spine remove it wholesale. Never set on real children.
+  static const isSample = 'is_sample';
+
   // Tracking flags — inherit from Group unless set explicitly here.
   static const tracksDiapers = 'tracks_diapers';
   static const tracksNaps = 'tracks_naps';

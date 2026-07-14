@@ -727,22 +727,24 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Onboarding
 **Path**: `lib/features/onboarding/`
-**Purpose**: Post-auth, pre-space flow. Lets a new signed-in user join an existing space (via invite code) or create a new one.
-**Personas served**: Brianna (joining), Maya (creating).
+**Purpose**: Post-auth, pre-space flow (join or create) PLUS the first-run starter spine on Today — day one proving the app instead of touring it (docs/BRAND.md "undeniable" onboarding).
+**Personas served**: Brianna (joining), Maya (creating + the day-one spine), Jordan (teacher welcome card).
 **Discovery surfaces**:
-- Routes: `/onboarding/join-or-create` (and any sub-routes)
-- Omnibox: no — pre-space surface
+- Routes: `/onboarding/join-or-create` (and any sub-routes); the spine renders on `/` (Today) — no route of its own
+- Omnibox: no — pre-space / first-run surfaces
 - Slash: none
 - Drawer: no — drawer only mounts after space is selected
 - Settings: no
-**Capabilities**: None — pre-space.
-**Data**: [spaces](SCHEMA.md#spaces), [members](SCHEMA.md#members), [invites](SCHEMA.md#invites)
+**Capabilities**: Spine full form requires `can_manage_space`; other staff get the one-card welcome. State keys: `SpaceCaps.onboarding*` (synced) + a per-device teacher-welcome flag.
+**Data**: [spaces](SCHEMA.md#spaces) (capabilities JSON carries spine state), [members](SCHEMA.md#members), [invites](SCHEMA.md#invites), [subjects](SCHEMA.md#subjects) + [entries](SCHEMA.md#entries) (the seeded sample child)
 **Surfaces**:
 - *Join-or-create screen* — `lib/features/onboarding/join_or_create_screen.dart`. Two paths: enter an invite code, or create a new program. Pushes Create when the user chooses to start fresh.
-- *Create space screen* — `lib/features/onboarding/create_space_screen.dart`. Bare-minimum form (program name + vertical). Inserts the `spaces` row + flips the current member into it.
-**Depends on**: Invites (redeem), Auth.
-**Consumed by**: Router (post-login redirect when `viewer.spaceId == null`).
-**Last verified**: 2026-05-22
+- *Create space screen* — `lib/features/onboarding/create_space_screen.dart`. Bare-minimum form (program name + vertical). Inserts the `spaces` row + flips the current member into it, then seeds Sam (the sample child).
+- *Starter spine* — `lib/features/onboarding/widgets/starter_spine.dart`. Self-retiring day-one section on Today: cast a game / open the sample child's story / add the first room, then the team-invites closer. Cards collapse to check rows as they complete; "Hide setup" dismisses. Teachers get a one-card welcome instead.
+- *Sample child ("Sam")* — `lib/features/onboarding/sample_child.dart`. Seeded six-week story (observations + missions) that makes the book payoff visible on day one; badged via `SubjectCaps.isSample`; removal is a cascading confirm that spares real kids (pinned by `test/unit/starter_spine_test.dart`).
+**Depends on**: Invites (redeem), Auth, Today (hosts the spine), Story (the sample-story link), Games (the cast card → `/present`).
+**Consumed by**: Router (post-login redirect when `viewer.spaceId == null`); Today (renders `StarterSpine` in both the empty-day-one body and `TodayBody`).
+**Last verified**: 2026-07-13
 
 ---
 

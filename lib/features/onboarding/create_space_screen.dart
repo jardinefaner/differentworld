@@ -1,5 +1,6 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/features/onboarding/sample_child.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +47,17 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
       if (db == null || session == null) {
         throw StateError('Database or session not ready.');
       }
+      final spaceId = const Uuid().v4();
       await db.createSpaceForMember(
-        spaceId: const Uuid().v4(),
+        spaceId: spaceId,
         spaceName: name,
+        memberId: session.user.id,
+      );
+      // Day-one spine: Sam, the sample child whose six-week story makes
+      // the book payoff visible before any real data exists.
+      await seedSampleChild(
+        db,
+        spaceId: spaceId,
         memberId: session.user.id,
       );
       // Pop ourselves off the navigator. CreateSpaceScreen was pushed

@@ -19,6 +19,7 @@ import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/launch/launch_readiness.dart';
 import 'package:differentworld/features/live_session/live_session_banner.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
+import 'package:differentworld/features/onboarding/widgets/starter_spine.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
@@ -1036,6 +1037,9 @@ class TodayBody extends ConsumerWidget {
               ? Theme.of(context).colorScheme.error
               : null,
         ),
+        // First-run starter spine — self-retiring; renders nothing once
+        // day one is done (lib/features/onboarding/widgets/starter_spine.dart).
+        const StarterSpine(),
         // Safety net: once the day is running (program/pickup), anyone still
         // unmarked is a real accountability gap — a kid with no attendance
         // decision. The arrival lead has already moved on, so this persists

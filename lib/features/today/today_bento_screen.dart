@@ -10,6 +10,7 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/live_session/live_session_banner.dart';
+import 'package:differentworld/features/onboarding/widgets/starter_spine.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
@@ -21,6 +22,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,24 +67,26 @@ class TodayBentoScreen extends ConsumerWidget {
         ),
         data: (groups) {
           if (groups.isEmpty) {
-            final groupLower = labels.group.toLowerCase();
+            // Day one: the director gets the starter spine — the app
+            // proving itself — instead of a bare empty state.
+            if (viewer.canManageSpace) {
+              return ResponsivePage(
+                children: [
+                  ContentHeader(
+                    title: viewer.space?.name ?? 'Today',
+                    subtitle: 'Day one.',
+                  ),
+                  const StarterSpine(),
+                ],
+              );
+            }
             final groupsLower = labels.groupPlural.toLowerCase();
             return EmptyState(
               icon: Icons.meeting_room_outlined,
               title: 'No $groupsLower yet',
-              message: viewer.canManageSpace
-                  ? 'Add your first $groupLower to start taking '
-                        '${labels.attendanceNoun.toLowerCase()} and '
-                        'logging the day.'
-                  : 'Your director will set up $groupsLower here. '
-                        'Check back later.',
-              action: viewer.canManageSpace
-                  ? FilledButton.icon(
-                      onPressed: () => context.push('/groups/new'),
-                      icon: const Icon(Icons.add),
-                      label: Text('Add $groupLower'),
-                    )
-                  : null,
+              message:
+                  'Your director will set up $groupsLower here. '
+                  'Check back later.',
             );
           }
           return _BentoBody(viewer: viewer, groups: groups);
