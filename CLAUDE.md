@@ -316,6 +316,11 @@ keep the map fresh, and three agents maintain + query them.
   architecture.** When adding a feature, check it's expressible as a
   combination of these eleven; needing a twelfth is a signal, not a
   default. A screen that obeys the eleven laws feels like the system.
+- **[docs/BRAND.md](docs/BRAND.md)** — the *how it shows up*: positioning
+  (book, not ledger — Brightwheel is the foil), the calm-host
+  personality, the five visual laws, voice, the Mobbin reference set,
+  and where each is mechanically enforced. **Authoritative for
+  identity.** A screen that violates it is a defect, not taste.
 - **[docs/VERTICALS.md](docs/VERTICALS.md)** — the *where else it fits*:
   the two axes of portability. The ENGINE (Space/Member/Group/Subject/
   Entry) re-skins to five operational verticals (childcare / construction
