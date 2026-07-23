@@ -121,4 +121,21 @@ void main() {
       );
     });
   });
+
+  group('quilt sizing', () {
+    test('span is deterministic per id and only 1 or 2', () {
+      for (final id in ['a', 'bb', 'photo-123', 'zzz-9']) {
+        final first = galleryTileSpan(id);
+        expect(first, galleryTileSpan(id));
+        expect(first == 1 || first == 2, isTrue);
+      }
+    });
+
+    test('some ids go big, most stay small', () {
+      final ids = [for (var i = 0; i < 200; i++) 'photo-$i'];
+      final bigs = ids.where((id) => galleryTileSpan(id) == 2).length;
+      expect(bigs, greaterThan(0));
+      expect(bigs, lessThan(100));
+    });
+  });
 }

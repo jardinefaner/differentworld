@@ -21,6 +21,7 @@ import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 
 /// `/photos` — the program-wide gallery: every room's photos in one
@@ -107,23 +108,50 @@ class _PhotosGalleryScreenState extends ConsumerState<PhotosGalleryScreen> {
               else
                 for (final day in days) ...[
                   SliverToBoxAdapter(child: _dayHeader(day.day)),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverGrid.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 140,
-                            crossAxisSpacing: 5,
-                            mainAxisSpacing: 5,
-                          ),
-                      itemCount: day.photos.length,
-                      itemBuilder: (context, i) => _GalleryTile(
-                        attachment: day.photos[i],
-                        subjectsById: subjectsById,
-                        onTap: () => _openViewer(day.photos, i, subjectsById),
-                        onLongPress: () =>
-                            _showMetadata(day.photos[i], subjectsById, groups),
-                      ),
+                  // Edge-to-edge quilt: compact tiles, hairline gaps, no
+                  // side gutters — sizes vary (1×1 / 2×2) deterministically
+                  // per photo so the wall never reshuffles. StaggeredGrid
+                  // builds a whole day at once; days are bounded and the
+                  // feed is capped at 500, so laziness stays at the
+                  // sliver-per-day level.
+                  SliverToBoxAdapter(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cols = (constraints.maxWidth / 110).floor().clamp(
+                          3,
+                          8,
+                        );
+                        return StaggeredGrid.count(
+                          crossAxisCount: cols,
+                          mainAxisSpacing: 2,
+                          crossAxisSpacing: 2,
+                          children: [
+                            for (var i = 0; i < day.photos.length; i++)
+                              StaggeredGridTile.count(
+                                crossAxisCellCount: galleryTileSpan(
+                                  day.photos[i].id,
+                                ),
+                                mainAxisCellCount: galleryTileSpan(
+                                  day.photos[i].id,
+                                ),
+                                child: _GalleryTile(
+                                  attachment: day.photos[i],
+                                  subjectsById: subjectsById,
+                                  onTap: () => _openViewer(
+                                    day.photos,
+                                    i,
+                                    subjectsById,
+                                  ),
+                                  onLongPress: () => _showMetadata(
+                                    day.photos[i],
+                                    subjectsById,
+                                    groups,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -383,8 +411,7 @@ class _GalleryTile extends ConsumerWidget {
         label: kid == null
             ? 'Photo'
             : 'Photo of ${kid.firstName}, opens full screen',
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+        child: ClipRect(
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -402,7 +429,7 @@ class _GalleryTile extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface.withValues(alpha: 0.82),
-                      borderRadius: BorderRadius.circular(7),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       kid.firstName,

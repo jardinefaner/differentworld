@@ -101,3 +101,14 @@ List<GalleryDay> groupGalleryByDay(List<Attachment> photos) {
   }
   return out;
 }
+
+/// Deterministic quilt sizing for the wall: roughly one photo in five
+/// renders 2×2. Derived from the id — never actual randomness — so a
+/// photo's size is stable across rebuilds, scrolls, and sessions.
+int galleryTileSpan(String id) {
+  var sum = 0;
+  for (final c in id.codeUnits) {
+    sum = (sum + c) & 0x7fffffff;
+  }
+  return sum % 5 == 0 ? 2 : 1;
+}
