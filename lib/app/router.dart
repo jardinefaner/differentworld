@@ -117,6 +117,7 @@ import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/photos/child_photos_folder_screen.dart';
+import 'package:differentworld/features/photos/photos_gallery_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/pickup/pickup_person_edit_screen.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
@@ -553,6 +554,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               // Capture inbox — the upward loop's *input* side. Quick
               // "I noticed…" notes awaiting triage into observations
               // or dismissal.
+              // The program-wide photo wall — every room, day-grouped,
+              // labeled, metadata one tap away.
+              GoRoute(
+                path: 'photos',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Photos',
+                  child: PhotosGalleryScreen(),
+                ),
+              ),
               GoRoute(
                 path: 'captures',
                 builder: (_, _) => const RouteTitle(

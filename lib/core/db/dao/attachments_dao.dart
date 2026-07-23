@@ -94,6 +94,21 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Every photo OF a child, across activities. Keyed on `subject_id`.
+  /// Every image in the space, newest first — the program-wide Photos
+  /// gallery. Windowed to the latest 500 locally (the grid's practical
+  /// ceiling; the per-child folders remain the deep archive path).
+  /// Backed by the `attachments_space` local index — without it this
+  /// watch would full-scan on every emission (CLAUDE.md rule #4).
+  Stream<List<Attachment>> watchImagesInSpace(String spaceId) {
+    return (select(attachments)
+          ..where(
+            (a) => a.spaceId.equals(spaceId) & a.mimeType.like('image/%'),
+          )
+          ..orderBy([(a) => OrderingTerm.desc(a.createdAt)])
+          ..limit(500))
+        .watch();
+  }
+
   Stream<List<Attachment>> watchForSubject(String subjectId) {
     return (select(attachments)
           ..where((a) => a.subjectId.equals(subjectId))

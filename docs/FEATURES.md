@@ -753,7 +753,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: Signed-URL minting + cached display for person photos (avatars, observation attachments), PLUS the per-child PROGRESS FOLDER — a browsable collection of one child's photos: the ones they SHOT and the ones OF them, favorites-first. Bytes live in Supabase Storage's private `person-photos` bucket; rows carry only the bucket-relative path.
 **Personas served**: All staff (upload + view + curate the folder), All guardians (view their own children's folder, read-only).
 **Discovery surfaces**:
-- Routes: `/subjects/:id/photos` (`ChildPhotosFolderScreen`, RouteTitle "Photos"; nested as a sibling of `subjects/:id/day` etc.).
+- Routes: `/photos` (program-wide gallery); `/subjects/:id/photos` (`ChildPhotosFolderScreen`, RouteTitle "Photos"; nested as a sibling of `subjects/:id/day` etc.).
 - Omnibox: yes — "Photos · {child}" per visible subject (keywords: photo, photos, folder, gallery, pictures, media, progress) → `/subjects/:id/photos`. Built in the per-subject loop of `omnibox_catalog.dart`; the catalog list is already viewer-scoped.
 - Slash: none
 - Drawer: no
@@ -769,7 +769,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Attachments providers* — `lib/features/photos/attachments_providers.dart`. `attachmentsCapturedByProvider` (Took), `attachmentsCapturedByCuratedProvider` (Took, favorites-first), `attachmentsForSubjectProvider` (Of — added for the folder), `attachmentsForEntityProvider`, `attachmentsForBlockProvider`; `AttachmentActions` (add / updateCaption / reorder / remove).
 **Depends on**: Supabase Storage client, Subjects (`subjectByIdProvider`, viewer gate), PhotoViewer.
 **Consumed by**: Members, Subjects (folder link), Entries (attachment display), Family, World (DrawSelfScreen → `CharacterSheetActions.setDrawnAvatar` → `PhotoService.uploadOnly`; CharacterSheetScreen → `PersonAvatar` for signed-URL render of the drawn avatar), Action Words (GrowthArcScreen weaves `attachmentsCapturedByProvider` shots into the growth-arc reel).
-**Last verified**: 2026-06-21
+- *Program photo wall* — `lib/features/photos/photos_gallery_screen.dart`. `/photos`: every room's photos, day-grouped grid, room/kid/source filter chips (vehicles hidden unless asked), name chip per tile, keeper hearts; tap → shared full-screen viewer with composite caption; long-press → metadata sheet (kid, room, time, source, shot-by, added-by). Staff-only; windowed to the latest 500 via `attachmentsDao.watchImagesInSpace` (backed by the `attachments_space` local index). Discovery: route `/photos`, omnibox `page.photos` (photos / gallery / pictures / photo wall / camera roll), drawer "Photos" after Captures. Pure filter/group core pinned by `test/unit/gallery_providers_test.dart`.
+**Last verified**: 2026-07-13
 
 ---
 

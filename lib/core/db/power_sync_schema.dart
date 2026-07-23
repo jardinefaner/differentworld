@@ -247,6 +247,11 @@ const appSchema = Schema([
         IndexedColumn('subject_id'),
         IndexedColumn.descending('created_at'),
       ]),
+      // The program-wide Photos gallery (space feed, newest first).
+      Index('attachments_space', [
+        IndexedColumn('space_id'),
+        IndexedColumn.descending('created_at'),
+      ]),
       Index('attachments_captured_by', [
         IndexedColumn('captured_by_subject_id'),
         IndexedColumn.descending('created_at'),
