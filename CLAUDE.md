@@ -1948,6 +1948,10 @@ that way.
 
 ## What's intentionally deferred
 
+- **App splits (Family / Room Screen / Games as separate SKUs)** — the
+  strategy, triggers, and monorepo mechanics live in
+  [docs/APP_SPLITS.md](docs/APP_SPLITS.md). Deliberately deferred: one
+  app until real external families exist (the Family split fires first).
 - **Native `google_sign_in`** for smoother mobile UX (current flow opens
   external browser — works, slightly clunky on iOS/Android)
 - **Sentry / crash reporting** — env slot ready, wire near ship
