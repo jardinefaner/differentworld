@@ -979,6 +979,32 @@ flutter test        # all passing
 
 The ones we've already burned a turn on.
 
+### "Not saving" / "cast not working" — check the CLOUD INFRA first, not the code
+
+Two multi-week mysteries (2026-07/08) were both dead backend services, not
+app bugs — and the app's offline-first design MASKED them (local writes
+kept working, so nothing errored loudly):
+
+- **"Things aren't saving properly"** = the PowerSync Cloud instance was
+  GONE — its hostname (`POWERSYNC_URL` in `.env`) returned NXDOMAIN from
+  every network. Local saves worked; nothing ever synced. Diagnose in one
+  step: `host <instance>.powersync.journeyapps.com` from the Mac. Fix:
+  PowerSync dashboard → revive/recreate the instance → update `.env` →
+  **paste sync_rules.yaml into the dashboard and Deploy** (fresh instance
+  has no rules) → rebuild.
+- **"Cast to screen / use device as screen not working"** = Supabase
+  **Realtime returning 500** while Auth (200) and REST were healthy. Cast
+  rides Realtime channels exclusively — a wedged Realtime kills both
+  directions with zero app-side errors worth grepping. Diagnose:
+  `curl -s -o /dev/null -w "%{http_code}" "$SUPABASE_URL/realtime/v1/websocket?apikey=$ANON"`
+  — healthy rejects with 403/426; **500 = server-side**. Fix: Supabase
+  dashboard → Settings → General → **Restart project**.
+
+Rule: before auditing app code for a "stopped working" report on any
+sync/live feature, run the two probes above (plus `auth/v1/health`).
+The sync-health sheet (tap the cloud pill) surfaces the PowerSync half
+on-device; Realtime has no in-app surface yet.
+
 ### QR deep links: vehicle = custom scheme, invite = https (don't flip them)
 
 This choice flip-flopped across Waves 165→170 — settled in Wave 171.
