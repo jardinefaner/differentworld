@@ -176,9 +176,25 @@ class _AppShellState extends ConsumerState<AppShell> {
     // between — they live on /, /messages, /children/*), and is
     // hidden in kid mode same as the drawer.
     final viewportWidth = MediaQuery.sizeOf(context).width;
+    // Immersive present/cast surfaces own the WHOLE viewport on desktop too —
+    // a fullscreen cast with the 240dp nav rail still docked left is the
+    // "left menu on the projector" bug (2026-08-02). Read the immersive
+    // signals here (before the rail decision); `isImmersive` below adds the
+    // route-prefix half for the bar, which needs `location` from the router.
+    final immersiveProviderOn =
+        ref.watch(speakImmersiveProvider) || ref.watch(castImmersiveProvider);
+    // The fullscreen activity routes hide chrome by route prefix; the rail
+    // must honor that too. uri.path is the full active location — reliable,
+    // unlike matchedLocation, which stays at the shell's own match
+    // (verified on device: `/breaks` while uri.path is the real child).
+    final immersiveRoute = GoRouterState.of(
+      context,
+    ).uri.path.startsWith('/activity/');
     final showDesktopRail =
         showDrawer &&
         viewer is! GuardianViewer &&
+        !immersiveProviderOn &&
+        !immersiveRoute &&
         viewportWidth >= Breakpoints.tablet;
 
     // ── Back / swipe model (Wave: reliable nav) ──────────────────────
@@ -201,14 +217,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     //                                 "back/swipe exits" bug).
     //   • shell can't pop, at home  → confirm app exit.
     //
-    // AppShell depends on GoRouterState (below), so it rebuilds on every
-    // navigation — `shellCanPop`/`location` are recomputed each route
-    // change and the captured closure values stay fresh.
-    final routerState = GoRouterState.of(context);
-    // Full active location — reliable, unlike matchedLocation. (Verified
-    // on device: matchedLocation stays at `/breaks` while uri.path is the
-    // real child route.)
-    final location = routerState.uri.path;
+    // AppShell depends on GoRouterState (the immersive-route read above),
+    // so it rebuilds on every navigation — `shellCanPop` is recomputed each
+    // route change and the captured closure values stay fresh.
     // `context.canPop()` resolves to the shell navigator's real
     // `canPop()` (go_router's delegate walks the ShellRouteMatch). NOTE it
     // is stale-by-ONE here: AppShell (the ShellRoute builder) builds BEFORE
@@ -222,10 +233,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     // hide the omnibox bar + reclaim its bottom space — like kid mode but
     // WITHOUT the lock. They're full-screen surfaces; the bar both clutters
     // them and steals the ~76 dp their layouts need.
-    final isImmersive =
-        location.startsWith('/activity/') ||
-        ref.watch(speakImmersiveProvider) ||
-        ref.watch(castImmersiveProvider);
+    final isImmersive = immersiveRoute || immersiveProviderOn;
 
     // PopScope.canPop=true → the system pops the shell navigator normally
     // (drill-ins reached via `push`, including `/search`); false → we
