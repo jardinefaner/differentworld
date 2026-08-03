@@ -138,10 +138,12 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     if (role == SessionRole.present) {
       final viewer = ref.read(viewerProvider);
       final spaceId = viewer.spaceId;
-      if (spaceId != null) {
+      final memberId = viewer.memberId;
+      if (spaceId != null && memberId != null) {
         _announcer = LobbyAnnouncer.announce(
           client: ref.read(supabaseProvider),
           spaceId: spaceId,
+          memberId: memberId,
           code: code,
           game: _def.id,
           presenter: viewer.displayName,

@@ -12,10 +12,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// durable rows), the documented Supabase-direct exception. No child PII on
 /// the wire — just a join code, a game id, and the presenter's name.
 ///
-/// Topic: `dw-live-<spaceId>`. Presenters `track({code, game, presenter})`;
+/// Topic: `dw-live-<spaceId>-<memberId>` — ACCOUNT-scoped (2026-08-02):
+/// each staff member's sessions are their own; a program never shares one
+/// discovery surface. Devices signed into the SAME account still discover
+/// each other (the kid-tablet path); a different account joins by typing
+/// the 4-char code instead. Presenters `track({code, game, presenter})`;
 /// watchers subscribe WITHOUT tracking (so they never appear as a session) and
 /// read the presence list.
-String lobbyTopicFor(String spaceId) => 'dw-live-$spaceId';
+String lobbyTopicFor(String spaceId, String memberId) =>
+    'dw-live-$spaceId-$memberId';
 
 /// One live session as advertised in the lobby.
 @immutable
@@ -55,11 +60,12 @@ class LobbyAnnouncer {
   factory LobbyAnnouncer.announce({
     required SupabaseClient client,
     required String spaceId,
+    required String memberId,
     required String code,
     required String game,
     required String presenter,
   }) {
-    final channel = client.channel(lobbyTopicFor(spaceId));
+    final channel = client.channel(lobbyTopicFor(spaceId, memberId));
     channel.subscribe((status, _) {
       if (status == RealtimeSubscribeStatus.subscribed) {
         unawaited(
@@ -95,8 +101,9 @@ class LobbyWatcher {
   factory LobbyWatcher.watch({
     required SupabaseClient client,
     required String spaceId,
+    required String memberId,
   }) {
-    final channel = client.channel(lobbyTopicFor(spaceId));
+    final channel = client.channel(lobbyTopicFor(spaceId, memberId));
     final watcher = LobbyWatcher._(channel);
     channel.onPresenceSync((_) => watcher._emit()).subscribe((status, _) {
       if (status == RealtimeSubscribeStatus.subscribed) watcher._emit();

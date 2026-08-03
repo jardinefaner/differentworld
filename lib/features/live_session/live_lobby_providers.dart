@@ -17,12 +17,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final activeSessionsProvider = StreamProvider.autoDispose<List<LiveSessionAd>>((
   ref,
 ) {
-  final spaceId = ref.watch(viewerProvider).spaceId;
-  // No space (guardian / not loaded) → nothing to discover.
-  if (spaceId == null) return Stream.value(const <LiveSessionAd>[]);
+  final viewer = ref.watch(viewerProvider);
+  final spaceId = viewer.spaceId;
+  final memberId = viewer.memberId;
+  // No space/member (guardian / not loaded) → nothing to discover.
+  if (spaceId == null || memberId == null) {
+    return Stream.value(const <LiveSessionAd>[]);
+  }
   final watcher = LobbyWatcher.watch(
     client: ref.read(supabaseProvider),
     spaceId: spaceId,
+    memberId: memberId,
   );
   ref.onDispose(() => unawaited(watcher.dispose()));
   return watcher.ads;
