@@ -165,6 +165,16 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       route: '/captures',
       countProvider: _openCapturesCountProvider,
     ),
+    const NavDestination(
+      icon: Icons.photo_library_outlined,
+      label: 'Photos',
+      route: '/photos',
+    ),
+    const NavDestination(
+      icon: Icons.casino_outlined,
+      label: 'Pick me',
+      route: '/picker',
+    ),
     NavDestination(
       icon: Icons.check_circle_outline,
       label: 'Tasks',

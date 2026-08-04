@@ -118,6 +118,7 @@ import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/photos/child_photos_folder_screen.dart';
 import 'package:differentworld/features/photos/photos_gallery_screen.dart';
+import 'package:differentworld/features/picker/picker_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/pickup/pickup_person_edit_screen.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
@@ -554,6 +555,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               // Capture inbox — the upward loop's *input* side. Quick
               // "I noticed…" notes awaiting triage into observations
               // or dismissal.
+              // The fair name picker — one kid, a pair, or teams; everyone
+              // goes before anyone repeats. A standalone tool, not a break.
+              GoRoute(
+                path: 'picker',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Pick me',
+                  child: NamePickerScreen(),
+                ),
+              ),
               // The program-wide photo wall — every room, day-grouped,
               // labeled, metadata one tap away.
               GoRoute(

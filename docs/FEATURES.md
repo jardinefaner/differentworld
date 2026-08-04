@@ -774,6 +774,26 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Picker
+**Path**: `lib/features/picker/`
+**Purpose**: The fair name picker — pick one kid, a pair, or split the room into teams; everyone gets picked before anyone repeats. A standalone tool, deliberately not a brain break.
+**Personas served**: Jordan, Coach Sam, Brianna (daily "who goes next" moments).
+**Discovery surfaces**:
+- Routes: `/picker`
+- Omnibox: yes — "Pick me — fair name picker" (page; keywords: picker, random, pick a name, name picker, teams, choose, randomizer, spinner)
+- Slash: none
+- Drawer: yes — "Pick me" after Photos
+- Settings: no
+**Capabilities**: Staff only (guardians blocked at the screen). No caps required.
+**Data**: [groups](SCHEMA.md#groups), [subjects](SCHEMA.md#subjects), [attendance_records](SCHEMA.md#attendance_records) (the "Here today" filter). The fair bag persists per room per device (SharedPreferences), not synced.
+**Surfaces**:
+- *Name picker* — `lib/features/picker/picker_screen.dart`. Room chips + "Here today" (present/late once attendance is taken) + One/Two/Teams modes; big reveal with haptic, fresh-round banner, already-picked pile, teams 2-6 with even split and calm nature names.
+- *Fair-draw core* — `lib/features/picker/picker_logic.dart`. `FairBag` (no repeats until exhaustion, refill mid-draw safe, roster sync, JSON persistence) + `splitTeams` (round-robin even split). Pinned by `test/unit/picker_logic_test.dart`.
+**Depends on**: Groups, Subjects, Attendance (read-only).
+**Consumed by**: Nothing yet — the games' Spotlight picker is separate (pure random, castable); folding the FairBag into it is a natural follow-up.
+**Last verified**: 2026-08-02
+
+---
 ## Poster
 **Path**: `lib/features/poster/`
 **Purpose**: Tile one image across several Letter/A4 pages — print all of them and tape them into one big poster (a kid's drawing blown up, a welcome banner, a giant map). The grid auto-fits the image's shape; you can reposition the crop, rotate, and add trim/assembly guides.
