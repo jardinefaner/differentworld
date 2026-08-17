@@ -419,7 +419,7 @@ void main() {
   group('custom grid', () {
     test('explicit 3x3 wins over size and fitShape', () {
       final layout = computePosterLayout(
-        const PosterOptions(size: 2, customCols: 3, customRows: 3),
+        const PosterOptions(customCols: 3, customRows: 3),
         1.5,
       );
       expect(layout.cols, 3);
@@ -444,16 +444,16 @@ void main() {
       // A wide image on a 2x2 grid → landscape pages match better.
       final layout = computePosterLayout(
         const PosterOptions(customCols: 2, customRows: 2),
-        2.0,
+        2,
       );
       expect(layout.landscape, isTrue);
     });
 
     test('customCols alone (rows 0) stays on the auto path', () {
-      final auto = computePosterLayout(const PosterOptions(size: 3), 1.0);
+      final auto = computePosterLayout(const PosterOptions(size: 3), 1);
       final half = computePosterLayout(
         const PosterOptions(size: 3, customCols: 4),
-        1.0,
+        1,
       );
       expect(half.cols, auto.cols);
       expect(half.rows, auto.rows);

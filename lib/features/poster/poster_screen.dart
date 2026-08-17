@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -98,6 +99,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
 
   /// Mutate options + persist so they come back next session.
   void _update(PosterOptions next) {
+    // Every option control shares this path — one selection tick for all.
+    unawaited(HapticFeedback.selectionClick());
     setState(() => _opts = next);
     unawaited(PosterPrefs.save(next));
   }
@@ -471,34 +474,61 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                       'Blow up an image across printed pages you tape '
                       'together',
                 ),
-                if (_working)
-                  _WorkingBanner(
-                    key: const ValueKey('poster-working'),
-                    done: _progressDone,
-                    total: _progressTotal,
-                  ),
-                if (_error != null)
-                  _ErrorBanner(
-                    key: const ValueKey('poster-error'),
-                    message: _error!,
-                    // Retry the SAME action that failed, and only when there's
-                    // an image to retry with.
-                    onRetry: (_bytes != null && !_working)
-                        ? () => _export(_lastDelivery)
-                        : null,
-                  ),
-                if (!hasImage)
-                  _Chooser(
-                    key: const ValueKey('poster-chooser'),
-                    onPick: _pick,
-                    onMakeSign: () => unawaited(_makeSign()),
-                  )
-                else
-                  Column(
-                    key: const ValueKey('poster-editor'),
+                // Banners ease in/out instead of snapping the layout.
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: _editor(context),
+                    children: [
+                      if (_working)
+                        _WorkingBanner(
+                          key: const ValueKey('poster-working'),
+                          done: _progressDone,
+                          total: _progressTotal,
+                        ),
+                      if (_error != null)
+                        _ErrorBanner(
+                          key: const ValueKey('poster-error'),
+                          message: _error!,
+                          // Retry the SAME action that failed, and only when
+                          // there's an image to retry with.
+                          onRetry: (_bytes != null && !_working)
+                              ? () => _export(_lastDelivery)
+                              : null,
+                        ),
+                    ],
                   ),
+                ),
+                // Chooser ↔ editor crossfade (with a whisper of rise) —
+                // landing an image should feel like arriving, not swapping.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.02),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: !hasImage
+                      ? _Chooser(
+                          key: const ValueKey('poster-chooser'),
+                          onPick: _pick,
+                          onMakeSign: () => unawaited(_makeSign()),
+                        )
+                      : Column(
+                          key: const ValueKey('poster-editor'),
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: _editor(context),
+                        ),
+                ),
               ],
             ),
           ),
@@ -517,8 +547,15 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 340, maxHeight: 460),
-          child: AspectRatio(
-            aspectRatio: layout.canvasAspect,
+          // Grid/orientation changes glide between shapes instead of
+          // snapping — the preview is the screen's anchor; it should move
+          // like paper, not flicker like state.
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: layout.canvasAspect),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            builder: (context, aspect, child) =>
+                AspectRatio(aspectRatio: aspect, child: child),
             child: _PosterPreview(
               bytes: _bytes!,
               layout: layout,
@@ -558,15 +595,22 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       ],
       const SizedBox(height: 8),
       Center(
-        child: Text(
-          'Prints as ${layout.cols}×${layout.rows} '
-          '${layout.landscape ? 'landscape' : 'portrait'} · ${layout.pageCount} '
-          '${_paperName(layout.paper)} page${layout.pageCount == 1 ? '' : 's'} · '
-          'about ${_assembledSize(layout)} assembled\n'
-          'Print all ${layout.pageCount}, line them up, and tape them together.'
-          '${_opts.guides ? '\nIncludes trim guides + an assembly map page.' : ''}',
-          textAlign: TextAlign.center,
-          style: caption,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            'Prints as ${layout.cols}×${layout.rows} '
+            '${layout.landscape ? 'landscape' : 'portrait'} · ${layout.pageCount} '
+            '${_paperName(layout.paper)} page${layout.pageCount == 1 ? '' : 's'} · '
+            'about ${_assembledSize(layout)} assembled\n'
+            'Print all ${layout.pageCount}, line them up, and tape them together.'
+            '${_opts.guides ? '\nIncludes trim guides + an assembly map page.' : ''}',
+            key: ValueKey(
+              '${layout.cols}-${layout.rows}-${layout.landscape}-'
+              '${layout.paper}-${_opts.guides}',
+            ),
+            textAlign: TextAlign.center,
+            style: caption,
+          ),
         ),
       ),
       const SizedBox(height: 20),
@@ -603,25 +647,37 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         ),
       ),
       const SizedBox(height: 4),
-      if (!_opts.hasCustomGrid)
-        Text('Pages along the poster’s longest edge.', style: caption)
-      else ...[
-        Text('Pick the exact page grid — wide × tall.', style: caption),
-        const SizedBox(height: 8),
-        _gridChips(
-          context,
-          label: 'Wide',
-          value: _opts.customCols,
-          onPick: (v) => _update(_opts.copyWith(customCols: v)),
+      // The custom rows reveal / retract as one smooth motion.
+      AnimatedSize(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        alignment: Alignment.topCenter,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: !_opts.hasCustomGrid
+              ? [Text('Pages along the poster’s longest edge.', style: caption)]
+              : [
+                  Text(
+                    'Pick the exact page grid — wide × tall.',
+                    style: caption,
+                  ),
+                  const SizedBox(height: 8),
+                  _gridChips(
+                    context,
+                    label: 'Wide',
+                    value: _opts.customCols,
+                    onPick: (v) => _update(_opts.copyWith(customCols: v)),
+                  ),
+                  const SizedBox(height: 6),
+                  _gridChips(
+                    context,
+                    label: 'Tall',
+                    value: _opts.customRows,
+                    onPick: (v) => _update(_opts.copyWith(customRows: v)),
+                  ),
+                ],
         ),
-        const SizedBox(height: 6),
-        _gridChips(
-          context,
-          label: 'Tall',
-          value: _opts.customRows,
-          onPick: (v) => _update(_opts.copyWith(customRows: v)),
-        ),
-      ],
+      ),
       const SizedBox(height: 4),
       if (!_opts.hasCustomGrid)
         SwitchListTile(
@@ -1054,10 +1110,16 @@ class _PosterPreviewState extends State<_PosterPreview> {
                     gaplessPlayback: true,
                     cacheWidth: 1280,
                   ),
-                CustomPaint(
-                  painter: _GridPainter(
-                    cols: widget.layout.cols,
-                    rows: widget.layout.rows,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: CustomPaint(
+                    key: ValueKey(
+                      'grid-${widget.layout.cols}x${widget.layout.rows}',
+                    ),
+                    painter: _GridPainter(
+                      cols: widget.layout.cols,
+                      rows: widget.layout.rows,
+                    ),
                   ),
                 ),
               ],
