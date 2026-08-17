@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:differentworld/features/poster/poster_engine.dart';
 import 'package:differentworld/features/poster/poster_models.dart';
 import 'package:differentworld/features/poster/poster_prefs.dart';
+import 'package:differentworld/features/poster/poster_text.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -146,6 +147,58 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     } on Object {
       return 1; // fall back to square framing if the header won't decode
     }
+  }
+
+  /// Ingest raw image bytes (the sign renderer / a seeded caller) into the
+  /// same working state a gallery pick lands in.
+  Future<void> _ingestBytes(Uint8List bytes) async {
+    final aspect = await _decodeAspect(bytes);
+    if (!mounted) return;
+    setState(() {
+      _bytes = bytes;
+      _imageAspect = aspect;
+      _zoom = 1;
+      _focusX = 0.5;
+      _focusY = 0.5;
+      _error = null;
+    });
+  }
+
+  /// "Make a sign" — type the words, render them in the brand serif on warm
+  /// paper, and drop the result into the normal poster pipeline.
+  Future<void> _makeSign() async {
+    if (_working) return;
+    final controller = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Make a sign'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            hintText: 'Welcome to Maple Room',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: const Text('Make it big'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (text == null || text.isEmpty || !mounted) return;
+    final bytes = await renderTextPoster(text);
+    if (!mounted) return;
+    await _ingestBytes(bytes);
   }
 
   Future<void> _pick(ImageSource source) async {
@@ -435,7 +488,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                         : null,
                   ),
                 if (!hasImage)
-                  _Chooser(key: const ValueKey('poster-chooser'), onPick: _pick)
+                  _Chooser(
+                    key: const ValueKey('poster-chooser'),
+                    onPick: _pick,
+                    onMakeSign: () => unawaited(_makeSign()),
+                  )
                 else
                   Column(
                     key: const ValueKey('poster-editor'),
@@ -768,7 +825,21 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       final h = (l.assembledHeightIn * 2.54).round();
       return '$w × $h cm';
     }
-    return '${_inches(l.assembledWidthIn)}″ × ${_inches(l.assembledHeightIn)}″';
+    final base =
+        '${_inches(l.assembledWidthIn)}″ × ${_inches(l.assembledHeightIn)}″';
+    // Big posters read better in feet — "50″" means little at a glance.
+    if (l.assembledWidthIn >= 24 || l.assembledHeightIn >= 24) {
+      return '$base  (${_feet(l.assembledWidthIn)} × '
+          '${_feet(l.assembledHeightIn)})';
+    }
+    return base;
+  }
+
+  String _feet(double inches) {
+    final ft = inches ~/ 12;
+    final rem = (inches - ft * 12).round();
+    if (ft == 0) return '$rem in';
+    return rem == 0 ? '$ft ft' : '$ft ft $rem in';
   }
 
   Widget _label(BuildContext context, String text) => Text(
@@ -784,9 +855,10 @@ String _inches(double v) =>
 
 /// The empty state: pick a source to start.
 class _Chooser extends StatelessWidget {
-  const _Chooser({required this.onPick, super.key});
+  const _Chooser({required this.onPick, required this.onMakeSign, super.key});
 
   final Future<void> Function(ImageSource) onPick;
+  final VoidCallback onMakeSign;
 
   @override
   Widget build(BuildContext context) {
@@ -826,6 +898,12 @@ class _Chooser extends StatelessWidget {
             onPressed: () => onPick(ImageSource.camera),
             icon: const Icon(Icons.photo_camera_outlined),
             label: const Text('Take a photo'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: onMakeSign,
+            icon: const Icon(Icons.title),
+            label: const Text('Make a sign'),
           ),
         ],
       ),

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// The one full-screen photo viewer. Swipe between photos in a list; pinch /
@@ -107,6 +108,31 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
       unawaited(Navigator.of(context).maybePop());
     } else {
       setState(() => _dragDy = 0);
+    }
+  }
+
+  /// "Print big" — fetch this photo's bytes (same signed-URL + cache path
+  /// as share) and hand them to the poster tool.
+  Future<void> _printBig() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    try {
+      final signed = await ref.read(
+        signedPersonPhotoUrlProvider(widget.urls[_index]).future,
+      );
+      if (signed == null || signed.isEmpty || !mounted) return;
+      final file = await DefaultCacheManager().getSingleFile(signed);
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      unawaited(context.push('/poster', extra: bytes));
+    } on Object catch (e) {
+      if (kDebugMode) debugPrint('[photo-print-big] $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't load the photo")),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
     }
   }
 
@@ -225,6 +251,14 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
                               )
                             : const Icon(Icons.ios_share),
                         onPressed: _sharing ? null : () => unawaited(_share()),
+                      ),
+                      IconButton(
+                        tooltip: 'Print big',
+                        color: Colors.white,
+                        icon: const Icon(Icons.print_outlined),
+                        onPressed: _sharing
+                            ? null
+                            : () => unawaited(_printBig()),
                       ),
                       IconButton(
                         tooltip: 'Cast to room',

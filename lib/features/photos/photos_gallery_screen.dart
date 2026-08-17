@@ -6,6 +6,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/gallery_providers.dart';
+import 'package:differentworld/features/photos/person_photo_url.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -20,8 +21,10 @@ import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// `/photos` — the program-wide gallery: every room's photos in one
@@ -304,6 +307,25 @@ class _PhotosGalleryScreenState extends ConsumerState<PhotosGalleryScreen> {
     ].join(' · ');
   }
 
+  /// Fetch the photo's bytes (signed URL → cache) and open the poster tool.
+  Future<void> _printBig(Attachment a) async {
+    try {
+      final signed = await ref.read(
+        signedPersonPhotoUrlProvider(a.url).future,
+      );
+      if (signed == null || signed.isEmpty || !mounted) return;
+      final file = await DefaultCacheManager().getSingleFile(signed);
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      unawaited(context.push('/poster', extra: bytes));
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't load the photo")),
+      );
+    }
+  }
+
   void _showMetadata(
     Attachment a,
     Map<String, Subject> subjectsById,
@@ -370,6 +392,18 @@ class _PhotosGalleryScreenState extends ConsumerState<PhotosGalleryScreen> {
                     ].join(' · '),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        unawaited(_printBig(a));
+                      },
+                      icon: const Icon(Icons.print_outlined),
+                      label: const Text('Print big'),
                     ),
                   ),
                 ],

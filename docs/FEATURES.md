@@ -813,7 +813,9 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Poster prefs* — `lib/features/poster/poster_prefs.dart`. Load/save the durable options (defensive: corrupt/missing/out-of-range → defaults).
 **Depends on**: `image` (decode/rotate/crop/resize), `pdf` + `printing` (PDF + OS print/share), `image_picker`, `shared_preferences`, EdgeScaffold + shared chrome primitives.
 **Consumed by**: none.
-**Last verified**: 2026-06-03
+- *Text signs* — `lib/features/poster/poster_text.dart`. "Make a sign" on the chooser: type the words, rendered in Fraunces on warm paper (raw canvas), fed into the same tile pipeline. Binary-search fit, up to 6 lines.
+- *Print big from photos* — the shared photo viewer (print icon) and the photo wall's metadata sheet both fetch the photo's bytes (signed URL → cache) and open `/poster` seeded. Sizes ≥ 24″ also read in feet.
+**Last verified**: 2026-08-09
 
 ---
 
