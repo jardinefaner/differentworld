@@ -24,6 +24,8 @@ class PosterPrefs {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       return PosterOptions(
         size: (map['size'] as num?)?.toInt().clamp(2, 5) ?? 2,
+        customCols: (map['customCols'] as num?)?.toInt().clamp(0, 6) ?? 0,
+        customRows: (map['customRows'] as num?)?.toInt().clamp(0, 6) ?? 0,
         fitShape: map['fitShape'] as bool? ?? true,
         orientation: _enumByName(
           PosterOrientation.values,
@@ -57,6 +59,8 @@ class PosterPrefs {
         _key,
         jsonEncode({
           'size': o.size,
+          'customCols': o.customCols,
+          'customRows': o.customRows,
           'fitShape': o.fitShape,
           'orientation': o.orientation.name,
           'fit': o.fit.name,

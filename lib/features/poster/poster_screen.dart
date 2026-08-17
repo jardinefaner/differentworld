@@ -580,24 +580,60 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             ButtonSegment(value: 3, label: Text('3')),
             ButtonSegment(value: 4, label: Text('4')),
             ButtonSegment(value: 5, label: Text('5')),
+            // 0 = pick the exact grid yourself below.
+            ButtonSegment(value: 0, label: Text('Custom')),
           ],
-          selected: {_opts.size},
-          onSelectionChanged: (s) => _update(_opts.copyWith(size: s.first)),
+          selected: {
+            if (_opts.hasCustomGrid) 0 else _opts.size,
+          },
+          onSelectionChanged: (s) {
+            final v = s.first;
+            if (v == 0) {
+              // Enter custom mode seeded from the current derived grid.
+              _update(
+                _opts.copyWith(
+                  customCols: _layout.cols.clamp(1, 6),
+                  customRows: _layout.rows.clamp(1, 6),
+                ),
+              );
+            } else {
+              _update(_opts.copyWith(size: v, customCols: 0, customRows: 0));
+            }
+          },
         ),
       ),
       const SizedBox(height: 4),
-      Text('Pages along the poster’s longest edge.', style: caption),
-      const SizedBox(height: 4),
-      SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: const Text('Fit to image shape'),
-        subtitle: const Text(
-          'Auto-pick the grid so a wide or tall image isn’t cropped hard or '
-          'printed with big margins',
+      if (!_opts.hasCustomGrid)
+        Text('Pages along the poster’s longest edge.', style: caption)
+      else ...[
+        Text('Pick the exact page grid — wide × tall.', style: caption),
+        const SizedBox(height: 8),
+        _gridChips(
+          context,
+          label: 'Wide',
+          value: _opts.customCols,
+          onPick: (v) => _update(_opts.copyWith(customCols: v)),
         ),
-        value: _opts.fitShape,
-        onChanged: (v) => _update(_opts.copyWith(fitShape: v)),
-      ),
+        const SizedBox(height: 6),
+        _gridChips(
+          context,
+          label: 'Tall',
+          value: _opts.customRows,
+          onPick: (v) => _update(_opts.copyWith(customRows: v)),
+        ),
+      ],
+      const SizedBox(height: 4),
+      if (!_opts.hasCustomGrid)
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Fit to image shape'),
+          subtitle: const Text(
+            'Auto-pick the grid so a wide or tall image isn’t cropped hard or '
+            'printed with big margins',
+          ),
+          value: _opts.fitShape,
+          onChanged: (v) => _update(_opts.copyWith(fitShape: v)),
+        ),
       const SizedBox(height: 12),
       _label(context, 'Fit'),
       const SizedBox(height: 6),
@@ -840,6 +876,37 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     final rem = (inches - ft * 12).round();
     if (ft == 0) return '$rem in';
     return rem == 0 ? '$ft ft' : '$ft ft $rem in';
+  }
+
+  /// One row of 1-6 grid chips for the custom wide/tall pick.
+  Widget _gridChips(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required ValueChanged<int> onPick,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 44,
+          child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ),
+        Expanded(
+          child: Wrap(
+            spacing: 4,
+            children: [
+              for (var n = 1; n <= 6; n++)
+                ChoiceChip(
+                  label: Text('$n'),
+                  visualDensity: VisualDensity.compact,
+                  selected: value == n,
+                  onSelected: (_) => onPick(n),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _label(BuildContext context, String text) => Text(

@@ -79,6 +79,29 @@ class PosterLayout {
 PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
   final size = opts.size;
 
+  // Explicit custom grid (3×3, 1×4, …): the grid IS the choice; only the
+  // page orientation is still picked (forced, or whichever matches the
+  // image's shape better).
+  if (opts.hasCustomGrid) {
+    final a = imageAspect.isFinite && imageAspect > 0 ? imageAspect : 1.0;
+    PosterLayout candidate({required bool landscape}) => PosterLayout(
+      cols: opts.customCols,
+      rows: opts.customRows,
+      landscape: landscape,
+      paper: opts.paper,
+    );
+    return switch (opts.orientation) {
+      PosterOrientation.portrait => candidate(landscape: false),
+      PosterOrientation.landscape => candidate(landscape: true),
+      PosterOrientation.auto => () {
+        final p = candidate(landscape: false);
+        final l = candidate(landscape: true);
+        double mm(double x, double y) => x > y ? x / y : y / x;
+        return mm(p.canvasAspect, a) <= mm(l.canvasAspect, a) ? p : l;
+      }(),
+    };
+  }
+
   // Which page orientations the grid search may use. Auto weighs both and
   // lets the image's shape decide; a forced orientation pins it.
   final orientations = switch (opts.orientation) {

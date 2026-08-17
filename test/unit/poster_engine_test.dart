@@ -415,4 +415,48 @@ void main() {
       expect(out[1], 0x50);
     });
   });
+
+  group('custom grid', () {
+    test('explicit 3x3 wins over size and fitShape', () {
+      final layout = computePosterLayout(
+        const PosterOptions(size: 2, customCols: 3, customRows: 3),
+        1.5,
+      );
+      expect(layout.cols, 3);
+      expect(layout.rows, 3);
+    });
+
+    test('1x4 banner honors forced orientation', () {
+      final layout = computePosterLayout(
+        const PosterOptions(
+          customCols: 1,
+          customRows: 4,
+          orientation: PosterOrientation.landscape,
+        ),
+        0.3,
+      );
+      expect(layout.cols, 1);
+      expect(layout.rows, 4);
+      expect(layout.landscape, isTrue);
+    });
+
+    test('auto orientation picks the better aspect match', () {
+      // A wide image on a 2x2 grid → landscape pages match better.
+      final layout = computePosterLayout(
+        const PosterOptions(customCols: 2, customRows: 2),
+        2.0,
+      );
+      expect(layout.landscape, isTrue);
+    });
+
+    test('customCols alone (rows 0) stays on the auto path', () {
+      final auto = computePosterLayout(const PosterOptions(size: 3), 1.0);
+      final half = computePosterLayout(
+        const PosterOptions(size: 3, customCols: 4),
+        1.0,
+      );
+      expect(half.cols, auto.cols);
+      expect(half.rows, auto.rows);
+    });
+  });
 }

@@ -66,6 +66,8 @@ class PosterOptions {
     this.quality = PosterQuality.standard,
     this.labels = true,
     this.guides = false,
+    this.customCols = 0,
+    this.customRows = 0,
   });
 
   /// How big — the number of pages along the poster's *longest* edge
@@ -104,6 +106,15 @@ class PosterOptions {
   /// path).
   final bool guides;
 
+  /// Explicit grid override — pages wide × pages tall (each 1-6). When BOTH
+  /// are > 0 the grid is exactly this (3×3, 1×4 banners, …) and [size] /
+  /// [fitShape] are ignored. 0 = auto (the derived grid above). Zero (not
+  /// null) so copyWith round-trips without sentinel gymnastics.
+  final int customCols;
+  final int customRows;
+
+  bool get hasCustomGrid => customCols > 0 && customRows > 0;
+
   PosterOptions copyWith({
     int? size,
     bool? fitShape,
@@ -113,6 +124,8 @@ class PosterOptions {
     PosterQuality? quality,
     bool? labels,
     bool? guides,
+    int? customCols,
+    int? customRows,
   }) => PosterOptions(
     size: size ?? this.size,
     fitShape: fitShape ?? this.fitShape,
@@ -122,5 +135,7 @@ class PosterOptions {
     quality: quality ?? this.quality,
     labels: labels ?? this.labels,
     guides: guides ?? this.guides,
+    customCols: customCols ?? this.customCols,
+    customRows: customRows ?? this.customRows,
   );
 }
