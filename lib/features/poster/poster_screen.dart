@@ -1212,10 +1212,18 @@ class _WorkingBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasCount = total > 0 && done > 0;
-    final value = hasCount ? (done / total).clamp(0.0, 1.0) : null;
+    final binding = total > 0 && done >= total;
+    // During the binding phase the count is done but the PDF is still
+    // being stitched — switch to an indeterminate bar so the motion
+    // itself says "alive" (the bind runs in an isolate, so it animates).
+    final value = binding
+        ? null
+        : hasCount
+        ? (done / total).clamp(0.0, 1.0)
+        : null;
     final String label;
-    if (total > 0 && done >= total) {
-      label = 'Finishing your poster…';
+    if (binding) {
+      label = 'Stitching the pages into one file…';
     } else if (hasCount) {
       label = 'Rendering page $done of $total…';
     } else {

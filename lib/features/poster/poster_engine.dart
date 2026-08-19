@@ -656,7 +656,7 @@ List<Uint8List> _renderPosterTilesSync(
 }
 
 // ---------------------------------------------------------------------------
-// PDF assembly — runs on the main isolate.
+// PDF assembly — off the UI thread.
 // ---------------------------------------------------------------------------
 
 /// Build the multi-page PDF from rendered [tiles] (row-major, length
@@ -665,12 +665,35 @@ List<Uint8List> _renderPosterTilesSync(
 /// margin carrying a dashed cut line + corner crop marks, and an "Assembly
 /// map" page is appended. When [labels] is on, a faint "R1·C2" chip is
 /// printed in each page's corner.
+///
+/// Runs in an isolate: binding a 36-tile lossless document takes seconds,
+/// and on the main isolate it froze the whole UI — the working banner's
+/// spinner included — right after the progress bar filled, which read as
+/// "the app is hanging" (the exact moment users would kill it).
 Future<Uint8List> buildPosterPdf({
   required List<Uint8List> tiles,
   required PosterLayout layout,
   bool labels = true,
   bool guides = false,
   String title = 'Poster',
+}) {
+  return Isolate.run(
+    () => _buildPosterPdfBody(
+      tiles: tiles,
+      layout: layout,
+      labels: labels,
+      guides: guides,
+      title: title,
+    ),
+  );
+}
+
+Future<Uint8List> _buildPosterPdfBody({
+  required List<Uint8List> tiles,
+  required PosterLayout layout,
+  required bool labels,
+  required bool guides,
+  required String title,
 }) async {
   final doc = pw.Document(title: title, creator: 'Different World');
   // Built-in standard PDF fonts — NOT PdfGoogleFonts (which downloads the
