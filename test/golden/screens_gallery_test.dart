@@ -1,15 +1,21 @@
 import 'dart:convert';
-
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/action_words_kid_screen.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/activity_arc_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
+import 'package:differentworld/features/action_words/block_run_screen.dart';
+import 'package:differentworld/features/action_words/book_screen.dart';
+import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/day_run_screen.dart';
+import 'package:differentworld/features/action_words/growth_arc_screen.dart';
 import 'package:differentworld/features/action_words/journey_tour_screen.dart';
+import 'package:differentworld/features/action_words/kid_job_screen.dart';
 import 'package:differentworld/features/action_words/program_hub_screen.dart';
+import 'package:differentworld/features/action_words/routine_script_editor_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
@@ -26,11 +32,13 @@ import 'package:differentworld/features/activity_runtime/discussions_screen.dart
 import 'package:differentworld/features/activity_runtime/do_it_screen.dart';
 import 'package:differentworld/features/activity_runtime/fill_blank_screen.dart';
 import 'package:differentworld/features/activity_runtime/letters_screen.dart';
+import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/penny_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/potions_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
+import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/calm/calm_screen.dart';
@@ -41,12 +49,25 @@ import 'package:differentworld/features/child_world/child_world_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
+import 'package:differentworld/features/curricula/session_run_screen.dart';
 import 'package:differentworld/features/daily/daily_screen.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
+import 'package:differentworld/features/entries/observations_screen.dart';
+import 'package:differentworld/features/exports/progress_report_screen.dart';
+import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
+import 'package:differentworld/features/family/family_share_screen.dart';
+import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
+import 'package:differentworld/features/game_content/picture_library_screen.dart';
+import 'package:differentworld/features/games/games/grid_reveal_screen.dart';
+import 'package:differentworld/features/games/games/memory_match_screen.dart';
+import 'package:differentworld/features/games/games/name_it_screen.dart';
+import 'package:differentworld/features/games/games/nownext_screen.dart';
+import 'package:differentworld/features/games/games/odd_one_out_screen.dart';
+import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
@@ -58,18 +79,25 @@ import 'package:differentworld/features/incidents/incident_form_screen.dart';
 import 'package:differentworld/features/incidents/incidents_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
+import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/launch/launch_screen.dart';
 import 'package:differentworld/features/live_board/live_board_screen.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/cast_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
+import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_board_screen.dart';
+import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/onboarding/create_space_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
+import 'package:differentworld/features/photos/child_photos_folder_screen.dart';
+import 'package:differentworld/features/photos/photos_gallery_screen.dart';
+import 'package:differentworld/features/picker/picker_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
+import 'package:differentworld/features/pickup/pickup_person_edit_screen.dart';
 import 'package:differentworld/features/poster/poster_screen.dart';
 import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
@@ -78,13 +106,19 @@ import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
+import 'package:differentworld/features/schedule/block_edit_screen.dart';
+import 'package:differentworld/features/schedule/block_run_sheet_screen.dart';
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
+import 'package:differentworld/features/schedule/location_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
+import 'package:differentworld/features/schedule/propose_day_screen.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/schedule/schedule_view_setting.dart';
+import 'package:differentworld/features/schedule/trip_detail_screen.dart';
 import 'package:differentworld/features/schedule/weekly_template_screen.dart';
+import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/roles_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
@@ -94,22 +128,39 @@ import 'package:differentworld/features/spellbook/spellbook_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/staff/runbook_screen.dart';
 import 'package:differentworld/features/staff/staff_ladder_screen.dart';
+import 'package:differentworld/features/story/kid_story_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
+import 'package:differentworld/features/story/story_showcase_screen.dart';
+import 'package:differentworld/features/subjects/child_trail_screen.dart';
+import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
+import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/supplies/supplies_list_screen.dart';
+import 'package:differentworld/features/supplies/supply_edit_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
+import 'package:differentworld/features/surveys/survey_table_screen.dart';
+import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
+import 'package:differentworld/features/today/child_day_screen.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_bento_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/toolkit/print_toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_screen.dart';
+import 'package:differentworld/features/toolkit/toolkit_tool_screen.dart';
 import 'package:differentworld/features/tools/tools_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_photo_shots_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_scan_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
+import 'package:differentworld/features/world/character_sheet_screen.dart';
+import 'package:differentworld/features/world/draw_self_screen.dart';
+import 'package:differentworld/features/world/skill_detail_screen.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
@@ -118,7 +169,6 @@ import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-
 import '_helpers.dart';
 
 /// THE SCREEN GALLERY — every reachable screen, rendered inside the real
@@ -367,6 +417,199 @@ void main() {
     'screens/subject_detail',
     const SubjectDetailScreen(subjectId: 's1'),
     const Size(440, 900),
+  );
+
+  // ---- Coverage wave (2026-08-19): the 44 screens that had NO plate. Every
+  // screen ships measured — "all screens coherent" starts with all VISIBLE.
+  // Sync wrappers use `async =>`; row-object screens select their seeded row.
+  _richPlate(
+    'screens/attendance',
+    (db) async => const AttendanceScreen(groupId: 'g1'),
+  );
+  _richPlate(
+    'screens/observations_group',
+    (db) async => const ObservationsScreen(groupId: 'g1'),
+  );
+  _richPlate(
+    'screens/subject_edit',
+    (db) async => const SubjectEditScreen(groupId: 'g1'),
+  );
+  _richPlate(
+    'screens/block_edit',
+    (db) async =>
+        BlockEditScreen(groupId: 'g1', defaultStart: DateTime(2026, 6, 17, 15)),
+  );
+  _richPlate('screens/block_run', (db) async => const BlockRunScreen());
+  _richPlate('screens/block_run_sheet', (db) async {
+    final block = await (db.select(
+      db.scheduleBlocks,
+    )..where((t) => t.id.equals('b1'))).getSingle();
+    return BlockRunSheetScreen(block: block);
+  });
+  _richPlate('screens/book', (db) async => const BookScreen(subjectId: 's1'));
+  _richPlate(
+    'screens/character_sheet',
+    (db) async => const CharacterSheetScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/child_day',
+    (db) async => const ChildDayScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/child_photos_folder',
+    (db) async => const ChildPhotosFolderScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/child_trail',
+    (db) async => const ChildTrailScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/collection',
+    (db) async => const CollectionScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/growth_arc',
+    (db) async => const GrowthArcScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/kid_job',
+    (db) async => const KidJobScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/kid_story',
+    (db) async => const KidStoryScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/progress_report',
+    (db) async => const ProgressReportScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/story_showcase',
+    (db) async => const StoryShowcaseScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/action_words_kid',
+    (db) async => const ActionWordsKidScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/draw_self',
+    (db) async => const DrawSelfScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/family_subject_detail',
+    (db) async => const FamilySubjectDetailScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/skill_detail',
+    (db) async => const SkillDetailScreen(subjectId: 's1', skillId: 'explorer'),
+  );
+  _richPlate(
+    'screens/pickup_person_edit',
+    (db) async => const PickupPersonEditScreen(subjectId: 's1'),
+  );
+  _richPlate(
+    'screens/message_thread',
+    (db) async => const MessageThreadScreen(subjectId: 's1', guardianId: 'gu1'),
+  );
+  _richPlate('screens/health_profile', (db) async {
+    final subject = await (db.select(
+      db.subjects,
+    )..where((t) => t.id.equals('s1'))).getSingle();
+    return HealthProfileScreen(subject: subject);
+  });
+  _richPlate('screens/invite_share', (db) async {
+    final invite = await (db.select(
+      db.invites,
+    )..where((t) => t.id.equals('inv1'))).getSingle();
+    return InviteShareScreen(invite: invite);
+  });
+  _richPlate('screens/send_export', (db) async {
+    final export = await (db.select(
+      db.exports,
+    )..where((t) => t.id.equals('ex1'))).getSingle();
+    return SendExportScreen(export: export);
+  });
+  _richPlate('screens/mission_do', (db) async {
+    final mission = await (db.select(
+      db.missions,
+    )..where((t) => t.id.equals('msn1'))).getSingle();
+    return MissionDoScreen(mission: mission);
+  });
+  _richPlate(
+    'screens/trip_detail',
+    (db) async => const TripDetailScreen(blockId: 'b2'),
+  );
+  _richPlate(
+    'screens/vehicle_detail',
+    (db) async => const VehicleDetailScreen(vehicleId: 'v1'),
+  );
+  _richPlate(
+    'screens/vehicle_inspection',
+    (db) async =>
+        const VehicleInspectionScreen(vehicleId: 'v1', kind: 'checkout'),
+  );
+  _richPlate(
+    'screens/vehicle_photo_shots_edit',
+    (db) async => const VehiclePhotoShotsEditScreen(vehicleId: 'v1'),
+  );
+  _richPlate(
+    'screens/member_detail',
+    (db) async => const MemberDetailScreen(memberId: 'm1'),
+  );
+  _richPlate(
+    'screens/photos_gallery',
+    (db) async => const PhotosGalleryScreen(),
+  );
+  _richPlate('screens/name_picker', (db) async => const NamePickerScreen());
+  _richPlate(
+    'screens/picture_library',
+    (db) async => const PictureLibraryScreen(),
+  );
+  _richPlate('screens/propose_day', (db) async => const ProposeDayScreen());
+  _richPlate(
+    'screens/routine_script_editor',
+    (db) async => const RoutineScriptEditorScreen(),
+  );
+  _richPlate('screens/location_edit', (db) async => const LocationEditScreen());
+  _richPlate('screens/supply_edit', (db) async => const SupplyEditScreen());
+  _richPlate('screens/family_share', (db) async => const FamilyShareScreen());
+  _richPlate(
+    'screens/grid_reveal_solo',
+    (db) async => const GridRevealScreen(),
+  );
+  _richPlate(
+    'screens/math_runner',
+    (db) async => const MathRunnerScreen(target: 12),
+  );
+  _richPlate(
+    'screens/memory_match',
+    (db) async => const MemoryMatchScreen(live: false),
+  );
+  _richPlate('screens/name_it', (db) async => const NameItScreen(live: false));
+  _richPlate('screens/nownext', (db) async => const NowNextScreen(live: false));
+  _richPlate(
+    'screens/odd_one_out',
+    (db) async => const OddOneOutScreen(live: false),
+  );
+  _richPlate(
+    'screens/whats_missing',
+    (db) async => const WhatsMissingScreen(live: false),
+  );
+  _richPlate(
+    'screens/session_run',
+    (db) async => const SessionRunScreen(slug: 'photo.s1.click-game'),
+  );
+  _richPlate(
+    'screens/toolkit_tool',
+    (db) async => const ToolkitToolScreen(slug: 'celebrate.specific-notice'),
+  );
+  _richPlate(
+    'screens/survey_table',
+    (db) async => const SurveyTableScreen(templateId: 'basecamp_2025_26'),
+  );
+  _richPlate(
+    'screens/survey_take',
+    (db) async => const SurveyTakeScreen(templateId: 'basecamp_2025_26'),
   );
 
   _bareScreenPlate('screens/create_space', const CreateSpaceScreen());
@@ -687,6 +930,258 @@ void _rosterPlate(String name, Widget screen, Size size) {
         db.spaces,
       )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: s);
+
+      await tester.binding.setSurfaceSize(size);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWith((ref) => db),
+            viewerProvider.overrideWithValue(viewer),
+            liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+            omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+            momentsForBlockProvider(
+              'blk-demo',
+            ).overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+            capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[]),
+            ),
+            tasksProvider(
+              TaskFilter.open,
+            ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+          ],
+          child: _app(mode, _shellRouter(screen)),
+        ),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('../../gallery/${name}__$mode.png'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      while (tester.takeException() != null) {
+        // drained
+      }
+      await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
+    }, skip: !runGoldens);
+  }
+}
+
+/// Like [_rosterPlate] but with a RICHER seed — guardian + link, a vehicle,
+/// today's schedule blocks (one on-site, one field trip), a mission, an
+/// invite, and a draft export — so the param'd detail screens across the app
+/// render populated instead of empty. The [build] callback gets the seeded
+/// DB so screens that take a ROW OBJECT (block / invite / export / mission /
+/// subject) can select it before the pump.
+void _richPlate(
+  String name,
+  Future<Widget> Function(AppDatabase db) build, {
+  Size size = const Size(440, 900),
+}) {
+  for (final mode in const ['light', 'dark']) {
+    testWidgets('$name - $mode', (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.createMigrator().createAll();
+      const now = '2026-06-17T08:00:00Z';
+      final today = dateKey(DateTime.now());
+      final dayStart = DateTime.now().copyWith(
+        hour: 15,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+        microsecond: 0,
+      );
+      await db
+          .into(db.spaces)
+          .insert(
+            SpacesCompanion.insert(
+              id: 'sp1',
+              name: 'Sunny Days Program',
+              settings: '{}',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await db
+          .into(db.members)
+          .insert(
+            MembersCompanion.insert(
+              id: 'm1',
+              displayName: 'Maya Okonkwo',
+              role: 'director',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              spaceId: const Value('sp1'),
+            ),
+          );
+      await db
+          .into(db.groups)
+          .insert(
+            GroupsCompanion.insert(
+              id: 'g1',
+              spaceId: 'sp1',
+              name: 'Sparrows',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              ageRange: const Value('Ages 4\u20135'),
+            ),
+          );
+      for (final (id, first, last) in const [
+        ('s1', 'Owen', 'Reyes'),
+        ('s2', 'Ava', 'Chen'),
+        ('s3', 'Liam', 'Okafor'),
+      ]) {
+        await db
+            .into(db.subjects)
+            .insert(
+              SubjectsCompanion.insert(
+                id: id,
+                spaceId: 'sp1',
+                firstName: first,
+                lastName: last,
+                capabilities: '{}',
+                createdAt: now,
+                updatedAt: now,
+                groupId: const Value('g1'),
+              ),
+            );
+      }
+      await db
+          .into(db.guardians)
+          .insert(
+            GuardiansCompanion.insert(
+              id: 'gu1',
+              spaceId: 'sp1',
+              name: 'Dana Reyes',
+              createdAt: now,
+              updatedAt: now,
+              relationship: const Value('Mother'),
+            ),
+          );
+      await db
+          .into(db.subjectGuardians)
+          .insert(
+            SubjectGuardiansCompanion.insert(
+              id: 'sg1',
+              subjectId: 's1',
+              guardianId: 'gu1',
+              spaceId: 'sp1',
+              createdAt: now,
+            ),
+          );
+      await db
+          .into(db.vehicles)
+          .insert(
+            VehiclesCompanion.insert(
+              id: 'v1',
+              spaceId: 'sp1',
+              name: 'Bus 2',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              make: const Value('Ford'),
+              model: const Value('Transit'),
+              licensePlate: const Value('DW-1234'),
+            ),
+          );
+      await db
+          .into(db.scheduleBlocks)
+          .insert(
+            ScheduleBlocksCompanion.insert(
+              id: 'b1',
+              spaceId: 'sp1',
+              groupId: 'g1',
+              date: today,
+              startAt: dayStart.toIso8601String(),
+              endAt: dayStart
+                  .add(const Duration(minutes: 45))
+                  .toIso8601String(),
+              kind: 'on_site',
+              createdAt: now,
+              updatedAt: now,
+              title: const Value('Board games'),
+            ),
+          );
+      await db
+          .into(db.scheduleBlocks)
+          .insert(
+            ScheduleBlocksCompanion.insert(
+              id: 'b2',
+              spaceId: 'sp1',
+              groupId: 'g1',
+              date: today,
+              startAt: dayStart.add(const Duration(hours: 1)).toIso8601String(),
+              endAt: dayStart.add(const Duration(hours: 3)).toIso8601String(),
+              kind: 'field_trip',
+              createdAt: now,
+              updatedAt: now,
+              title: const Value('Pool trip'),
+            ),
+          );
+      await db
+          .into(db.missions)
+          .insert(
+            MissionsCompanion.insert(
+              id: 'msn1',
+              spaceId: 'sp1',
+              name: 'Kindness scout',
+              evidenceKind: 'photo',
+              isActive: 1,
+              sort: 0,
+              createdAt: now,
+              updatedAt: now,
+              tagline: const Value('Catch someone being kind'),
+            ),
+          );
+      await db
+          .into(db.invites)
+          .insert(
+            InvitesCompanion.insert(
+              id: 'inv1',
+              spaceId: 'sp1',
+              role: 'guardian',
+              capabilities: '{}',
+              createdAt: now,
+              code: const Value('SUNNY-42'),
+              subjectId: const Value('s1'),
+            ),
+          );
+      await db
+          .into(db.exports)
+          .insert(
+            ExportsCompanion.insert(
+              id: 'ex1',
+              spaceId: 'sp1',
+              templateId: 'progress_report',
+              templateVersion: '1',
+              status: 'draft',
+              format: 'pdf',
+              snapshotJson: '{}',
+              generatedAt: now,
+              createdAt: now,
+              updatedAt: now,
+              subjectId: const Value('s1'),
+            ),
+          );
+      final m = await (db.select(
+        db.members,
+      )..where((t) => t.id.equals('m1'))).getSingle();
+      final sp = await (db.select(
+        db.spaces,
+      )..where((t) => t.id.equals('sp1'))).getSingle();
+      final viewer = Viewer(member: m, space: sp);
+      final screen = await build(db);
 
       await tester.binding.setSurfaceSize(size);
       tester.view.physicalSize = size;

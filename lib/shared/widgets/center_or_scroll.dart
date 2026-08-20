@@ -5,13 +5,21 @@ import 'package:flutter/material.dart';
 /// hero) never produces a `RenderFlex overflowed` on a short viewport at
 /// large text (phone landscape at 200% dynamic type is the classic trigger).
 ///
-/// Falls back to a plain [Center] when the incoming height is unbounded
-/// (e.g. placed inside another scrollable), where wrapping in a nested
-/// scroll view would assert.
+/// Implementation note: this deliberately does NOT use a [LayoutBuilder].
+/// Hosts like `SliverFillRemaining(hasScrollBody: false)` measure their
+/// child's intrinsic height, and a LayoutBuilder cannot answer intrinsics —
+/// debug builds threw the "LayoutBuilder does not support returning
+/// intrinsic dimensions" assert the moment an empty state rendered inside
+/// one (the photo wall's empty filter was the trigger). The [Center] +
+/// shrink-wrapping [SingleChildScrollView] pair gives the same behavior at
+/// every height, intrinsics included:
 ///
-/// The canonical "center-or-scroll" recipe: a [SingleChildScrollView] whose
-/// child is forced to at least the viewport height, so [Center] fills and
-/// centers when content is short, and the scroll view engages when it's tall.
+/// - Bounded height, short content → the scroll view shrink-wraps to the
+///   content and [Center] centers it. No scrolling.
+/// - Bounded height, tall content → the scroll view is capped at the
+///   viewport height and scrolls.
+/// - Unbounded height (inside another scrollable) → the scroll view sizes
+///   to the content and never engages, matching the old plain-Center path.
 class CenterOrScroll extends StatelessWidget {
   const CenterOrScroll({required this.child, super.key});
 
@@ -19,18 +27,6 @@ class CenterOrScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (!constraints.maxHeight.isFinite) {
-          return Center(child: child);
-        }
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Center(child: child),
-          ),
-        );
-      },
-    );
+    return Center(child: SingleChildScrollView(child: child));
   }
 }

@@ -1,5 +1,165 @@
 [
   {
+    "name": "kid_job",
+    "cls": "KidJobScreen",
+    "file": "lib/features/action_words/kid_job_screen.dart",
+    "score": 76,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.8553961515426636,
+    "dead": 0.9,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 0,
+    "deductions": [
+      {
+        "pts": -20,
+        "why": "rendered root is a raw Scaffold, not EdgeScaffold"
+      },
+      {
+        "pts": -4,
+        "why": "no ContentHeader / SafeArea top-clearance signal"
+      }
+    ]
+  },
+  {
+    "name": "action_words_kid",
+    "cls": "ActionWordsKidScreen",
+    "file": "lib/features/action_words/action_words_kid_screen.dart",
+    "score": 80,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.7362824082374573,
+    "dead": 0.42,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 139,
+    "deductions": [
+      {
+        "pts": -20,
+        "why": "rendered root is a raw Scaffold, not EdgeScaffold"
+      }
+    ]
+  },
+  {
+    "name": "story_showcase",
+    "cls": "StoryShowcaseScreen",
+    "file": "lib/features/story/story_showcase_screen.dart",
+    "score": 84,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.8497346639633179,
+    "dead": 0.85,
+    "solid": 1,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": [
+      {
+        "pts": -12,
+        "why": "1 hardcoded color(s) on a themed surface"
+      },
+      {
+        "pts": -4,
+        "why": "no ContentHeader / SafeArea top-clearance signal"
+      }
+    ]
+  },
+  {
+    "name": "child_day",
+    "cls": "ChildDayScreen",
+    "file": "lib/features/today/child_day_screen.dart",
+    "score": 88,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.787467896938324,
+    "dead": 0.55,
+    "solid": 1,
+    "states": 2,
+    "low_contrast_evidence": 47,
+    "deductions": [
+      {
+        "pts": -12,
+        "why": "1 hardcoded color(s) on a themed surface"
+      }
+    ]
+  },
+  {
+    "name": "invite_share",
+    "cls": "InviteShareScreen",
+    "file": "lib/features/invites/invite_share_screen.dart",
+    "score": 88,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.6723009347915649,
+    "dead": 0.43,
+    "solid": 1,
+    "states": 0,
+    "low_contrast_evidence": 47,
+    "deductions": [
+      {
+        "pts": -12,
+        "why": "1 hardcoded color(s) on a themed surface"
+      }
+    ]
+  },
+  {
+    "name": "message_thread",
+    "cls": "MessageThreadScreen",
+    "file": "lib/features/messages/message_thread_screen.dart",
+    "score": 88,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.8361721038818359,
+    "dead": 0.79,
+    "solid": 0,
+    "states": 1,
+    "low_contrast_evidence": 23,
+    "deductions": [
+      {
+        "pts": -12,
+        "why": "2 of loading/empty/error states missing"
+      }
+    ]
+  },
+  {
+    "name": "send_export",
+    "cls": "SendExportScreen",
+    "file": "lib/features/exports/send_export_screen.dart",
+    "score": 88,
+    "band": "minor work",
+    "is_raw": false,
+    "delta": 0.8195983171463013,
+    "dead": 0.73,
+    "solid": 0,
+    "states": 1,
+    "low_contrast_evidence": 47,
+    "deductions": [
+      {
+        "pts": -12,
+        "why": "2 of loading/empty/error states missing"
+      }
+    ]
+  },
+  {
+    "name": "character_sheet",
+    "cls": "CharacterSheetScreen",
+    "file": "lib/features/world/character_sheet_screen.dart",
+    "score": 94,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7578679919242859,
+    "dead": 0.39,
+    "solid": 0,
+    "states": 2,
+    "low_contrast_evidence": 86,
+    "deductions": [
+      {
+        "pts": -6,
+        "why": "1 of loading/empty/error states missing"
+      }
+    ]
+  },
+  {
     "name": "runbook",
     "cls": "RunbookScreen",
     "file": "lib/features/staff/runbook_screen.dart",
@@ -76,6 +236,25 @@
     ]
   },
   {
+    "name": "trip_detail",
+    "cls": "TripDetailScreen",
+    "file": "lib/features/schedule/trip_detail_screen.dart",
+    "score": 94,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7654189467430115,
+    "dead": 0.52,
+    "solid": 0,
+    "states": 2,
+    "low_contrast_evidence": 104,
+    "deductions": [
+      {
+        "pts": -6,
+        "why": "1 of loading/empty/error states missing"
+      }
+    ]
+  },
+  {
     "name": "verb_jobs",
     "cls": "VerbJobsScreen",
     "file": "lib/features/action_words/verb_jobs_screen.dart",
@@ -95,6 +274,25 @@
     ]
   },
   {
+    "name": "kid_story",
+    "cls": "KidStoryScreen",
+    "file": "lib/features/story/kid_story_screen.dart",
+    "score": 96,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8473366498947144,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": [
+      {
+        "pts": -4,
+        "why": "no ContentHeader / SafeArea top-clearance signal"
+      }
+    ]
+  },
+  {
     "name": "room_story",
     "cls": "RoomStoryScreen",
     "file": "lib/features/story/room_story_screen.dart",
@@ -106,6 +304,25 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 13,
+    "deductions": [
+      {
+        "pts": -4,
+        "why": "no ContentHeader / SafeArea top-clearance signal"
+      }
+    ]
+  },
+  {
+    "name": "toolkit_tool",
+    "cls": "ToolkitToolScreen",
+    "file": "lib/features/toolkit/toolkit_tool_screen.dart",
+    "score": 96,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7516034841537476,
+    "dead": 0.16,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 117,
     "deductions": [
       {
         "pts": -4,
@@ -176,8 +393,8 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7882308959960938,
-    "dead": 0.47,
+    "delta": 0.7909713983535767,
+    "dead": 0.5,
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 56,
@@ -212,6 +429,62 @@
     "deductions": []
   },
   {
+    "name": "attendance",
+    "cls": "AttendanceScreen",
+    "file": "lib/features/attendance/attendance_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8185825347900391,
+    "dead": 0.59,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 116,
+    "deductions": []
+  },
+  {
+    "name": "block_edit",
+    "cls": "BlockEditScreen",
+    "file": "lib/features/schedule/block_edit_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7390229105949402,
+    "dead": 0.3,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 160,
+    "deductions": []
+  },
+  {
+    "name": "block_run",
+    "cls": "BlockRunScreen",
+    "file": "lib/features/action_words/block_run_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.736754834651947,
+    "dead": 0.44,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 112,
+    "deductions": []
+  },
+  {
+    "name": "block_run_sheet",
+    "cls": "BlockRunSheetScreen",
+    "file": "lib/features/schedule/block_run_sheet_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8047633171081543,
+    "dead": 0.65,
+    "solid": 0,
+    "states": 1,
+    "low_contrast_evidence": 72,
+    "deductions": []
+  },
+  {
     "name": "board",
     "cls": "BoardScreen",
     "file": "lib/features/live_session/board_screen.dart",
@@ -223,6 +496,20 @@
     "solid": 28,
     "states": 0,
     "low_contrast_evidence": 85,
+    "deductions": []
+  },
+  {
+    "name": "book",
+    "cls": "BookScreen",
+    "file": "lib/features/action_words/book_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8465527296066284,
+    "dead": 0.83,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
     "deductions": []
   },
   {
@@ -310,6 +597,34 @@
     "deductions": []
   },
   {
+    "name": "child_photos_folder",
+    "cls": "ChildPhotosFolderScreen",
+    "file": "lib/features/photos/child_photos_folder_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8412248492240906,
+    "dead": 0.78,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 26,
+    "deductions": []
+  },
+  {
+    "name": "child_trail",
+    "cls": "ChildTrailScreen",
+    "file": "lib/features/subjects/child_trail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8489153981208801,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 14,
+    "deductions": []
+  },
+  {
     "name": "child_world",
     "cls": "ChildWorldScreen",
     "file": "lib/features/child_world/child_world_screen.dart",
@@ -321,6 +636,20 @@
     "solid": 0,
     "states": 2,
     "low_contrast_evidence": 85,
+    "deductions": []
+  },
+  {
+    "name": "collection",
+    "cls": "CollectionScreen",
+    "file": "lib/features/action_words/collection_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8506110310554504,
+    "dead": 0.86,
+    "solid": 0,
+    "states": 2,
+    "low_contrast_evidence": 13,
     "deductions": []
   },
   {
@@ -400,11 +729,25 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.6810920834541321,
+    "delta": 0.6691962480545044,
     "dead": 0.54,
     "solid": 0,
     "states": 1,
     "low_contrast_evidence": 52,
+    "deductions": []
+  },
+  {
+    "name": "draw_self",
+    "cls": "DrawSelfScreen",
+    "file": "lib/features/world/draw_self_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.0,
+    "dead": 0.78,
+    "solid": 5,
+    "states": 0,
+    "low_contrast_evidence": 0,
     "deductions": []
   },
   {
@@ -415,6 +758,34 @@
     "band": "ship-confident",
     "is_raw": false,
     "delta": 0.8495481610298157,
+    "dead": 0.89,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "family_share",
+    "cls": "FamilyShareScreen",
+    "file": "lib/features/family/family_share_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8511038422584534,
+    "dead": 0.9,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 14,
+    "deductions": []
+  },
+  {
+    "name": "family_subject_detail",
+    "cls": "FamilySubjectDetailScreen",
+    "file": "lib/features/family/family_subject_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8508473038673401,
     "dead": 0.89,
     "solid": 0,
     "states": 3,
@@ -442,11 +813,25 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.781154453754425,
-    "dead": 0.64,
+    "delta": 0.7826932668685913,
+    "dead": 0.65,
     "solid": 0,
     "states": 1,
     "low_contrast_evidence": 37,
+    "deductions": []
+  },
+  {
+    "name": "grid_reveal_solo",
+    "cls": "GridRevealScreen",
+    "file": "lib/features/games/games/grid_reveal_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.23959170281887054,
+    "dead": 0.72,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 30,
     "deductions": []
   },
   {
@@ -489,6 +874,34 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 67,
+    "deductions": []
+  },
+  {
+    "name": "growth_arc",
+    "cls": "GrowthArcScreen",
+    "file": "lib/features/action_words/growth_arc_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.0585918165743351,
+    "dead": 0.82,
+    "solid": 1,
+    "states": 1,
+    "low_contrast_evidence": 0,
+    "deductions": []
+  },
+  {
+    "name": "health_profile",
+    "cls": "HealthProfileScreen",
+    "file": "lib/features/subjects/health_profile_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7666198015213013,
+    "dead": 0.4,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 167,
     "deductions": []
   },
   {
@@ -638,8 +1051,8 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7824605107307434,
-    "dead": 0.35,
+    "delta": 0.7872194051742554,
+    "dead": 0.36,
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 133,
@@ -657,6 +1070,20 @@
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 93,
+    "deductions": []
+  },
+  {
+    "name": "location_edit",
+    "cls": "LocationEditScreen",
+    "file": "lib/features/schedule/location_edit_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8011673092842102,
+    "dead": 0.62,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 94,
     "deductions": []
   },
   {
@@ -688,6 +1115,48 @@
     "deductions": []
   },
   {
+    "name": "math_runner",
+    "cls": "MathRunnerScreen",
+    "file": "lib/features/activity_runtime/math_runner_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8399074077606201,
+    "dead": 0.87,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "member_detail",
+    "cls": "MemberDetailScreen",
+    "file": "lib/features/settings/member_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8315927386283875,
+    "dead": 0.56,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 101,
+    "deductions": []
+  },
+  {
+    "name": "memory_match",
+    "cls": "MemoryMatchScreen",
+    "file": "lib/features/games/games/memory_match_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.21278388798236847,
+    "dead": 0.25,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 59,
+    "deductions": []
+  },
+  {
     "name": "mission_board",
     "cls": "MissionBoardScreen",
     "file": "lib/features/missions/mission_board_screen.dart",
@@ -699,6 +1168,20 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 15,
+    "deductions": []
+  },
+  {
+    "name": "mission_do",
+    "cls": "MissionDoScreen",
+    "file": "lib/features/missions/mission_do_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.5062934756278992,
+    "dead": 0.74,
+    "solid": 11,
+    "states": 0,
+    "low_contrast_evidence": 13,
     "deductions": []
   },
   {
@@ -730,6 +1213,34 @@
     "deductions": []
   },
   {
+    "name": "name_it",
+    "cls": "NameItScreen",
+    "file": "lib/features/games/games/name_it_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.8552904725074768,
+    "dead": 0.95,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "name_picker",
+    "cls": "NamePickerScreen",
+    "file": "lib/features/picker/picker_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8052664995193481,
+    "dead": 0.65,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 39,
+    "deductions": []
+  },
+  {
     "name": "now_cockpit",
     "cls": "NowCockpitScreen",
     "file": "lib/features/cockpit/now_cockpit_screen.dart",
@@ -741,6 +1252,20 @@
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 30,
+    "deductions": []
+  },
+  {
+    "name": "nownext",
+    "cls": "NowNextScreen",
+    "file": "lib/features/games/games/nownext_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.0534660667181015,
+    "dead": 0.73,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 12,
     "deductions": []
   },
   {
@@ -758,6 +1283,20 @@
     "deductions": []
   },
   {
+    "name": "observations_group",
+    "cls": "ObservationsScreen",
+    "file": "lib/features/entries/observations_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.827359139919281,
+    "dead": 0.84,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
     "name": "observations_index",
     "cls": "ObservationsIndexScreen",
     "file": "lib/features/entries/observations_index_screen.dart",
@@ -768,6 +1307,20 @@
     "dead": 0.79,
     "solid": 0,
     "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "odd_one_out",
+    "cls": "OddOneOutScreen",
+    "file": "lib/features/games/games/odd_one_out_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.8552904725074768,
+    "dead": 0.95,
+    "solid": 0,
+    "states": 0,
     "low_contrast_evidence": 13,
     "deductions": []
   },
@@ -792,8 +1345,8 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7661181688308716,
-    "dead": 0.43,
+    "delta": 0.7661424875259399,
+    "dead": 0.45,
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 77,
@@ -828,6 +1381,20 @@
     "deductions": []
   },
   {
+    "name": "photos_gallery",
+    "cls": "PhotosGalleryScreen",
+    "file": "lib/features/photos/photos_gallery_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8421701192855835,
+    "dead": 0.75,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 39,
+    "deductions": []
+  },
+  {
     "name": "pickup_board",
     "cls": "PickupBoardScreen",
     "file": "lib/features/pickup/pickup_board_screen.dart",
@@ -839,6 +1406,34 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "pickup_person_edit",
+    "cls": "PickupPersonEditScreen",
+    "file": "lib/features/pickup/pickup_person_edit_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7976582050323486,
+    "dead": 0.6,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 108,
+    "deductions": []
+  },
+  {
+    "name": "picture_library",
+    "cls": "PictureLibraryScreen",
+    "file": "lib/features/game_content/picture_library_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8245555758476257,
+    "dead": 0.73,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 15,
     "deductions": []
   },
   {
@@ -926,6 +1521,34 @@
     "deductions": []
   },
   {
+    "name": "progress_report",
+    "cls": "ProgressReportScreen",
+    "file": "lib/features/exports/progress_report_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.17852716147899628,
+    "dead": 0.76,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 14,
+    "deductions": []
+  },
+  {
+    "name": "propose_day",
+    "cls": "ProposeDayScreen",
+    "file": "lib/features/schedule/propose_day_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7943859100341797,
+    "dead": 0.34,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 32,
+    "deductions": []
+  },
+  {
     "name": "recap_composer",
     "cls": "RecapComposerScreen",
     "file": "lib/features/recap/recap_composer_screen.dart",
@@ -1010,6 +1633,20 @@
     "deductions": []
   },
   {
+    "name": "routine_script_editor",
+    "cls": "RoutineScriptEditorScreen",
+    "file": "lib/features/action_words/routine_script_editor_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7982485294342041,
+    "dead": 0.31,
+    "solid": 0,
+    "states": 2,
+    "low_contrast_evidence": 168,
+    "deductions": []
+  },
+  {
     "name": "routines",
     "cls": "RoutinesScreen",
     "file": "lib/features/routines/routines_screen.dart",
@@ -1066,6 +1703,20 @@
     "deductions": []
   },
   {
+    "name": "session_run",
+    "cls": "SessionRunScreen",
+    "file": "lib/features/curricula/session_run_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.755452573299408,
+    "dead": 0.25,
+    "solid": 0,
+    "states": 1,
+    "low_contrast_evidence": 118,
+    "deductions": []
+  },
+  {
     "name": "settings",
     "cls": "SettingsScreen",
     "file": "lib/features/settings/settings_screen.dart",
@@ -1077,6 +1728,20 @@
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 59,
+    "deductions": []
+  },
+  {
+    "name": "skill_detail",
+    "cls": "SkillDetailScreen",
+    "file": "lib/features/world/skill_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8513044714927673,
+    "dead": 0.9,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
     "deductions": []
   },
   {
@@ -1136,6 +1801,20 @@
     "deductions": []
   },
   {
+    "name": "subject_edit",
+    "cls": "SubjectEditScreen",
+    "file": "lib/features/subjects/subject_edit_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8272067904472351,
+    "dead": 0.71,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 57,
+    "deductions": []
+  },
+  {
     "name": "supplies_list",
     "cls": "SuppliesListScreen",
     "file": "lib/features/supplies/supplies_list_screen.dart",
@@ -1150,6 +1829,20 @@
     "deductions": []
   },
   {
+    "name": "supply_edit",
+    "cls": "SupplyEditScreen",
+    "file": "lib/features/supplies/supply_edit_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.748607337474823,
+    "dead": 0.31,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 170,
+    "deductions": []
+  },
+  {
     "name": "survey_index",
     "cls": "SurveyIndexScreen",
     "file": "lib/features/surveys/survey_list_screen.dart",
@@ -1161,6 +1854,34 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 53,
+    "deductions": []
+  },
+  {
+    "name": "survey_table",
+    "cls": "SurveyTableScreen",
+    "file": "lib/features/surveys/survey_table_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8405153751373291,
+    "dead": 0.79,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 44,
+    "deductions": []
+  },
+  {
+    "name": "survey_take",
+    "cls": "SurveyTakeScreen",
+    "file": "lib/features/surveys/survey_take_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7632787823677063,
+    "dead": 0.31,
+    "solid": 0,
+    "states": 1,
+    "low_contrast_evidence": 106,
     "deductions": []
   },
   {
@@ -1304,6 +2025,20 @@
     "deductions": []
   },
   {
+    "name": "vehicle_detail",
+    "cls": "VehicleDetailScreen",
+    "file": "lib/features/vehicles/vehicle_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8184137344360352,
+    "dead": 0.67,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 77,
+    "deductions": []
+  },
+  {
     "name": "vehicle_edit",
     "cls": "VehicleEditScreen",
     "file": "lib/features/vehicles/vehicle_edit_screen.dart",
@@ -1315,6 +2050,34 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 118,
+    "deductions": []
+  },
+  {
+    "name": "vehicle_inspection",
+    "cls": "VehicleInspectionScreen",
+    "file": "lib/features/vehicles/vehicle_inspection_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8494552373886108,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "vehicle_photo_shots_edit",
+    "cls": "VehiclePhotoShotsEditScreen",
+    "file": "lib/features/vehicles/vehicle_photo_shots_edit_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8344902396202087,
+    "dead": 0.29,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 31,
     "deductions": []
   },
   {
@@ -1384,6 +2147,20 @@
     "dead": 0.79,
     "solid": 0,
     "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "whats_missing",
+    "cls": "WhatsMissingScreen",
+    "file": "lib/features/games/games/whats_missing_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.8552904725074768,
+    "dead": 0.95,
+    "solid": 0,
+    "states": 0,
     "low_contrast_evidence": 13,
     "deductions": []
   },

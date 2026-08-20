@@ -60,6 +60,26 @@ def build_registry():
             txt,
         )
     )
+    # _richPlate takes a builder lambda instead of a const widget. Two
+    # shapes: `(db) async => const Screen(...)` (sync arrow, possibly
+    # line-wrapped by the formatter) and `(db) async { ... return Screen(`
+    # (row-object selects). Bind both so the coverage wave is SCORED —
+    # a plate the audit silently skips is a plate that can rot.
+    plate.update(
+        re.findall(
+            r"_richPlate\(\s*'screens/([a-z0-9_]+)',\s*"
+            r"\(db\) async =>\s*(?:const\s+)?([A-Za-z0-9]+)\(",
+            txt,
+        )
+    )
+    plate.update(
+        re.findall(
+            r"_richPlate\(\s*'screens/([a-z0-9_]+)',\s*"
+            r"\(db\) async \{.*?return ([A-Za-z0-9]+)\(",
+            txt,
+            re.DOTALL,
+        )
+    )
     imports = re.findall(
         r"import 'package:differentworld/(features/[^']+\.dart)'", txt
     )

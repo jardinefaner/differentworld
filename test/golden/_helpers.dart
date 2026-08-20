@@ -57,6 +57,46 @@ Future<void> ensureGoldenBootstrap() async {
         (call) async => null,
       );
 
+  // The PDF-preview screens (progress report) rasterize via the printing
+  // plugin's channel; without it a MissingPluginException fails the plate.
+  // Null replies leave the preview on its loading surface — fine for a plate.
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(const MethodChannel('net.nfet.printing'), (
+        call,
+      ) async {
+        // PdfPreview null-checks the info reply, so it needs a real map;
+        // "can't print / share / raster" keeps the preview on its calm
+        // fallback surface.
+        if (call.method == 'printingInfo') {
+          return <String, dynamic>{
+            'directPrint': false,
+            'dynamicLayout': false,
+            'canPrint': false,
+            'canShare': false,
+            'canRaster': false,
+          };
+        }
+        return null;
+      });
+
+  // Screens that keep the display awake (galleries, run surfaces) toggle
+  // wakelock_plus on mount; without the plugin the pigeon channel throws a
+  // PlatformException that fails the plate. Reply "success, null" (pigeon
+  // encodes success as a one-element list).
+  const wakelockCodec = StandardMessageCodec();
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMessageHandler(
+        'dev.flutter.pigeon.wakelock_plus_platform_interface.'
+        'WakelockPlusApi.toggle',
+        (message) async => wakelockCodec.encodeMessage(<Object?>[null]),
+      );
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMessageHandler(
+        'dev.flutter.pigeon.wakelock_plus_platform_interface.'
+        'WakelockPlusApi.isEnabled',
+        (message) async => wakelockCodec.encodeMessage(<Object?>[false]),
+      );
+
   try {
     await Supabase.initialize(
       url: 'https://example.supabase.co',
