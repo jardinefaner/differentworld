@@ -24,7 +24,12 @@ enum _PosterDelivery {
   /// Save the multi-page PDF (share sheet → Files / Drive / email → computer).
   savePdf,
 
-  /// Save the whole poster as one PNG image (same share path).
+  /// Save one image PER PAGE — the same pages the PDF prints, for anyone
+  /// who prints images instead of PDFs. Named R1C1, R1C2, … so the taping
+  /// order survives the share.
+  savePages,
+
+  /// Save the whole poster as ONE giant image (for a print shop / plotter).
   savePng,
 
   /// Hand the PDF straight to the OS print dialog on this device.
@@ -282,14 +287,14 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     final bytes = _bytes;
     if (bytes == null || _working) return;
     final layout = _layout;
-    final isPng = delivery == _PosterDelivery.savePng;
+    final onePng = delivery == _PosterDelivery.savePng;
     setState(() {
       _working = true;
       _lastDelivery = delivery;
       _error = null;
       _progressDone = 0;
-      // PNG is a single render (no per-page count) → indeterminate banner.
-      _progressTotal = isPng ? 0 : layout.pageCount;
+      // The giant single image has no per-page count → indeterminate banner.
+      _progressTotal = onePng ? 0 : layout.pageCount;
     });
     final tag = '${layout.cols}×${layout.rows}';
     final stem = 'poster-${layout.cols}x${layout.rows}';
@@ -322,6 +327,37 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           } else {
             await Printing.sharePdf(bytes: pdf, filename: '$stem.pdf');
           }
+        case _PosterDelivery.savePages:
+          // The SAME tiles the PDF prints (guides margin included), shared
+          // as one image file per page so what you save matches the preview.
+          final tiles = await renderPosterTiles(
+            bytes,
+            layout,
+            _opts.fit,
+            guides: _opts.guides,
+            zoom: _zoom,
+            focusX: _focusX,
+            focusY: _focusY,
+            quality: _opts.quality,
+            onProgress: (done, total) {
+              if (!mounted) return;
+              setState(() {
+                _progressDone = done;
+                _progressTotal = total;
+              });
+            },
+          );
+          if (!mounted) return;
+          // Tiles are JPEG except on lossless (PNG) — name them honestly.
+          final png = _opts.quality == PosterQuality.lossless;
+          await _shareManyBytes([
+            for (var i = 0; i < tiles.length; i++)
+              (
+                '$stem-R${i ~/ layout.cols + 1}C${i % layout.cols + 1}'
+                    '.${png ? 'png' : 'jpg'}',
+                tiles[i],
+              ),
+          ], png ? 'image/png' : 'image/jpeg');
         case _PosterDelivery.savePng:
           final png = await renderPosterImagePng(
             bytes,
@@ -376,14 +412,46 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   }
 
+  /// Share several files at once (the per-page image export). Same web /
+  /// device split as [_shareBytes].
+  Future<void> _shareManyBytes(
+    List<(String, Uint8List)> files,
+    String mime,
+  ) async {
+    if (kIsWeb) {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            for (final (name, bytes) in files)
+              XFile.fromData(bytes, name: name, mimeType: mime),
+          ],
+          fileNameOverrides: [for (final (name, _) in files) name],
+        ),
+      );
+      return;
+    }
+    final dir = await getTemporaryDirectory();
+    final paths = <String>[];
+    for (final (name, bytes) in files) {
+      final file = File('${dir.path}/$name');
+      await file.writeAsBytes(bytes);
+      paths.add(file.path);
+    }
+    await SharePlus.instance.share(
+      ShareParams(files: [for (final p in paths) XFile(p)]),
+    );
+  }
+
   String _outcomeMessage(_PosterDelivery delivery, int pages) =>
       switch (delivery) {
         _PosterDelivery.printPdf =>
           'Sent to print — $pages pages. Print at 100%, then tape them!',
         _PosterDelivery.savePdf =>
           'PDF saved ($pages pages). Open it on a computer and print at 100%.',
+        _PosterDelivery.savePages =>
+          '$pages page images saved. Print each at 100%, then tape them!',
         _PosterDelivery.savePng =>
-          'Image saved. Open it on a computer and print at 100% / actual size.',
+          'One full-size image saved — hand it to a print shop.',
       };
 
   Future<void> _showExportSheet() {
@@ -425,9 +493,22 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.image_outlined),
-                title: const Text('Save as PNG'),
+                title: const Text('Save as images'),
+                subtitle: Text(
+                  '${layout.pageCount} image files — one per page, same as '
+                  'the preview',
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  unawaited(_export(_PosterDelivery.savePages));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.wallpaper_outlined),
+                title: const Text('One giant image'),
                 subtitle: const Text(
-                  'One big image file — for a print shop or any app',
+                  'The whole poster as a single full-size file — for a '
+                  'print shop, not a home printer',
                 ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();

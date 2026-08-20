@@ -726,6 +726,19 @@ Future<Uint8List> buildPosterPdf({
   bool guides = false,
   String title = 'Poster',
 }) {
+  if (kIsWeb) {
+    // No isolates on web — Isolate.run throws UnsupportedError there, which
+    // used to kill EVERY web PDF export with the generic "couldn't build"
+    // banner. Bind on the main thread instead (same trade the tile renderer
+    // makes: the page can't animate mid-bind, but it completes).
+    return _buildPosterPdfBody(
+      tiles: tiles,
+      layout: layout,
+      labels: labels,
+      guides: guides,
+      title: title,
+    );
+  }
   return Isolate.run(
     () => _buildPosterPdfBody(
       tiles: tiles,
