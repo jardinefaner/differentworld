@@ -68,6 +68,7 @@ class PosterOptions {
     this.guides = false,
     this.customCols = 0,
     this.customRows = 0,
+    this.overlapIn = 0,
   });
 
   /// How big — the number of pages along the poster's *longest* edge
@@ -115,6 +116,12 @@ class PosterOptions {
 
   bool get hasCustomGrid => customCols > 0 && customRows > 0;
 
+  /// Seam cushion, in inches (0 / 0.25 / 0.5). When > 0, every interior
+  /// seam prints the SAME strip of image on both adjacent pages, so the
+  /// pages shingle: cut anywhere inside the shared strip — or skip cutting
+  /// and lay one page over its neighbor — and an uneven cut costs nothing.
+  final double overlapIn;
+
   PosterOptions copyWith({
     int? size,
     bool? fitShape,
@@ -126,6 +133,7 @@ class PosterOptions {
     bool? guides,
     int? customCols,
     int? customRows,
+    double? overlapIn,
   }) => PosterOptions(
     size: size ?? this.size,
     fitShape: fitShape ?? this.fitShape,
@@ -137,5 +145,6 @@ class PosterOptions {
     guides: guides ?? this.guides,
     customCols: customCols ?? this.customCols,
     customRows: customRows ?? this.customRows,
+    overlapIn: overlapIn ?? this.overlapIn,
   );
 }

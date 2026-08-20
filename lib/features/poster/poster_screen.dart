@@ -409,6 +409,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                 child: _HowToPrint(
                   pageCount: layout.pageCount,
                   guides: _opts.guides,
+                  overlapIn: _opts.overlapIn,
                 ),
               ),
               ListTile(
@@ -602,11 +603,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             '${layout.landscape ? 'landscape' : 'portrait'} · ${layout.pageCount} '
             '${_paperName(layout.paper)} page${layout.pageCount == 1 ? '' : 's'} · '
             'about ${_assembledSize(layout)} assembled\n'
-            'Print all ${layout.pageCount}, line them up, and tape them together.'
+            '${_opts.overlapIn > 0 ? 'Print all ${layout.pageCount} and overlap each page onto the last — the ${_ovLabel(_opts.overlapIn)} shared strip hides uneven cuts.' : 'Print all ${layout.pageCount}, line them up, and tape them together.'}'
             '${_opts.guides ? '\nIncludes trim guides + an assembly map page.' : ''}',
             key: ValueKey(
               '${layout.cols}-${layout.rows}-${layout.landscape}-'
-              '${layout.paper}-${_opts.guides}',
+              '${layout.paper}-${_opts.guides}-${_opts.overlapIn}',
             ),
             textAlign: TextAlign.center,
             style: caption,
@@ -862,6 +863,37 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               value: _opts.guides,
               onChanged: (v) => _update(_opts.copyWith(guides: v)),
             ),
+            const SizedBox(height: 8),
+            _label(context, 'Seam cushion'),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<double>(
+                segments: const [
+                  ButtonSegment(value: 0, label: Text('None')),
+                  ButtonSegment(value: 0.25, label: Text('¼ inch')),
+                  ButtonSegment(value: 0.5, label: Text('½ inch')),
+                ],
+                selected: {_opts.overlapIn},
+                onSelectionChanged: (sel) =>
+                    _update(_opts.copyWith(overlapIn: sel.first)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: Text(
+                _opts.overlapIn > 0
+                    ? 'Every seam prints on both pages, so you can lay each '
+                          'page over the last — an uneven cut just disappears '
+                          'into the shared strip.'
+                    : 'For imperfect scissors: print a shared strip on both '
+                          'sides of every seam, then overlap the pages.',
+                style: caption,
+              ),
+            ),
           ],
         ),
       ),
@@ -905,11 +937,14 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       _qualityLabel(_opts.quality),
       if (_opts.labels) 'labels',
       if (_opts.guides) 'guides',
+      if (_opts.overlapIn > 0) '${_ovLabel(_opts.overlapIn)} cushion',
     ];
     return parts.join(' · ');
   }
 
   String _paperName(PosterPaper p) => p == PosterPaper.a4 ? 'A4' : 'letter';
+
+  String _ovLabel(double inches) => inches >= 0.5 ? '½″' : '¼″';
 
   String _assembledSize(PosterLayout l) {
     if (l.paper == PosterPaper.a4) {
@@ -1114,11 +1149,20 @@ class _PosterPreviewState extends State<_PosterPreview> {
                   duration: const Duration(milliseconds: 180),
                   child: CustomPaint(
                     key: ValueKey(
-                      'grid-${widget.layout.cols}x${widget.layout.rows}',
+                      'grid-${widget.layout.cols}x${widget.layout.rows}-'
+                      '${widget.layout.overlapIn}',
                     ),
                     painter: _GridPainter(
                       cols: widget.layout.cols,
                       rows: widget.layout.rows,
+                      ovFracX: posterOverlapFrac(
+                        widget.layout.overlapIn,
+                        widget.layout.pageWidthIn,
+                      ),
+                      ovFracY: posterOverlapFrac(
+                        widget.layout.overlapIn,
+                        widget.layout.pageHeightIn,
+                      ),
                     ),
                   ),
                 ),
@@ -1160,15 +1204,24 @@ class _PosterPreviewState extends State<_PosterPreview> {
 }
 
 class _GridPainter extends CustomPainter {
-  _GridPainter({required this.cols, required this.rows});
+  _GridPainter({
+    required this.cols,
+    required this.rows,
+    this.ovFracX = 0,
+    this.ovFracY = 0,
+  });
 
   final int cols;
   final int rows;
 
+  /// Seam cushion as a fraction of one page (0 = pages abut). With a
+  /// cushion, each interior seam is a shared BAND (both pages print it),
+  /// so the preview shows a band, not a line.
+  final double ovFracX;
+  final double ovFracY;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final cellW = size.width / cols;
-    final cellH = size.height / rows;
     // FAINT hairlines — show WHERE the pages split without hiding the art
     // beneath. NO labels drawn over the image: the preview stays clean so you
     // can read your whole picture. (The "R1·C2" registration labels, when on,
@@ -1180,23 +1233,51 @@ class _GridPainter extends CustomPainter {
     final line = Paint()
       ..color = Colors.white.withValues(alpha: 0.5)
       ..strokeWidth = 1;
+    final band = Paint()..color = Colors.white.withValues(alpha: 0.22);
+
+    // Shingled span in page units — with no cushion this is just cols/rows
+    // and the bands collapse to the classic single seam lines.
+    final unitsX = 1 + (cols - 1) * (1 - ovFracX);
+    final unitsY = 1 + (rows - 1) * (1 - ovFracY);
+
+    void vSeam(double x0, double x1) {
+      if (x1 - x0 >= 1) {
+        canvas.drawRect(Rect.fromLTRB(x0, 0, x1, size.height), band);
+      }
+      for (final x in [x0, if (x1 - x0 >= 1) x1]) {
+        canvas
+          ..drawLine(Offset(x, 0), Offset(x, size.height), under)
+          ..drawLine(Offset(x, 0), Offset(x, size.height), line);
+      }
+    }
+
+    void hSeam(double y0, double y1) {
+      if (y1 - y0 >= 1) {
+        canvas.drawRect(Rect.fromLTRB(0, y0, size.width, y1), band);
+      }
+      for (final y in [y0, if (y1 - y0 >= 1) y1]) {
+        canvas
+          ..drawLine(Offset(0, y), Offset(size.width, y), under)
+          ..drawLine(Offset(0, y), Offset(size.width, y), line);
+      }
+    }
 
     for (var c = 1; c < cols; c++) {
-      final x = cellW * c;
-      canvas
-        ..drawLine(Offset(x, 0), Offset(x, size.height), under)
-        ..drawLine(Offset(x, 0), Offset(x, size.height), line);
+      final start = c * (1 - ovFracX) / unitsX * size.width;
+      vSeam(start, start + ovFracX / unitsX * size.width);
     }
     for (var r = 1; r < rows; r++) {
-      final y = cellH * r;
-      canvas
-        ..drawLine(Offset(0, y), Offset(size.width, y), under)
-        ..drawLine(Offset(0, y), Offset(size.width, y), line);
+      final start = r * (1 - ovFracY) / unitsY * size.height;
+      hSeam(start, start + ovFracY / unitsY * size.height);
     }
   }
 
   @override
-  bool shouldRepaint(_GridPainter old) => old.cols != cols || old.rows != rows;
+  bool shouldRepaint(_GridPainter old) =>
+      old.cols != cols ||
+      old.rows != rows ||
+      old.ovFracX != ovFracX ||
+      old.ovFracY != ovFracY;
 }
 
 /// Determinate render progress. While the worker streams page counts the bar
@@ -1268,10 +1349,15 @@ class _WorkingBanner extends StatelessWidget {
 /// 100% / actual size) is the one that actually keeps the tiles lined up — a
 /// printer "fit to page" silently rescales every page and breaks the seams.
 class _HowToPrint extends StatelessWidget {
-  const _HowToPrint({required this.pageCount, required this.guides});
+  const _HowToPrint({
+    required this.pageCount,
+    required this.guides,
+    this.overlapIn = 0,
+  });
 
   final int pageCount;
   final bool guides;
+  final double overlapIn;
 
   @override
   Widget build(BuildContext context) {
@@ -1281,7 +1367,12 @@ class _HowToPrint extends StatelessWidget {
     const printStep =
         'Print at 100% / “Actual size” — turn OFF “Fit to page” '
         '/ “Scale to fit”. This is what keeps the pieces lined up.';
-    final tapeStep = guides
+    final tapeStep = overlapIn > 0
+        ? 'Lay the $pageCount pages out in order, overlapping each page '
+              'onto the one before it — match the picture across the shared '
+              'strip, then tape or glue the overlap flat. Any trimming can '
+              'be rough: the strip swallows an uneven cut.'
+        : guides
         ? 'Trim each page on the dashed line, line them up (R1-C1 at the '
               'top-left), and tape.'
         : 'Lay the $pageCount pages out in order and tape them together.';
@@ -1335,9 +1426,9 @@ class _HowToPrint extends StatelessWidget {
                 ],
               ),
             ),
-          // Seam guidance — only when guides are off (the at-risk case; with
-          // guides on, step 4 already covers the trim).
-          if (!guides) ...[
+          // Seam guidance — only when neither fix is on (the at-risk case;
+          // guides cover the trim, the cushion makes trimming forgiving).
+          if (!guides && overlapIn <= 0) ...[
             const SizedBox(height: 2),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

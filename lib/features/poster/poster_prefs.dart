@@ -45,6 +45,8 @@ class PosterPrefs {
         ),
         labels: map['labels'] as bool? ?? true,
         guides: map['guides'] as bool? ?? false,
+        overlapIn:
+            (map['overlapIn'] as num?)?.toDouble().clamp(0.0, 0.5) ?? 0.0,
       );
     } on Object {
       return const PosterOptions();
@@ -68,6 +70,7 @@ class PosterPrefs {
           'quality': o.quality.name,
           'labels': o.labels,
           'guides': o.guides,
+          'overlapIn': o.overlapIn,
         }),
       );
     } on Object {

@@ -335,6 +335,128 @@ void main() {
     });
   });
 
+  group('seam cushion (overlap)', () {
+    test('assembled size shrinks by one overlap per interior seam', () {
+      const plain = PosterLayout(
+        cols: 3,
+        rows: 2,
+        landscape: false,
+        paper: PosterPaper.letter,
+      );
+      const cushioned = PosterLayout(
+        cols: 3,
+        rows: 2,
+        landscape: false,
+        paper: PosterPaper.letter,
+        overlapIn: 0.25,
+      );
+      expect(plain.assembledWidthIn, closeTo(3 * 8.5, 1e-9));
+      expect(plain.assembledHeightIn, closeTo(2 * 11, 1e-9));
+      // 2 interior seams across, 1 down — each eats one overlap.
+      expect(cushioned.assembledWidthIn, closeTo(3 * 8.5 - 2 * 0.25, 1e-9));
+      expect(cushioned.assembledHeightIn, closeTo(2 * 11 - 0.25, 1e-9));
+    });
+
+    test('overlap fraction clamps: never more than 45% of a page', () {
+      expect(posterOverlapFrac(0.25, 8.5), closeTo(0.25 / 8.5, 1e-12));
+      expect(posterOverlapFrac(0, 8.5), 0);
+      expect(posterOverlapFrac(-1, 8.5), 0);
+      expect(posterOverlapFrac(6, 8.5), 0.45);
+    });
+
+    test('axis units: n pages shingle to 1 + (n-1) steps', () {
+      expect(posterAxisUnits(1, 0.1), 1);
+      expect(posterAxisUnits(4, 0), 4);
+      expect(posterAxisUnits(3, 0.5), closeTo(2, 1e-12));
+    });
+
+    test('computePosterLayout threads overlap into every path', () {
+      const opts = PosterOptions(overlapIn: 0.5);
+      expect(
+        computePosterLayout(opts, 1.5).overlapIn,
+        0.5,
+        reason: 'fit-shape search',
+      );
+      expect(
+        computePosterLayout(
+          opts.copyWith(fitShape: false),
+          1,
+        ).overlapIn,
+        0.5,
+        reason: 'plain square grid',
+      );
+      expect(
+        computePosterLayout(
+          opts.copyWith(customCols: 3, customRows: 2),
+          1,
+        ).overlapIn,
+        0.5,
+        reason: 'custom grid',
+      );
+    });
+
+    test('adjacent tiles print the SAME strip at an interior seam', () {
+      // Horizontal gradient → a pixel's red channel encodes its source x,
+      // so shared content is verifiable by color.
+      const srcW = 1600;
+      const srcH = 1000;
+      final image = img.Image(width: srcW, height: srcH);
+      for (var x = 0; x < srcW; x++) {
+        final r = (x / (srcW - 1) * 255).round();
+        for (var y = 0; y < srcH; y++) {
+          image.setPixelRgb(x, y, r, 60, 60);
+        }
+      }
+      final bytes = Uint8List.fromList(img.encodePng(image));
+
+      final layout = computePosterLayout(
+        const PosterOptions(
+          customCols: 2,
+          customRows: 1,
+          orientation: PosterOrientation.portrait,
+          // A deliberately huge cushion (~35% of the page) so the shared
+          // strip moves the gradient far enough to assert against noise.
+          overlapIn: 3,
+        ),
+        srcW / srcH,
+      );
+      final tiles = renderPosterTilesForTest(bytes, layout, PosterFit.fill);
+      expect(tiles.length, 2);
+      final left = img.decodeImage(tiles[0])!;
+      final right = img.decodeImage(tiles[1])!;
+
+      // Tile 0's right edge and tile 1's overlap-end column show the same
+      // source column (the two ends of the shared strip).
+      final ovPx = (left.width * posterOverlapFrac(3, layout.pageWidthIn))
+          .round();
+      expect(ovPx, greaterThan(2), reason: 'strip must be visible');
+      final midY = left.height ~/ 2;
+      final endOfLeft = left.getPixel(left.width - 1, midY).r;
+      final endOfSharedOnRight = right.getPixel(ovPx - 1, midY).r;
+      expect(
+        (endOfLeft - endOfSharedOnRight).abs(),
+        lessThanOrEqualTo(8),
+        reason: 'the seam strip prints on both pages',
+      );
+      // And with no cushion the same two samples are ~one page apart.
+      final plainTiles = renderPosterTilesForTest(
+        bytes,
+        PosterLayout(
+          cols: layout.cols,
+          rows: layout.rows,
+          landscape: layout.landscape,
+          paper: layout.paper,
+        ),
+        PosterFit.fill,
+      );
+      final plainLeft = img.decodeImage(plainTiles[0])!;
+      final plainRight = img.decodeImage(plainTiles[1])!;
+      final a = plainLeft.getPixel(plainLeft.width - 1, midY).r;
+      final b = plainRight.getPixel(ovPx - 1, midY).r;
+      expect((a - b).abs(), greaterThan(20), reason: 'abutting pages differ');
+    });
+  });
+
   group('print quality', () {
     Uint8List solid(int w, int h) {
       final image = img.Image(width: w, height: h);

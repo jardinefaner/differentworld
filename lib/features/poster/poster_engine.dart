@@ -30,12 +30,17 @@ class PosterLayout {
     required this.rows,
     required this.landscape,
     required this.paper,
+    this.overlapIn = 0,
   });
 
   final int cols;
   final int rows;
   final bool landscape;
   final PosterPaper paper;
+
+  /// Seam cushion (inches): interior seams duplicate this much image on
+  /// both adjacent pages so uneven cuts are harmless (see PosterOptions).
+  final double overlapIn;
 
   int get pageCount => cols * rows;
 
@@ -45,9 +50,15 @@ class PosterLayout {
   double get pageHeightIn =>
       landscape ? _paperShortIn(paper) : _paperLongIn(paper);
 
-  /// The assembled poster's size in inches.
-  double get assembledWidthIn => cols * pageWidthIn;
-  double get assembledHeightIn => rows * pageHeightIn;
+  /// The horizontal / vertical step between consecutive pages' content —
+  /// a full page minus the shared seam strip.
+  double get stepWidthIn => pageWidthIn - overlapIn;
+  double get stepHeightIn => pageHeightIn - overlapIn;
+
+  /// The assembled poster's size in inches. With overlap the pages
+  /// shingle, so each page past the first only advances by a step.
+  double get assembledWidthIn => pageWidthIn + (cols - 1) * stepWidthIn;
+  double get assembledHeightIn => pageHeightIn + (rows - 1) * stepHeightIn;
 
   /// Aspect (width / height) of the assembled poster.
   double get canvasAspect => assembledWidthIn / assembledHeightIn;
@@ -58,10 +69,11 @@ class PosterLayout {
       other.cols == cols &&
       other.rows == rows &&
       other.landscape == landscape &&
+      other.overlapIn == overlapIn &&
       other.paper == paper;
 
   @override
-  int get hashCode => Object.hash(cols, rows, landscape, paper);
+  int get hashCode => Object.hash(cols, rows, landscape, paper, overlapIn);
 
   @override
   String toString() =>
@@ -89,6 +101,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
       rows: opts.customRows,
       landscape: landscape,
       paper: opts.paper,
+      overlapIn: opts.overlapIn,
     );
     return switch (opts.orientation) {
       PosterOrientation.portrait => candidate(landscape: false),
@@ -118,6 +131,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
       rows: size,
       landscape: opts.orientation == PosterOrientation.landscape,
       paper: opts.paper,
+      overlapIn: opts.overlapIn,
     );
   }
 
@@ -140,6 +154,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
           rows: dims.$2,
           landscape: landscape,
           paper: opts.paper,
+          overlapIn: opts.overlapIn,
         );
         final score = mismatch(cand.canvasAspect, aspect);
         // Primary: closest aspect. Tie-break: fewer pages, then the page
@@ -169,6 +184,19 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
 // binding, or an isolate. The isolate renderer and the preview both lean on
 // these so they agree on framing.
 // ---------------------------------------------------------------------------
+
+/// Overlap as a fraction of one page's printed content along an axis.
+/// Clamped so a page can never overlap more than 45% of itself — beyond
+/// that the "shingle" stops being a seam cushion and starts eating pages.
+double posterOverlapFrac(double overlapIn, double contentIn) {
+  if (overlapIn <= 0 || contentIn <= 0) return 0;
+  return (overlapIn / contentIn).clamp(0.0, 0.45);
+}
+
+/// How many "page units" the assembled canvas spans along an axis when
+/// [n] pages shingle with [ovFrac] of a page shared at every seam:
+/// the first page contributes a full unit, each later one a step.
+double posterAxisUnits(int n, double ovFrac) => 1 + (n - 1) * (1 - ovFrac);
 
 /// US Letter in inches (portrait). Kept for the preview's default framing
 /// and back-compat with existing geometry tests.
@@ -587,7 +615,18 @@ List<Uint8List> _renderPosterTilesSync(
   final pageH = math.max(1, px.pageH - 2 * marginPx);
   final cols = layout.cols;
   final rows = layout.rows;
-  final canvasAspect = (cols * pageW) / (rows * pageH);
+  // Seam cushion: each page past the first advances by a step (one page
+  // minus the shared strip), so every interior seam prints the same
+  // [layout.overlapIn] inches of image on both adjacent pages. With guides
+  // the printed content is inset by the trim margin, so the fraction is
+  // taken of the CONTENT inches — the physical overlap stays true.
+  final contentWIn = layout.pageWidthIn - (guides ? 2 * kGuideMarginIn : 0);
+  final contentHIn = layout.pageHeightIn - (guides ? 2 * kGuideMarginIn : 0);
+  final ovFx = posterOverlapFrac(layout.overlapIn, contentWIn);
+  final ovFy = posterOverlapFrac(layout.overlapIn, contentHIn);
+  final unitsX = posterAxisUnits(cols, ovFx);
+  final unitsY = posterAxisUnits(rows, ovFy);
+  final canvasAspect = (unitsX * pageW) / (unitsY * pageH);
   final tiles = <Uint8List>[];
 
   switch (fit) {
@@ -604,15 +643,17 @@ List<Uint8List> _renderPosterTilesSync(
         focusX,
         focusY,
       );
+      final unitW = cw / unitsX; // source px per page along x
+      final unitH = ch / unitsY;
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < cols; col++) {
-          final sx = (cl + col * cw / cols).round();
-          final sy = (ct + row * ch / rows).round();
+          final sx = (cl + col * (1 - ovFx) * unitW).round();
+          final sy = (ct + row * (1 - ovFy) * unitH).round();
           final sw = math
-              .min((cw / cols).round(), src.width - sx)
+              .min(unitW.round(), src.width - sx)
               .clamp(1, src.width);
           final sh = math
-              .min((ch / rows).round(), src.height - sy)
+              .min(unitH.round(), src.height - sy)
               .clamp(1, src.height);
           final crop = img.copyCrop(
             src,
@@ -634,16 +675,24 @@ List<Uint8List> _renderPosterTilesSync(
 
     case PosterFit.whole:
       // Contain: place the whole image centered on a white canvas, then
-      // slice. Builds the full canvas once (less common path).
-      final canvasW = pageW * cols;
-      final canvasH = pageH * rows;
+      // slice. Builds the full canvas once (less common path). With a seam
+      // cushion the canvas shrinks to the shingled span and consecutive
+      // slices advance by a step, re-reading the shared strip.
+      final canvasW = math.max(1, (pageW * unitsX).round());
+      final canvasH = math.max(1, (pageH * unitsY).round());
       final canvas = _containOnWhite(src, canvasW, canvasH);
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < cols; col++) {
           final tile = img.copyCrop(
             canvas,
-            x: col * pageW,
-            y: row * pageH,
+            x: (col * (1 - ovFx) * pageW).round().clamp(
+              0,
+              math.max(0, canvasW - pageW),
+            ),
+            y: (row * (1 - ovFy) * pageH).round().clamp(
+              0,
+              math.max(0, canvasH - pageH),
+            ),
             width: pageW,
             height: pageH,
           );
@@ -966,8 +1015,19 @@ Uint8List _renderPosterImageSync(
     throw const FormatException('Could not decode the chosen image.');
   }
   final px = _pagePixels(layout, _maxCanvasLongPx(quality, fit));
-  final canvasW = math.max(1, px.pageW * layout.cols);
-  final canvasH = math.max(1, px.pageH * layout.rows);
+  // One seamless image has no seams to cushion — but with overlap on, the
+  // assembled (shingled) poster spans fewer page-units, so the single PNG
+  // matches that span (and the tiled pages' framing).
+  final unitsX = posterAxisUnits(
+    layout.cols,
+    posterOverlapFrac(layout.overlapIn, layout.pageWidthIn),
+  );
+  final unitsY = posterAxisUnits(
+    layout.rows,
+    posterOverlapFrac(layout.overlapIn, layout.pageHeightIn),
+  );
+  final canvasW = math.max(1, (px.pageW * unitsX).round());
+  final canvasH = math.max(1, (px.pageH * unitsY).round());
 
   final img.Image out;
   switch (fit) {
