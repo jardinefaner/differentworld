@@ -5,6 +5,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,17 @@ class RunbookScreen extends ConsumerWidget {
           title: 'Could not load the runbook',
           onRetry: () => ref.invalidate(staffRunbookProvider),
         ),
-        data: (moments) => bento ? _bentoBody(moments) : _flatBody(moments),
+        data: (moments) => moments.isEmpty
+            ? const EmptyState(
+                icon: Icons.menu_book_outlined,
+                title: 'No moments in the runbook yet',
+                message:
+                    'The day\u2019s schedule feeds this page \u2014 add '
+                    'blocks and the run-of-show appears here.',
+              )
+            : bento
+            ? _bentoBody(moments)
+            : _flatBody(moments),
       ),
     );
   }

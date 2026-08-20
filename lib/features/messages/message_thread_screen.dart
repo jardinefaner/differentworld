@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
@@ -12,6 +11,8 @@ import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -188,39 +189,19 @@ class _MessageThreadScreenState extends ConsumerState<MessageThreadScreen> {
             Expanded(
               child: messagesAsync.when(
                 loading: () => const LoadingSlot(),
-                error: (_, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Could not load this thread.'),
-                        const SizedBox(height: 12),
-                        FilledButton.tonalIcon(
-                          onPressed: () => ref.invalidate(
-                            messageThreadProvider(threadKey),
-                          ),
-                          icon: const Icon(Icons.refresh, size: 18),
-                          label: const Text('Try again'),
-                        ),
-                      ],
-                    ),
-                  ),
+                error: (_, _) => ErrorState(
+                  title: 'Could not load this thread',
+                  onRetry: () =>
+                      ref.invalidate(messageThreadProvider(threadKey)),
                 ),
                 data: (messages) {
                   if (messages.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          iAmGuardian
-                              ? 'Nothing here yet. Say hi to the team.'
-                              : 'No messages yet from this family.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
+                    return EmptyState(
+                      icon: Icons.forum_outlined,
+                      title: 'Nothing here yet',
+                      message: iAmGuardian
+                          ? 'Say hi to the team — they see it right away.'
+                          : 'No messages yet from this family.',
                     );
                   }
                   // First frame after data lands: jump to the bottom so

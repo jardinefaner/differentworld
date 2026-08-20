@@ -6,6 +6,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,13 @@ class VerbJobsScreen extends ConsumerWidget {
             for (final v in kVerbs)
               if (roles[v.id] case final role?) (v, role),
           ];
+          if (cards.isEmpty) {
+            return const EmptyState(
+              icon: Icons.badge_outlined,
+              title: 'No verb jobs yet',
+              message: 'The verb roles could not be loaded.',
+            );
+          }
           return bento ? _bentoBody(cards) : _flatBody(cards);
         },
       ),

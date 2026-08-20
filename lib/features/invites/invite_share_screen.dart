@@ -125,7 +125,9 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  // A QR quiet zone must stay white in BOTH themes or dark
+                  // mode kills scan contrast — functional, not themed.
+                  color: Colors.white, // raw-canvas
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(

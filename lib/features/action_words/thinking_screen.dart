@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/widgets/thinking_game_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
@@ -9,6 +8,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +40,13 @@ class ThinkingScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(thinkingGamesProvider),
         ),
         data: (games) {
+          if (games.isEmpty) {
+            return const EmptyState(
+              icon: Icons.psychology_outlined,
+              title: 'No thinking games yet',
+              message: 'The game deck could not be loaded.',
+            );
+          }
           // Lead with this week's WORLD game(s), then the game under each RPG
           // system, then the rest of the deck.
           final weekGames = ref.watch(thisWeekThinkingProvider);

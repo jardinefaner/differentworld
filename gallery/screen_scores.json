@@ -1,336 +1,5 @@
 [
   {
-    "name": "kid_job",
-    "cls": "KidJobScreen",
-    "file": "lib/features/action_words/kid_job_screen.dart",
-    "score": 76,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.8553961515426636,
-    "dead": 0.9,
-    "solid": 0,
-    "states": 0,
-    "low_contrast_evidence": 0,
-    "deductions": [
-      {
-        "pts": -20,
-        "why": "rendered root is a raw Scaffold, not EdgeScaffold"
-      },
-      {
-        "pts": -4,
-        "why": "no ContentHeader / SafeArea top-clearance signal"
-      }
-    ]
-  },
-  {
-    "name": "action_words_kid",
-    "cls": "ActionWordsKidScreen",
-    "file": "lib/features/action_words/action_words_kid_screen.dart",
-    "score": 80,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.7362824082374573,
-    "dead": 0.42,
-    "solid": 0,
-    "states": 0,
-    "low_contrast_evidence": 139,
-    "deductions": [
-      {
-        "pts": -20,
-        "why": "rendered root is a raw Scaffold, not EdgeScaffold"
-      }
-    ]
-  },
-  {
-    "name": "story_showcase",
-    "cls": "StoryShowcaseScreen",
-    "file": "lib/features/story/story_showcase_screen.dart",
-    "score": 84,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.8497346639633179,
-    "dead": 0.85,
-    "solid": 1,
-    "states": 3,
-    "low_contrast_evidence": 13,
-    "deductions": [
-      {
-        "pts": -12,
-        "why": "1 hardcoded color(s) on a themed surface"
-      },
-      {
-        "pts": -4,
-        "why": "no ContentHeader / SafeArea top-clearance signal"
-      }
-    ]
-  },
-  {
-    "name": "child_day",
-    "cls": "ChildDayScreen",
-    "file": "lib/features/today/child_day_screen.dart",
-    "score": 88,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.787467896938324,
-    "dead": 0.55,
-    "solid": 1,
-    "states": 2,
-    "low_contrast_evidence": 47,
-    "deductions": [
-      {
-        "pts": -12,
-        "why": "1 hardcoded color(s) on a themed surface"
-      }
-    ]
-  },
-  {
-    "name": "invite_share",
-    "cls": "InviteShareScreen",
-    "file": "lib/features/invites/invite_share_screen.dart",
-    "score": 88,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.6723009347915649,
-    "dead": 0.43,
-    "solid": 1,
-    "states": 0,
-    "low_contrast_evidence": 47,
-    "deductions": [
-      {
-        "pts": -12,
-        "why": "1 hardcoded color(s) on a themed surface"
-      }
-    ]
-  },
-  {
-    "name": "message_thread",
-    "cls": "MessageThreadScreen",
-    "file": "lib/features/messages/message_thread_screen.dart",
-    "score": 88,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.8361721038818359,
-    "dead": 0.79,
-    "solid": 0,
-    "states": 1,
-    "low_contrast_evidence": 23,
-    "deductions": [
-      {
-        "pts": -12,
-        "why": "2 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "send_export",
-    "cls": "SendExportScreen",
-    "file": "lib/features/exports/send_export_screen.dart",
-    "score": 88,
-    "band": "minor work",
-    "is_raw": false,
-    "delta": 0.8195983171463013,
-    "dead": 0.73,
-    "solid": 0,
-    "states": 1,
-    "low_contrast_evidence": 47,
-    "deductions": [
-      {
-        "pts": -12,
-        "why": "2 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "character_sheet",
-    "cls": "CharacterSheetScreen",
-    "file": "lib/features/world/character_sheet_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.7578679919242859,
-    "dead": 0.39,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 86,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "runbook",
-    "cls": "RunbookScreen",
-    "file": "lib/features/staff/runbook_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.8361371755599976,
-    "dead": 0.16,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 12,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "staff_ladder",
-    "cls": "StaffLadderScreen",
-    "file": "lib/features/staff/staff_ladder_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.8100219368934631,
-    "dead": 0.33,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 48,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "themed_world",
-    "cls": "ThemedWorldScreen",
-    "file": "lib/features/action_words/themed_world_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.8369512557983398,
-    "dead": 0.65,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 110,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "thinking",
-    "cls": "ThinkingScreen",
-    "file": "lib/features/action_words/thinking_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.8369512557983398,
-    "dead": 0.65,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 110,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "trip_detail",
-    "cls": "TripDetailScreen",
-    "file": "lib/features/schedule/trip_detail_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.7654189467430115,
-    "dead": 0.52,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 104,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "verb_jobs",
-    "cls": "VerbJobsScreen",
-    "file": "lib/features/action_words/verb_jobs_screen.dart",
-    "score": 94,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.8270114660263062,
-    "dead": 0.11,
-    "solid": 0,
-    "states": 2,
-    "low_contrast_evidence": 8,
-    "deductions": [
-      {
-        "pts": -6,
-        "why": "1 of loading/empty/error states missing"
-      }
-    ]
-  },
-  {
-    "name": "kid_story",
-    "cls": "KidStoryScreen",
-    "file": "lib/features/story/kid_story_screen.dart",
-    "score": 96,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.8473366498947144,
-    "dead": 0.85,
-    "solid": 0,
-    "states": 3,
-    "low_contrast_evidence": 13,
-    "deductions": [
-      {
-        "pts": -4,
-        "why": "no ContentHeader / SafeArea top-clearance signal"
-      }
-    ]
-  },
-  {
-    "name": "room_story",
-    "cls": "RoomStoryScreen",
-    "file": "lib/features/story/room_story_screen.dart",
-    "score": 96,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.847652792930603,
-    "dead": 0.85,
-    "solid": 0,
-    "states": 3,
-    "low_contrast_evidence": 13,
-    "deductions": [
-      {
-        "pts": -4,
-        "why": "no ContentHeader / SafeArea top-clearance signal"
-      }
-    ]
-  },
-  {
-    "name": "toolkit_tool",
-    "cls": "ToolkitToolScreen",
-    "file": "lib/features/toolkit/toolkit_tool_screen.dart",
-    "score": 96,
-    "band": "ship-confident",
-    "is_raw": false,
-    "delta": 0.7516034841537476,
-    "dead": 0.16,
-    "solid": 0,
-    "states": 0,
-    "low_contrast_evidence": 117,
-    "deductions": [
-      {
-        "pts": -4,
-        "why": "no ContentHeader / SafeArea top-clearance signal"
-      }
-    ]
-  },
-  {
     "name": "action_words",
     "cls": "ActionWordsScreen",
     "file": "lib/features/action_words/action_words_screen.dart",
@@ -342,6 +11,20 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "action_words_kid",
+    "cls": "ActionWordsKidScreen",
+    "file": "lib/features/action_words/action_words_kid_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.7362824082374573,
+    "dead": 0.42,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 139,
     "deductions": []
   },
   {
@@ -393,7 +76,7 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7909713983535767,
+    "delta": 0.791460394859314,
     "dead": 0.5,
     "solid": 0,
     "states": 0,
@@ -452,7 +135,7 @@
     "delta": 0.7390229105949402,
     "dead": 0.3,
     "solid": 0,
-    "states": 0,
+    "states": 3,
     "low_contrast_evidence": 160,
     "deductions": []
   },
@@ -480,7 +163,7 @@
     "delta": 0.8047633171081543,
     "dead": 0.65,
     "solid": 0,
-    "states": 1,
+    "states": 3,
     "low_contrast_evidence": 72,
     "deductions": []
   },
@@ -494,7 +177,7 @@
     "delta": 0.7886227369308472,
     "dead": 0.51,
     "solid": 28,
-    "states": 0,
+    "states": 1,
     "low_contrast_evidence": 85,
     "deductions": []
   },
@@ -597,6 +280,34 @@
     "deductions": []
   },
   {
+    "name": "character_sheet",
+    "cls": "CharacterSheetScreen",
+    "file": "lib/features/world/character_sheet_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7578679919242859,
+    "dead": 0.39,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 86,
+    "deductions": []
+  },
+  {
+    "name": "child_day",
+    "cls": "ChildDayScreen",
+    "file": "lib/features/today/child_day_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.787467896938324,
+    "dead": 0.55,
+    "solid": 0,
+    "states": 2,
+    "low_contrast_evidence": 47,
+    "deductions": []
+  },
+  {
     "name": "child_photos_folder",
     "cls": "ChildPhotosFolderScreen",
     "file": "lib/features/photos/child_photos_folder_screen.dart",
@@ -687,11 +398,11 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7175432443618774,
-    "dead": 0.38,
+    "delta": 0.7268702983856201,
+    "dead": 0.4,
     "solid": 0,
     "states": 1,
-    "low_contrast_evidence": 88,
+    "low_contrast_evidence": 85,
     "deductions": []
   },
   {
@@ -729,8 +440,8 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.6691962480545044,
-    "dead": 0.54,
+    "delta": 0.6825532913208008,
+    "dead": 0.55,
     "solid": 0,
     "states": 1,
     "low_contrast_evidence": 52,
@@ -813,7 +524,7 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7826932668685913,
+    "delta": 0.783937931060791,
     "dead": 0.65,
     "solid": 0,
     "states": 1,
@@ -989,6 +700,20 @@
     "deductions": []
   },
   {
+    "name": "invite_share",
+    "cls": "InviteShareScreen",
+    "file": "lib/features/invites/invite_share_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.6723009347915649,
+    "dead": 0.43,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 47,
+    "deductions": []
+  },
+  {
     "name": "join_or_create",
     "cls": "JoinOrCreateScreen",
     "file": "lib/features/onboarding/join_or_create_screen.dart",
@@ -1031,6 +756,34 @@
     "deductions": []
   },
   {
+    "name": "kid_job",
+    "cls": "KidJobScreen",
+    "file": "lib/features/action_words/kid_job_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.8553961515426636,
+    "dead": 0.9,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 0,
+    "deductions": []
+  },
+  {
+    "name": "kid_story",
+    "cls": "KidStoryScreen",
+    "file": "lib/features/story/kid_story_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8473366498947144,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
     "name": "launch",
     "cls": "LaunchScreen",
     "file": "lib/features/launch/launch_screen.dart",
@@ -1051,8 +804,8 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7872194051742554,
-    "dead": 0.36,
+    "delta": 0.7814709544181824,
+    "dead": 0.37,
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 133,
@@ -1068,7 +821,7 @@
     "delta": 0.5608658790588379,
     "dead": 0.4,
     "solid": 0,
-    "states": 0,
+    "states": 1,
     "low_contrast_evidence": 93,
     "deductions": []
   },
@@ -1154,6 +907,20 @@
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 59,
+    "deductions": []
+  },
+  {
+    "name": "message_thread",
+    "cls": "MessageThreadScreen",
+    "file": "lib/features/messages/message_thread_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8324735760688782,
+    "dead": 0.77,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 23,
     "deductions": []
   },
   {
@@ -1261,11 +1028,11 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": true,
-    "delta": 0.0534660667181015,
-    "dead": 0.73,
+    "delta": 0.04962270334362984,
+    "dead": 0.67,
     "solid": 0,
     "states": 0,
-    "low_contrast_evidence": 12,
+    "low_contrast_evidence": 11,
     "deductions": []
   },
   {
@@ -1345,8 +1112,8 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7661424875259399,
-    "dead": 0.45,
+    "delta": 0.7664401531219482,
+    "dead": 0.44,
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 77,
@@ -1633,6 +1400,20 @@
     "deductions": []
   },
   {
+    "name": "room_story",
+    "cls": "RoomStoryScreen",
+    "file": "lib/features/story/room_story_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.847652792930603,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
     "name": "routine_script_editor",
     "cls": "RoutineScriptEditorScreen",
     "file": "lib/features/action_words/routine_script_editor_screen.dart",
@@ -1658,6 +1439,20 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 15,
+    "deductions": []
+  },
+  {
+    "name": "runbook",
+    "cls": "RunbookScreen",
+    "file": "lib/features/staff/runbook_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8361371755599976,
+    "dead": 0.16,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 12,
     "deductions": []
   },
   {
@@ -1703,6 +1498,20 @@
     "deductions": []
   },
   {
+    "name": "send_export",
+    "cls": "SendExportScreen",
+    "file": "lib/features/exports/send_export_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8195983171463013,
+    "dead": 0.73,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 47,
+    "deductions": []
+  },
+  {
     "name": "session_run",
     "cls": "SessionRunScreen",
     "file": "lib/features/curricula/session_run_screen.dart",
@@ -1712,7 +1521,7 @@
     "delta": 0.755452573299408,
     "dead": 0.25,
     "solid": 0,
-    "states": 1,
+    "states": 3,
     "low_contrast_evidence": 118,
     "deductions": []
   },
@@ -1765,11 +1574,11 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.819568932056427,
+    "delta": 0.8202368021011353,
     "dead": 0.46,
     "solid": 0,
     "states": 0,
-    "low_contrast_evidence": 77,
+    "low_contrast_evidence": 76,
     "deductions": []
   },
   {
@@ -1779,11 +1588,39 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7390972971916199,
+    "delta": 0.7394236326217651,
     "dead": 0.53,
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 100,
+    "deductions": []
+  },
+  {
+    "name": "staff_ladder",
+    "cls": "StaffLadderScreen",
+    "file": "lib/features/staff/staff_ladder_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8100219368934631,
+    "dead": 0.33,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 48,
+    "deductions": []
+  },
+  {
+    "name": "story_showcase",
+    "cls": "StoryShowcaseScreen",
+    "file": "lib/features/story/story_showcase_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": true,
+    "delta": 0.8497346639633179,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 13,
     "deductions": []
   },
   {
@@ -1927,6 +1764,34 @@
     "deductions": []
   },
   {
+    "name": "themed_world",
+    "cls": "ThemedWorldScreen",
+    "file": "lib/features/action_words/themed_world_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8369512557983398,
+    "dead": 0.65,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 110,
+    "deductions": []
+  },
+  {
+    "name": "thinking",
+    "cls": "ThinkingScreen",
+    "file": "lib/features/action_words/thinking_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8369512557983398,
+    "dead": 0.65,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 110,
+    "deductions": []
+  },
+  {
     "name": "this_week",
     "cls": "ThisWeekScreen",
     "file": "lib/features/action_words/this_week_screen.dart",
@@ -1975,11 +1840,11 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7257725596427917,
+    "delta": 0.7259683012962341,
     "dead": 0.49,
     "solid": 0,
     "states": 3,
-    "low_contrast_evidence": 92,
+    "low_contrast_evidence": 93,
     "deductions": []
   },
   {
@@ -1989,11 +1854,11 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.7871021032333374,
+    "delta": 0.7871828079223633,
     "dead": 0.6,
     "solid": 0,
     "states": 3,
-    "low_contrast_evidence": 98,
+    "low_contrast_evidence": 97,
     "deductions": []
   },
   {
@@ -2011,6 +1876,20 @@
     "deductions": []
   },
   {
+    "name": "toolkit_tool",
+    "cls": "ToolkitToolScreen",
+    "file": "lib/features/toolkit/toolkit_tool_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7516034841537476,
+    "dead": 0.16,
+    "solid": 0,
+    "states": 2,
+    "low_contrast_evidence": 117,
+    "deductions": []
+  },
+  {
     "name": "tools",
     "cls": "ToolsScreen",
     "file": "lib/features/tools/tools_screen.dart",
@@ -2022,6 +1901,20 @@
     "solid": 0,
     "states": 1,
     "low_contrast_evidence": 151,
+    "deductions": []
+  },
+  {
+    "name": "trip_detail",
+    "cls": "TripDetailScreen",
+    "file": "lib/features/schedule/trip_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7654189467430115,
+    "dead": 0.52,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 104,
     "deductions": []
   },
   {
@@ -2106,6 +1999,20 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 13,
+    "deductions": []
+  },
+  {
+    "name": "verb_jobs",
+    "cls": "VerbJobsScreen",
+    "file": "lib/features/action_words/verb_jobs_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8270114660263062,
+    "dead": 0.11,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 8,
     "deductions": []
   },
   {

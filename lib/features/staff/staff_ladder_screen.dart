@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/staff/staff_ladder.dart';
@@ -7,6 +6,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +40,13 @@ class StaffLadderScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(staffRolesProvider),
         ),
         data: (roles) {
+          if (roles.isEmpty) {
+            return const EmptyState(
+              icon: Icons.school_outlined,
+              title: 'No ladder to show',
+              message: 'The staff growth ladder could not be loaded.',
+            );
+          }
           StaffRole? mine;
           for (final r in roles) {
             if (r.id == myLevel) {

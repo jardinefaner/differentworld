@@ -154,6 +154,21 @@ def source_metrics(path):
     # The allowlist regex anchors on `lib/...` (the repo-relative path the
     # theme-adherence script greps), so match the full path.
     is_raw = bool(ALLOW.search(path))
+    # A screen that delegates its body to a widget in another FEATURE file
+    # (StoryTimeline carries the ContentHeader; a shared DetailView carries
+    # the states) is coherent — the signals just live one file away. Follow
+    # one hop of lib/features/ imports for the structure/state scan only.
+    # lib/shared/ is excluded: those files DEFINE the primitives, so pulling
+    # them in would credit every screen with every state.
+    hop_src = ""
+    for imp in re.findall(
+        r"import 'package:differentworld/(features/[^']+\.dart)'", src
+    ):
+        try:
+            hop_src += open("lib/" + imp).read()
+        except FileNotFoundError:
+            continue
+    deep = src + hop_src
     # hardcoded solid colors: a color literal on a line that ISN'T a scrim
     # (.withValues(alpha:/.withOpacity) and isn't Colors.transparent.
     solid = 0
@@ -166,10 +181,16 @@ def source_metrics(path):
             continue
         solid += len(_COLOR.findall(line))
     states = sum(
-        src.count(p + "(")
+        deep.count(p + "(")
         for p in ("EmptyState", "ErrorState", "LoadingSlot")
     )
-    if "SkeletonList(" in src or "SkeletonCards(" in src:
+    if "SkeletonList(" in deep or "SkeletonCards(" in deep:
+        states += 1
+    # A screen whose zero-data view is a DESIGNED surface under another name
+    # (a setup flow, a "choose your name" sheet frame) declares it with a
+    # `// designed-empty` comment — a human classified the empty as designed,
+    # so the audit counts it without forcing the EmptyState widget shape.
+    if "// designed-empty" in src:
         states += 1
     states = min(3, states)
     data_strong = bool(
@@ -198,7 +219,7 @@ def source_metrics(path):
         "solid": 0 if is_raw else solid,
         "solid_raw": solid,
         "edge": "EdgeScaffold(" in src,
-        "header": "ContentHeader(" in src or "SafeArea(" in src,
+        "header": "ContentHeader(" in deep or "SafeArea(" in deep,
         "states": states,
         "consumes_async": consumes_async,
         "data": data_strong or states >= 1,

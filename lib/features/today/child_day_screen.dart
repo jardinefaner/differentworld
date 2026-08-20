@@ -785,7 +785,8 @@ class _GalleryTile extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black54],
+                    // Over-photo caption scrim (the family_today pattern).
+                    colors: [Colors.transparent, Colors.black54], // raw-canvas
                   ),
                 ),
                 child: Text(
@@ -793,7 +794,7 @@ class _GalleryTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Colors.white, // raw-canvas
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

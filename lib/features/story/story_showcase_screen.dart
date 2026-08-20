@@ -220,7 +220,8 @@ class _MomentStage extends ConsumerWidget {
                   Text(
                     '${moment.emoji}  ${moment.title}',
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
+                      // Over-photo scrim label (the family_today pattern).
+                      color: Colors.white, // raw-canvas
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -147,6 +147,8 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
               builder: (context, snap) {
                 final row = snap.data;
                 _scheduleSeed(row);
+                // designed-empty: no logistics row yet IS a designed state —
+                // the setup view invites the first fill-in.
                 return row == null
                     ? _setupView(context)
                     : _glanceView(context, db, row);

@@ -117,6 +117,9 @@ class _Body extends ConsumerWidget {
     final practiced = collection?.verbTotals ?? const <String, int>{};
     final title = collection?.emergingTitle;
 
+    // designed-empty: a brand-new kid's sheet IS the designed zero state —
+    // avatar placeholder + "Choose a name" + the draw prompt invite the
+    // first action; there is no blank page to guard.
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),

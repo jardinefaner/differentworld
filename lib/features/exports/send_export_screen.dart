@@ -1,11 +1,12 @@
 import 'dart:async';
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
@@ -216,7 +217,7 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
             subtitle: 'Email the family or copy a 7-day shareable link.',
           ),
           guardiansAsync.when(
-            loading: () => const LinearProgressIndicator(),
+            loading: () => const LoadingSlot(variant: LoadingVariant.spinner),
             // On a SEND screen a silently-missing recipient list reads as
             // "no family on file" — say what happened instead.
             error: (_, _) => ErrorState(
@@ -229,11 +230,12 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
             ),
             data: (guardians) {
               if (guardians.isEmpty) {
-                return Text(
-                  'No family contacts on file for this child.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                return const EmptyState(
+                  icon: Icons.family_restroom_outlined,
+                  title: 'No family contacts on file',
+                  message:
+                      "Add a guardian on this child's profile to email "
+                      'this home.',
                 );
               }
               return Column(

@@ -2,28 +2,12 @@
 
 150 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **98.9** · minor work: 7 · ship-confident: 143
+Average: **100.0** · ship-confident: 150
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
-| 76 | minor work | `kid_job` | -20 rendered root is a raw Scaffold, not EdgeScaffold; -4 no ContentHeader / SafeArea top-clearance signal |
-| 80 | minor work | `action_words_kid` | -20 rendered root is a raw Scaffold, not EdgeScaffold |
-| 84 | minor work | `story_showcase` | -12 1 hardcoded color(s) on a themed surface; -4 no ContentHeader / SafeArea top-clearance signal |
-| 88 | minor work | `child_day` | -12 1 hardcoded color(s) on a themed surface |
-| 88 | minor work | `invite_share` | -12 1 hardcoded color(s) on a themed surface |
-| 88 | minor work | `message_thread` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `send_export` | -12 2 of loading/empty/error states missing |
-| 94 | ship-confident | `character_sheet` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `runbook` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `staff_ladder` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `themed_world` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `thinking` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `trip_detail` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `verb_jobs` | -6 1 of loading/empty/error states missing |
-| 96 | ship-confident | `kid_story` | -4 no ContentHeader / SafeArea top-clearance signal |
-| 96 | ship-confident | `room_story` | -4 no ContentHeader / SafeArea top-clearance signal |
-| 96 | ship-confident | `toolkit_tool` | -4 no ContentHeader / SafeArea top-clearance signal |
 | 100 | ship-confident | `action_words` | — |
+| 100 | ship-confident | `action_words_kid` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `activities_list` | — |
 | 100 | ship-confident | `activity_arc` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `activity_edit` | — |
@@ -42,6 +26,8 @@ Average: **98.9** · minor work: 7 · ship-confident: 143
 | 100 | ship-confident | `capture` | — |
 | 100 | ship-confident | `capture_inbox` | — |
 | 100 | ship-confident | `cast` | — |
+| 100 | ship-confident | `character_sheet` | — |
+| 100 | ship-confident | `child_day` | — |
 | 100 | ship-confident | `child_photos_folder` | — |
 | 100 | ship-confident | `child_trail` | — |
 | 100 | ship-confident | `child_world` | — |
@@ -70,9 +56,12 @@ Average: **98.9** · minor work: 7 · ship-confident: 143
 | 100 | ship-confident | `incidents` | — |
 | 100 | ship-confident | `insights` | — |
 | 100 | ship-confident | `invite_create` | — |
+| 100 | ship-confident | `invite_share` | — |
 | 100 | ship-confident | `join_or_create` | — |
 | 100 | ship-confident | `join_unavailable` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `journey_tour` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `kid_job` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `kid_story` | — |
 | 100 | ship-confident | `launch` | — |
 | 100 | ship-confident | `letters` | — |
 | 100 | ship-confident | `live_board` | — |
@@ -82,6 +71,7 @@ Average: **98.9** · minor work: 7 · ship-confident: 143
 | 100 | ship-confident | `math_runner` | — |
 | 100 | ship-confident | `member_detail` | — |
 | 100 | ship-confident | `memory_match` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `message_thread` | — |
 | 100 | ship-confident | `mission_board` | — |
 | 100 | ship-confident | `mission_do` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `missions_list` | — |
@@ -116,17 +106,22 @@ Average: **98.9** · minor work: 7 · ship-confident: 143
 | 100 | ship-confident | `role_deck` | — |
 | 100 | ship-confident | `role_game` | — |
 | 100 | ship-confident | `roles` | — |
+| 100 | ship-confident | `room_story` | — |
 | 100 | ship-confident | `routine_script_editor` | — |
 | 100 | ship-confident | `routines` | — |
+| 100 | ship-confident | `runbook` | — |
 | 100 | ship-confident | `schedule` | — |
 | 100 | ship-confident | `schedule_time_grid` | — |
 | 100 | ship-confident | `send` | — |
+| 100 | ship-confident | `send_export` | — |
 | 100 | ship-confident | `session_run` | — |
 | 100 | ship-confident | `settings` | — |
 | 100 | ship-confident | `skill_detail` | — |
 | 100 | ship-confident | `speak` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `spellbook` | — |
 | 100 | ship-confident | `spells` | — |
+| 100 | ship-confident | `staff_ladder` | — |
+| 100 | ship-confident | `story_showcase` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `subject_detail` | — |
 | 100 | ship-confident | `subject_edit` | — |
 | 100 | ship-confident | `supplies_list` | — |
@@ -137,19 +132,24 @@ Average: **98.9** · minor work: 7 · ship-confident: 143
 | 100 | ship-confident | `task` | — |
 | 100 | ship-confident | `tasks` | — |
 | 100 | ship-confident | `team` | — |
+| 100 | ship-confident | `themed_world` | — |
+| 100 | ship-confident | `thinking` | — |
 | 100 | ship-confident | `this_week` | — |
 | 100 | ship-confident | `time_capsule` | — |
 | 100 | ship-confident | `today` | — |
 | 100 | ship-confident | `today_bento` | — |
 | 100 | ship-confident | `today_bento_wide` | — |
 | 100 | ship-confident | `toolkit` | — |
+| 100 | ship-confident | `toolkit_tool` | — |
 | 100 | ship-confident | `tools` | — |
+| 100 | ship-confident | `trip_detail` | — |
 | 100 | ship-confident | `vehicle_detail` | — |
 | 100 | ship-confident | `vehicle_edit` | — |
 | 100 | ship-confident | `vehicle_inspection` | — |
 | 100 | ship-confident | `vehicle_photo_shots_edit` | — |
 | 100 | ship-confident | `vehicle_scan` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `vehicles_list` | — |
+| 100 | ship-confident | `verb_jobs` | — |
 | 100 | ship-confident | `wall` | — |
 | 100 | ship-confident | `weekly_review` | — |
 | 100 | ship-confident | `weekly_template` | — |

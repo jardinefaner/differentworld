@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/themed_worlds.dart';
@@ -13,6 +12,7 @@ import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
@@ -54,42 +54,51 @@ class ThemedWorldScreen extends ConsumerWidget {
           title: 'Could not load the worlds',
           onRetry: () => ref.invalidate(curriculumWorldsProvider),
         ),
-        data: (worlds) => ResponsivePage(
-          children: [
-            const ContentHeader(
-              title: 'Different Worlds',
-              subtitle: '10 weeks · 10 worlds · 1 Different World',
-            ),
-            const SizedBox(height: 4),
-            if (bento)
-              // Each world card is SHORT → `phone: 1` packs them 2-up on a
-              // phone (the grid read), 2-up on tablet, 3-up on desktop. The
-              // [CatalogCard] already shrink-wraps (mainAxisSize.min, no
-              // Spacer/Expanded), so it's safe in the min-height/unbounded
-              // bento cell with no fixed-height wrapper (docs/GRID.md). Tap
-              // still opens the world sheet — same behavior as the flat grid.
-              BentoGrid(
-                tiles: [
-                  for (final w in worlds)
-                    BentoTile(
-                      id: 'world-${w.id}',
-                      span: const BentoSpan(phone: 1),
-                      child: _WorldCard(
-                        world: w,
-                        onTap: () => _showWorld(context, w),
-                      ),
+        data: (worlds) => worlds.isEmpty
+            ? const EmptyState(
+                icon: Icons.public_outlined,
+                title: 'No worlds yet',
+                message: 'The 10-week world list could not be loaded.',
+              )
+            : ResponsivePage(
+                children: [
+                  const ContentHeader(
+                    title: 'Different Worlds',
+                    subtitle: '10 weeks · 10 worlds · 1 Different World',
+                  ),
+                  const SizedBox(height: 4),
+                  if (bento)
+                    // Each world card is SHORT → `phone: 1` packs them 2-up on a
+                    // phone (the grid read), 2-up on tablet, 3-up on desktop. The
+                    // [CatalogCard] already shrink-wraps (mainAxisSize.min, no
+                    // Spacer/Expanded), so it's safe in the min-height/unbounded
+                    // bento cell with no fixed-height wrapper (docs/GRID.md). Tap
+                    // still opens the world sheet — same behavior as the flat grid.
+                    BentoGrid(
+                      tiles: [
+                        for (final w in worlds)
+                          BentoTile(
+                            id: 'world-${w.id}',
+                            span: const BentoSpan(phone: 1),
+                            child: _WorldCard(
+                              world: w,
+                              onTap: () => _showWorld(context, w),
+                            ),
+                          ),
+                      ],
+                    )
+                  else
+                    CatalogGrid(
+                      children: [
+                        for (final w in worlds)
+                          _WorldCard(
+                            world: w,
+                            onTap: () => _showWorld(context, w),
+                          ),
+                      ],
                     ),
                 ],
-              )
-            else
-              CatalogGrid(
-                children: [
-                  for (final w in worlds)
-                    _WorldCard(world: w, onTap: () => _showWorld(context, w)),
-                ],
               ),
-          ],
-        ),
       ),
     );
   }
