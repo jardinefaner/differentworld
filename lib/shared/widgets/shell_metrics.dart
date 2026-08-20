@@ -37,4 +37,12 @@ abstract class ShellMetrics {
   /// indicator. Body content + omnibox suggestion panel both pad-
   /// bottom by this when the bar is visible.
   static const double bottomOmniboxHeight = 76;
+
+  /// Height of the LIVE block strip when a block is live (it collapses to
+  /// zero otherwise). It floats OVER route content just above the omnibox
+  /// bar — scrolling content passes under it by design, but a screen with a
+  /// FIXED bottom control (a chat composer, a stage's control bar) must add
+  /// this much clearance when a block is live or the strip covers the
+  /// control (the message-thread composer bug, 2026-08-20).
+  static const double liveStripHeight = 36;
 }

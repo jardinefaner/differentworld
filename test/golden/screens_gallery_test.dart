@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
@@ -55,9 +57,9 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
-import 'package:differentworld/features/exports/progress_report_screen.dart';
 import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
+import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/family/family_share_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
@@ -213,7 +215,33 @@ Future<void> _loadFonts() async {
     }
     await loader.load();
   }
+  // Full-coverage monochrome emoji as its OWN family, wired into the plate
+  // themes as fontFamilyFallback (see _app) — the test environment has no
+  // platform emoji font, so emoji otherwise render as tofu boxes. It must
+  // NOT be merged into the text families: a variable-weight face wins the
+  // weight match and steals Latin glyphs (every plate went full tofu when
+  // we tried). Fallback fonts are only consulted for glyphs the primary
+  // lacks. Test-only file; not shipped in the app bundle.
+  final emojiBytes = File(
+    'test/golden/fonts/NotoEmoji-Regular.ttf',
+  ).readAsBytesSync();
+  final emojiLoader = FontLoader(kEmojiTestFamily)
+    ..addFont(Future.value(ByteData.view(emojiBytes.buffer)));
+  await emojiLoader.load();
 }
+
+/// Test-only emoji family name (see [_loadFonts]).
+const kEmojiTestFamily = 'NotoEmojiTest';
+
+/// Apply the emoji fallback to every text style a plate can reach.
+ThemeData _withEmojiFallback(ThemeData t) => t.copyWith(
+  textTheme: t.textTheme.apply(
+    fontFamilyFallback: const [kEmojiTestFamily],
+  ),
+  primaryTextTheme: t.primaryTextTheme.apply(
+    fontFamilyFallback: const [kEmojiTestFamily],
+  ),
+);
 
 LiveBlock _demoLiveBlock() => LiveBlock(
   blockId: 'blk-demo',
@@ -479,10 +507,10 @@ void main() {
     'screens/kid_story',
     (db) async => const KidStoryScreen(subjectId: 's1'),
   );
-  _richPlate(
-    'screens/progress_report',
-    (db) async => const ProgressReportScreen(subjectId: 's1'),
-  );
+  // NOT plated: progress_report — its body IS a PdfPreview, whose
+  // rasterizer is a platform channel that can't run headless; the plate
+  // captures Flutter's red ErrorWidget instead of the screen. Exercised
+  // on-device instead.
   _richPlate(
     'screens/story_showcase',
     (db) async => const StoryShowcaseScreen(subjectId: 's1'),
@@ -498,10 +526,23 @@ void main() {
   _richPlate(
     'screens/family_subject_detail',
     (db) async => const FamilySubjectDetailScreen(subjectId: 's1'),
+    // The family lens reads PostgREST (guardian-side), which the harness
+    // can't reach — override the subject read with the seeded row so the
+    // plate shows the screen, not "Child not found". The attendance/entry
+    // sections fall back to their designed empties.
+    extraOverrides: (db) async {
+      final subject = await (db.select(
+        db.subjects,
+      )..where((t) => t.id.equals('s1'))).getSingle();
+      return [
+        familySubjectByIdProvider('s1').overrideWith((ref) async => subject),
+      ];
+    },
   );
   _richPlate(
     'screens/skill_detail',
-    (db) async => const SkillDetailScreen(subjectId: 's1', skillId: 'explorer'),
+    (db) async =>
+        const SkillDetailScreen(subjectId: 's1', skillId: 'carry.lift'),
   );
   _richPlate(
     'screens/pickup_person_edit',
@@ -576,24 +617,37 @@ void main() {
   _richPlate(
     'screens/grid_reveal_solo',
     (db) async => const GridRevealScreen(),
+    bare: true,
   );
   _richPlate(
     'screens/math_runner',
     (db) async => const MathRunnerScreen(target: 12),
+    bare: true,
   );
   _richPlate(
     'screens/memory_match',
     (db) async => const MemoryMatchScreen(live: false),
+    bare: true,
   );
-  _richPlate('screens/name_it', (db) async => const NameItScreen(live: false));
-  _richPlate('screens/nownext', (db) async => const NowNextScreen(live: false));
+  _richPlate(
+    'screens/name_it',
+    (db) async => const NameItScreen(live: false),
+    bare: true,
+  );
+  _richPlate(
+    'screens/nownext',
+    (db) async => const NowNextScreen(live: false),
+    bare: true,
+  );
   _richPlate(
     'screens/odd_one_out',
     (db) async => const OddOneOutScreen(live: false),
+    bare: true,
   );
   _richPlate(
     'screens/whats_missing',
     (db) async => const WhatsMissingScreen(live: false),
+    bare: true,
   );
   _richPlate(
     'screens/session_run',
@@ -610,6 +664,7 @@ void main() {
   _richPlate(
     'screens/survey_take',
     (db) async => const SurveyTakeScreen(templateId: 'basecamp_2025_26'),
+    bare: true,
   );
 
   _bareScreenPlate('screens/create_space', const CreateSpaceScreen());
@@ -675,7 +730,9 @@ Future<void> _pumpAndShoot(
 }
 
 Widget _app(String mode, GoRouter router) => MaterialApp.router(
-  theme: mode == 'dark' ? buildDarkTheme() : buildLightTheme(),
+  theme: _withEmojiFallback(
+    mode == 'dark' ? buildDarkTheme() : buildLightTheme(),
+  ),
   debugShowCheckedModeBanner: false,
   routerConfig: router,
 );
@@ -956,8 +1013,18 @@ void _rosterPlate(String name, Widget screen, Size size) {
           child: _app(mode, _shellRouter(screen)),
         ),
       );
-      for (var i = 0; i < 6; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
+      // Let REAL async IO complete (rootBundle deck manifests, asset image
+      // decodes) — fake-clock pumps alone leave those futures pending and
+      // the plate captures an eternal spinner (the card-game plates bug).
+      // Two rounds: IO often chains (manifest → image codec), and each
+      // completion needs a pump before the next future is even created.
+      for (var round = 0; round < 2; round++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 350)),
+        );
+        for (var i = 0; i < 6; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
       }
       await expectLater(
         find.byType(MaterialApp),
@@ -985,6 +1052,15 @@ void _richPlate(
   String name,
   Future<Widget> Function(AppDatabase db) build, {
   Size size = const Size(440, 900),
+  // Riverpod 3 deliberately does not export the `Override` type (overrides
+  // are inference-only), so this is typed as List<Object> and spread with a
+  // cast below.
+  Future<List<Object>> Function(AppDatabase db)? extraOverrides,
+  // On device these screens live on immersive routes (/activity/*, kid
+  // mode) where AppShell hides ALL chrome — mounting them in the shell
+  // painted pills + the omnibox over stages that never see them. `bare`
+  // mounts without the shell, matching device reality.
+  bool bare = false,
 }) {
   for (final mode in const ['light', 'dark']) {
     testWidgets('$name - $mode', (tester) async {
@@ -1182,6 +1258,9 @@ void _richPlate(
       )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: sp);
       final screen = await build(db);
+      final List<dynamic> extra = extraOverrides == null
+          ? const <Object>[]
+          : await extraOverrides(db);
 
       await tester.binding.setSurfaceSize(size);
       tester.view.physicalSize = size;
@@ -1204,12 +1283,25 @@ void _richPlate(
             tasksProvider(
               TaskFilter.open,
             ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
-          ],
-          child: _app(mode, _shellRouter(screen)),
+            // extra's element type is erased (Override is unexported);
+            // cast() re-types it from the list's inferred context.
+            // ignore: prefer_spread_collections
+          ]..addAll(extra.cast()),
+          child: _app(mode, bare ? _bareRouter(screen) : _shellRouter(screen)),
         ),
       );
-      for (var i = 0; i < 6; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
+      // Let REAL async IO complete (rootBundle deck manifests, asset image
+      // decodes) — fake-clock pumps alone leave those futures pending and
+      // the plate captures an eternal spinner (the card-game plates bug).
+      // Two rounds: IO often chains (manifest → image codec), and each
+      // completion needs a pump before the next future is even created.
+      for (var round = 0; round < 2; round++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 350)),
+        );
+        for (var i = 0; i < 6; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
       }
       await expectLater(
         find.byType(MaterialApp),

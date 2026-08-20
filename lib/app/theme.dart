@@ -198,7 +198,14 @@ ThemeData _themeFrom(ColorScheme scheme, {TextTheme? textTheme}) {
     chipTheme: ChipThemeData(
       shape: const StadiumBorder(),
       side: BorderSide(color: scheme.outlineVariant),
-      labelStyle: text.labelLarge,
+      // The ramp's labelLarge deliberately carries no color — but a chip
+      // labelStyle with a NULL color doesn't fall back to the M3 default,
+      // it inherits whatever DefaultTextStyle is above it (white on a
+      // light surface in several screens). Pin it to the scheme.
+      labelStyle: text.labelLarge?.copyWith(color: scheme.onSurface),
+      secondaryLabelStyle: text.labelLarge?.copyWith(
+        color: scheme.onSurfaceVariant,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: Insets.md,
         vertical: Insets.sm,

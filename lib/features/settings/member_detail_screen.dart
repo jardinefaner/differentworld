@@ -223,13 +223,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                           : null,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      member.displayName,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
+                  // No centred name here — the flush-left ContentHeader above
+                  // already carries it; repeating it centred broke the
+                  // one-left-edge law and read as a duplicate.
                   const SizedBox(height: 4),
                   Center(
                     child: Text(

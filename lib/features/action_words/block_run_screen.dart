@@ -343,11 +343,16 @@ class _BlockDayDeck extends ConsumerWidget {
         );
         // The "nudge the day" bar rides above the deck — say what's happening,
         // the app recomposes the rest, you confirm the diff (docs/VISION.md).
-        return Column(
-          children: [
-            NudgeBar(blocks: blocks),
-            Expanded(child: deck),
-          ],
+        // SafeArea consumes the chrome band EdgeScaffold publishes into
+        // padding.top — without it the nudge bar renders behind the pills.
+        return SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              NudgeBar(blocks: blocks),
+              Expanded(child: deck),
+            ],
+          ),
         );
       },
     );

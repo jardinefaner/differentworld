@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -14,6 +15,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
+import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -216,10 +218,21 @@ class _MessageThreadScreenState extends ConsumerState<MessageThreadScreen> {
                 },
               ),
             ),
-            _Composer(
-              controller: _ctrl,
-              sending: _sending,
-              onSend: _send,
+            // The LIVE strip floats over the body's bottom edge when a
+            // block is live; the composer is a fixed control, so it adds
+            // that clearance rather than getting covered (scroll content
+            // above passes under the strip by design).
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: ref.watch(liveBlockProvider) != null
+                    ? ShellMetrics.liveStripHeight
+                    : 0,
+              ),
+              child: _Composer(
+                controller: _ctrl,
+                sending: _sending,
+                onSend: _send,
+              ),
             ),
           ],
         ),

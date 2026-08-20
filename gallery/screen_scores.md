@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-150 screens scored · worst-first · `tool/score_screens.py`
+149 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **100.0** · ship-confident: 150
+Average: **100.0** · ship-confident: 149
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -98,7 +98,6 @@ Average: **100.0** · ship-confident: 150
 | 100 | ship-confident | `print_toolkit` | — |
 | 100 | ship-confident | `program_hub` | — |
 | 100 | ship-confident | `program_settings` | — |
-| 100 | ship-confident | `progress_report` | — |
 | 100 | ship-confident | `propose_day` | — |
 | 100 | ship-confident | `recap_composer` | — |
 | 100 | ship-confident | `reflection_session` | — |

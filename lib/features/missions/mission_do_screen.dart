@@ -59,10 +59,12 @@ class _MissionDoScreenState extends ConsumerState<MissionDoScreen> {
   Widget build(BuildContext context) {
     return EdgeScaffold(
       backFallbackRoute: '/settings/missions',
-      body: ColoredBox(
-        color: const Color(0xFF12231F),
-        child: SafeArea(child: _done ? _confirm(context) : _doing(context)),
-      ),
+      // The dark field paints via the background hook so it fills
+      // edge-to-edge UNDER the chrome and bleeds beneath the omnibox bar —
+      // painting it in the body left a hard seam where the content ended
+      // (the documented EdgeScaffold(background:) band bug).
+      background: const ColoredBox(color: Color(0xFF12231F)),
+      body: SafeArea(child: _done ? _confirm(context) : _doing(context)),
     );
   }
 
