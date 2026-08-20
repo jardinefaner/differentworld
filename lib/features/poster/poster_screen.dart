@@ -941,8 +941,9 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               subtitle: const Text(
                 'Tiny ticks on both sides of every seam — slide the pages '
                 'until the ticks join and everything is lined up. With a '
-                'seam cushion, also a dashed line showing exactly where '
-                'the next page lands (hidden once they overlap).',
+                'seam cushion it\u2019s a dashed line showing exactly where '
+                'the next page lands instead — completely hidden once the '
+                'pages overlap.',
               ),
               value: _opts.marks,
               onChanged: (v) => _update(_opts.copyWith(marks: v)),

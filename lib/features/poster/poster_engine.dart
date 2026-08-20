@@ -790,39 +790,61 @@ void _drawSeamMarks(
   final seamX = (w * (1 - ovFx)).round();
   final seamY = (h * (1 - ovFy)).round();
 
-  // Right-hand seam: ticks end AT the seam line; the neighbor's left-edge
-  // ticks continue them.
+  // Cushioned seams get ONLY the dashed placement line: a line gives both
+  // position and level (lay the edge along it), and it's covered by the
+  // overlapping page — so an assembled cushioned poster shows NO marks at
+  // all. Abutting seams need the meeting ticks (nothing covers them, so
+  // they stay faintly visible — that's the inherent trade; the switch
+  // turns them off for a clean print).
   if (col < cols - 1) {
-    for (final f in const [0.25, 0.5, 0.75]) {
-      hTick(seamX - tick, seamX, (h * f).round());
-    }
     if (ovFx > 0) {
-      // Dashed placement line for the neighbor's edge.
+      // Drawn from the landing position INWARD (into the covered strip) —
+      // centering it on the seam left a half-line sliver peeking past the
+      // neighbor's edge after assembly.
       final dash = tick;
       for (var y = 0; y < h; y += dash * 2) {
-        vTick(seamX, y, math.min(y + dash, h));
+        img.fillRect(
+          tile,
+          x1: seamX.clamp(0, w - 1),
+          y1: y.clamp(0, h - 1),
+          x2: (seamX + 2).clamp(0, w - 1),
+          y2: math.min(y + dash, h - 1),
+          color: grey,
+        );
+      }
+    } else {
+      for (final f in const [0.25, 0.5, 0.75]) {
+        hTick(seamX - tick, seamX, (h * f).round());
       }
     }
   }
   // Left edge of a page with a left neighbor: matching ticks from the edge.
-  if (col > 0) {
+  if (col > 0 && ovFx == 0) {
     for (final f in const [0.25, 0.5, 0.75]) {
       hTick(0, tick, (h * f).round());
     }
   }
   // Bottom seam + top edge, same story vertically.
   if (row < rows - 1) {
-    for (final f in const [0.25, 0.5, 0.75]) {
-      vTick((w * f).round(), seamY - tick, seamY);
-    }
     if (ovFy > 0) {
       final dash = tick;
       for (var x = 0; x < w; x += dash * 2) {
-        hTick(x, math.min(x + dash, w), seamY);
+        img.fillRect(
+          tile,
+          x1: x.clamp(0, w - 1),
+          y1: seamY.clamp(0, h - 1),
+          x2: math.min(x + dash, w - 1),
+          y2: (seamY + 2).clamp(0, h - 1),
+          color: grey,
+        );
+      }
+    } else {
+      for (final f in const [0.25, 0.5, 0.75]) {
+        vTick((w * f).round(), seamY - tick, seamY);
       }
     }
   }
-  if (row > 0) {
+  if (row > 0 && ovFy == 0) {
     for (final f in const [0.25, 0.5, 0.75]) {
       vTick((w * f).round(), 0, tick);
     }

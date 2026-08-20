@@ -521,6 +521,19 @@ void main() {
         found = isMark(left.getPixel(seamX, y));
       }
       expect(found, isTrue, reason: 'placement line at the step');
+      // Everything is INSIDE the covered strip: nothing prints left of the
+      // landing position (a centred line left a sliver peeking past the
+      // neighbor's edge), and cushioned seams carry no meeting ticks — an
+      // assembled cushioned poster shows zero marks.
+      for (var y = 0; y < left.height; y++) {
+        for (var x = seamX - 4; x < seamX; x++) {
+          expect(
+            isMark(left.getPixel(x, y)),
+            isFalse,
+            reason: 'no mark may survive assembly at ($x, $y)',
+          );
+        }
+      }
     });
   });
 
