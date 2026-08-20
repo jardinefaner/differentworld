@@ -2,7 +2,7 @@
 
 99 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **99.6** · ship-confident: 99
+Average: **99.7** · ship-confident: 99
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -12,7 +12,6 @@ Average: **99.6** · ship-confident: 99
 | 94 | ship-confident | `thinking` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `verb_jobs` | -6 1 of loading/empty/error states missing |
 | 96 | ship-confident | `room_story` | -4 no ContentHeader / SafeArea top-clearance signal |
-| 96 | ship-confident | `today` | -4 no ContentHeader / SafeArea top-clearance signal |
 | 100 | ship-confident | `action_words` | — |
 | 100 | ship-confident | `activities_list` | — |
 | 100 | ship-confident | `activity_arc` ⟨raw canvas⟩ | — |
@@ -93,6 +92,7 @@ Average: **99.6** · ship-confident: 99
 | 100 | ship-confident | `team` | — |
 | 100 | ship-confident | `this_week` | — |
 | 100 | ship-confident | `time_capsule` | — |
+| 100 | ship-confident | `today` | — |
 | 100 | ship-confident | `today_bento` | — |
 | 100 | ship-confident | `today_bento_wide` | — |
 | 100 | ship-confident | `toolkit` | — |
