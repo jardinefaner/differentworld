@@ -309,6 +309,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             labels: _opts.labels,
             title: 'Poster $tag',
             guides: _opts.guides,
+            marks: _opts.marks,
             zoom: _zoom,
             focusX: _focusX,
             focusY: _focusY,
@@ -335,6 +336,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             layout,
             _opts.fit,
             guides: _opts.guides,
+            marks: _opts.marks,
             zoom: _zoom,
             focusX: _focusX,
             focusY: _focusY,
@@ -935,6 +937,18 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
+              title: const Text('Alignment marks'),
+              subtitle: const Text(
+                'Tiny ticks on both sides of every seam — slide the pages '
+                'until the ticks join and everything is lined up. With a '
+                'seam cushion, also a dashed line showing exactly where '
+                'the next page lands (hidden once they overlap).',
+              ),
+              value: _opts.marks,
+              onChanged: (v) => _update(_opts.copyWith(marks: v)),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
               title: const Text('Assembly guides'),
               subtitle: const Text(
                 'No white seams: prints a trim border + cut lines so you trim '
@@ -1017,6 +1031,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       if (_opts.paper == PosterPaper.a4) 'A4' else 'Letter',
       _qualityLabel(_opts.quality),
       if (_opts.labels) 'labels',
+      if (_opts.marks) 'marks',
       if (_opts.guides) 'guides',
       if (_opts.overlapIn > 0) '${_ovLabel(_opts.overlapIn)} cushion',
     ];

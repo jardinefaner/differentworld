@@ -365,6 +365,7 @@ Future<List<Uint8List>> renderPosterTiles(
   PosterLayout layout,
   PosterFit fit, {
   bool guides = false,
+  bool marks = false,
   double zoom = 1,
   double focusX = 0.5,
   double focusY = 0.5,
@@ -382,6 +383,7 @@ Future<List<Uint8List>> renderPosterTiles(
       layout,
       fit,
       guides,
+      marks,
       zoom,
       focusX,
       focusY,
@@ -398,6 +400,7 @@ Future<List<Uint8List>> renderPosterTiles(
         layout,
         fit,
         guides,
+        marks,
         zoom,
         focusX,
         focusY,
@@ -411,6 +414,7 @@ Future<List<Uint8List>> renderPosterTiles(
     layout,
     fit,
     guides,
+    marks,
     zoom,
     focusX,
     focusY,
@@ -434,6 +438,7 @@ class _PosterRenderRequest {
     required this.layout,
     required this.fit,
     required this.guides,
+    required this.marks,
     required this.zoom,
     required this.focusX,
     required this.focusY,
@@ -444,6 +449,7 @@ class _PosterRenderRequest {
   final PosterLayout layout;
   final PosterFit fit;
   final bool guides;
+  final bool marks;
   final double zoom;
   final double focusX;
   final double focusY;
@@ -474,6 +480,7 @@ void _renderWorker(_PosterRenderRequest req) {
       req.layout,
       req.fit,
       req.guides,
+      req.marks,
       req.zoom,
       req.focusX,
       req.focusY,
@@ -491,6 +498,7 @@ Future<List<Uint8List>> _renderTilesWithProgress(
   PosterLayout layout,
   PosterFit fit,
   bool guides,
+  bool marks,
   double zoom,
   double focusX,
   double focusY,
@@ -542,6 +550,7 @@ Future<List<Uint8List>> _renderTilesWithProgress(
         layout: layout,
         fit: fit,
         guides: guides,
+        marks: marks,
         zoom: zoom,
         focusX: focusX,
         focusY: focusY,
@@ -572,6 +581,7 @@ List<Uint8List> renderPosterTilesForTest(
   PosterLayout layout,
   PosterFit fit, {
   bool guides = false,
+  bool marks = false,
   double zoom = 1,
   double focusX = 0.5,
   double focusY = 0.5,
@@ -581,6 +591,7 @@ List<Uint8List> renderPosterTilesForTest(
   layout,
   fit,
   guides,
+  marks,
   zoom,
   focusX,
   focusY,
@@ -595,6 +606,7 @@ List<Uint8List> _renderPosterTilesSync(
   PosterLayout layout,
   PosterFit fit,
   bool guides,
+  bool marks,
   double zoom,
   double focusX,
   double focusY,
@@ -668,6 +680,17 @@ List<Uint8List> _renderPosterTilesSync(
             height: pageH,
             interpolation: img.Interpolation.average,
           );
+          if (marks) {
+            _drawSeamMarks(
+              tile,
+              row: row,
+              col: col,
+              rows: rows,
+              cols: cols,
+              ovFx: ovFx,
+              ovFy: ovFy,
+            );
+          }
           tiles.add(_encodeTile(tile, quality));
           onTile?.call(tiles.length);
         }
@@ -696,12 +719,114 @@ List<Uint8List> _renderPosterTilesSync(
             width: pageW,
             height: pageH,
           );
+          if (marks) {
+            _drawSeamMarks(
+              tile,
+              row: row,
+              col: col,
+              rows: rows,
+              cols: cols,
+              ovFx: ovFx,
+              ovFy: ovFy,
+            );
+          }
           tiles.add(_encodeTile(tile, quality));
           onTile?.call(tiles.length);
         }
       }
   }
   return tiles;
+}
+
+/// Alignment marks, drawn INTO the page image so every export path (PDF,
+/// per-page images, direct print) carries them.
+///
+/// Two mechanics, per interior seam:
+/// - **Meeting ticks**: three short ticks at ¼ / ½ / ¾ of the seam length,
+///   printed on BOTH sides. Slide the pages until the ticks join into
+///   continuous lines and the seam is registered in both axes.
+/// - **Placement line** (only with a seam cushion): a dashed line printed
+///   exactly where the NEXT page's edge lands. Lay the neighbor's edge on
+///   the dashes and the shared strip is perfectly doubled — then the
+///   overlapping page hides the line entirely.
+///
+/// Marks are mid-grey and a few millimetres long: visible while assembling,
+/// unobtrusive from poster-viewing distance (and, with a cushion, covered).
+void _drawSeamMarks(
+  img.Image tile, {
+  required int row,
+  required int col,
+  required int rows,
+  required int cols,
+  required double ovFx,
+  required double ovFy,
+}) {
+  final w = tile.width;
+  final h = tile.height;
+  final grey = img.ColorRgba8(128, 128, 128, 255);
+  // ~3 mm at any print size; 2 px thick so it survives JPEG.
+  final tick = (w * 0.018).round().clamp(8, 48);
+  const half = 1; // half thickness
+
+  void hTick(int cx0, int cx1, int cy) => img.fillRect(
+    tile,
+    x1: cx0.clamp(0, w - 1),
+    y1: (cy - half).clamp(0, h - 1),
+    x2: cx1.clamp(0, w - 1),
+    y2: (cy + half).clamp(0, h - 1),
+    color: grey,
+  );
+  void vTick(int cx, int cy0, int cy1) => img.fillRect(
+    tile,
+    x1: (cx - half).clamp(0, w - 1),
+    y1: cy0.clamp(0, h - 1),
+    x2: (cx + half).clamp(0, w - 1),
+    y2: cy1.clamp(0, h - 1),
+    color: grey,
+  );
+
+  // Where the next page's content begins on THIS page (== the page edge
+  // when there's no cushion).
+  final seamX = (w * (1 - ovFx)).round();
+  final seamY = (h * (1 - ovFy)).round();
+
+  // Right-hand seam: ticks end AT the seam line; the neighbor's left-edge
+  // ticks continue them.
+  if (col < cols - 1) {
+    for (final f in const [0.25, 0.5, 0.75]) {
+      hTick(seamX - tick, seamX, (h * f).round());
+    }
+    if (ovFx > 0) {
+      // Dashed placement line for the neighbor's edge.
+      final dash = tick;
+      for (var y = 0; y < h; y += dash * 2) {
+        vTick(seamX, y, math.min(y + dash, h));
+      }
+    }
+  }
+  // Left edge of a page with a left neighbor: matching ticks from the edge.
+  if (col > 0) {
+    for (final f in const [0.25, 0.5, 0.75]) {
+      hTick(0, tick, (h * f).round());
+    }
+  }
+  // Bottom seam + top edge, same story vertically.
+  if (row < rows - 1) {
+    for (final f in const [0.25, 0.5, 0.75]) {
+      vTick((w * f).round(), seamY - tick, seamY);
+    }
+    if (ovFy > 0) {
+      final dash = tick;
+      for (var x = 0; x < w; x += dash * 2) {
+        hTick(x, math.min(x + dash, w), seamY);
+      }
+    }
+  }
+  if (row > 0) {
+    for (final f in const [0.25, 0.5, 0.75]) {
+      vTick((w * f).round(), 0, tick);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -935,6 +1060,7 @@ Future<Uint8List> renderPosterPdf(
   bool labels = true,
   String title = 'Poster',
   bool guides = false,
+  bool marks = false,
   double zoom = 1,
   double focusX = 0.5,
   double focusY = 0.5,
@@ -946,6 +1072,7 @@ Future<Uint8List> renderPosterPdf(
     layout,
     fit,
     guides: guides,
+    marks: marks,
     zoom: zoom,
     focusX: focusX,
     focusY: focusY,

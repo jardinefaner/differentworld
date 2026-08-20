@@ -457,6 +457,73 @@ void main() {
     });
   });
 
+  group('alignment marks', () {
+    Uint8List flatPng(int w, int h) {
+      final image = img.Image(width: w, height: h);
+      img.fill(image, color: img.ColorRgb8(240, 240, 240));
+      return Uint8List.fromList(img.encodePng(image));
+    }
+
+    // Grey differs from the flat 240-grey field → a mark is detectable.
+    bool isMark(img.Pixel p) => (p.r - 128).abs() < 40;
+
+    test('meeting ticks print on both sides of an abutting seam', () {
+      final bytes = flatPng(1200, 800);
+      final layout = computePosterLayout(
+        const PosterOptions(
+          customCols: 2,
+          customRows: 1,
+          orientation: PosterOrientation.portrait,
+        ),
+        1200 / 800,
+      );
+      final tiles = renderPosterTilesForTest(
+        bytes,
+        layout,
+        PosterFit.fill,
+        marks: true,
+      );
+      final left = img.decodeImage(tiles[0])!;
+      final right = img.decodeImage(tiles[1])!;
+      final midY = left.height ~/ 2;
+      expect(isMark(left.getPixel(left.width - 3, midY)), isTrue);
+      expect(isMark(right.getPixel(2, midY)), isTrue);
+      // Off by default: same pixels stay clean.
+      final plain = renderPosterTilesForTest(bytes, layout, PosterFit.fill);
+      final p0 = img.decodeImage(plain[0])!;
+      expect(isMark(p0.getPixel(p0.width - 3, midY)), isFalse);
+    });
+
+    test('with a cushion, a dashed placement line sits at the step', () {
+      final bytes = flatPng(1200, 800);
+      final layout = computePosterLayout(
+        const PosterOptions(
+          customCols: 2,
+          customRows: 1,
+          orientation: PosterOrientation.portrait,
+          overlapIn: 0.5,
+        ),
+        1200 / 800,
+      );
+      final tiles = renderPosterTilesForTest(
+        bytes,
+        layout,
+        PosterFit.fill,
+        marks: true,
+      );
+      final left = img.decodeImage(tiles[0])!;
+      final seamX =
+          (left.width * (1 - posterOverlapFrac(0.5, layout.pageWidthIn)))
+              .round();
+      // A dash exists somewhere on the line (dashes alternate, so scan).
+      var found = false;
+      for (var y = 0; y < left.height && !found; y++) {
+        found = isMark(left.getPixel(seamX, y));
+      }
+      expect(found, isTrue, reason: 'placement line at the step');
+    });
+  });
+
   group('print quality', () {
     Uint8List solid(int w, int h) {
       final image = img.Image(width: w, height: h);

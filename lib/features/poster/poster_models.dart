@@ -69,6 +69,7 @@ class PosterOptions {
     this.customCols = 0,
     this.customRows = 0,
     this.overlapIn = 0,
+    this.marks = true,
   });
 
   /// How big — the number of pages along the poster's *longest* edge
@@ -122,6 +123,12 @@ class PosterOptions {
   /// and lay one page over its neighbor — and an uneven cut costs nothing.
   final double overlapIn;
 
+  /// Alignment marks: small ticks printed on both sides of every interior
+  /// seam that meet into a continuous line when the pages are lined up —
+  /// plus, with a seam cushion, a dashed line showing exactly where the
+  /// next page's edge lands (hidden once the pages overlap).
+  final bool marks;
+
   PosterOptions copyWith({
     int? size,
     bool? fitShape,
@@ -134,6 +141,7 @@ class PosterOptions {
     int? customCols,
     int? customRows,
     double? overlapIn,
+    bool? marks,
   }) => PosterOptions(
     size: size ?? this.size,
     fitShape: fitShape ?? this.fitShape,
@@ -146,5 +154,6 @@ class PosterOptions {
     customCols: customCols ?? this.customCols,
     customRows: customRows ?? this.customRows,
     overlapIn: overlapIn ?? this.overlapIn,
+    marks: marks ?? this.marks,
   );
 }
