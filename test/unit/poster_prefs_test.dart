@@ -31,7 +31,7 @@ void main() {
       paper: PosterPaper.a4,
       quality: PosterQuality.lossless,
       labels: false,
-      guides: true,
+      assembly: PosterAssembly.fold,
     );
     await PosterPrefs.save(saved);
     final loaded = await PosterPrefs.load();
@@ -42,7 +42,23 @@ void main() {
     expect(loaded.paper, PosterPaper.a4);
     expect(loaded.quality, PosterQuality.lossless);
     expect(loaded.labels, isFalse);
-    expect(loaded.guides, isTrue);
+    expect(loaded.assembly, PosterAssembly.fold);
+  });
+
+  test('an old guides:true blob migrates to trim assembly', () async {
+    SharedPreferences.setMockInitialValues({
+      'poster.options.v1': '{"size":3,"guides":true}',
+    });
+    final o = await PosterPrefs.load();
+    expect(o.assembly, PosterAssembly.trim);
+  });
+
+  test('an old guides:false blob migrates to tape assembly', () async {
+    SharedPreferences.setMockInitialValues({
+      'poster.options.v1': '{"size":3,"guides":false}',
+    });
+    final o = await PosterPrefs.load();
+    expect(o.assembly, PosterAssembly.tape);
   });
 
   test('a corrupt blob falls back to defaults', () async {

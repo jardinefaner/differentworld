@@ -101,7 +101,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
       rows: opts.customRows,
       landscape: landscape,
       paper: opts.paper,
-      overlapIn: opts.overlapIn,
+      overlapIn: opts.effectiveOverlapIn,
     );
     return switch (opts.orientation) {
       PosterOrientation.portrait => candidate(landscape: false),
@@ -131,7 +131,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
       rows: size,
       landscape: opts.orientation == PosterOrientation.landscape,
       paper: opts.paper,
-      overlapIn: opts.overlapIn,
+      overlapIn: opts.effectiveOverlapIn,
     );
   }
 
@@ -154,7 +154,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
           rows: dims.$2,
           landscape: landscape,
           paper: opts.paper,
-          overlapIn: opts.overlapIn,
+          overlapIn: opts.effectiveOverlapIn,
         );
         final score = mismatch(cand.canvasAspect, aspect);
         // Primary: closest aspect. Tie-break: fewer pages, then the page
@@ -299,10 +299,10 @@ int _maxCanvasLongPx(PosterQuality quality, PosterFit fit) {
   return fit == PosterFit.whole ? 4200 : 6000;
 }
 
-/// The white border (inches) reserved on each page when assembly guides are
-/// on — room for the dashed cut line + crop marks, and a safe trim margin
-/// (most printers can't print the outer ~0.25"). After trimming on the
-/// dashed line, the pages butt together seamlessly.
+/// The white border (inches) reserved on each page by every assembly mode
+/// except [PosterAssembly.tape] — room for the cut / fold line + crop
+/// marks, and a safe margin (most printers can't print the outer ~0.25").
+/// Trim on it, fold on it, or leave it as a panel gutter.
 const double kGuideMarginIn = 0.35;
 
 /// Encode one rendered tile per [quality] — lossless PNG, or JPEG at a
@@ -364,7 +364,7 @@ Future<List<Uint8List>> renderPosterTiles(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit, {
-  bool guides = false,
+  PosterAssembly assembly = PosterAssembly.tape,
   bool marks = false,
   double zoom = 1,
   double focusX = 0.5,
@@ -382,7 +382,7 @@ Future<List<Uint8List>> renderPosterTiles(
       bytes,
       layout,
       fit,
-      guides,
+      assembly,
       marks,
       zoom,
       focusX,
@@ -399,7 +399,7 @@ Future<List<Uint8List>> renderPosterTiles(
         bytes,
         layout,
         fit,
-        guides,
+        assembly,
         marks,
         zoom,
         focusX,
@@ -413,7 +413,7 @@ Future<List<Uint8List>> renderPosterTiles(
     bytes,
     layout,
     fit,
-    guides,
+    assembly,
     marks,
     zoom,
     focusX,
@@ -437,7 +437,7 @@ class _PosterRenderRequest {
     required this.bytes,
     required this.layout,
     required this.fit,
-    required this.guides,
+    required this.assembly,
     required this.marks,
     required this.zoom,
     required this.focusX,
@@ -448,7 +448,7 @@ class _PosterRenderRequest {
   final Uint8List bytes;
   final PosterLayout layout;
   final PosterFit fit;
-  final bool guides;
+  final PosterAssembly assembly;
   final bool marks;
   final double zoom;
   final double focusX;
@@ -479,7 +479,7 @@ void _renderWorker(_PosterRenderRequest req) {
       req.bytes,
       req.layout,
       req.fit,
-      req.guides,
+      req.assembly,
       req.marks,
       req.zoom,
       req.focusX,
@@ -497,7 +497,7 @@ Future<List<Uint8List>> _renderTilesWithProgress(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit,
-  bool guides,
+  PosterAssembly assembly,
   bool marks,
   double zoom,
   double focusX,
@@ -549,7 +549,7 @@ Future<List<Uint8List>> _renderTilesWithProgress(
         bytes: bytes,
         layout: layout,
         fit: fit,
-        guides: guides,
+        assembly: assembly,
         marks: marks,
         zoom: zoom,
         focusX: focusX,
@@ -580,7 +580,7 @@ List<Uint8List> renderPosterTilesForTest(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit, {
-  bool guides = false,
+  PosterAssembly assembly = PosterAssembly.tape,
   bool marks = false,
   double zoom = 1,
   double focusX = 0.5,
@@ -590,7 +590,7 @@ List<Uint8List> renderPosterTilesForTest(
   bytes,
   layout,
   fit,
-  guides,
+  assembly,
   marks,
   zoom,
   focusX,
@@ -605,7 +605,7 @@ List<Uint8List> _renderPosterTilesSync(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit,
-  bool guides,
+  PosterAssembly assembly,
   bool marks,
   double zoom,
   double focusX,
@@ -618,22 +618,23 @@ List<Uint8List> _renderPosterTilesSync(
     throw const FormatException('Could not decode the chosen image.');
   }
   final px = _pagePixels(layout, _maxCanvasLongPx(quality, fit));
-  // With guides on, the image only fills the trimmable area inside each
+  // On every inset mode, the image only fills the printable area inside each
   // page's margin — so the tiles are smaller and the white border is added
   // in the PDF. The continuous image still spans the IMAGE areas, so after
   // trimming the margins the pages butt together seamlessly.
-  final marginPx = guides ? (kGuideMarginIn * px.dpi).round() : 0;
+  final marginPx = assembly.insetsPages ? (kGuideMarginIn * px.dpi).round() : 0;
   final pageW = math.max(1, px.pageW - 2 * marginPx);
   final pageH = math.max(1, px.pageH - 2 * marginPx);
   final cols = layout.cols;
   final rows = layout.rows;
   // Seam cushion: each page past the first advances by a step (one page
   // minus the shared strip), so every interior seam prints the same
-  // [layout.overlapIn] inches of image on both adjacent pages. With guides
+  // [layout.overlapIn] inches of image on both adjacent pages. When inset
   // the printed content is inset by the trim margin, so the fraction is
   // taken of the CONTENT inches — the physical overlap stays true.
-  final contentWIn = layout.pageWidthIn - (guides ? 2 * kGuideMarginIn : 0);
-  final contentHIn = layout.pageHeightIn - (guides ? 2 * kGuideMarginIn : 0);
+  final borderIn = assembly.insetsPages ? 2 * kGuideMarginIn : 0.0;
+  final contentWIn = layout.pageWidthIn - borderIn;
+  final contentHIn = layout.pageHeightIn - borderIn;
   final ovFx = posterOverlapFrac(layout.overlapIn, contentWIn);
   final ovFy = posterOverlapFrac(layout.overlapIn, contentHIn);
   final unitsX = posterAxisUnits(cols, ovFx);
@@ -856,10 +857,11 @@ void _drawSeamMarks(
 // ---------------------------------------------------------------------------
 
 /// Build the multi-page PDF from rendered [tiles] (row-major, length
-/// `layout.pageCount`). Without [guides], each tile fills one full-bleed page
-/// so adjacent pages abut. With [guides], each tile is inset by a white trim
-/// margin carrying a dashed cut line + corner crop marks, and an "Assembly
-/// map" page is appended. When [labels] is on, a faint "R1·C2" chip is
+/// `layout.pageCount`). On [PosterAssembly.tape] each tile fills one
+/// full-bleed page so adjacent pages abut. Every other mode insets the tile
+/// by a white margin — carrying a dashed CUT line + crop marks (trim), a
+/// solid FOLD line on the two edges that lie on top of a neighbour (fold),
+/// or nothing at all (panels) — and appends an "Assembly map" page. When [labels] is on, a faint "R1·C2" chip is
 /// printed in each page's corner.
 ///
 /// Runs in an isolate: binding a 36-tile lossless document takes seconds,
@@ -870,7 +872,7 @@ Future<Uint8List> buildPosterPdf({
   required List<Uint8List> tiles,
   required PosterLayout layout,
   bool labels = true,
-  bool guides = false,
+  PosterAssembly assembly = PosterAssembly.tape,
   String title = 'Poster',
 }) {
   if (kIsWeb) {
@@ -882,7 +884,7 @@ Future<Uint8List> buildPosterPdf({
       tiles: tiles,
       layout: layout,
       labels: labels,
-      guides: guides,
+      assembly: assembly,
       title: title,
     );
   }
@@ -891,7 +893,7 @@ Future<Uint8List> buildPosterPdf({
       tiles: tiles,
       layout: layout,
       labels: labels,
-      guides: guides,
+      assembly: assembly,
       title: title,
     ),
   );
@@ -901,7 +903,7 @@ Future<Uint8List> _buildPosterPdfBody({
   required List<Uint8List> tiles,
   required PosterLayout layout,
   required bool labels,
-  required bool guides,
+  required PosterAssembly assembly,
   required String title,
 }) async {
   final doc = pw.Document(title: title, creator: 'Different World');
@@ -915,7 +917,9 @@ Future<Uint8List> _buildPosterPdfBody({
       : PdfPageFormat.letter;
   if (layout.landscape) format = format.landscape;
 
-  final marginPt = guides ? kGuideMarginIn * PdfPageFormat.inch : 0.0;
+  final marginPt = assembly.insetsPages
+      ? kGuideMarginIn * PdfPageFormat.inch
+      : 0.0;
   final cols = layout.cols;
 
   for (var i = 0; i < tiles.length; i++) {
@@ -937,11 +941,26 @@ Future<Uint8List> _buildPosterPdfBody({
                 bottom: marginPt,
                 child: pw.Image(image, fit: pw.BoxFit.fill),
               ),
-              if (guides)
+              if (assembly == PosterAssembly.trim)
                 pw.CustomPaint(
                   size: PdfPoint(format.width, format.height),
                   painter: (canvas, size) =>
                       _drawTrimGuides(canvas, size, marginPt),
+                ),
+              // Fold mode marks ONLY the edges that end up on top of a
+              // neighbour — the left + top of every page past the first
+              // column / row. The other two margins stay blank because
+              // they're covered by the pages laid over them.
+              if (assembly == PosterAssembly.fold && (col > 0 || row > 0))
+                pw.CustomPaint(
+                  size: PdfPoint(format.width, format.height),
+                  painter: (canvas, size) => _drawFoldLines(
+                    canvas,
+                    size,
+                    marginPt,
+                    left: col > 0,
+                    top: row > 0,
+                  ),
                 ),
               if (labels)
                 pw.Positioned(
@@ -957,7 +976,7 @@ Future<Uint8List> _buildPosterPdfBody({
     );
   }
 
-  if (guides) {
+  if (assembly.insetsPages) {
     doc.addPage(_mapPage(format, layout, font, fontBold));
   }
   return doc.save();
@@ -992,6 +1011,37 @@ void _drawTrimGuides(PdfGraphics canvas, PdfPoint size, double m) {
         ..lineTo(x, vy)
         ..strokePath();
     }
+  }
+}
+
+/// Draw the FOLD lines: a solid line [m] points in from the left and/or top
+/// edge, with a small "fold" arrow tick, on the margins that will be creased
+/// behind the page. Solid (not dashed) so it reads as "crease here", never
+/// "cut here" — and it ends up on the crease itself, hidden after folding.
+void _drawFoldLines(
+  PdfGraphics canvas,
+  PdfPoint size,
+  double m, {
+  required bool left,
+  required bool top,
+}) {
+  final w = size.x;
+  final h = size.y;
+  canvas
+    ..setStrokeColor(PdfColors.grey500)
+    ..setLineWidth(0.6);
+  if (left) {
+    canvas
+      ..moveTo(m, 0)
+      ..lineTo(m, h)
+      ..strokePath();
+  }
+  if (top) {
+    // Raw-PDF origin is bottom-left, so the visual TOP edge is y = h - m.
+    canvas
+      ..moveTo(0, h - m)
+      ..lineTo(w, h - m)
+      ..strokePath();
   }
 }
 
@@ -1081,7 +1131,7 @@ Future<Uint8List> renderPosterPdf(
   PosterFit fit, {
   bool labels = true,
   String title = 'Poster',
-  bool guides = false,
+  PosterAssembly assembly = PosterAssembly.tape,
   bool marks = false,
   double zoom = 1,
   double focusX = 0.5,
@@ -1093,7 +1143,7 @@ Future<Uint8List> renderPosterPdf(
     bytes,
     layout,
     fit,
-    guides: guides,
+    assembly: assembly,
     marks: marks,
     zoom: zoom,
     focusX: focusX,
@@ -1105,7 +1155,7 @@ Future<Uint8List> renderPosterPdf(
     tiles: tiles,
     layout: layout,
     labels: labels,
-    guides: guides,
+    assembly: assembly,
     title: title,
   );
 }

@@ -294,7 +294,7 @@ void main() {
       expect(tiles.length, layout.pageCount); // 2×2 → 4
     });
 
-    test('guides shrink each tile to leave a trim margin', () {
+    test('an inset mode shrinks each tile to leave a trim margin', () {
       final bytes = solidPng(600, 800);
       final layout = computePosterLayout(
         const PosterOptions(fitShape: false),
@@ -305,7 +305,7 @@ void main() {
         bytes,
         layout,
         PosterFit.fill,
-        guides: true,
+        assembly: PosterAssembly.trim,
       );
       final p0 = img.decodeImage(plain.first)!;
       final g0 = img.decodeImage(guided.first)!;
@@ -313,7 +313,7 @@ void main() {
       expect(g0.height, lessThan(p0.height));
     });
 
-    test('a guided PDF is valid and non-empty', () async {
+    test('a trim-mode PDF is valid and non-empty', () async {
       final bytes = solidPng(400, 400);
       final layout = computePosterLayout(
         const PosterOptions(fitShape: false),
@@ -323,12 +323,12 @@ void main() {
         bytes,
         layout,
         PosterFit.fill,
-        guides: true,
+        assembly: PosterAssembly.trim,
       );
       final pdf = await buildPosterPdf(
         tiles: tiles,
         layout: layout,
-        guides: true,
+        assembly: PosterAssembly.trim,
       );
       expect(pdf, isNotEmpty);
       expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
@@ -534,6 +534,77 @@ void main() {
           );
         }
       }
+    });
+  });
+
+  group('assembly modes', () {
+    Uint8List flat(int w, int h) {
+      final im = img.Image(width: w, height: h);
+      img.fill(im, color: img.ColorRgb8(200, 120, 90));
+      return Uint8List.fromList(img.encodePng(im));
+    }
+
+    test('panels refuse a cushion — pages butt, they never shingle', () {
+      const opts = PosterOptions(
+        customCols: 3,
+        customRows: 2,
+        overlapIn: 0.5,
+        assembly: PosterAssembly.panels,
+      );
+      expect(opts.effectiveOverlapIn, 0);
+      final l = computePosterLayout(opts, 1.5);
+      expect(l.overlapIn, 0);
+      // The assembled poster is therefore a plain page multiple again.
+      expect(l.assembledWidthIn, closeTo(3 * l.pageWidthIn, 1e-9));
+      // …and seam marks would be stray ink inside a gutter-framed panel.
+      expect(opts.effectiveMarks, isFalse);
+    });
+
+    test('every no-tape mode insets the page; tape fills it', () {
+      final bytes = flat(900, 700);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        900 / 700,
+      );
+      int widthFor(PosterAssembly a) => img
+          .decodeImage(
+            renderPosterTilesForTest(
+              bytes,
+              layout,
+              PosterFit.fill,
+              assembly: a,
+            ).first,
+          )!
+          .width;
+      final full = widthFor(PosterAssembly.tape);
+      for (final a in const [
+        PosterAssembly.trim,
+        PosterAssembly.fold,
+        PosterAssembly.panels,
+      ]) {
+        expect(widthFor(a), lessThan(full), reason: '$a must reserve a border');
+      }
+    });
+
+    test('a fold-mode PDF is valid and non-empty', () async {
+      final bytes = flat(400, 400);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        1,
+      );
+      final tiles = renderPosterTilesForTest(
+        bytes,
+        layout,
+        PosterFit.fill,
+        assembly: PosterAssembly.fold,
+      );
+      final pdf = await buildPosterPdf(
+        tiles: tiles,
+        layout: layout,
+        assembly: PosterAssembly.fold,
+      );
+      expect(pdf, isNotEmpty);
+      expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
     });
   });
 

@@ -308,8 +308,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             _opts.fit,
             labels: _opts.labels,
             title: 'Poster $tag',
-            guides: _opts.guides,
-            marks: _opts.marks,
+            assembly: _opts.assembly,
+            marks: _opts.effectiveMarks,
             zoom: _zoom,
             focusX: _focusX,
             focusY: _focusY,
@@ -335,8 +335,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             bytes,
             layout,
             _opts.fit,
-            guides: _opts.guides,
-            marks: _opts.marks,
+            assembly: _opts.assembly,
+            marks: _opts.effectiveMarks,
             zoom: _zoom,
             focusX: _focusX,
             focusY: _focusY,
@@ -478,7 +478,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                 child: _HowToPrint(
                   pageCount: layout.pageCount,
-                  guides: _opts.guides,
+                  assembly: _opts.assembly,
                   overlapIn: _opts.overlapIn,
                 ),
               ),
@@ -686,11 +686,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             '${layout.landscape ? 'landscape' : 'portrait'} · ${layout.pageCount} '
             '${_paperName(layout.paper)} page${layout.pageCount == 1 ? '' : 's'} · '
             'about ${_assembledSize(layout)} assembled\n'
-            '${_opts.overlapIn > 0 ? 'Print all ${layout.pageCount} and overlap each page onto the last — the ${_ovLabel(_opts.overlapIn)} shared strip hides uneven cuts.' : 'Print all ${layout.pageCount}, line them up, and tape them together.'}'
-            '${_opts.guides ? '\nIncludes trim guides + an assembly map page.' : ''}',
+            '${_assemblySummary(layout)}'
+            '${_opts.insetPages ? '\nIncludes an assembly map page.' : ''}',
             key: ValueKey(
               '${layout.cols}-${layout.rows}-${layout.landscape}-'
-              '${layout.paper}-${_opts.guides}-${_opts.overlapIn}',
+              '${layout.paper}-${_opts.assembly}-${_opts.effectiveOverlapIn}',
             ),
             textAlign: TextAlign.center,
             style: caption,
@@ -945,19 +945,50 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                 'the next page lands instead — completely hidden once the '
                 'pages overlap.',
               ),
-              value: _opts.marks,
-              onChanged: (v) => _update(_opts.copyWith(marks: v)),
+              value: _opts.effectiveMarks,
+              onChanged: _opts.assembly == PosterAssembly.panels
+                  ? null
+                  : (v) => _update(_opts.copyWith(marks: v)),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Assembly guides'),
-              subtitle: const Text(
-                'No white seams: prints a trim border + cut lines so you trim '
-                'each page on the line and tape with no gaps (the fix for a '
-                'printer that can’t print to the edge). Adds a map page.',
+            const SizedBox(height: 8),
+            _label(context, 'Putting it together'),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<PosterAssembly>(
+                segments: const [
+                  ButtonSegment(
+                    value: PosterAssembly.panels,
+                    label: Text('Panels'),
+                    icon: Icon(Icons.grid_view_outlined),
+                  ),
+                  ButtonSegment(
+                    value: PosterAssembly.fold,
+                    label: Text('Fold'),
+                    icon: Icon(Icons.flip_to_back_outlined),
+                  ),
+                  ButtonSegment(
+                    value: PosterAssembly.trim,
+                    label: Text('Trim'),
+                    icon: Icon(Icons.content_cut),
+                  ),
+                  ButtonSegment(
+                    value: PosterAssembly.tape,
+                    label: Text('Tape'),
+                    icon: Icon(Icons.link),
+                  ),
+                ],
+                selected: {_opts.assembly},
+                onSelectionChanged: (sel) =>
+                    _update(_opts.copyWith(assembly: sel.first)),
               ),
-              value: _opts.guides,
-              onChanged: (v) => _update(_opts.copyWith(guides: v)),
+            ),
+            const SizedBox(height: 4),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: Text(_assemblyHint(_opts.assembly), style: caption),
             ),
             const SizedBox(height: 8),
             _label(context, 'Seam cushion'),
@@ -1032,9 +1063,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       if (_opts.paper == PosterPaper.a4) 'A4' else 'Letter',
       _qualityLabel(_opts.quality),
       if (_opts.labels) 'labels',
-      if (_opts.marks) 'marks',
-      if (_opts.guides) 'guides',
-      if (_opts.overlapIn > 0) '${_ovLabel(_opts.overlapIn)} cushion',
+      if (_opts.effectiveMarks) 'marks',
+      _assemblyLabel(_opts.assembly),
+      if (_opts.effectiveOverlapIn > 0)
+        '${_ovLabel(_opts.effectiveOverlapIn)} cushion',
     ];
     return parts.join(' · ');
   }
@@ -1042,6 +1074,50 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   String _paperName(PosterPaper p) => p == PosterPaper.a4 ? 'A4' : 'letter';
 
   String _ovLabel(double inches) => inches >= 0.5 ? '½″' : '¼″';
+
+  /// The one-line "what you'll physically do" under the size read-out.
+  String _assemblySummary(PosterLayout l) {
+    final n = l.pageCount;
+    return switch (_opts.assembly) {
+      PosterAssembly.panels =>
+        'Print all $n and butt them together — no cutting; the white borders '
+            'become even gutters.',
+      PosterAssembly.fold =>
+        'Print all $n, fold each page’s top and left border behind it, and '
+            'lay it over its neighbour.',
+      PosterAssembly.trim =>
+        'Print all $n, trim each on the dashed line, then butt and tape.',
+      PosterAssembly.tape =>
+        _opts.overlapIn > 0
+            ? 'Print all $n and overlap each page onto the last — the '
+                  '${_ovLabel(_opts.overlapIn)} shared strip hides uneven cuts.'
+            : 'Print all $n, line them up, and tape them together.',
+    };
+  }
+
+  String _assemblyLabel(PosterAssembly a) => switch (a) {
+    PosterAssembly.panels => 'panels',
+    PosterAssembly.fold => 'fold',
+    PosterAssembly.trim => 'trim',
+    PosterAssembly.tape => 'tape',
+  };
+
+  String _assemblyHint(PosterAssembly a) => switch (a) {
+    PosterAssembly.panels =>
+      'No cutting at all. Each page prints inside a white border; butt them '
+          'together and the borders become even gutters, like split-canvas '
+          'wall art.',
+    PosterAssembly.fold =>
+      'No cutting. Fold each page’s top and left border behind it on the '
+          'printed line, then lay it over its neighbour. A crease can be '
+          'redone — a cut can’t.',
+    PosterAssembly.trim =>
+      'Seamless, but needs a steady hand: trim every page on the dashed line, '
+          'then butt and tape.',
+    PosterAssembly.tape =>
+      'Simplest: print edge to edge and tape from behind. Your printer’s own '
+          'border may trim a sliver off each page.',
+  };
 
   String _assembledSize(PosterLayout l) {
     if (l.paper == PosterPaper.a4) {
@@ -1448,12 +1524,12 @@ class _WorkingBanner extends StatelessWidget {
 class _HowToPrint extends StatelessWidget {
   const _HowToPrint({
     required this.pageCount,
-    required this.guides,
+    required this.assembly,
     this.overlapIn = 0,
   });
 
   final int pageCount;
-  final bool guides;
+  final PosterAssembly assembly;
   final double overlapIn;
 
   @override
@@ -1464,20 +1540,49 @@ class _HowToPrint extends StatelessWidget {
     const printStep =
         'Print at 100% / “Actual size” — turn OFF “Fit to page” '
         '/ “Scale to fit”. This is what keeps the pieces lined up.';
-    final tapeStep = overlapIn > 0
-        ? 'Lay the $pageCount pages out in order, overlapping each page '
-              'onto the one before it — match the picture across the shared '
-              'strip, then tape or glue the overlap flat. Any trimming can '
-              'be rough: the strip swallows an uneven cut.'
-        : guides
-        ? 'Trim each page on the dashed line, line them up (R1-C1 at the '
-              'top-left), and tape.'
-        : 'Lay the $pageCount pages out in order and tape them together.';
+    // Every wrapped string lives in a local — adjacent string literals
+    // directly inside a list literal are the documented footgun here.
+    const panelsLay =
+        'Lay the pages out in order (R1-C1 at the top-left), edges touching.';
+    const panelsTape =
+        'Tape them together from behind. The white borders line up into even '
+        'gutters — that’s the look, not a mistake.';
+    const foldCrease =
+        'On every page except the top row and left column, fold the top and '
+        'left border behind the page, creasing on the printed line. A ruler '
+        'edge helps, and a crease that’s off can just be redone.';
+    const foldOverlap =
+        'Lay each folded page over its neighbour and slide until the picture '
+        'matches — the shared strip means the exact position is free. Tape '
+        'the overlap flat.';
+    const foldButt =
+        'Butt each folded edge against its neighbour’s picture and tape from '
+        'behind.';
+    const trimCut = 'Trim each page on the dashed line.';
+    const trimTape =
+        'Line them up (R1-C1 at the top-left) and tape from behind.';
+    final tapeOverlap =
+        'Lay the $pageCount pages out in order, overlapping each onto the one '
+        'before it — match the picture across the shared strip, then tape the '
+        'overlap flat. Any trimming can be rough: the strip swallows an '
+        'uneven cut.';
+    final tapePlain =
+        'Lay the $pageCount pages out in order and tape them together.';
+    final assembleSteps = switch (assembly) {
+      // No blade, no crease — the only skill is laying paper on a table.
+      PosterAssembly.panels => const [panelsLay, panelsTape],
+      PosterAssembly.fold => [
+        foldCrease,
+        if (overlapIn > 0) foldOverlap else foldButt,
+      ],
+      PosterAssembly.trim => const [trimCut, trimTape],
+      PosterAssembly.tape => [if (overlapIn > 0) tapeOverlap else tapePlain],
+    };
     final steps = <String>[
       'Save it to your phone (Files or Drive), or email it to yourself.',
       'Open the file on your computer.',
       printStep,
-      tapeStep,
+      ...assembleSteps,
     ];
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1523,9 +1628,10 @@ class _HowToPrint extends StatelessWidget {
                 ],
               ),
             ),
-          // Seam guidance — only when neither fix is on (the at-risk case;
-          // guides cover the trim, the cushion makes trimming forgiving).
-          if (!guides && overlapIn <= 0) ...[
+          // Seam guidance — only for plain edge-to-edge taping with no
+          // cushion (the at-risk case; every other mode already prints a
+          // border, and the cushion makes trimming forgiving).
+          if (assembly == PosterAssembly.tape && overlapIn <= 0) ...[
             const SizedBox(height: 2),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1539,8 +1645,8 @@ class _HowToPrint extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'White borders at the seams? Most printers can’t print to '
-                    'the edge. Turn on “Assembly guides” and trim on the lines '
-                    '— or print Borderless — for a seamless join.',
+                    'the edge. Switch “Putting it together” to Panels (no '
+                    'cutting) or Fold — or print Borderless.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

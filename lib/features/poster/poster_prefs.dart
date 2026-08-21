@@ -44,7 +44,14 @@ class PosterPrefs {
           PosterQuality.standard,
         ),
         labels: map['labels'] as bool? ?? true,
-        guides: map['guides'] as bool? ?? false,
+        // Migrates the old boolean: guides-on meant "trim on the line".
+        assembly: _enumByName(
+          PosterAssembly.values,
+          map['assembly'],
+          (map['guides'] as bool? ?? false)
+              ? PosterAssembly.trim
+              : PosterAssembly.tape,
+        ),
         overlapIn:
             (map['overlapIn'] as num?)?.toDouble().clamp(0.0, 0.5) ?? 0.0,
         marks: map['marks'] as bool? ?? true,
@@ -70,7 +77,7 @@ class PosterPrefs {
           'paper': o.paper.name,
           'quality': o.quality.name,
           'labels': o.labels,
-          'guides': o.guides,
+          'assembly': o.assembly.name,
           'overlapIn': o.overlapIn,
           'marks': o.marks,
         }),

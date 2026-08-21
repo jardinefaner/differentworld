@@ -51,6 +51,35 @@ enum PosterQuality {
   lossless,
 }
 
+/// How the printed pages become one poster — the physical step after the
+/// printer stops. Each mode changes what's printed on the page, so the
+/// paper matches the method.
+enum PosterAssembly {
+  /// Edge-to-edge printing, taped from behind. Nothing to cut, but a home
+  /// printer's unprintable border eats a sliver of every page.
+  tape,
+
+  /// Every page prints inside a white border with a dashed cut line. Trim
+  /// on the line, butt the pages, tape. Seamless — but only as straight as
+  /// your scissors.
+  trim,
+
+  /// Same white border, but the line is a FOLD line, printed only on the
+  /// edges that lie ON TOP of a neighbour (left + top). Crease the margin
+  /// behind the page and lay it over the next one. No cutting, re-doable
+  /// if the crease is off, and with a seam cushion the position is free.
+  fold,
+
+  /// No cutting and no folding: butt the printed pages edge to edge and
+  /// the white borders become deliberate gutters, like split-canvas wall
+  /// art. Zero precision required.
+  panels
+  ;
+
+  /// True for every mode that prints the image inside a white border.
+  bool get insetsPages => this != PosterAssembly.tape;
+}
+
 /// One poster job's configuration. The concrete page grid (columns ×
 /// rows + page orientation) is *derived* from this plus the image's
 /// aspect ratio — see `computePosterLayout` in poster_engine.dart.
@@ -65,11 +94,11 @@ class PosterOptions {
     this.paper = PosterPaper.letter,
     this.quality = PosterQuality.standard,
     this.labels = true,
-    this.guides = false,
     this.customCols = 0,
     this.customRows = 0,
     this.overlapIn = 0,
     this.marks = true,
+    this.assembly = PosterAssembly.tape,
   });
 
   /// How big — the number of pages along the poster's *longest* edge
@@ -102,12 +131,6 @@ class PosterOptions {
   /// the assembly order is obvious when you lay the pages out.
   final bool labels;
 
-  /// Add a white trim border with a dashed cut line + corner crop marks on
-  /// every page, plus an "Assembly map" index page — so the seams line up
-  /// cleanly when you trim and tape. Off by default (the simple full-bleed
-  /// path).
-  final bool guides;
-
   /// Explicit grid override — pages wide × pages tall (each 1-6). When BOTH
   /// are > 0 the grid is exactly this (3×3, 1×4 banners, …) and [size] /
   /// [fitShape] are ignored. 0 = auto (the derived grid above). Zero (not
@@ -129,6 +152,26 @@ class PosterOptions {
   /// next page's edge lands (hidden once the pages overlap).
   final bool marks;
 
+  /// How the pages get joined — see [PosterAssembly]. Governs the printed
+  /// border, the line style, and the instructions.
+  final PosterAssembly assembly;
+
+  /// Every mode except [PosterAssembly.tape] prints the image inside a
+  /// white border (the trim / fold margin, and the printer's own safe
+  /// area).
+  bool get insetPages => assembly.insetsPages;
+
+  /// The cushion actually applied. Panels BUTT rather than shingle, so a
+  /// cushion there would duplicate a strip AND leave a gutter — wrong on
+  /// both counts. Every other mode honours the pick.
+  double get effectiveOverlapIn =>
+      assembly == PosterAssembly.panels ? 0 : overlapIn;
+
+  /// Alignment marks only mean something where two pages MEET over the
+  /// image. Panels register on the page edges themselves, so marks there
+  /// would just be stray ink inside a gutter-framed panel.
+  bool get effectiveMarks => marks && assembly != PosterAssembly.panels;
+
   PosterOptions copyWith({
     int? size,
     bool? fitShape,
@@ -137,11 +180,11 @@ class PosterOptions {
     PosterPaper? paper,
     PosterQuality? quality,
     bool? labels,
-    bool? guides,
     int? customCols,
     int? customRows,
     double? overlapIn,
     bool? marks,
+    PosterAssembly? assembly,
   }) => PosterOptions(
     size: size ?? this.size,
     fitShape: fitShape ?? this.fitShape,
@@ -150,10 +193,10 @@ class PosterOptions {
     paper: paper ?? this.paper,
     quality: quality ?? this.quality,
     labels: labels ?? this.labels,
-    guides: guides ?? this.guides,
     customCols: customCols ?? this.customCols,
     customRows: customRows ?? this.customRows,
     overlapIn: overlapIn ?? this.overlapIn,
     marks: marks ?? this.marks,
+    assembly: assembly ?? this.assembly,
   );
 }
