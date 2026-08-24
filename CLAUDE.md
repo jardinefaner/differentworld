@@ -1060,6 +1060,32 @@ sync/live feature, run the two probes above (plus `auth/v1/health`).
 The sync-health sheet (tap the cloud pill) surfaces the PowerSync half
 on-device; Realtime has no in-app surface yet.
 
+### A new table name can collide with one Dart never sees
+
+`supabase db push` refused a migration because `enrollments` already
+existed — it has meant **staff↔classroom** since the foundation migration
+(`member_id` / `group_id` / `role`). A new table for a different
+relationship (child↔room↔period) reused the word, and the collision ran
+through every layer at once: `create table if not exists` silently
+skipped, then an index on the new column failed; `power_sync_schema.dart`
+declared `Table('enrollments')` **twice** (shadowing the legacy table in
+the local schema); and `sync_rules.yaml` listed it twice in `by_space`.
+
+**None of it was visible to `flutter analyze` or to the full test suite**,
+because the legacy table is synced but has **no Drift class** — Dart never
+sees it. Only the real database found it.
+
+Rules:
+- **Before naming a new synced table, grep `supabase/migrations/` for the
+  name** (`grep -rn "create table.*<name>" supabase/migrations/`), not just
+  `lib/`. A synced table with no Drift class is invisible from Dart.
+- **After adding a `Table(...)` to `power_sync_schema.dart`, check the name
+  appears exactly once** — a duplicate is accepted by the compiler and
+  shadows silently.
+- **Push migrations promptly rather than batching them.** Deferring is what
+  let this sit undetected behind a green analyze + 1092 passing tests. The
+  push IS the test for the layers Dart can't reach.
+
 ### QR deep links: vehicle = custom scheme, invite = https (don't flip them)
 
 This choice flip-flopped across Waves 165→170 — settled in Wave 171.
