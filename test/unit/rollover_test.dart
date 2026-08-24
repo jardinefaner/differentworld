@@ -188,7 +188,7 @@ void main() {
 
     Future<void> roll(Map<String, String?> returning) async {
       var seq = 0;
-      await db.enrollmentsDao.applyRollover(
+      await db.placementsDao.applyRollover(
         spaceId: 'sp1',
         newTermId: 't2',
         newTerm: TermsCompanion.insert(
@@ -210,7 +210,7 @@ void main() {
       'carrying everyone forward opens an enrollment each, deletes nothing',
       () async {
         await roll({'s1': 'g1', 's2': 'g1', 's3': 'g2'});
-        final rows = await db.select(db.enrollments).get();
+        final rows = await db.select(db.placements).get();
         expect(rows.length, 3);
         expect(rows.every((e) => e.endedAt == null), isTrue);
         final kids = await db.select(db.subjects).get();
@@ -249,7 +249,7 @@ void main() {
       )..where((s) => s.id.equals('s1'))).getSingle();
       expect(owen.groupId, 'g2');
       final enrollment = await (db.select(
-        db.enrollments,
+        db.placements,
       )..where((e) => e.subjectId.equals('s1'))).getSingle();
       expect(enrollment.groupId, 'g2');
       expect(enrollment.termId, 't2');
@@ -260,7 +260,7 @@ void main() {
       () async {
         await roll({'s1': 'g1', 's2': 'g1', 's3': 'g2'});
         var seq = 100;
-        await db.enrollmentsDao.applyRollover(
+        await db.placementsDao.applyRollover(
           spaceId: 'sp1',
           newTermId: 't3',
           newTerm: TermsCompanion.insert(
@@ -276,7 +276,7 @@ void main() {
           newId: () => 'en${seq++}',
           nowIso: now,
         );
-        final all = await db.select(db.enrollments).get();
+        final all = await db.select(db.placements).get();
         // Three from the first period (now closed) + one new open one.
         expect(all.where((e) => e.endedAt != null).length, 3);
         expect(all.where((e) => e.endedAt == null).length, 1);
@@ -304,9 +304,9 @@ void main() {
             ),
           );
       await db
-          .into(db.enrollments)
+          .into(db.placements)
           .insert(
-            EnrollmentsCompanion.insert(
+            PlacementsCompanion.insert(
               id: 'old1',
               spaceId: 'sp1',
               subjectId: 's3',
@@ -318,7 +318,7 @@ void main() {
             ),
           );
       await roll({'s1': 'g1', 's2': 'g1'}); // s3 → alumni
-      await db.enrollmentsDao.undoRollover(
+      await db.placementsDao.undoRollover(
         spaceId: 'sp1',
         termId: 't2',
         previousTermId: 't1',
@@ -330,7 +330,7 @@ void main() {
       )..where((s) => s.id.equals('s3'))).getSingle();
       expect(liam.status, 'enrolled', reason: 'un-alumni-ed');
       final old = await (db.select(
-        db.enrollments,
+        db.placements,
       )..where((e) => e.id.equals('old1'))).getSingle();
       expect(old.endedAt, isNull, reason: 're-opened');
       final t2 = await (db.select(
@@ -374,7 +374,7 @@ void main() {
       expect(inSpace.length, 3);
       // …and they can still be rolled over.
       await roll({'s1': 'g1', 's2': 'g1', 's3': 'g2'});
-      final rows = await db.select(db.enrollments).get();
+      final rows = await db.select(db.placements).get();
       expect(rows.length, 3);
     });
 
@@ -395,7 +395,7 @@ void main() {
       'undo works on the FIRST rollover, when there is no prior period',
       () async {
         await roll({'s1': 'g1', 's2': 'g1'});
-        await db.enrollmentsDao.undoRollover(
+        await db.placementsDao.undoRollover(
           spaceId: 'sp1',
           termId: 't2',
           previousTermId: null,
@@ -403,14 +403,14 @@ void main() {
         );
         final kids = await db.select(db.subjects).get();
         expect(kids.every((s) => s.status == 'enrolled'), isTrue);
-        expect(await db.select(db.enrollments).get(), isEmpty);
+        expect(await db.select(db.placements).get(), isEmpty);
         expect(await db.select(db.terms).get(), isEmpty);
       },
     );
 
     test('an alumnus can be brought back', () async {
       await roll({'s1': 'g1', 's2': 'g1'});
-      await db.enrollmentsDao.reinstate('s3', now);
+      await db.placementsDao.reinstate('s3', now);
       final liam = await (db.select(
         db.subjects,
       )..where((s) => s.id.equals('s3'))).getSingle();

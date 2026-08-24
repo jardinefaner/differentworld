@@ -77,7 +77,7 @@ class _RolloverScreenState extends ConsumerState<RolloverScreen> {
 
     try {
       final db = await ref.read(appDatabaseProvider.future);
-      await db.enrollmentsDao.applyRollover(
+      await db.placementsDao.applyRollover(
         spaceId: spaceId,
         newTermId: termId,
         newTerm: TermsCompanion.insert(
@@ -140,7 +140,7 @@ class _RolloverScreenState extends ConsumerState<RolloverScreen> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       final db = await ref.read(appDatabaseProvider.future);
-      await db.enrollmentsDao.undoRollover(
+      await db.placementsDao.undoRollover(
         spaceId: spaceId,
         termId: termId,
         previousTermId: previousTermId,

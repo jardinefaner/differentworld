@@ -27429,12 +27429,12 @@ class TermsCompanion extends UpdateCompanion<Term> {
   }
 }
 
-class $EnrollmentsTable extends Enrollments
-    with TableInfo<$EnrollmentsTable, Enrollment> {
+class $PlacementsTable extends Placements
+    with TableInfo<$PlacementsTable, Placement> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $EnrollmentsTable(this.attachedDatabase, [this._alias]);
+  $PlacementsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -27546,10 +27546,10 @@ class $EnrollmentsTable extends Enrollments
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'enrollments';
+  static const String $name = 'placements';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Enrollment> instance, {
+    Insertable<Placement> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -27625,9 +27625,9 @@ class $EnrollmentsTable extends Enrollments
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Enrollment map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Placement map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Enrollment(
+    return Placement(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -27668,12 +27668,12 @@ class $EnrollmentsTable extends Enrollments
   }
 
   @override
-  $EnrollmentsTable createAlias(String alias) {
-    return $EnrollmentsTable(attachedDatabase, alias);
+  $PlacementsTable createAlias(String alias) {
+    return $PlacementsTable(attachedDatabase, alias);
   }
 }
 
-class Enrollment extends DataClass implements Insertable<Enrollment> {
+class Placement extends DataClass implements Insertable<Placement> {
   final String id;
   final String spaceId;
   final String subjectId;
@@ -27687,7 +27687,7 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
   final String? endedAt;
   final String createdAt;
   final String updatedAt;
-  const Enrollment({
+  const Placement({
     required this.id,
     required this.spaceId,
     required this.subjectId,
@@ -27717,8 +27717,8 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
     return map;
   }
 
-  EnrollmentsCompanion toCompanion(bool nullToAbsent) {
-    return EnrollmentsCompanion(
+  PlacementsCompanion toCompanion(bool nullToAbsent) {
+    return PlacementsCompanion(
       id: Value(id),
       spaceId: Value(spaceId),
       subjectId: Value(subjectId),
@@ -27735,12 +27735,12 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
     );
   }
 
-  factory Enrollment.fromJson(
+  factory Placement.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Enrollment(
+    return Placement(
       id: serializer.fromJson<String>(json['id']),
       spaceId: serializer.fromJson<String>(json['spaceId']),
       subjectId: serializer.fromJson<String>(json['subjectId']),
@@ -27768,7 +27768,7 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
     };
   }
 
-  Enrollment copyWith({
+  Placement copyWith({
     String? id,
     String? spaceId,
     String? subjectId,
@@ -27778,7 +27778,7 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
     Value<String?> endedAt = const Value.absent(),
     String? createdAt,
     String? updatedAt,
-  }) => Enrollment(
+  }) => Placement(
     id: id ?? this.id,
     spaceId: spaceId ?? this.spaceId,
     subjectId: subjectId ?? this.subjectId,
@@ -27789,8 +27789,8 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  Enrollment copyWithCompanion(EnrollmentsCompanion data) {
-    return Enrollment(
+  Placement copyWithCompanion(PlacementsCompanion data) {
+    return Placement(
       id: data.id.present ? data.id.value : this.id,
       spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
       subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
@@ -27805,7 +27805,7 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
 
   @override
   String toString() {
-    return (StringBuffer('Enrollment(')
+    return (StringBuffer('Placement(')
           ..write('id: $id, ')
           ..write('spaceId: $spaceId, ')
           ..write('subjectId: $subjectId, ')
@@ -27834,7 +27834,7 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Enrollment &&
+      (other is Placement &&
           other.id == this.id &&
           other.spaceId == this.spaceId &&
           other.subjectId == this.subjectId &&
@@ -27846,7 +27846,7 @@ class Enrollment extends DataClass implements Insertable<Enrollment> {
           other.updatedAt == this.updatedAt);
 }
 
-class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
+class PlacementsCompanion extends UpdateCompanion<Placement> {
   final Value<String> id;
   final Value<String> spaceId;
   final Value<String> subjectId;
@@ -27857,7 +27857,7 @@ class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
-  const EnrollmentsCompanion({
+  const PlacementsCompanion({
     this.id = const Value.absent(),
     this.spaceId = const Value.absent(),
     this.subjectId = const Value.absent(),
@@ -27869,7 +27869,7 @@ class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  EnrollmentsCompanion.insert({
+  PlacementsCompanion.insert({
     required String id,
     required String spaceId,
     required String subjectId,
@@ -27887,7 +27887,7 @@ class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
        startedAt = Value(startedAt),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
-  static Insertable<Enrollment> custom({
+  static Insertable<Placement> custom({
     Expression<String>? id,
     Expression<String>? spaceId,
     Expression<String>? subjectId,
@@ -27913,7 +27913,7 @@ class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
     });
   }
 
-  EnrollmentsCompanion copyWith({
+  PlacementsCompanion copyWith({
     Value<String>? id,
     Value<String>? spaceId,
     Value<String>? subjectId,
@@ -27925,7 +27925,7 @@ class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
     Value<String>? updatedAt,
     Value<int>? rowid,
   }) {
-    return EnrollmentsCompanion(
+    return PlacementsCompanion(
       id: id ?? this.id,
       spaceId: spaceId ?? this.spaceId,
       subjectId: subjectId ?? this.subjectId,
@@ -27977,7 +27977,7 @@ class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
 
   @override
   String toString() {
-    return (StringBuffer('EnrollmentsCompanion(')
+    return (StringBuffer('PlacementsCompanion(')
           ..write('id: $id, ')
           ..write('spaceId: $spaceId, ')
           ..write('subjectId: $subjectId, ')
@@ -28055,15 +28055,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RotationRoundsTable rotationRounds = $RotationRoundsTable(this);
   late final $RoomEventsTable roomEvents = $RoomEventsTable(this);
   late final $TermsTable terms = $TermsTable(this);
-  late final $EnrollmentsTable enrollments = $EnrollmentsTable(this);
+  late final $PlacementsTable placements = $PlacementsTable(this);
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
   late final RotationDao rotationDao = RotationDao(this as AppDatabase);
   late final RoomEventsDao roomEventsDao = RoomEventsDao(this as AppDatabase);
-  late final EnrollmentsDao enrollmentsDao = EnrollmentsDao(
-    this as AppDatabase,
-  );
+  late final PlacementsDao placementsDao = PlacementsDao(this as AppDatabase);
   late final AttendanceDao attendanceDao = AttendanceDao(this as AppDatabase);
   late final CapturesDao capturesDao = CapturesDao(this as AppDatabase);
   late final CharacterSheetsDao characterSheetsDao = CharacterSheetsDao(
@@ -28151,7 +28149,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     rotationRounds,
     roomEvents,
     terms,
-    enrollments,
+    placements,
   ];
 }
 
@@ -41174,8 +41172,8 @@ typedef $$TermsTableProcessedTableManager =
       Term,
       PrefetchHooks Function()
     >;
-typedef $$EnrollmentsTableCreateCompanionBuilder =
-    EnrollmentsCompanion Function({
+typedef $$PlacementsTableCreateCompanionBuilder =
+    PlacementsCompanion Function({
       required String id,
       required String spaceId,
       required String subjectId,
@@ -41187,8 +41185,8 @@ typedef $$EnrollmentsTableCreateCompanionBuilder =
       required String updatedAt,
       Value<int> rowid,
     });
-typedef $$EnrollmentsTableUpdateCompanionBuilder =
-    EnrollmentsCompanion Function({
+typedef $$PlacementsTableUpdateCompanionBuilder =
+    PlacementsCompanion Function({
       Value<String> id,
       Value<String> spaceId,
       Value<String> subjectId,
@@ -41201,9 +41199,9 @@ typedef $$EnrollmentsTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-class $$EnrollmentsTableFilterComposer
-    extends Composer<_$AppDatabase, $EnrollmentsTable> {
-  $$EnrollmentsTableFilterComposer({
+class $$PlacementsTableFilterComposer
+    extends Composer<_$AppDatabase, $PlacementsTable> {
+  $$PlacementsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -41256,9 +41254,9 @@ class $$EnrollmentsTableFilterComposer
   );
 }
 
-class $$EnrollmentsTableOrderingComposer
-    extends Composer<_$AppDatabase, $EnrollmentsTable> {
-  $$EnrollmentsTableOrderingComposer({
+class $$PlacementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlacementsTable> {
+  $$PlacementsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -41311,9 +41309,9 @@ class $$EnrollmentsTableOrderingComposer
   );
 }
 
-class $$EnrollmentsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $EnrollmentsTable> {
-  $$EnrollmentsTableAnnotationComposer({
+class $$PlacementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlacementsTable> {
+  $$PlacementsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -41348,35 +41346,35 @@ class $$EnrollmentsTableAnnotationComposer
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
-class $$EnrollmentsTableTableManager
+class $$PlacementsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $EnrollmentsTable,
-          Enrollment,
-          $$EnrollmentsTableFilterComposer,
-          $$EnrollmentsTableOrderingComposer,
-          $$EnrollmentsTableAnnotationComposer,
-          $$EnrollmentsTableCreateCompanionBuilder,
-          $$EnrollmentsTableUpdateCompanionBuilder,
+          $PlacementsTable,
+          Placement,
+          $$PlacementsTableFilterComposer,
+          $$PlacementsTableOrderingComposer,
+          $$PlacementsTableAnnotationComposer,
+          $$PlacementsTableCreateCompanionBuilder,
+          $$PlacementsTableUpdateCompanionBuilder,
           (
-            Enrollment,
-            BaseReferences<_$AppDatabase, $EnrollmentsTable, Enrollment>,
+            Placement,
+            BaseReferences<_$AppDatabase, $PlacementsTable, Placement>,
           ),
-          Enrollment,
+          Placement,
           PrefetchHooks Function()
         > {
-  $$EnrollmentsTableTableManager(_$AppDatabase db, $EnrollmentsTable table)
+  $$PlacementsTableTableManager(_$AppDatabase db, $PlacementsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$EnrollmentsTableFilterComposer($db: db, $table: table),
+              $$PlacementsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$EnrollmentsTableOrderingComposer($db: db, $table: table),
+              $$PlacementsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$EnrollmentsTableAnnotationComposer($db: db, $table: table),
+              $$PlacementsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -41389,7 +41387,7 @@ class $$EnrollmentsTableTableManager
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => EnrollmentsCompanion(
+              }) => PlacementsCompanion(
                 id: id,
                 spaceId: spaceId,
                 subjectId: subjectId,
@@ -41413,7 +41411,7 @@ class $$EnrollmentsTableTableManager
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
-              }) => EnrollmentsCompanion.insert(
+              }) => PlacementsCompanion.insert(
                 id: id,
                 spaceId: spaceId,
                 subjectId: subjectId,
@@ -41433,21 +41431,18 @@ class $$EnrollmentsTableTableManager
       );
 }
 
-typedef $$EnrollmentsTableProcessedTableManager =
+typedef $$PlacementsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $EnrollmentsTable,
-      Enrollment,
-      $$EnrollmentsTableFilterComposer,
-      $$EnrollmentsTableOrderingComposer,
-      $$EnrollmentsTableAnnotationComposer,
-      $$EnrollmentsTableCreateCompanionBuilder,
-      $$EnrollmentsTableUpdateCompanionBuilder,
-      (
-        Enrollment,
-        BaseReferences<_$AppDatabase, $EnrollmentsTable, Enrollment>,
-      ),
-      Enrollment,
+      $PlacementsTable,
+      Placement,
+      $$PlacementsTableFilterComposer,
+      $$PlacementsTableOrderingComposer,
+      $$PlacementsTableAnnotationComposer,
+      $$PlacementsTableCreateCompanionBuilder,
+      $$PlacementsTableUpdateCompanionBuilder,
+      (Placement, BaseReferences<_$AppDatabase, $PlacementsTable, Placement>),
+      Placement,
       PrefetchHooks Function()
     >;
 
@@ -41534,6 +41529,6 @@ class $AppDatabaseManager {
       $$RoomEventsTableTableManager(_db, _db.roomEvents);
   $$TermsTableTableManager get terms =>
       $$TermsTableTableManager(_db, _db.terms);
-  $$EnrollmentsTableTableManager get enrollments =>
-      $$EnrollmentsTableTableManager(_db, _db.enrollments);
+  $$PlacementsTableTableManager get placements =>
+      $$PlacementsTableTableManager(_db, _db.placements);
 }

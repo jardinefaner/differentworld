@@ -673,7 +673,10 @@ const appSchema = Schema([
     Column.text('updated_at'),
   ]),
 
-  Table('enrollments', [
+  // NOT `enrollments` — that name has meant staff↔classroom since the
+  // foundation migration (declared above). Declaring it twice here would
+  // have shadowed the legacy table in the local schema.
+  Table('placements', [
     Column.text('space_id'),
     Column.text('subject_id'),
     Column.text('group_id'),

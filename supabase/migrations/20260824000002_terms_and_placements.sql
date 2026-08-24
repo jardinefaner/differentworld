@@ -39,7 +39,12 @@ create index if not exists terms_space_idx on public.terms (space_id, starts_on 
 -- One child, in one room, for one period. The missing spine: this is what
 -- makes "Owen was in Sparrows last year and Ospreys this year" a fact the
 -- app holds rather than something overwritten.
-create table if not exists public.enrollments (
+--
+-- NOT called `enrollments`: that name has been taken since the foundation
+-- migration by the STAFF↔classroom join (member_id / group_id / role). Two
+-- different relationships, one word — so this one is `placements`, which
+-- says what it is without borrowing a name that already means something.
+create table if not exists public.placements (
   id          uuid primary key default gen_random_uuid(),
   space_id    uuid not null references public.spaces(id) on delete cascade,
   subject_id  uuid not null references public.subjects(id) on delete cascade,
@@ -53,10 +58,10 @@ create table if not exists public.enrollments (
   updated_at  timestamptz not null default now()
 );
 
-create index if not exists enrollments_subject_idx
-  on public.enrollments (subject_id, started_at desc);
-create index if not exists enrollments_term_idx
-  on public.enrollments (term_id, group_id);
+create index if not exists placements_subject_idx
+  on public.placements (subject_id, started_at desc);
+create index if not exists placements_term_idx
+  on public.placements (term_id, group_id);
 
 -- enrolled | alumni. Alumni keep every row they ever had; they simply stop
 -- appearing in attendance, pickers and today's rosters.
@@ -67,18 +72,18 @@ create index if not exists subjects_status_idx
   on public.subjects (space_id, status);
 
 alter table public.terms       replica identity full;
-alter table public.enrollments replica identity full;
+alter table public.placements replica identity full;
 
 alter table public.terms       enable row level security;
-alter table public.enrollments enable row level security;
+alter table public.placements enable row level security;
 
 -- Relaxed policies, consistent with the ES256 auth.uid()-null workaround
--- (CLAUDE.md). Staff-only data: an enrollment names which child sat in
--- which room, so neither table joins the by_guardian stream.
+-- (CLAUDE.md). Staff-only data: a placement names which child sat in which
+-- room, so neither table joins the by_guardian stream.
 create policy "terms_authenticated_all" on public.terms
   for all to authenticated using (true) with check (true);
-create policy "enrollments_authenticated_all" on public.enrollments
+create policy "placements_authenticated_all" on public.placements
   for all to authenticated using (true) with check (true);
 
 alter publication powersync add table public.terms;
-alter publication powersync add table public.enrollments;
+alter publication powersync add table public.placements;

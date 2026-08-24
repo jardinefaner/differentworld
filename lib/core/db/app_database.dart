@@ -7,7 +7,6 @@ import 'package:differentworld/core/db/dao/certifications_dao.dart';
 import 'package:differentworld/core/db/dao/character_sheets_dao.dart';
 import 'package:differentworld/core/db/dao/content_bank_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
-import 'package:differentworld/core/db/dao/enrollments_dao.dart';
 import 'package:differentworld/core/db/dao/entries_dao.dart';
 import 'package:differentworld/core/db/dao/events_dao.dart';
 import 'package:differentworld/core/db/dao/exports_dao.dart';
@@ -19,6 +18,7 @@ import 'package:differentworld/core/db/dao/locations_dao.dart';
 import 'package:differentworld/core/db/dao/members_dao.dart';
 import 'package:differentworld/core/db/dao/messages_dao.dart';
 import 'package:differentworld/core/db/dao/missions_dao.dart';
+import 'package:differentworld/core/db/dao/placements_dao.dart';
 import 'package:differentworld/core/db/dao/room_events_dao.dart';
 import 'package:differentworld/core/db/dao/rotation_dao.dart';
 import 'package:differentworld/core/db/dao/schedule_dao.dart';
@@ -676,7 +676,10 @@ class Terms extends Table {
 /// One child, in one room, for one period — the history that makes a new
 /// intake additive. `subjects.groupId` remains the CURRENT room so every
 /// existing roster query keeps working; this sits beside it.
-class Enrollments extends Table {
+///
+/// Deliberately NOT `Enrollments`: `enrollments` has meant staff↔classroom
+/// since the foundation migration. Same word, different relationship.
+class Placements extends Table {
   TextColumn get id => text()();
   TextColumn get spaceId => text()();
   TextColumn get subjectId => text()();
@@ -1030,13 +1033,13 @@ class Events extends Table {
     // The Room console — arrangements + the shared fairness log.
     RotationRounds, RoomEvents,
     // Year rollover — named periods + child-in-room-for-a-period.
-    Terms, Enrollments,
+    Terms, Placements,
   ],
   daos: [
     AttachmentsDao,
     RotationDao,
     RoomEventsDao,
-    EnrollmentsDao,
+    PlacementsDao,
     AttendanceDao,
     CapturesDao,
     CharacterSheetsDao,

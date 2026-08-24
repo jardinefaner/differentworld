@@ -13,7 +13,7 @@ final StreamProvider<Term?> currentTermProvider =
         return;
       }
       final db = await ref.watch(appDatabaseProvider.future);
-      yield* db.enrollmentsDao.watchCurrentTerm(spaceId);
+      yield* db.placementsDao.watchCurrentTerm(spaceId);
     });
 
 /// Past children — the ones a rollover moved on. They keep every record
@@ -32,7 +32,7 @@ final StreamProvider<List<Subject>> alumniProvider =
 /// One child's whole room history, newest first.
 // ignore: specify_nonobvious_property_types
 final enrollmentHistoryProvider = StreamProvider.autoDispose
-    .family<List<Enrollment>, String>((ref, subjectId) async* {
+    .family<List<Placement>, String>((ref, subjectId) async* {
       final db = await ref.watch(appDatabaseProvider.future);
-      yield* db.enrollmentsDao.watchForSubject(subjectId);
+      yield* db.placementsDao.watchForSubject(subjectId);
     });

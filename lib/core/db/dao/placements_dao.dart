@@ -1,18 +1,22 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:drift/drift.dart';
 
-part 'enrollments_dao.g.dart';
+part 'placements_dao.g.dart';
 
-/// Periods, enrollments, and the year rollover (docs/ROLLOVER.md).
+/// Periods, placements, and the year rollover (docs/ROLLOVER.md).
+///
+/// A PLACEMENT is one child in one room for one period. It is not called an
+/// enrollment because `enrollments` has meant staff↔classroom since the
+/// foundation migration.
 ///
 /// The whole point of this DAO is that **nothing it does is destructive**.
 /// A new intake used to mean deleting last year's children; here it means
 /// closing their enrollment and opening a new one, so a child's record only
 /// ever grows.
-@DriftAccessor(tables: [Terms, Enrollments, Subjects])
-class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
-    with _$EnrollmentsDaoMixin {
-  EnrollmentsDao(super.attachedDatabase);
+@DriftAccessor(tables: [Terms, Placements, Subjects])
+class PlacementsDao extends DatabaseAccessor<AppDatabase>
+    with _$PlacementsDaoMixin {
+  PlacementsDao(super.attachedDatabase);
 
   // ── Periods ────────────────────────────────────────────────────────────
 
@@ -46,8 +50,8 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
 
   /// A child's whole history, newest first — "Ospreys now, Sparrows last
   /// year". This is what the child record shows under Rooms.
-  Stream<List<Enrollment>> watchForSubject(String subjectId) {
-    return (select(enrollments)
+  Stream<List<Placement>> watchForSubject(String subjectId) {
+    return (select(placements)
           ..where((e) => e.subjectId.equals(subjectId))
           ..orderBy([
             (e) =>
@@ -56,18 +60,19 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  Stream<List<Enrollment>> watchForTerm(String termId) {
-    return (select(enrollments)..where((e) => e.termId.equals(termId))).watch();
+  Stream<List<Placement>> watchForTerm(String termId) {
+    return (select(placements)..where((e) => e.termId.equals(termId))).watch();
   }
 
-  Future<List<Enrollment>> openEnrollments(String spaceId) {
+  /// Placements with no end date — the current period's.
+  Future<List<Placement>> openPlacements(String spaceId) {
     return (select(
-      enrollments,
+      placements,
     )..where((e) => e.spaceId.equals(spaceId) & e.endedAt.isNull())).get();
   }
 
-  Future<void> createEnrollment(EnrollmentsCompanion row) =>
-      into(enrollments).insert(row);
+  Future<void> createPlacement(PlacementsCompanion row) =>
+      into(placements).insert(row);
 
   // ── The rollover ───────────────────────────────────────────────────────
 
@@ -97,10 +102,10 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
       );
       await into(terms).insert(newTerm);
 
-      final open = await openEnrollments(spaceId);
+      final open = await openPlacements(spaceId);
       for (final e in open) {
-        await (update(enrollments)..where((r) => r.id.equals(e.id))).write(
-          EnrollmentsCompanion(
+        await (update(placements)..where((r) => r.id.equals(e.id))).write(
+          PlacementsCompanion(
             endedAt: Value(nowIso),
             updatedAt: Value(nowIso),
           ),
@@ -124,8 +129,8 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
         final stays = returning.containsKey(s.id);
         if (stays) {
           final room = returning[s.id];
-          await into(enrollments).insert(
-            EnrollmentsCompanion.insert(
+          await into(placements).insert(
+            PlacementsCompanion.insert(
               id: newId(),
               spaceId: spaceId,
               subjectId: s.id,
@@ -163,7 +168,7 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  /// Undo a rollover: re-open the enrollments it closed, drop the ones it
+  /// Undo a rollover: re-open the placements it closed, drop the ones it
   /// opened, restore everyone it made alumni, and remove the new period.
   /// Reversible because the rollover only ever wrote — it never deleted.
   /// [previousTermId] is null on the very first rollover — there is simply
@@ -175,14 +180,14 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
     required String nowIso,
   }) async {
     await transaction(() async {
-      await (delete(enrollments)..where((e) => e.termId.equals(termId))).go();
+      await (delete(placements)..where((e) => e.termId.equals(termId))).go();
       if (previousTermId != null) {
-        await (update(enrollments)..where(
+        await (update(placements)..where(
               (e) =>
                   e.spaceId.equals(spaceId) & e.termId.equals(previousTermId),
             ))
             .write(
-              EnrollmentsCompanion(
+              PlacementsCompanion(
                 endedAt: const Value(null),
                 updatedAt: Value(nowIso),
               ),
