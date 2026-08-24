@@ -32,6 +32,7 @@ Attachment _photo(
 Subject _kid(String id, String groupId) => Subject(
   id: id,
   spaceId: 'space-1',
+  status: 'enrolled',
   groupId: groupId,
   firstName: 'K$id',
   lastName: 'L',

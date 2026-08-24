@@ -14,6 +14,7 @@ import 'package:go_router/go_router.dart';
 Subject _subject(String id, String first, String last) => Subject(
   id: id,
   spaceId: 'space-1',
+  status: 'enrolled',
   firstName: first,
   lastName: last,
   capabilities: '{}',

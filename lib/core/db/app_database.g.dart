@@ -1648,6 +1648,16 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('enrolled'),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1686,6 +1696,7 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
     dropoffWindowEnd,
     pickupWindowStart,
     pickupWindowEnd,
+    status,
     createdAt,
     updatedAt,
   ];
@@ -1807,6 +1818,12 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
         ),
       );
     }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1888,6 +1905,10 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
         DriftSqlType.string,
         data['${effectivePrefix}pickup_window_end'],
       ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -1920,6 +1941,12 @@ class Subject extends DataClass implements Insertable<Subject> {
   final String? dropoffWindowEnd;
   final String? pickupWindowStart;
   final String? pickupWindowEnd;
+
+  /// `enrolled` | `alumni`. A child is NEVER deleted to make room for a new
+  /// intake — the year rollover turns them into an alumnus, and they keep
+  /// every observation, photo tag, message and book they ever had
+  /// (docs/ROLLOVER.md).
+  final String status;
   final String createdAt;
   final String updatedAt;
   const Subject({
@@ -1937,6 +1964,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     this.dropoffWindowEnd,
     this.pickupWindowStart,
     this.pickupWindowEnd,
+    required this.status,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1975,6 +2003,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     if (!nullToAbsent || pickupWindowEnd != null) {
       map['pickup_window_end'] = Variable<String>(pickupWindowEnd);
     }
+    map['status'] = Variable<String>(status);
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -2012,6 +2041,7 @@ class Subject extends DataClass implements Insertable<Subject> {
       pickupWindowEnd: pickupWindowEnd == null && nullToAbsent
           ? const Value.absent()
           : Value(pickupWindowEnd),
+      status: Value(status),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2041,6 +2071,7 @@ class Subject extends DataClass implements Insertable<Subject> {
         json['pickupWindowStart'],
       ),
       pickupWindowEnd: serializer.fromJson<String?>(json['pickupWindowEnd']),
+      status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -2063,6 +2094,7 @@ class Subject extends DataClass implements Insertable<Subject> {
       'dropoffWindowEnd': serializer.toJson<String?>(dropoffWindowEnd),
       'pickupWindowStart': serializer.toJson<String?>(pickupWindowStart),
       'pickupWindowEnd': serializer.toJson<String?>(pickupWindowEnd),
+      'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -2083,6 +2115,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     Value<String?> dropoffWindowEnd = const Value.absent(),
     Value<String?> pickupWindowStart = const Value.absent(),
     Value<String?> pickupWindowEnd = const Value.absent(),
+    String? status,
     String? createdAt,
     String? updatedAt,
   }) => Subject(
@@ -2108,6 +2141,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     pickupWindowEnd: pickupWindowEnd.present
         ? pickupWindowEnd.value
         : this.pickupWindowEnd,
+    status: status ?? this.status,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -2137,6 +2171,7 @@ class Subject extends DataClass implements Insertable<Subject> {
       pickupWindowEnd: data.pickupWindowEnd.present
           ? data.pickupWindowEnd.value
           : this.pickupWindowEnd,
+      status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2159,6 +2194,7 @@ class Subject extends DataClass implements Insertable<Subject> {
           ..write('dropoffWindowEnd: $dropoffWindowEnd, ')
           ..write('pickupWindowStart: $pickupWindowStart, ')
           ..write('pickupWindowEnd: $pickupWindowEnd, ')
+          ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2181,6 +2217,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     dropoffWindowEnd,
     pickupWindowStart,
     pickupWindowEnd,
+    status,
     createdAt,
     updatedAt,
   );
@@ -2202,6 +2239,7 @@ class Subject extends DataClass implements Insertable<Subject> {
           other.dropoffWindowEnd == this.dropoffWindowEnd &&
           other.pickupWindowStart == this.pickupWindowStart &&
           other.pickupWindowEnd == this.pickupWindowEnd &&
+          other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2221,6 +2259,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
   final Value<String?> dropoffWindowEnd;
   final Value<String?> pickupWindowStart;
   final Value<String?> pickupWindowEnd;
+  final Value<String> status;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -2239,6 +2278,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     this.dropoffWindowEnd = const Value.absent(),
     this.pickupWindowStart = const Value.absent(),
     this.pickupWindowEnd = const Value.absent(),
+    this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2258,6 +2298,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     this.dropoffWindowEnd = const Value.absent(),
     this.pickupWindowStart = const Value.absent(),
     this.pickupWindowEnd = const Value.absent(),
+    this.status = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -2283,6 +2324,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     Expression<String>? dropoffWindowEnd,
     Expression<String>? pickupWindowStart,
     Expression<String>? pickupWindowEnd,
+    Expression<String>? status,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -2303,6 +2345,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
       if (dropoffWindowEnd != null) 'dropoff_window_end': dropoffWindowEnd,
       if (pickupWindowStart != null) 'pickup_window_start': pickupWindowStart,
       if (pickupWindowEnd != null) 'pickup_window_end': pickupWindowEnd,
+      if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2324,6 +2367,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     Value<String?>? dropoffWindowEnd,
     Value<String?>? pickupWindowStart,
     Value<String?>? pickupWindowEnd,
+    Value<String>? status,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -2343,6 +2387,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
       dropoffWindowEnd: dropoffWindowEnd ?? this.dropoffWindowEnd,
       pickupWindowStart: pickupWindowStart ?? this.pickupWindowStart,
       pickupWindowEnd: pickupWindowEnd ?? this.pickupWindowEnd,
+      status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2394,6 +2439,9 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     if (pickupWindowEnd.present) {
       map['pickup_window_end'] = Variable<String>(pickupWindowEnd.value);
     }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -2423,6 +2471,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
           ..write('dropoffWindowEnd: $dropoffWindowEnd, ')
           ..write('pickupWindowStart: $pickupWindowStart, ')
           ..write('pickupWindowEnd: $pickupWindowEnd, ')
+          ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -26862,6 +26911,1078 @@ class RoomEventsCompanion extends UpdateCompanion<RoomEvent> {
   }
 }
 
+class $TermsTable extends Terms with TableInfo<$TermsTable, Term> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TermsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startsOnMeta = const VerificationMeta(
+    'startsOn',
+  );
+  @override
+  late final GeneratedColumn<String> startsOn = GeneratedColumn<String>(
+    'starts_on',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endsOnMeta = const VerificationMeta('endsOn');
+  @override
+  late final GeneratedColumn<String> endsOn = GeneratedColumn<String>(
+    'ends_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isCurrentMeta = const VerificationMeta(
+    'isCurrent',
+  );
+  @override
+  late final GeneratedColumn<int> isCurrent = GeneratedColumn<int>(
+    'is_current',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    name,
+    startsOn,
+    endsOn,
+    isCurrent,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'terms';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Term> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('starts_on')) {
+      context.handle(
+        _startsOnMeta,
+        startsOn.isAcceptableOrUnknown(data['starts_on']!, _startsOnMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startsOnMeta);
+    }
+    if (data.containsKey('ends_on')) {
+      context.handle(
+        _endsOnMeta,
+        endsOn.isAcceptableOrUnknown(data['ends_on']!, _endsOnMeta),
+      );
+    }
+    if (data.containsKey('is_current')) {
+      context.handle(
+        _isCurrentMeta,
+        isCurrent.isAcceptableOrUnknown(data['is_current']!, _isCurrentMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Term map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Term(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      startsOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}starts_on'],
+      )!,
+      endsOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ends_on'],
+      ),
+      isCurrent: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_current'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TermsTable createAlias(String alias) {
+    return $TermsTable(attachedDatabase, alias);
+  }
+}
+
+class Term extends DataClass implements Insertable<Term> {
+  final String id;
+  final String spaceId;
+  final String name;
+  final String startsOn;
+  final String? endsOn;
+
+  /// 0/1. Exactly one per space, enforced by a partial unique index server-side.
+  final int isCurrent;
+  final String createdAt;
+  final String updatedAt;
+  const Term({
+    required this.id,
+    required this.spaceId,
+    required this.name,
+    required this.startsOn,
+    this.endsOn,
+    required this.isCurrent,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['name'] = Variable<String>(name);
+    map['starts_on'] = Variable<String>(startsOn);
+    if (!nullToAbsent || endsOn != null) {
+      map['ends_on'] = Variable<String>(endsOn);
+    }
+    map['is_current'] = Variable<int>(isCurrent);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  TermsCompanion toCompanion(bool nullToAbsent) {
+    return TermsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      name: Value(name),
+      startsOn: Value(startsOn),
+      endsOn: endsOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endsOn),
+      isCurrent: Value(isCurrent),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Term.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Term(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      name: serializer.fromJson<String>(json['name']),
+      startsOn: serializer.fromJson<String>(json['startsOn']),
+      endsOn: serializer.fromJson<String?>(json['endsOn']),
+      isCurrent: serializer.fromJson<int>(json['isCurrent']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'name': serializer.toJson<String>(name),
+      'startsOn': serializer.toJson<String>(startsOn),
+      'endsOn': serializer.toJson<String?>(endsOn),
+      'isCurrent': serializer.toJson<int>(isCurrent),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Term copyWith({
+    String? id,
+    String? spaceId,
+    String? name,
+    String? startsOn,
+    Value<String?> endsOn = const Value.absent(),
+    int? isCurrent,
+    String? createdAt,
+    String? updatedAt,
+  }) => Term(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    name: name ?? this.name,
+    startsOn: startsOn ?? this.startsOn,
+    endsOn: endsOn.present ? endsOn.value : this.endsOn,
+    isCurrent: isCurrent ?? this.isCurrent,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Term copyWithCompanion(TermsCompanion data) {
+    return Term(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      name: data.name.present ? data.name.value : this.name,
+      startsOn: data.startsOn.present ? data.startsOn.value : this.startsOn,
+      endsOn: data.endsOn.present ? data.endsOn.value : this.endsOn,
+      isCurrent: data.isCurrent.present ? data.isCurrent.value : this.isCurrent,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Term(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('startsOn: $startsOn, ')
+          ..write('endsOn: $endsOn, ')
+          ..write('isCurrent: $isCurrent, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    name,
+    startsOn,
+    endsOn,
+    isCurrent,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Term &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.name == this.name &&
+          other.startsOn == this.startsOn &&
+          other.endsOn == this.endsOn &&
+          other.isCurrent == this.isCurrent &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TermsCompanion extends UpdateCompanion<Term> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> name;
+  final Value<String> startsOn;
+  final Value<String?> endsOn;
+  final Value<int> isCurrent;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const TermsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.startsOn = const Value.absent(),
+    this.endsOn = const Value.absent(),
+    this.isCurrent = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TermsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String name,
+    required String startsOn,
+    this.endsOn = const Value.absent(),
+    this.isCurrent = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       name = Value(name),
+       startsOn = Value(startsOn),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Term> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? name,
+    Expression<String>? startsOn,
+    Expression<String>? endsOn,
+    Expression<int>? isCurrent,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (name != null) 'name': name,
+      if (startsOn != null) 'starts_on': startsOn,
+      if (endsOn != null) 'ends_on': endsOn,
+      if (isCurrent != null) 'is_current': isCurrent,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TermsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? name,
+    Value<String>? startsOn,
+    Value<String?>? endsOn,
+    Value<int>? isCurrent,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TermsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      name: name ?? this.name,
+      startsOn: startsOn ?? this.startsOn,
+      endsOn: endsOn ?? this.endsOn,
+      isCurrent: isCurrent ?? this.isCurrent,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (startsOn.present) {
+      map['starts_on'] = Variable<String>(startsOn.value);
+    }
+    if (endsOn.present) {
+      map['ends_on'] = Variable<String>(endsOn.value);
+    }
+    if (isCurrent.present) {
+      map['is_current'] = Variable<int>(isCurrent.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TermsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('startsOn: $startsOn, ')
+          ..write('endsOn: $endsOn, ')
+          ..write('isCurrent: $isCurrent, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EnrollmentsTable extends Enrollments
+    with TableInfo<$EnrollmentsTable, Enrollment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EnrollmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _termIdMeta = const VerificationMeta('termId');
+  @override
+  late final GeneratedColumn<String> termId = GeneratedColumn<String>(
+    'term_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<String> startedAt = GeneratedColumn<String>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<String> endedAt = GeneratedColumn<String>(
+    'ended_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    subjectId,
+    groupId,
+    termId,
+    startedAt,
+    endedAt,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'enrollments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Enrollment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('term_id')) {
+      context.handle(
+        _termIdMeta,
+        termId.isAcceptableOrUnknown(data['term_id']!, _termIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_termIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Enrollment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Enrollment(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      termId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}term_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}started_at'],
+      )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ended_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EnrollmentsTable createAlias(String alias) {
+    return $EnrollmentsTable(attachedDatabase, alias);
+  }
+}
+
+class Enrollment extends DataClass implements Insertable<Enrollment> {
+  final String id;
+  final String spaceId;
+  final String subjectId;
+
+  /// Null = enrolled for the period but not yet placed in a room.
+  final String? groupId;
+  final String termId;
+  final String startedAt;
+
+  /// Null = still open. Rollover CLOSES rather than deletes.
+  final String? endedAt;
+  final String createdAt;
+  final String updatedAt;
+  const Enrollment({
+    required this.id,
+    required this.spaceId,
+    required this.subjectId,
+    this.groupId,
+    required this.termId,
+    required this.startedAt,
+    this.endedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['subject_id'] = Variable<String>(subjectId);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    map['term_id'] = Variable<String>(termId);
+    map['started_at'] = Variable<String>(startedAt);
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<String>(endedAt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  EnrollmentsCompanion toCompanion(bool nullToAbsent) {
+    return EnrollmentsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      subjectId: Value(subjectId),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      termId: Value(termId),
+      startedAt: Value(startedAt),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Enrollment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Enrollment(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      termId: serializer.fromJson<String>(json['termId']),
+      startedAt: serializer.fromJson<String>(json['startedAt']),
+      endedAt: serializer.fromJson<String?>(json['endedAt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'subjectId': serializer.toJson<String>(subjectId),
+      'groupId': serializer.toJson<String?>(groupId),
+      'termId': serializer.toJson<String>(termId),
+      'startedAt': serializer.toJson<String>(startedAt),
+      'endedAt': serializer.toJson<String?>(endedAt),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Enrollment copyWith({
+    String? id,
+    String? spaceId,
+    String? subjectId,
+    Value<String?> groupId = const Value.absent(),
+    String? termId,
+    String? startedAt,
+    Value<String?> endedAt = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => Enrollment(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    subjectId: subjectId ?? this.subjectId,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    termId: termId ?? this.termId,
+    startedAt: startedAt ?? this.startedAt,
+    endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Enrollment copyWithCompanion(EnrollmentsCompanion data) {
+    return Enrollment(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      termId: data.termId.present ? data.termId.value : this.termId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Enrollment(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('groupId: $groupId, ')
+          ..write('termId: $termId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    subjectId,
+    groupId,
+    termId,
+    startedAt,
+    endedAt,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Enrollment &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.subjectId == this.subjectId &&
+          other.groupId == this.groupId &&
+          other.termId == this.termId &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class EnrollmentsCompanion extends UpdateCompanion<Enrollment> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> subjectId;
+  final Value<String?> groupId;
+  final Value<String> termId;
+  final Value<String> startedAt;
+  final Value<String?> endedAt;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const EnrollmentsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.termId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EnrollmentsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String subjectId,
+    this.groupId = const Value.absent(),
+    required String termId,
+    required String startedAt,
+    this.endedAt = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       subjectId = Value(subjectId),
+       termId = Value(termId),
+       startedAt = Value(startedAt),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Enrollment> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? subjectId,
+    Expression<String>? groupId,
+    Expression<String>? termId,
+    Expression<String>? startedAt,
+    Expression<String>? endedAt,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (groupId != null) 'group_id': groupId,
+      if (termId != null) 'term_id': termId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EnrollmentsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? subjectId,
+    Value<String?>? groupId,
+    Value<String>? termId,
+    Value<String>? startedAt,
+    Value<String?>? endedAt,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return EnrollmentsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      subjectId: subjectId ?? this.subjectId,
+      groupId: groupId ?? this.groupId,
+      termId: termId ?? this.termId,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (termId.present) {
+      map['term_id'] = Variable<String>(termId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<String>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<String>(endedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EnrollmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('groupId: $groupId, ')
+          ..write('termId: $termId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -26923,11 +28044,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ContentItemsTable contentItems = $ContentItemsTable(this);
   late final $RotationRoundsTable rotationRounds = $RotationRoundsTable(this);
   late final $RoomEventsTable roomEvents = $RoomEventsTable(this);
+  late final $TermsTable terms = $TermsTable(this);
+  late final $EnrollmentsTable enrollments = $EnrollmentsTable(this);
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
   late final RotationDao rotationDao = RotationDao(this as AppDatabase);
   late final RoomEventsDao roomEventsDao = RoomEventsDao(this as AppDatabase);
+  late final EnrollmentsDao enrollmentsDao = EnrollmentsDao(
+    this as AppDatabase,
+  );
   late final AttendanceDao attendanceDao = AttendanceDao(this as AppDatabase);
   late final CapturesDao capturesDao = CapturesDao(this as AppDatabase);
   late final CharacterSheetsDao characterSheetsDao = CharacterSheetsDao(
@@ -27014,6 +28140,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     contentItems,
     rotationRounds,
     roomEvents,
+    terms,
+    enrollments,
   ];
 }
 
@@ -27775,6 +28903,7 @@ typedef $$SubjectsTableCreateCompanionBuilder =
       Value<String?> dropoffWindowEnd,
       Value<String?> pickupWindowStart,
       Value<String?> pickupWindowEnd,
+      Value<String> status,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -27795,6 +28924,7 @@ typedef $$SubjectsTableUpdateCompanionBuilder =
       Value<String?> dropoffWindowEnd,
       Value<String?> pickupWindowStart,
       Value<String?> pickupWindowEnd,
+      Value<String> status,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -27876,6 +29006,11 @@ class $$SubjectsTableFilterComposer
 
   ColumnFilters<String> get pickupWindowEnd => $composableBuilder(
     column: $table.pickupWindowEnd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -27969,6 +29104,11 @@ class $$SubjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -28041,6 +29181,9 @@ class $$SubjectsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -28090,6 +29233,7 @@ class $$SubjectsTableTableManager
                 Value<String?> dropoffWindowEnd = const Value.absent(),
                 Value<String?> pickupWindowStart = const Value.absent(),
                 Value<String?> pickupWindowEnd = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -28108,6 +29252,7 @@ class $$SubjectsTableTableManager
                 dropoffWindowEnd: dropoffWindowEnd,
                 pickupWindowStart: pickupWindowStart,
                 pickupWindowEnd: pickupWindowEnd,
+                status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -28128,6 +29273,7 @@ class $$SubjectsTableTableManager
                 Value<String?> dropoffWindowEnd = const Value.absent(),
                 Value<String?> pickupWindowStart = const Value.absent(),
                 Value<String?> pickupWindowEnd = const Value.absent(),
+                Value<String> status = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -28146,6 +29292,7 @@ class $$SubjectsTableTableManager
                 dropoffWindowEnd: dropoffWindowEnd,
                 pickupWindowStart: pickupWindowStart,
                 pickupWindowEnd: pickupWindowEnd,
+                status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -39767,6 +40914,532 @@ typedef $$RoomEventsTableProcessedTableManager =
       RoomEvent,
       PrefetchHooks Function()
     >;
+typedef $$TermsTableCreateCompanionBuilder =
+    TermsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String name,
+      required String startsOn,
+      Value<String?> endsOn,
+      Value<int> isCurrent,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$TermsTableUpdateCompanionBuilder =
+    TermsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> name,
+      Value<String> startsOn,
+      Value<String?> endsOn,
+      Value<int> isCurrent,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$TermsTableFilterComposer extends Composer<_$AppDatabase, $TermsTable> {
+  $$TermsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get startsOn => $composableBuilder(
+    column: $table.startsOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endsOn => $composableBuilder(
+    column: $table.endsOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isCurrent => $composableBuilder(
+    column: $table.isCurrent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TermsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TermsTable> {
+  $$TermsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get startsOn => $composableBuilder(
+    column: $table.startsOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endsOn => $composableBuilder(
+    column: $table.endsOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get isCurrent => $composableBuilder(
+    column: $table.isCurrent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TermsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TermsTable> {
+  $$TermsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get startsOn =>
+      $composableBuilder(column: $table.startsOn, builder: (column) => column);
+
+  GeneratedColumn<String> get endsOn =>
+      $composableBuilder(column: $table.endsOn, builder: (column) => column);
+
+  GeneratedColumn<int> get isCurrent =>
+      $composableBuilder(column: $table.isCurrent, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TermsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TermsTable,
+          Term,
+          $$TermsTableFilterComposer,
+          $$TermsTableOrderingComposer,
+          $$TermsTableAnnotationComposer,
+          $$TermsTableCreateCompanionBuilder,
+          $$TermsTableUpdateCompanionBuilder,
+          (Term, BaseReferences<_$AppDatabase, $TermsTable, Term>),
+          Term,
+          PrefetchHooks Function()
+        > {
+  $$TermsTableTableManager(_$AppDatabase db, $TermsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TermsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TermsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TermsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> startsOn = const Value.absent(),
+                Value<String?> endsOn = const Value.absent(),
+                Value<int> isCurrent = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TermsCompanion(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                startsOn: startsOn,
+                endsOn: endsOn,
+                isCurrent: isCurrent,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String name,
+                required String startsOn,
+                Value<String?> endsOn = const Value.absent(),
+                Value<int> isCurrent = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TermsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                startsOn: startsOn,
+                endsOn: endsOn,
+                isCurrent: isCurrent,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TermsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TermsTable,
+      Term,
+      $$TermsTableFilterComposer,
+      $$TermsTableOrderingComposer,
+      $$TermsTableAnnotationComposer,
+      $$TermsTableCreateCompanionBuilder,
+      $$TermsTableUpdateCompanionBuilder,
+      (Term, BaseReferences<_$AppDatabase, $TermsTable, Term>),
+      Term,
+      PrefetchHooks Function()
+    >;
+typedef $$EnrollmentsTableCreateCompanionBuilder =
+    EnrollmentsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String subjectId,
+      Value<String?> groupId,
+      required String termId,
+      required String startedAt,
+      Value<String?> endedAt,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$EnrollmentsTableUpdateCompanionBuilder =
+    EnrollmentsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> subjectId,
+      Value<String?> groupId,
+      Value<String> termId,
+      Value<String> startedAt,
+      Value<String?> endedAt,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$EnrollmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $EnrollmentsTable> {
+  $$EnrollmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get termId => $composableBuilder(
+    column: $table.termId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EnrollmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $EnrollmentsTable> {
+  $$EnrollmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get termId => $composableBuilder(
+    column: $table.termId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EnrollmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EnrollmentsTable> {
+  $$EnrollmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get termId =>
+      $composableBuilder(column: $table.termId, builder: (column) => column);
+
+  GeneratedColumn<String> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$EnrollmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EnrollmentsTable,
+          Enrollment,
+          $$EnrollmentsTableFilterComposer,
+          $$EnrollmentsTableOrderingComposer,
+          $$EnrollmentsTableAnnotationComposer,
+          $$EnrollmentsTableCreateCompanionBuilder,
+          $$EnrollmentsTableUpdateCompanionBuilder,
+          (
+            Enrollment,
+            BaseReferences<_$AppDatabase, $EnrollmentsTable, Enrollment>,
+          ),
+          Enrollment,
+          PrefetchHooks Function()
+        > {
+  $$EnrollmentsTableTableManager(_$AppDatabase db, $EnrollmentsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EnrollmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EnrollmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EnrollmentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> subjectId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String> termId = const Value.absent(),
+                Value<String> startedAt = const Value.absent(),
+                Value<String?> endedAt = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EnrollmentsCompanion(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                groupId: groupId,
+                termId: termId,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String subjectId,
+                Value<String?> groupId = const Value.absent(),
+                required String termId,
+                required String startedAt,
+                Value<String?> endedAt = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => EnrollmentsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                groupId: groupId,
+                termId: termId,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$EnrollmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EnrollmentsTable,
+      Enrollment,
+      $$EnrollmentsTableFilterComposer,
+      $$EnrollmentsTableOrderingComposer,
+      $$EnrollmentsTableAnnotationComposer,
+      $$EnrollmentsTableCreateCompanionBuilder,
+      $$EnrollmentsTableUpdateCompanionBuilder,
+      (
+        Enrollment,
+        BaseReferences<_$AppDatabase, $EnrollmentsTable, Enrollment>,
+      ),
+      Enrollment,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -39849,4 +41522,8 @@ class $AppDatabaseManager {
       $$RotationRoundsTableTableManager(_db, _db.rotationRounds);
   $$RoomEventsTableTableManager get roomEvents =>
       $$RoomEventsTableTableManager(_db, _db.roomEvents);
+  $$TermsTableTableManager get terms =>
+      $$TermsTableTableManager(_db, _db.terms);
+  $$EnrollmentsTableTableManager get enrollments =>
+      $$EnrollmentsTableTableManager(_db, _db.enrollments);
 }

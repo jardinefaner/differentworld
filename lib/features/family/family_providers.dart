@@ -530,6 +530,7 @@ ScheduleBlock _scheduleBlockFromMap(Map<String, dynamic> r) => ScheduleBlock(
 Subject _subjectFromMap(Map<String, dynamic> r) => Subject(
   id: r['id'] as String,
   spaceId: r['space_id'] as String,
+  status: 'enrolled',
   groupId: r['group_id'] as String?,
   firstName: (r['first_name'] as String?) ?? '',
   lastName: (r['last_name'] as String?) ?? '',

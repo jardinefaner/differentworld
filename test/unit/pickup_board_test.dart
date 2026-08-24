@@ -21,6 +21,7 @@ Group _group(String id, String name) => Group(
 Subject _subject(String id, String first, String last) => Subject(
   id: id,
   spaceId: _space,
+  status: 'enrolled',
   firstName: first,
   lastName: last,
   capabilities: '{}',

@@ -170,3 +170,9 @@ streams:
       # together, so neither table may ever join the by_guardian stream.
       - SELECT * FROM rotation_rounds        WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM room_events            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Year rollover (docs/ROLLOVER.md). `terms` are the named periods;
+      # `enrollments` are child-in-room-for-a-period — the history that makes
+      # a new intake ADDITIVE instead of a delete. Staff-only: an enrollment
+      # names which child sat in which room.
+      - SELECT * FROM terms                  WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM enrollments            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())

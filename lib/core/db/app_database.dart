@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/dao/certifications_dao.dart';
 import 'package:differentworld/core/db/dao/character_sheets_dao.dart';
 import 'package:differentworld/core/db/dao/content_bank_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
+import 'package:differentworld/core/db/dao/enrollments_dao.dart';
 import 'package:differentworld/core/db/dao/entries_dao.dart';
 import 'package:differentworld/core/db/dao/events_dao.dart';
 import 'package:differentworld/core/db/dao/exports_dao.dart';
@@ -103,6 +104,12 @@ class Subjects extends Table {
   TextColumn get dropoffWindowEnd => text().nullable()();
   TextColumn get pickupWindowStart => text().nullable()();
   TextColumn get pickupWindowEnd => text().nullable()();
+
+  /// `enrolled` | `alumni`. A child is NEVER deleted to make room for a new
+  /// intake — the year rollover turns them into an alumnus, and they keep
+  /// every observation, photo tag, message and book they ever had
+  /// (docs/ROLLOVER.md).
+  TextColumn get status => text().withDefault(const Constant('enrolled'))();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 
@@ -640,6 +647,47 @@ class ContentItems extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// A named period — '2026–27' or 'Summer 2026'. One table serves a school
+/// year and a session because an afterschool program needs both words and
+/// the shape is identical (docs/ROLLOVER.md).
+class Terms extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get startsOn => text()();
+  TextColumn get endsOn => text().nullable()();
+
+  /// 0/1. Exactly one per space, enforced by a partial unique index server-side.
+  IntColumn get isCurrent => integer().withDefault(const Constant(0))();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One child, in one room, for one period — the history that makes a new
+/// intake additive. `subjects.groupId` remains the CURRENT room so every
+/// existing roster query keeps working; this sits beside it.
+class Enrollments extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get subjectId => text()();
+
+  /// Null = enrolled for the period but not yet placed in a room.
+  TextColumn get groupId => text().nullable()();
+  TextColumn get termId => text()();
+  TextColumn get startedAt => text()();
+
+  /// Null = still open. Rollover CLOSES rather than deletes.
+  TextColumn get endedAt => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// One ARRANGEMENT of a cohort (docs/ROTATION.md). The pair history is
 /// derived by folding these rows — `groups` already says who was together —
 /// so there is no second table to keep in step, and undo is a delete.
@@ -974,11 +1022,14 @@ class Events extends Table {
     ContentItems,
     // The Room console — arrangements + the shared fairness log.
     RotationRounds, RoomEvents,
+    // Year rollover — named periods + child-in-room-for-a-period.
+    Terms, Enrollments,
   ],
   daos: [
     AttachmentsDao,
     RotationDao,
     RoomEventsDao,
+    EnrollmentsDao,
     AttendanceDao,
     CapturesDao,
     CharacterSheetsDao,

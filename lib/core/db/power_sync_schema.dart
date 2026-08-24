@@ -57,6 +57,9 @@ const appSchema = Schema([
     Column.text('dropoff_window_end'),
     Column.text('pickup_window_start'),
     Column.text('pickup_window_end'),
+    // enrolled | alumni. A child is never deleted to make room for a new
+    // intake — they become alumni and keep every row (docs/ROLLOVER.md).
+    Column.text('status'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
@@ -655,6 +658,31 @@ const appSchema = Schema([
       ]),
     ],
   ),
+
+  // Year rollover (docs/ROLLOVER.md). Neither table grows per-session — a
+  // term is one row a year and an enrollment one row per child per year —
+  // so neither needs a local index beyond PowerSync's implicit id.
+  Table('terms', [
+    Column.text('space_id'),
+    Column.text('name'),
+    Column.text('starts_on'),
+    Column.text('ends_on'),
+    // boolean server-side → 0/1 locally.
+    Column.integer('is_current'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
+
+  Table('enrollments', [
+    Column.text('space_id'),
+    Column.text('subject_id'),
+    Column.text('group_id'),
+    Column.text('term_id'),
+    Column.text('started_at'),
+    Column.text('ended_at'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 
   Table(
     'room_events',
