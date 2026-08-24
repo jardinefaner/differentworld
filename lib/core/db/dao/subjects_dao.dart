@@ -94,6 +94,13 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
         allergies: Value(allergies),
         notes: Value(notes),
         capabilities: '{}',
+        // Set EXPLICITLY, never left to the local default. `status` is
+        // nullable locally (PowerSync columns always are) but NOT NULL on
+        // the server, and a Postgres default only applies when a column is
+        // OMITTED — an explicit null still violates the constraint. The
+        // connector upserts opData as-is, so a null here would fail the
+        // insert forever and stall the whole upload queue behind it.
+        status: const Value('enrolled'),
         createdAt: now,
         updatedAt: now,
       ),

@@ -192,6 +192,9 @@ Future<String> seedSampleChild(
               'moments become. Remove from the setup card on Today.',
             ),
             capabilities: jsonEncode(const {SubjectCaps.isSample: true}),
+            // Explicit — the server column is NOT NULL and a default only
+            // applies to an OMITTED column (see SubjectsDao.create).
+            status: const Value('enrolled'),
             createdAt: nowIso,
             updatedAt: nowIso,
           ),

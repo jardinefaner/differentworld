@@ -343,6 +343,24 @@ void main() {
       expect(current.id, 't1');
     });
 
+    test('a newly created child gets an EXPLICIT status', () async {
+      // Not cosmetic: status is nullable locally (PowerSync columns always
+      // are) but NOT NULL on the server, and a Postgres default only
+      // applies to an OMITTED column. An explicit null would fail the
+      // insert forever and stall every later upload behind it.
+      await db.subjectsDao.create(
+        id: 'new1',
+        spaceId: 'sp1',
+        groupId: 'g1',
+        firstName: 'New',
+        lastName: 'Child',
+      );
+      final row = await (db.select(
+        db.subjects,
+      )..where((s) => s.id.equals('new1'))).getSingle();
+      expect(row.status, 'enrolled');
+    });
+
     test('a row with NULL status still counts as enrolled', () async {
       // The upgrade window: `status` is a new column, so between an app
       // update and the first sync that carries it every existing local row
