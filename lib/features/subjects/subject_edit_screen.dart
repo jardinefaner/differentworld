@@ -174,12 +174,22 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
     if (s == null) return;
     final confirmed = await confirmDestructive(
       context,
-      title: 'Remove this student?',
+      title: 'Delete ${s.firstName} permanently?',
+      // TRUTHFUL COPY (2026-08-24). This said "hides them… their history
+      // stays in your records" while calling a hard DELETE that cascades
+      // from seven tables. A director rolling into a new school year would
+      // have read that as archiving and destroyed a child's entire year.
+      // The real fix is an archive/alumni status + a year rollover
+      // (docs/ROLLOVER.md); until that lands the dialog must at least not
+      // lie about what the button does.
       message:
-          'Removing ${s.firstName} ${s.lastName} hides them from '
-          'attendance and the classroom roster. Their history stays '
-          'in your records.',
-      confirmLabel: 'Remove student',
+          'This does NOT archive ${s.firstName} — it erases them and '
+          'everything attached: observations, photo tags, messages to '
+          'their family, survey answers, their character sheet and their '
+          'attendance. Their book cannot be recovered.\n\n'
+          'Moving up a year? Do not use this. Ask for the year rollover '
+          'instead — it keeps every record.',
+      confirmLabel: 'Erase permanently',
     );
     if (!confirmed || !mounted) return;
     setState(() => _saving = true);
