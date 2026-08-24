@@ -56,6 +56,16 @@ so nobody re-litigates them screen by screen.
    w800+ weights outside the raw stages.
 5. **Obvious first.** The best instruction is never read. Content-driven
    world accents stay muted and belong to content, not chrome.
+6. **One thing at a time, readable in half a second.** A live-room
+   surface is an INSTRUMENT: it owns the screen while it runs, it puts
+   what you press at the bottom and what you read at the top, and it
+   shows instructions only while they are news. The launcher above it
+   reports live state (`2:14 left`) so you never open a thing to learn
+   whether it is running. (CLAUDE.md "The half-second rule".)
+
+**Glow is a scarce resource.** At most ONE emphasised action per
+screen — a second highlighted thing makes both mean nothing. Depth
+comes from layered lightness, never from borders stacked on borders.
 
 ## Voice
 

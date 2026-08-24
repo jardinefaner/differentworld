@@ -818,6 +818,61 @@ traps). So:
 Migration is staged (bucket 1: confirms→undo; bucket 2: forms→pages; peek
 untouched). New code follows the law from the start.
 
+### The half-second rule — instruments, not settings panels
+
+**A staffer must be able to operate any live-room surface one-handed, while
+talking, while walking, glancing at the screen for half a second.** This is the
+operational form of the calm-host brand, and it is mostly SUBTRACTIVE — it tells
+you what to remove. (Adapted from the Feature Lab's launcher rule, 2026-08-22.)
+
+What it kills:
+
+- **Simultaneous half-started tools.** A chip row holding four tools, all one
+  tap away, none of them actually running, is a settings panel wearing the
+  costume of an instrument. Nobody times four things at once. **Pick one, and it
+  owns the screen until you close it.** The cost is one extra tap; the gain is
+  that at any moment the screen is doing exactly one thing — the only way half a
+  second is enough to read it.
+- **Permanent instructions.** "Tap a face to mark them away" is true forever,
+  which is exactly why it stops being read. *An instruction that is always on
+  screen is a sign on a wall.* Instructions appear only while they are NEWS —
+  "tap someone to link them" exists only during linking, then goes. (This
+  sharpens the microcopy rule below; it does not replace it.)
+- **Controls used once.** Adding children happens on day one and then almost
+  never. It does not get to sit beside the register all term — it goes in the
+  one housekeeping menu. Two identical `⋯` menus on one screen is worse than the
+  button they replaced.
+
+What it demands:
+
+- **The thumb owns the bottom.** What you READ sits at the top; what you PRESS
+  repeatedly sits at the bottom. Not symmetry — the top of a phone is out of
+  reach one-handed, and a control you must look at is a control you cannot use
+  while talking. (Note the standing tension: `EdgeScaffold`'s `actions:` pill is
+  at the TOP. That is right for a page's save/edit; it is wrong for an
+  instrument's repeated action. A live-room instrument puts its repeated control
+  in the body's bottom, above the omnibox reservation.)
+- **Live state on the launcher.** Because an instrument hides everything else,
+  the launcher must answer "is anything running" WITHOUT being opened — the
+  Timer row reads `2:14 left` in amber while the clock runs. This is what
+  `NavDestination.countProvider` does for counts; live surfaces need the same
+  for state.
+- **Filled shapes mean events.** A filled, bordered container is the shape of
+  something you press to CAUSE something. A control that only changes what you
+  are LOOKING at is words and a rule, not a filled segmented control —
+  segmented controls that promise action and deliver navigation are a lie the
+  hand notices.
+- **Motion instead of cuts.** After a re-arrangement the only question is *what
+  moved*. A single-frame replacement makes that unanswerable, so a new
+  arrangement settles in left to right rather than swapping.
+- **Deliberate latency on a fairness reveal.** Instant results feel rigged;
+  ~600–900 ms of reveal feels fair. The one place in the app where slower is
+  better. Deal the result out rather than swapping a list — the reveal is the
+  emotional peak.
+- **Report the mix, not a warning.** "10 new pairings · 2 unavoidable repeats"
+  beats "2 repeated", and marks WHICH — a count with no referent is an alarm,
+  and this is not an alarm.
+
 ### Instruction & microcopy — make it obvious first
 
 **The golden rule: the best instruction is the one the user never needs to
