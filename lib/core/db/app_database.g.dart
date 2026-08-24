@@ -1653,10 +1653,9 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
     'status',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultValue: const Constant('enrolled'),
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -1908,7 +1907,7 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
-      )!,
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -1946,7 +1945,14 @@ class Subject extends DataClass implements Insertable<Subject> {
   /// intake — the year rollover turns them into an alumnus, and they keep
   /// every observation, photo tag, message and book they ever had
   /// (docs/ROLLOVER.md).
-  final String status;
+  ///
+  /// **Nullable, deliberately, even though the server column is NOT NULL.**
+  /// PowerSync's local columns are always nullable, and a newly-added one
+  /// reads NULL for every row already on the device until the sync that
+  /// carries it arrives. Declaring it non-null here would make Drift throw
+  /// while mapping those rows — so the type mirrors the local reality, and
+  /// every query treats NULL as enrolled.
+  final String? status;
   final String createdAt;
   final String updatedAt;
   const Subject({
@@ -1964,7 +1970,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     this.dropoffWindowEnd,
     this.pickupWindowStart,
     this.pickupWindowEnd,
-    required this.status,
+    this.status,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -2003,7 +2009,9 @@ class Subject extends DataClass implements Insertable<Subject> {
     if (!nullToAbsent || pickupWindowEnd != null) {
       map['pickup_window_end'] = Variable<String>(pickupWindowEnd);
     }
-    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || status != null) {
+      map['status'] = Variable<String>(status);
+    }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -2041,7 +2049,9 @@ class Subject extends DataClass implements Insertable<Subject> {
       pickupWindowEnd: pickupWindowEnd == null && nullToAbsent
           ? const Value.absent()
           : Value(pickupWindowEnd),
-      status: Value(status),
+      status: status == null && nullToAbsent
+          ? const Value.absent()
+          : Value(status),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2071,7 +2081,7 @@ class Subject extends DataClass implements Insertable<Subject> {
         json['pickupWindowStart'],
       ),
       pickupWindowEnd: serializer.fromJson<String?>(json['pickupWindowEnd']),
-      status: serializer.fromJson<String>(json['status']),
+      status: serializer.fromJson<String?>(json['status']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -2094,7 +2104,7 @@ class Subject extends DataClass implements Insertable<Subject> {
       'dropoffWindowEnd': serializer.toJson<String?>(dropoffWindowEnd),
       'pickupWindowStart': serializer.toJson<String?>(pickupWindowStart),
       'pickupWindowEnd': serializer.toJson<String?>(pickupWindowEnd),
-      'status': serializer.toJson<String>(status),
+      'status': serializer.toJson<String?>(status),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -2115,7 +2125,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     Value<String?> dropoffWindowEnd = const Value.absent(),
     Value<String?> pickupWindowStart = const Value.absent(),
     Value<String?> pickupWindowEnd = const Value.absent(),
-    String? status,
+    Value<String?> status = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => Subject(
@@ -2141,7 +2151,7 @@ class Subject extends DataClass implements Insertable<Subject> {
     pickupWindowEnd: pickupWindowEnd.present
         ? pickupWindowEnd.value
         : this.pickupWindowEnd,
-    status: status ?? this.status,
+    status: status.present ? status.value : this.status,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -2259,7 +2269,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
   final Value<String?> dropoffWindowEnd;
   final Value<String?> pickupWindowStart;
   final Value<String?> pickupWindowEnd;
-  final Value<String> status;
+  final Value<String?> status;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -2367,7 +2377,7 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     Value<String?>? dropoffWindowEnd,
     Value<String?>? pickupWindowStart,
     Value<String?>? pickupWindowEnd,
-    Value<String>? status,
+    Value<String?>? status,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -28903,7 +28913,7 @@ typedef $$SubjectsTableCreateCompanionBuilder =
       Value<String?> dropoffWindowEnd,
       Value<String?> pickupWindowStart,
       Value<String?> pickupWindowEnd,
-      Value<String> status,
+      Value<String?> status,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -28924,7 +28934,7 @@ typedef $$SubjectsTableUpdateCompanionBuilder =
       Value<String?> dropoffWindowEnd,
       Value<String?> pickupWindowStart,
       Value<String?> pickupWindowEnd,
-      Value<String> status,
+      Value<String?> status,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -29233,7 +29243,7 @@ class $$SubjectsTableTableManager
                 Value<String?> dropoffWindowEnd = const Value.absent(),
                 Value<String?> pickupWindowStart = const Value.absent(),
                 Value<String?> pickupWindowEnd = const Value.absent(),
-                Value<String> status = const Value.absent(),
+                Value<String?> status = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -29273,7 +29283,7 @@ class $$SubjectsTableTableManager
                 Value<String?> dropoffWindowEnd = const Value.absent(),
                 Value<String?> pickupWindowStart = const Value.absent(),
                 Value<String?> pickupWindowEnd = const Value.absent(),
-                Value<String> status = const Value.absent(),
+                Value<String?> status = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),

@@ -156,16 +156,28 @@ class _Row extends StatelessWidget {
   }
 
   void _go(BuildContext context) {
-    switch (item.kind) {
-      case ReadinessKind.neverArranged:
-        unawaited(context.push('/groups/${item.groupId}'));
-      case ReadinessKind.missingGuardian:
-      case ReadinessKind.missingAllergyAnswer:
-      case ReadinessKind.missingConsent:
-      case ReadinessKind.missingPhoto:
-        // Every one of these is fixed on a child's record, and the roster is
-        // where you pick which child — one hop, not a deep link per item.
-        unawaited(context.push('/subjects'));
+    final groupId = item.groupId;
+    if (item.kind == ReadinessKind.neverArranged) {
+      if (groupId != null) unawaited(context.push('/groups/$groupId'));
+      return;
     }
+    // Every other item is fixed on a child's record, which lives under its
+    // room. Land on the first offender rather than a roster you then have
+    // to search — the count ticks down as you work through them.
+    final subjectId = item.subjectId;
+    if (groupId != null && subjectId != null) {
+      unawaited(context.push('/groups/$groupId/students/$subjectId'));
+      return;
+    }
+    // A child with no room has no record route. Say so rather than
+    // absorbing the tap (CLAUDE.md: no silent no-op handlers).
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${item.names.isEmpty ? 'That child' : item.names.first} '
+          'is not in a room yet — add them to one first.',
+        ),
+      ),
+    );
   }
 }

@@ -47,6 +47,7 @@ class ReadinessItem {
     this.names = const [],
     this.groupId,
     this.groupName,
+    this.subjectId,
   });
 
   final ReadinessKind kind;
@@ -59,6 +60,11 @@ class ReadinessItem {
 
   final String? groupId;
   final String? groupName;
+
+  /// The FIRST child this item is about, so the row can land on a record
+  /// you can actually fix rather than a roster you then have to search.
+  /// Null only for [ReadinessKind.neverArranged], which is about a room.
+  final String? subjectId;
 }
 
 /// Everything today needs, most urgent first, omitting anything already done.
@@ -73,7 +79,9 @@ List<ReadinessItem> computeReadiness({
   Set<String> arrangedGroupIds = const {},
 }) {
   // Alumni are not today's problem. They keep every record they ever had,
-  // and none of it needs completing.
+  // and none of it needs completing. Anything that is not explicitly
+  // 'alumni' counts as active, so a row that predates the status column
+  // (NULL, or an unrecognised value) is still looked after.
   final active = [
     for (final s in roster)
       if (s.status != 'alumni') s,
@@ -84,10 +92,19 @@ List<ReadinessItem> computeReadiness({
 
   ReadinessItem? item(ReadinessKind kind, List<Subject> matches) {
     if (matches.isEmpty) return null;
+    // Prefer a child who HAS a room, because the child record lives under
+    // one (/groups/:id/students/:sid). A roomless child would otherwise
+    // give the row nowhere to go.
+    final target = matches.firstWhere(
+      (s) => s.groupId != null,
+      orElse: () => matches.first,
+    );
     return ReadinessItem(
       kind: kind,
       count: matches.length,
       names: [for (final s in matches.take(3)) nameOf(s)],
+      subjectId: target.id,
+      groupId: target.groupId,
     );
   }
 

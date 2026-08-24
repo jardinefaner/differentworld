@@ -57,8 +57,9 @@ class _RolloverScreenState extends ConsumerState<RolloverScreen> {
   ];
 
   Future<void> _start(List<RolloverCandidate> roster) async {
-    final spaceId = ref.read(viewerProvider).spaceId;
-    if (spaceId == null || _busy) return;
+    final space = ref.read(viewerProvider).spaceId;
+    if (space == null || _busy) return;
+    final spaceId = space;
     final name = _name.text.trim();
     if (name.isEmpty) return;
 
@@ -69,6 +70,10 @@ class _RolloverScreenState extends ConsumerState<RolloverScreen> {
     final now = DateTime.now().toIso8601String();
     final termId = uuid.v4();
     final summary = summarise(roster, _plan);
+    // Captured BEFORE the write, because undo has to put this period back
+    // as the current one. Null on the very first rollover, which undo
+    // handles — there is simply no previous period to restore.
+    final previousTermId = ref.read(currentTermProvider).value?.id;
 
     try {
       final db = await ref.read(appDatabaseProvider.future);
@@ -91,10 +96,24 @@ class _RolloverScreenState extends ConsumerState<RolloverScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
+          duration: const Duration(seconds: 8),
           content: Text(
             '$name started — ${summary.carriedForward} carried forward, '
             '${summary.becameAlumni} now alumni, '
             '${summary.recordsDeleted} records deleted.',
+          ),
+          // Undo is offered because it genuinely works: the rollover only
+          // ever wrote, so putting it back is a matter of closing what it
+          // opened and re-opening what it closed.
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => unawaited(
+              _undo(
+                spaceId: spaceId,
+                termId: termId,
+                previousTermId: previousTermId,
+              ),
+            ),
           ),
         ),
       );
@@ -109,6 +128,34 @@ class _RolloverScreenState extends ConsumerState<RolloverScreen> {
       );
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Put the year back. Safe to offer because nothing was destroyed.
+  Future<void> _undo({
+    required String spaceId,
+    required String termId,
+    required String? previousTermId,
+  }) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final db = await ref.read(appDatabaseProvider.future);
+      await db.enrollmentsDao.undoRollover(
+        spaceId: spaceId,
+        termId: termId,
+        previousTermId: previousTermId,
+        nowIso: DateTime.now().toIso8601String(),
+      );
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Put back. Nothing changed.')),
+      );
+    } on Object catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'rollover'),
+      );
+      messenger?.showSnackBar(
+        const SnackBar(content: Text("Couldn't undo that. Try again.")),
+      );
     }
   }
 

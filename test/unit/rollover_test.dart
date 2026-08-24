@@ -343,6 +343,53 @@ void main() {
       expect(current.id, 't1');
     });
 
+    test('a row with NULL status still counts as enrolled', () async {
+      // The upgrade window: `status` is a new column, so between an app
+      // update and the first sync that carries it every existing local row
+      // has NULL there. If the roster queries tested `status = 'enrolled'`
+      // alone, every child in the program would vanish from every roster —
+      // the exact disappearance this feature exists to prevent.
+      await db.customStatement('UPDATE subjects SET status = NULL');
+      final inRoom = await db.subjectsDao.watchInGroup('g1').first;
+      final inSpace = await db.subjectsDao.watchInSpace('sp1').first;
+      expect(inRoom.length, 2, reason: 'NULL is not "gone"');
+      expect(inSpace.length, 3);
+      // …and they can still be rolled over.
+      await roll({'s1': 'g1', 's2': 'g1', 's3': 'g2'});
+      final rows = await db.select(db.enrollments).get();
+      expect(rows.length, 3);
+    });
+
+    test('alumni actually leave the rosters', () async {
+      await roll({'s1': 'g1', 's2': 'g1'}); // s3 → alumni
+      final inRoom = await db.subjectsDao.watchInGroup('g2').first;
+      final inSpace = await db.subjectsDao.watchInSpace('sp1').first;
+      expect(inRoom, isEmpty, reason: 'g2 only held the alumnus');
+      // Ordered by first name (Ava before Owen), which is what the roster
+      // queries promise — assert the SET, not an incidental order.
+      expect(inSpace.map((s) => s.id).toSet(), {'s1', 's2'});
+      // But they are still reachable on purpose.
+      final alumni = await db.subjectsDao.watchAlumniInSpace('sp1').first;
+      expect(alumni.map((s) => s.id), ['s3']);
+    });
+
+    test(
+      'undo works on the FIRST rollover, when there is no prior period',
+      () async {
+        await roll({'s1': 'g1', 's2': 'g1'});
+        await db.enrollmentsDao.undoRollover(
+          spaceId: 'sp1',
+          termId: 't2',
+          previousTermId: null,
+          nowIso: now,
+        );
+        final kids = await db.select(db.subjects).get();
+        expect(kids.every((s) => s.status == 'enrolled'), isTrue);
+        expect(await db.select(db.enrollments).get(), isEmpty);
+        expect(await db.select(db.terms).get(), isEmpty);
+      },
+    );
+
     test('an alumnus can be brought back', () async {
       await roll({'s1': 'g1', 's2': 'g1'});
       await db.enrollmentsDao.reinstate('s3', now);

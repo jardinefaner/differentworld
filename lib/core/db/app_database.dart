@@ -109,7 +109,14 @@ class Subjects extends Table {
   /// intake — the year rollover turns them into an alumnus, and they keep
   /// every observation, photo tag, message and book they ever had
   /// (docs/ROLLOVER.md).
-  TextColumn get status => text().withDefault(const Constant('enrolled'))();
+  ///
+  /// **Nullable, deliberately, even though the server column is NOT NULL.**
+  /// PowerSync's local columns are always nullable, and a newly-added one
+  /// reads NULL for every row already on the device until the sync that
+  /// carries it arrives. Declaring it non-null here would make Drift throw
+  /// while mapping those rows — so the type mirrors the local reality, and
+  /// every query treats NULL as enrolled.
+  TextColumn get status => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

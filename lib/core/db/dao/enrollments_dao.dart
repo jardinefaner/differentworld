@@ -109,9 +109,14 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
 
       // Everyone currently enrolled — including children who never had an
       // enrollment row because they predate this feature.
+      // NULL counts as enrolled — see SubjectsDao.watchInGroup. A row that
+      // predates the status column must still be rolled over, or the first
+      // rollover after an update quietly skips the entire program.
       final roster =
           await (select(subjects)..where(
-                (s) => s.spaceId.equals(spaceId) & s.status.equals('enrolled'),
+                (s) =>
+                    s.spaceId.equals(spaceId) &
+                    (s.status.equals('enrolled') | s.status.isNull()),
               ))
               .get();
 
@@ -132,11 +137,16 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
             ),
           );
           // Keep the denormalised current room in step, so every existing
-          // roster query follows the child up without knowing about terms.
-          if (room != null && room != s.groupId) {
+          // roster query follows the child up without knowing about terms —
+          // and stamp status explicitly, which HEALS the NULL a newly-added
+          // column leaves behind. After one rollover the whole roster is
+          // self-describing and no query has to be defensive about it.
+          final movingRoom = room != null && room != s.groupId;
+          if (movingRoom || s.status != 'enrolled') {
             await (update(subjects)..where((r) => r.id.equals(s.id))).write(
               SubjectsCompanion(
-                groupId: Value(room),
+                groupId: movingRoom ? Value(room) : const Value.absent(),
+                status: const Value('enrolled'),
                 updatedAt: Value(nowIso),
               ),
             );
@@ -156,23 +166,28 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
   /// Undo a rollover: re-open the enrollments it closed, drop the ones it
   /// opened, restore everyone it made alumni, and remove the new period.
   /// Reversible because the rollover only ever wrote — it never deleted.
+  /// [previousTermId] is null on the very first rollover — there is simply
+  /// no earlier period to restore, and undo still has to work.
   Future<void> undoRollover({
     required String spaceId,
     required String termId,
-    required String previousTermId,
+    required String? previousTermId,
     required String nowIso,
   }) async {
     await transaction(() async {
       await (delete(enrollments)..where((e) => e.termId.equals(termId))).go();
-      await (update(enrollments)..where(
-            (e) => e.spaceId.equals(spaceId) & e.termId.equals(previousTermId),
-          ))
-          .write(
-            EnrollmentsCompanion(
-              endedAt: const Value(null),
-              updatedAt: Value(nowIso),
-            ),
-          );
+      if (previousTermId != null) {
+        await (update(enrollments)..where(
+              (e) =>
+                  e.spaceId.equals(spaceId) & e.termId.equals(previousTermId),
+            ))
+            .write(
+              EnrollmentsCompanion(
+                endedAt: const Value(null),
+                updatedAt: Value(nowIso),
+              ),
+            );
+      }
       await (update(subjects)..where(
             (s) => s.spaceId.equals(spaceId) & s.status.equals('alumni'),
           ))
@@ -183,9 +198,11 @@ class EnrollmentsDao extends DatabaseAccessor<AppDatabase>
             ),
           );
       await (delete(terms)..where((t) => t.id.equals(termId))).go();
-      await (update(terms)..where((t) => t.id.equals(previousTermId))).write(
-        TermsCompanion(isCurrent: const Value(1), updatedAt: Value(nowIso)),
-      );
+      if (previousTermId != null) {
+        await (update(terms)..where((t) => t.id.equals(previousTermId))).write(
+          TermsCompanion(isCurrent: const Value(1), updatedAt: Value(nowIso)),
+        );
+      }
     });
   }
 

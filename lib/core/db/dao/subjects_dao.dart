@@ -15,10 +15,19 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
   /// each call site — every daily surface (attendance, the pickers, the
   /// arrangement engine) reads through this, and a rollover has to actually
   /// clear the room or it hasn't done anything (docs/ROLLOVER.md).
+  ///
+  /// **NULL counts as enrolled, and that is load-bearing.** `status` is a
+  /// new column: between an app update and the first sync that carries it,
+  /// every existing local row has NULL there. Testing `status = 'enrolled'`
+  /// alone would make every child in the program vanish from every roster
+  /// for that window — the exact "my data disappeared" panic this whole
+  /// feature exists to prevent.
   Stream<List<Subject>> watchInGroup(String groupId) {
     return (select(subjects)
           ..where(
-            (s) => s.groupId.equals(groupId) & s.status.equals('enrolled'),
+            (s) =>
+                s.groupId.equals(groupId) &
+                (s.status.equals('enrolled') | s.status.isNull()),
           )
           ..orderBy([
             (s) => OrderingTerm(expression: s.firstName),
@@ -33,7 +42,9 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
   Stream<List<Subject>> watchInSpace(String spaceId) {
     return (select(subjects)
           ..where(
-            (s) => s.spaceId.equals(spaceId) & s.status.equals('enrolled'),
+            (s) =>
+                s.spaceId.equals(spaceId) &
+                (s.status.equals('enrolled') | s.status.isNull()),
           )
           ..orderBy([
             (s) => OrderingTerm(expression: s.firstName),
