@@ -97,6 +97,30 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning', 'afternoon'],
       onSelect: (ctx, _) => ctx.push('/run-day'),
     ),
+    // Make groups, per cohort. Emitted per-room like the other per-cohort
+    // entries, and keyed to the words staff use ("partners", "teams",
+    // "split them up") rather than the feature's name.
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.arrange.${g.id}',
+        label: 'Make groups · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.groups_2_outlined,
+        keywords: [
+          'arrange',
+          'make groups',
+          'group them',
+          'split',
+          'split them up',
+          'partners',
+          'pairs',
+          'teams',
+          'shuffle',
+          'mix them up',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/arrange'),
+      ),
     // Year rollover + its receipt. Director-only, and reachable by the
     // words a director actually uses in August ("new year", "move up",
     // "graduate") rather than the feature's own name.

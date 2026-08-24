@@ -108,6 +108,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
               switch (v) {
                 case 'observations':
                   unawaited(context.push('/groups/$groupId/observations'));
+                case 'arrange':
+                  unawaited(context.push('/groups/$groupId/arrange'));
+                case 'coverage':
+                  unawaited(context.push('/groups/$groupId/coverage'));
                 case 'edit':
                   unawaited(context.push('/groups/$groupId/edit'));
               }
@@ -122,6 +126,23 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
+              // The Room console's instruments (docs/ROTATION.md).
+              const PopupMenuItem(
+                value: 'arrange',
+                child: ListTile(
+                  leading: Icon(Icons.groups_2_outlined),
+                  title: Text('Make groups'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'coverage',
+                child: ListTile(
+                  leading: Icon(Icons.hub_outlined),
+                  title: Text('Who hasn’t worked together'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
               if (group != null && viewer.canManageSpace)
                 const PopupMenuItem(
                   value: 'edit',

@@ -128,6 +128,8 @@ import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
+import 'package:differentworld/features/rotation/arrange_screen.dart';
+import 'package:differentworld/features/rotation/coverage_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
@@ -433,6 +435,26 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => RouteTitle(
                       title: 'Observations',
                       child: ObservationsScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  // The Room console's instruments (docs/ROTATION.md), nested
+                  // under the room because the roster lives inside it.
+                  GoRoute(
+                    path: 'arrange',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Make groups',
+                      child: ArrangeScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'coverage',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Coverage',
+                      child: CoverageScreen(
                         groupId: state.pathParameters['id']!,
                       ),
                     ),

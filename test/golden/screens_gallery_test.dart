@@ -107,6 +107,8 @@ import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
+import 'package:differentworld/features/rotation/arrange_screen.dart';
+import 'package:differentworld/features/rotation/coverage_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
@@ -667,6 +669,16 @@ void main() {
     'screens/survey_take',
     (db) async => const SurveyTakeScreen(templateId: 'basecamp_2025_26'),
     bare: true,
+  );
+
+  // The Room console's instruments (docs/ROTATION.md).
+  _richPlate(
+    'screens/arrange',
+    (db) async => const ArrangeScreen(groupId: 'g1'),
+  );
+  _richPlate(
+    'screens/coverage',
+    (db) async => const CoverageScreen(groupId: 'g1'),
   );
 
   // Year rollover + its receipt (docs/ROLLOVER.md).

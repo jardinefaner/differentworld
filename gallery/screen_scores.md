@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-151 screens scored · worst-first · `tool/score_screens.py`
+153 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **100.0** · ship-confident: 151
+Average: **100.0** · ship-confident: 153
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -15,6 +15,7 @@ Average: **100.0** · ship-confident: 151
 | 100 | ship-confident | `activity_lens` | — |
 | 100 | ship-confident | `activity_match` | — |
 | 100 | ship-confident | `alumni` | — |
+| 100 | ship-confident | `arrange` | — |
 | 100 | ship-confident | `attendance` | — |
 | 100 | ship-confident | `block_edit` | — |
 | 100 | ship-confident | `block_run` | — |
@@ -34,6 +35,7 @@ Average: **100.0** · ship-confident: 151
 | 100 | ship-confident | `child_world` | — |
 | 100 | ship-confident | `collection` | — |
 | 100 | ship-confident | `conductor` | — |
+| 100 | ship-confident | `coverage` | — |
 | 100 | ship-confident | `create_space` | — |
 | 100 | ship-confident | `daily` | — |
 | 100 | ship-confident | `day_run` ⟨raw canvas⟩ | — |
