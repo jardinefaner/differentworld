@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -20,6 +19,7 @@ import 'package:differentworld/features/launch/launch_readiness.dart';
 import 'package:differentworld/features/live_session/live_session_banner.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/onboarding/widgets/starter_spine.dart';
+import 'package:differentworld/features/readiness/widgets/readiness_card.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
@@ -1037,6 +1037,10 @@ class TodayBody extends ConsumerWidget {
               ? Theme.of(context).colorScheme.error
               : null,
         ),
+        // What today needs — self-retiring like the spine below it, and
+        // above it because these are the things only fixable while the
+        // families are still in the room (docs/READINESS.md).
+        const ReadinessCard(),
         // First-run starter spine — self-retiring; renders nothing once
         // day one is done (lib/features/onboarding/widgets/starter_spine.dart).
         const StarterSpine(),

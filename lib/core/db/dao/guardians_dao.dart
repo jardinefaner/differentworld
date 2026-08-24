@@ -94,6 +94,15 @@ class GuardiansDao extends DatabaseAccessor<AppDatabase>
   /// Find the guardian row that an authenticated user resolves to.
   /// Returns null when the signed-in user isn't linked to any guardian
   /// — i.e., they're staff or not yet onboarded.
+  /// Every subject↔guardian link in a space — the cheap way to answer
+  /// "which children have nobody to call", which the day-one readiness
+  /// briefing asks for the whole roster at once rather than per child.
+  Stream<List<SubjectGuardian>> watchLinksInSpace(String spaceId) {
+    return (select(
+      subjectGuardians,
+    )..where((l) => l.spaceId.equals(spaceId))).watch();
+  }
+
   Stream<Guardian?> watchForUser(String authUserId) {
     return (select(
       guardians,
