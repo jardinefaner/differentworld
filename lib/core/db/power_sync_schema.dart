@@ -621,4 +621,60 @@ const appSchema = Schema([
     Column.text('created_by'),
     Column.text('created_at'),
   ]),
+
+  // The Room console (docs/ROTATION.md). Both GROW every session, and both
+  // are watched as "this cohort, newest first" — so both carry the index
+  // that query shape needs. Without it each stream emission full-scans and
+  // sorts the whole table locally (the cost that bit entries / attendance).
+  Table(
+    'rotation_rounds',
+    [
+      Column.text('space_id'),
+      Column.text('group_id'),
+      Column.integer('round_no'),
+      Column.text('mode'),
+      Column.integer('n'),
+      Column.text('remainder'),
+      // jsonb server-side → raw JSON string locally, parsed client-side.
+      Column.text('groups'),
+      Column.text('sat_out'),
+      // bigint server-side; the local store has no 64-bit-safe INTEGER
+      // guarantee across platforms, so the seed rides as text and parses
+      // back to an int. It is an opaque token, never arithmetic.
+      Column.text('seed'),
+      Column.integer('new_pairs'),
+      Column.integer('repeat_pairs'),
+      Column.text('created_by'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('rotation_rounds_group', [
+        IndexedColumn('group_id'),
+        IndexedColumn.descending('round_no'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'room_events',
+    [
+      Column.text('space_id'),
+      Column.text('group_id'),
+      Column.text('subject_id'),
+      Column.text('kind'),
+      Column.integer('value'),
+      Column.text('detail'),
+      Column.text('occurred_at'),
+      Column.text('created_by'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('room_events_group', [
+        IndexedColumn('group_id'),
+        IndexedColumn.descending('occurred_at'),
+      ]),
+    ],
+  ),
 ]);

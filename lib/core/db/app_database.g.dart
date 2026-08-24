@@ -25362,6 +25362,1506 @@ class ContentItemsCompanion extends UpdateCompanion<ContentItemRow> {
   }
 }
 
+class $RotationRoundsTable extends RotationRounds
+    with TableInfo<$RotationRoundsTable, RotationRound> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RotationRoundsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _roundNoMeta = const VerificationMeta(
+    'roundNo',
+  );
+  @override
+  late final GeneratedColumn<int> roundNo = GeneratedColumn<int>(
+    'round_no',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modeMeta = const VerificationMeta('mode');
+  @override
+  late final GeneratedColumn<String> mode = GeneratedColumn<String>(
+    'mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nMeta = const VerificationMeta('n');
+  @override
+  late final GeneratedColumn<int> n = GeneratedColumn<int>(
+    'n',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _remainderMeta = const VerificationMeta(
+    'remainder',
+  );
+  @override
+  late final GeneratedColumn<String> remainder = GeneratedColumn<String>(
+    'remainder',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupsMeta = const VerificationMeta('groups');
+  @override
+  late final GeneratedColumn<String> groups = GeneratedColumn<String>(
+    'groups',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _satOutMeta = const VerificationMeta('satOut');
+  @override
+  late final GeneratedColumn<String> satOut = GeneratedColumn<String>(
+    'sat_out',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _seedMeta = const VerificationMeta('seed');
+  @override
+  late final GeneratedColumn<String> seed = GeneratedColumn<String>(
+    'seed',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _newPairsMeta = const VerificationMeta(
+    'newPairs',
+  );
+  @override
+  late final GeneratedColumn<int> newPairs = GeneratedColumn<int>(
+    'new_pairs',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repeatPairsMeta = const VerificationMeta(
+    'repeatPairs',
+  );
+  @override
+  late final GeneratedColumn<int> repeatPairs = GeneratedColumn<int>(
+    'repeat_pairs',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    groupId,
+    roundNo,
+    mode,
+    n,
+    remainder,
+    groups,
+    satOut,
+    seed,
+    newPairs,
+    repeatPairs,
+    createdBy,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rotation_rounds';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RotationRound> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('round_no')) {
+      context.handle(
+        _roundNoMeta,
+        roundNo.isAcceptableOrUnknown(data['round_no']!, _roundNoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_roundNoMeta);
+    }
+    if (data.containsKey('mode')) {
+      context.handle(
+        _modeMeta,
+        mode.isAcceptableOrUnknown(data['mode']!, _modeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modeMeta);
+    }
+    if (data.containsKey('n')) {
+      context.handle(_nMeta, n.isAcceptableOrUnknown(data['n']!, _nMeta));
+    } else if (isInserting) {
+      context.missing(_nMeta);
+    }
+    if (data.containsKey('remainder')) {
+      context.handle(
+        _remainderMeta,
+        remainder.isAcceptableOrUnknown(data['remainder']!, _remainderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_remainderMeta);
+    }
+    if (data.containsKey('groups')) {
+      context.handle(
+        _groupsMeta,
+        groups.isAcceptableOrUnknown(data['groups']!, _groupsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupsMeta);
+    }
+    if (data.containsKey('sat_out')) {
+      context.handle(
+        _satOutMeta,
+        satOut.isAcceptableOrUnknown(data['sat_out']!, _satOutMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_satOutMeta);
+    }
+    if (data.containsKey('seed')) {
+      context.handle(
+        _seedMeta,
+        seed.isAcceptableOrUnknown(data['seed']!, _seedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seedMeta);
+    }
+    if (data.containsKey('new_pairs')) {
+      context.handle(
+        _newPairsMeta,
+        newPairs.isAcceptableOrUnknown(data['new_pairs']!, _newPairsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_newPairsMeta);
+    }
+    if (data.containsKey('repeat_pairs')) {
+      context.handle(
+        _repeatPairsMeta,
+        repeatPairs.isAcceptableOrUnknown(
+          data['repeat_pairs']!,
+          _repeatPairsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_repeatPairsMeta);
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RotationRound map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RotationRound(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      roundNo: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}round_no'],
+      )!,
+      mode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mode'],
+      )!,
+      n: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}n'],
+      )!,
+      remainder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remainder'],
+      )!,
+      groups: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}groups'],
+      )!,
+      satOut: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sat_out'],
+      )!,
+      seed: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}seed'],
+      )!,
+      newPairs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}new_pairs'],
+      )!,
+      repeatPairs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}repeat_pairs'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RotationRoundsTable createAlias(String alias) {
+    return $RotationRoundsTable(attachedDatabase, alias);
+  }
+}
+
+class RotationRound extends DataClass implements Insertable<RotationRound> {
+  final String id;
+  final String spaceId;
+  final String groupId;
+  final int roundNo;
+  final String mode;
+  final int n;
+  final String remainder;
+  final String groups;
+  final String satOut;
+  final String seed;
+  final int newPairs;
+  final int repeatPairs;
+  final String? createdBy;
+  final String createdAt;
+  final String updatedAt;
+  const RotationRound({
+    required this.id,
+    required this.spaceId,
+    required this.groupId,
+    required this.roundNo,
+    required this.mode,
+    required this.n,
+    required this.remainder,
+    required this.groups,
+    required this.satOut,
+    required this.seed,
+    required this.newPairs,
+    required this.repeatPairs,
+    this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['group_id'] = Variable<String>(groupId);
+    map['round_no'] = Variable<int>(roundNo);
+    map['mode'] = Variable<String>(mode);
+    map['n'] = Variable<int>(n);
+    map['remainder'] = Variable<String>(remainder);
+    map['groups'] = Variable<String>(groups);
+    map['sat_out'] = Variable<String>(satOut);
+    map['seed'] = Variable<String>(seed);
+    map['new_pairs'] = Variable<int>(newPairs);
+    map['repeat_pairs'] = Variable<int>(repeatPairs);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  RotationRoundsCompanion toCompanion(bool nullToAbsent) {
+    return RotationRoundsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      groupId: Value(groupId),
+      roundNo: Value(roundNo),
+      mode: Value(mode),
+      n: Value(n),
+      remainder: Value(remainder),
+      groups: Value(groups),
+      satOut: Value(satOut),
+      seed: Value(seed),
+      newPairs: Value(newPairs),
+      repeatPairs: Value(repeatPairs),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory RotationRound.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RotationRound(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      roundNo: serializer.fromJson<int>(json['roundNo']),
+      mode: serializer.fromJson<String>(json['mode']),
+      n: serializer.fromJson<int>(json['n']),
+      remainder: serializer.fromJson<String>(json['remainder']),
+      groups: serializer.fromJson<String>(json['groups']),
+      satOut: serializer.fromJson<String>(json['satOut']),
+      seed: serializer.fromJson<String>(json['seed']),
+      newPairs: serializer.fromJson<int>(json['newPairs']),
+      repeatPairs: serializer.fromJson<int>(json['repeatPairs']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'groupId': serializer.toJson<String>(groupId),
+      'roundNo': serializer.toJson<int>(roundNo),
+      'mode': serializer.toJson<String>(mode),
+      'n': serializer.toJson<int>(n),
+      'remainder': serializer.toJson<String>(remainder),
+      'groups': serializer.toJson<String>(groups),
+      'satOut': serializer.toJson<String>(satOut),
+      'seed': serializer.toJson<String>(seed),
+      'newPairs': serializer.toJson<int>(newPairs),
+      'repeatPairs': serializer.toJson<int>(repeatPairs),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  RotationRound copyWith({
+    String? id,
+    String? spaceId,
+    String? groupId,
+    int? roundNo,
+    String? mode,
+    int? n,
+    String? remainder,
+    String? groups,
+    String? satOut,
+    String? seed,
+    int? newPairs,
+    int? repeatPairs,
+    Value<String?> createdBy = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => RotationRound(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    groupId: groupId ?? this.groupId,
+    roundNo: roundNo ?? this.roundNo,
+    mode: mode ?? this.mode,
+    n: n ?? this.n,
+    remainder: remainder ?? this.remainder,
+    groups: groups ?? this.groups,
+    satOut: satOut ?? this.satOut,
+    seed: seed ?? this.seed,
+    newPairs: newPairs ?? this.newPairs,
+    repeatPairs: repeatPairs ?? this.repeatPairs,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  RotationRound copyWithCompanion(RotationRoundsCompanion data) {
+    return RotationRound(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      roundNo: data.roundNo.present ? data.roundNo.value : this.roundNo,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      n: data.n.present ? data.n.value : this.n,
+      remainder: data.remainder.present ? data.remainder.value : this.remainder,
+      groups: data.groups.present ? data.groups.value : this.groups,
+      satOut: data.satOut.present ? data.satOut.value : this.satOut,
+      seed: data.seed.present ? data.seed.value : this.seed,
+      newPairs: data.newPairs.present ? data.newPairs.value : this.newPairs,
+      repeatPairs: data.repeatPairs.present
+          ? data.repeatPairs.value
+          : this.repeatPairs,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RotationRound(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('roundNo: $roundNo, ')
+          ..write('mode: $mode, ')
+          ..write('n: $n, ')
+          ..write('remainder: $remainder, ')
+          ..write('groups: $groups, ')
+          ..write('satOut: $satOut, ')
+          ..write('seed: $seed, ')
+          ..write('newPairs: $newPairs, ')
+          ..write('repeatPairs: $repeatPairs, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    groupId,
+    roundNo,
+    mode,
+    n,
+    remainder,
+    groups,
+    satOut,
+    seed,
+    newPairs,
+    repeatPairs,
+    createdBy,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RotationRound &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.groupId == this.groupId &&
+          other.roundNo == this.roundNo &&
+          other.mode == this.mode &&
+          other.n == this.n &&
+          other.remainder == this.remainder &&
+          other.groups == this.groups &&
+          other.satOut == this.satOut &&
+          other.seed == this.seed &&
+          other.newPairs == this.newPairs &&
+          other.repeatPairs == this.repeatPairs &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class RotationRoundsCompanion extends UpdateCompanion<RotationRound> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> groupId;
+  final Value<int> roundNo;
+  final Value<String> mode;
+  final Value<int> n;
+  final Value<String> remainder;
+  final Value<String> groups;
+  final Value<String> satOut;
+  final Value<String> seed;
+  final Value<int> newPairs;
+  final Value<int> repeatPairs;
+  final Value<String?> createdBy;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const RotationRoundsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.roundNo = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.n = const Value.absent(),
+    this.remainder = const Value.absent(),
+    this.groups = const Value.absent(),
+    this.satOut = const Value.absent(),
+    this.seed = const Value.absent(),
+    this.newPairs = const Value.absent(),
+    this.repeatPairs = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RotationRoundsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String groupId,
+    required int roundNo,
+    required String mode,
+    required int n,
+    required String remainder,
+    required String groups,
+    required String satOut,
+    required String seed,
+    required int newPairs,
+    required int repeatPairs,
+    this.createdBy = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       groupId = Value(groupId),
+       roundNo = Value(roundNo),
+       mode = Value(mode),
+       n = Value(n),
+       remainder = Value(remainder),
+       groups = Value(groups),
+       satOut = Value(satOut),
+       seed = Value(seed),
+       newPairs = Value(newPairs),
+       repeatPairs = Value(repeatPairs),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<RotationRound> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? groupId,
+    Expression<int>? roundNo,
+    Expression<String>? mode,
+    Expression<int>? n,
+    Expression<String>? remainder,
+    Expression<String>? groups,
+    Expression<String>? satOut,
+    Expression<String>? seed,
+    Expression<int>? newPairs,
+    Expression<int>? repeatPairs,
+    Expression<String>? createdBy,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (groupId != null) 'group_id': groupId,
+      if (roundNo != null) 'round_no': roundNo,
+      if (mode != null) 'mode': mode,
+      if (n != null) 'n': n,
+      if (remainder != null) 'remainder': remainder,
+      if (groups != null) 'groups': groups,
+      if (satOut != null) 'sat_out': satOut,
+      if (seed != null) 'seed': seed,
+      if (newPairs != null) 'new_pairs': newPairs,
+      if (repeatPairs != null) 'repeat_pairs': repeatPairs,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RotationRoundsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? groupId,
+    Value<int>? roundNo,
+    Value<String>? mode,
+    Value<int>? n,
+    Value<String>? remainder,
+    Value<String>? groups,
+    Value<String>? satOut,
+    Value<String>? seed,
+    Value<int>? newPairs,
+    Value<int>? repeatPairs,
+    Value<String?>? createdBy,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return RotationRoundsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      groupId: groupId ?? this.groupId,
+      roundNo: roundNo ?? this.roundNo,
+      mode: mode ?? this.mode,
+      n: n ?? this.n,
+      remainder: remainder ?? this.remainder,
+      groups: groups ?? this.groups,
+      satOut: satOut ?? this.satOut,
+      seed: seed ?? this.seed,
+      newPairs: newPairs ?? this.newPairs,
+      repeatPairs: repeatPairs ?? this.repeatPairs,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (roundNo.present) {
+      map['round_no'] = Variable<int>(roundNo.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(mode.value);
+    }
+    if (n.present) {
+      map['n'] = Variable<int>(n.value);
+    }
+    if (remainder.present) {
+      map['remainder'] = Variable<String>(remainder.value);
+    }
+    if (groups.present) {
+      map['groups'] = Variable<String>(groups.value);
+    }
+    if (satOut.present) {
+      map['sat_out'] = Variable<String>(satOut.value);
+    }
+    if (seed.present) {
+      map['seed'] = Variable<String>(seed.value);
+    }
+    if (newPairs.present) {
+      map['new_pairs'] = Variable<int>(newPairs.value);
+    }
+    if (repeatPairs.present) {
+      map['repeat_pairs'] = Variable<int>(repeatPairs.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RotationRoundsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('roundNo: $roundNo, ')
+          ..write('mode: $mode, ')
+          ..write('n: $n, ')
+          ..write('remainder: $remainder, ')
+          ..write('groups: $groups, ')
+          ..write('satOut: $satOut, ')
+          ..write('seed: $seed, ')
+          ..write('newPairs: $newPairs, ')
+          ..write('repeatPairs: $repeatPairs, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RoomEventsTable extends RoomEvents
+    with TableInfo<$RoomEventsTable, RoomEvent> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoomEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<int> value = GeneratedColumn<int>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _detailMeta = const VerificationMeta('detail');
+  @override
+  late final GeneratedColumn<String> detail = GeneratedColumn<String>(
+    'detail',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<String> occurredAt = GeneratedColumn<String>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    groupId,
+    subjectId,
+    kind,
+    value,
+    detail,
+    occurredAt,
+    createdBy,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'room_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoomEvent> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('detail')) {
+      context.handle(
+        _detailMeta,
+        detail.isAcceptableOrUnknown(data['detail']!, _detailMeta),
+      );
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RoomEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoomEvent(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}value'],
+      )!,
+      detail: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}detail'],
+      ),
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RoomEventsTable createAlias(String alias) {
+    return $RoomEventsTable(attachedDatabase, alias);
+  }
+}
+
+class RoomEvent extends DataClass implements Insertable<RoomEvent> {
+  final String id;
+  final String spaceId;
+  final String groupId;
+
+  /// Null when the event is about the room rather than a child.
+  final String? subjectId;
+  final String kind;
+
+  /// Kind-dependent magnitude: seconds spoken, points awarded, else 1.
+  final int value;
+  final String? detail;
+  final String occurredAt;
+  final String? createdBy;
+  final String createdAt;
+  final String updatedAt;
+  const RoomEvent({
+    required this.id,
+    required this.spaceId,
+    required this.groupId,
+    this.subjectId,
+    required this.kind,
+    required this.value,
+    this.detail,
+    required this.occurredAt,
+    this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['group_id'] = Variable<String>(groupId);
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
+    map['kind'] = Variable<String>(kind);
+    map['value'] = Variable<int>(value);
+    if (!nullToAbsent || detail != null) {
+      map['detail'] = Variable<String>(detail);
+    }
+    map['occurred_at'] = Variable<String>(occurredAt);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  RoomEventsCompanion toCompanion(bool nullToAbsent) {
+    return RoomEventsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      groupId: Value(groupId),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
+      kind: Value(kind),
+      value: Value(value),
+      detail: detail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(detail),
+      occurredAt: Value(occurredAt),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory RoomEvent.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoomEvent(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      value: serializer.fromJson<int>(json['value']),
+      detail: serializer.fromJson<String?>(json['detail']),
+      occurredAt: serializer.fromJson<String>(json['occurredAt']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'groupId': serializer.toJson<String>(groupId),
+      'subjectId': serializer.toJson<String?>(subjectId),
+      'kind': serializer.toJson<String>(kind),
+      'value': serializer.toJson<int>(value),
+      'detail': serializer.toJson<String?>(detail),
+      'occurredAt': serializer.toJson<String>(occurredAt),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  RoomEvent copyWith({
+    String? id,
+    String? spaceId,
+    String? groupId,
+    Value<String?> subjectId = const Value.absent(),
+    String? kind,
+    int? value,
+    Value<String?> detail = const Value.absent(),
+    String? occurredAt,
+    Value<String?> createdBy = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => RoomEvent(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    groupId: groupId ?? this.groupId,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
+    kind: kind ?? this.kind,
+    value: value ?? this.value,
+    detail: detail.present ? detail.value : this.detail,
+    occurredAt: occurredAt ?? this.occurredAt,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  RoomEvent copyWithCompanion(RoomEventsCompanion data) {
+    return RoomEvent(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      value: data.value.present ? data.value.value : this.value,
+      detail: data.detail.present ? data.detail.value : this.detail,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoomEvent(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('kind: $kind, ')
+          ..write('value: $value, ')
+          ..write('detail: $detail, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    groupId,
+    subjectId,
+    kind,
+    value,
+    detail,
+    occurredAt,
+    createdBy,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoomEvent &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.groupId == this.groupId &&
+          other.subjectId == this.subjectId &&
+          other.kind == this.kind &&
+          other.value == this.value &&
+          other.detail == this.detail &&
+          other.occurredAt == this.occurredAt &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class RoomEventsCompanion extends UpdateCompanion<RoomEvent> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> groupId;
+  final Value<String?> subjectId;
+  final Value<String> kind;
+  final Value<int> value;
+  final Value<String?> detail;
+  final Value<String> occurredAt;
+  final Value<String?> createdBy;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const RoomEventsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.value = const Value.absent(),
+    this.detail = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RoomEventsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String groupId,
+    this.subjectId = const Value.absent(),
+    required String kind,
+    required int value,
+    this.detail = const Value.absent(),
+    required String occurredAt,
+    this.createdBy = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       groupId = Value(groupId),
+       kind = Value(kind),
+       value = Value(value),
+       occurredAt = Value(occurredAt),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<RoomEvent> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? groupId,
+    Expression<String>? subjectId,
+    Expression<String>? kind,
+    Expression<int>? value,
+    Expression<String>? detail,
+    Expression<String>? occurredAt,
+    Expression<String>? createdBy,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (groupId != null) 'group_id': groupId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (kind != null) 'kind': kind,
+      if (value != null) 'value': value,
+      if (detail != null) 'detail': detail,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RoomEventsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? groupId,
+    Value<String?>? subjectId,
+    Value<String>? kind,
+    Value<int>? value,
+    Value<String?>? detail,
+    Value<String>? occurredAt,
+    Value<String?>? createdBy,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return RoomEventsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      groupId: groupId ?? this.groupId,
+      subjectId: subjectId ?? this.subjectId,
+      kind: kind ?? this.kind,
+      value: value ?? this.value,
+      detail: detail ?? this.detail,
+      occurredAt: occurredAt ?? this.occurredAt,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<int>(value.value);
+    }
+    if (detail.present) {
+      map['detail'] = Variable<String>(detail.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<String>(occurredAt.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoomEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('kind: $kind, ')
+          ..write('value: $value, ')
+          ..write('detail: $detail, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -25421,9 +26921,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WeeklyTemplateBlocksTable weeklyTemplateBlocks =
       $WeeklyTemplateBlocksTable(this);
   late final $ContentItemsTable contentItems = $ContentItemsTable(this);
+  late final $RotationRoundsTable rotationRounds = $RotationRoundsTable(this);
+  late final $RoomEventsTable roomEvents = $RoomEventsTable(this);
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
+  late final RotationDao rotationDao = RotationDao(this as AppDatabase);
+  late final RoomEventsDao roomEventsDao = RoomEventsDao(this as AppDatabase);
   late final AttendanceDao attendanceDao = AttendanceDao(this as AppDatabase);
   late final CapturesDao capturesDao = CapturesDao(this as AppDatabase);
   late final CharacterSheetsDao characterSheetsDao = CharacterSheetsDao(
@@ -25508,6 +27012,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     weeklyTemplates,
     weeklyTemplateBlocks,
     contentItems,
+    rotationRounds,
+    roomEvents,
   ];
 }
 
@@ -37554,6 +39060,713 @@ typedef $$ContentItemsTableProcessedTableManager =
       ContentItemRow,
       PrefetchHooks Function()
     >;
+typedef $$RotationRoundsTableCreateCompanionBuilder =
+    RotationRoundsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String groupId,
+      required int roundNo,
+      required String mode,
+      required int n,
+      required String remainder,
+      required String groups,
+      required String satOut,
+      required String seed,
+      required int newPairs,
+      required int repeatPairs,
+      Value<String?> createdBy,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$RotationRoundsTableUpdateCompanionBuilder =
+    RotationRoundsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> groupId,
+      Value<int> roundNo,
+      Value<String> mode,
+      Value<int> n,
+      Value<String> remainder,
+      Value<String> groups,
+      Value<String> satOut,
+      Value<String> seed,
+      Value<int> newPairs,
+      Value<int> repeatPairs,
+      Value<String?> createdBy,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$RotationRoundsTableFilterComposer
+    extends Composer<_$AppDatabase, $RotationRoundsTable> {
+  $$RotationRoundsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get roundNo => $composableBuilder(
+    column: $table.roundNo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get n => $composableBuilder(
+    column: $table.n,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remainder => $composableBuilder(
+    column: $table.remainder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groups => $composableBuilder(
+    column: $table.groups,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get satOut => $composableBuilder(
+    column: $table.satOut,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seed => $composableBuilder(
+    column: $table.seed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get newPairs => $composableBuilder(
+    column: $table.newPairs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get repeatPairs => $composableBuilder(
+    column: $table.repeatPairs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RotationRoundsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RotationRoundsTable> {
+  $$RotationRoundsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get roundNo => $composableBuilder(
+    column: $table.roundNo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get n => $composableBuilder(
+    column: $table.n,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remainder => $composableBuilder(
+    column: $table.remainder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groups => $composableBuilder(
+    column: $table.groups,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get satOut => $composableBuilder(
+    column: $table.satOut,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seed => $composableBuilder(
+    column: $table.seed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get newPairs => $composableBuilder(
+    column: $table.newPairs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get repeatPairs => $composableBuilder(
+    column: $table.repeatPairs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RotationRoundsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RotationRoundsTable> {
+  $$RotationRoundsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<int> get roundNo =>
+      $composableBuilder(column: $table.roundNo, builder: (column) => column);
+
+  GeneratedColumn<String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<int> get n =>
+      $composableBuilder(column: $table.n, builder: (column) => column);
+
+  GeneratedColumn<String> get remainder =>
+      $composableBuilder(column: $table.remainder, builder: (column) => column);
+
+  GeneratedColumn<String> get groups =>
+      $composableBuilder(column: $table.groups, builder: (column) => column);
+
+  GeneratedColumn<String> get satOut =>
+      $composableBuilder(column: $table.satOut, builder: (column) => column);
+
+  GeneratedColumn<String> get seed =>
+      $composableBuilder(column: $table.seed, builder: (column) => column);
+
+  GeneratedColumn<int> get newPairs =>
+      $composableBuilder(column: $table.newPairs, builder: (column) => column);
+
+  GeneratedColumn<int> get repeatPairs => $composableBuilder(
+    column: $table.repeatPairs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$RotationRoundsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RotationRoundsTable,
+          RotationRound,
+          $$RotationRoundsTableFilterComposer,
+          $$RotationRoundsTableOrderingComposer,
+          $$RotationRoundsTableAnnotationComposer,
+          $$RotationRoundsTableCreateCompanionBuilder,
+          $$RotationRoundsTableUpdateCompanionBuilder,
+          (
+            RotationRound,
+            BaseReferences<_$AppDatabase, $RotationRoundsTable, RotationRound>,
+          ),
+          RotationRound,
+          PrefetchHooks Function()
+        > {
+  $$RotationRoundsTableTableManager(
+    _$AppDatabase db,
+    $RotationRoundsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RotationRoundsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RotationRoundsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RotationRoundsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<int> roundNo = const Value.absent(),
+                Value<String> mode = const Value.absent(),
+                Value<int> n = const Value.absent(),
+                Value<String> remainder = const Value.absent(),
+                Value<String> groups = const Value.absent(),
+                Value<String> satOut = const Value.absent(),
+                Value<String> seed = const Value.absent(),
+                Value<int> newPairs = const Value.absent(),
+                Value<int> repeatPairs = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RotationRoundsCompanion(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                roundNo: roundNo,
+                mode: mode,
+                n: n,
+                remainder: remainder,
+                groups: groups,
+                satOut: satOut,
+                seed: seed,
+                newPairs: newPairs,
+                repeatPairs: repeatPairs,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String groupId,
+                required int roundNo,
+                required String mode,
+                required int n,
+                required String remainder,
+                required String groups,
+                required String satOut,
+                required String seed,
+                required int newPairs,
+                required int repeatPairs,
+                Value<String?> createdBy = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => RotationRoundsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                roundNo: roundNo,
+                mode: mode,
+                n: n,
+                remainder: remainder,
+                groups: groups,
+                satOut: satOut,
+                seed: seed,
+                newPairs: newPairs,
+                repeatPairs: repeatPairs,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RotationRoundsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RotationRoundsTable,
+      RotationRound,
+      $$RotationRoundsTableFilterComposer,
+      $$RotationRoundsTableOrderingComposer,
+      $$RotationRoundsTableAnnotationComposer,
+      $$RotationRoundsTableCreateCompanionBuilder,
+      $$RotationRoundsTableUpdateCompanionBuilder,
+      (
+        RotationRound,
+        BaseReferences<_$AppDatabase, $RotationRoundsTable, RotationRound>,
+      ),
+      RotationRound,
+      PrefetchHooks Function()
+    >;
+typedef $$RoomEventsTableCreateCompanionBuilder =
+    RoomEventsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String groupId,
+      Value<String?> subjectId,
+      required String kind,
+      required int value,
+      Value<String?> detail,
+      required String occurredAt,
+      Value<String?> createdBy,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$RoomEventsTableUpdateCompanionBuilder =
+    RoomEventsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> groupId,
+      Value<String?> subjectId,
+      Value<String> kind,
+      Value<int> value,
+      Value<String?> detail,
+      Value<String> occurredAt,
+      Value<String?> createdBy,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$RoomEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $RoomEventsTable> {
+  $$RoomEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get detail => $composableBuilder(
+    column: $table.detail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RoomEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RoomEventsTable> {
+  $$RoomEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get detail => $composableBuilder(
+    column: $table.detail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RoomEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RoomEventsTable> {
+  $$RoomEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<int> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<String> get detail =>
+      $composableBuilder(column: $table.detail, builder: (column) => column);
+
+  GeneratedColumn<String> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$RoomEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RoomEventsTable,
+          RoomEvent,
+          $$RoomEventsTableFilterComposer,
+          $$RoomEventsTableOrderingComposer,
+          $$RoomEventsTableAnnotationComposer,
+          $$RoomEventsTableCreateCompanionBuilder,
+          $$RoomEventsTableUpdateCompanionBuilder,
+          (
+            RoomEvent,
+            BaseReferences<_$AppDatabase, $RoomEventsTable, RoomEvent>,
+          ),
+          RoomEvent,
+          PrefetchHooks Function()
+        > {
+  $$RoomEventsTableTableManager(_$AppDatabase db, $RoomEventsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RoomEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RoomEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RoomEventsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<int> value = const Value.absent(),
+                Value<String?> detail = const Value.absent(),
+                Value<String> occurredAt = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RoomEventsCompanion(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                subjectId: subjectId,
+                kind: kind,
+                value: value,
+                detail: detail,
+                occurredAt: occurredAt,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String groupId,
+                Value<String?> subjectId = const Value.absent(),
+                required String kind,
+                required int value,
+                Value<String?> detail = const Value.absent(),
+                required String occurredAt,
+                Value<String?> createdBy = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => RoomEventsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                subjectId: subjectId,
+                kind: kind,
+                value: value,
+                detail: detail,
+                occurredAt: occurredAt,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RoomEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RoomEventsTable,
+      RoomEvent,
+      $$RoomEventsTableFilterComposer,
+      $$RoomEventsTableOrderingComposer,
+      $$RoomEventsTableAnnotationComposer,
+      $$RoomEventsTableCreateCompanionBuilder,
+      $$RoomEventsTableUpdateCompanionBuilder,
+      (RoomEvent, BaseReferences<_$AppDatabase, $RoomEventsTable, RoomEvent>),
+      RoomEvent,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -37632,4 +39845,8 @@ class $AppDatabaseManager {
       $$WeeklyTemplateBlocksTableTableManager(_db, _db.weeklyTemplateBlocks);
   $$ContentItemsTableTableManager get contentItems =>
       $$ContentItemsTableTableManager(_db, _db.contentItems);
+  $$RotationRoundsTableTableManager get rotationRounds =>
+      $$RotationRoundsTableTableManager(_db, _db.rotationRounds);
+  $$RoomEventsTableTableManager get roomEvents =>
+      $$RoomEventsTableTableManager(_db, _db.roomEvents);
 }

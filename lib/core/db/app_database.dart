@@ -18,6 +18,8 @@ import 'package:differentworld/core/db/dao/locations_dao.dart';
 import 'package:differentworld/core/db/dao/members_dao.dart';
 import 'package:differentworld/core/db/dao/messages_dao.dart';
 import 'package:differentworld/core/db/dao/missions_dao.dart';
+import 'package:differentworld/core/db/dao/room_events_dao.dart';
+import 'package:differentworld/core/db/dao/rotation_dao.dart';
 import 'package:differentworld/core/db/dao/schedule_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/subjects_dao.dart';
@@ -30,8 +32,6 @@ import 'package:differentworld/core/db/dao/weekly_template_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
 import 'package:flutter/foundation.dart';
-// Both drift and powersync export a `Column` class — only import what we
-// actually need from powersync to avoid the ambiguity.
 import 'package:powersync/powersync.dart' show PowerSyncDatabase;
 import 'package:uuid/uuid.dart';
 
@@ -640,6 +640,59 @@ class ContentItems extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// One ARRANGEMENT of a cohort (docs/ROTATION.md). The pair history is
+/// derived by folding these rows — `groups` already says who was together —
+/// so there is no second table to keep in step, and undo is a delete.
+///
+/// `groups` / `satOut` are raw JSON strings (jsonb server-side); `seed` is
+/// text because it is an opaque reproducibility token, never arithmetic.
+class RotationRounds extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get groupId => text()();
+  IntColumn get roundNo => integer()();
+  TextColumn get mode => text()();
+  IntColumn get n => integer()();
+  TextColumn get remainder => text()();
+  TextColumn get groups => text()();
+  TextColumn get satOut => text()();
+  TextColumn get seed => text()();
+  IntColumn get newPairs => integer()();
+  IntColumn get repeatPairs => integer()();
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// The ONE fairness log every Room instrument writes to — who was picked,
+/// who spoke first, who spoke and for how long, points, which prompt was
+/// used. They all answer the same question (who has had their share, and how
+/// recently), so they share a store; separate ones would make
+/// cross-instrument fairness impossible.
+class RoomEvents extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get groupId => text()();
+
+  /// Null when the event is about the room rather than a child.
+  TextColumn get subjectId => text().nullable()();
+  TextColumn get kind => text()();
+
+  /// Kind-dependent magnitude: seconds spoken, points awarded, else 1.
+  IntColumn get value => integer()();
+  TextColumn get detail => text().nullable()();
+  TextColumn get occurredAt => text()();
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The program's real-world inventory (docs/SUPPLIES.md). A catalog
 /// referenced by id from the things that consume it. `quantity` /
 /// `lowStockThreshold` are doubles; `photoUrl` is a Storage path.
@@ -919,9 +972,13 @@ class Events extends Table {
     WeeklyTemplates, WeeklyTemplateBlocks,
     // Content bank — generate-once-reuse activity content.
     ContentItems,
+    // The Room console — arrangements + the shared fairness log.
+    RotationRounds, RoomEvents,
   ],
   daos: [
     AttachmentsDao,
+    RotationDao,
+    RoomEventsDao,
     AttendanceDao,
     CapturesDao,
     CharacterSheetsDao,

@@ -224,7 +224,7 @@ void main() {
 
     test('one child, or none, never produces a group of one by accident', () {
       final one = const RotationEngine().arrange(
-        RotationRequest(
+        const RotationRequest(
           presentIds: ['solo'],
           mode: SplitMode.groupsOf,
           n: 2,
@@ -234,8 +234,8 @@ void main() {
       );
       expect(one.groups.expand((g) => g).toList(), ['solo']);
       final none = const RotationEngine().arrange(
-        RotationRequest(
-          presentIds: const [],
+        const RotationRequest(
+          presentIds: [],
           mode: SplitMode.groupsOf,
           n: 2,
           round: 1,

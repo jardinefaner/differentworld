@@ -163,3 +163,10 @@ streams:
       # chosen name), 1:1 with a subject. One row per enrolled child;
       # tiny. See docs/WORLD.md + supabase/migrations/20260606000001.
       - SELECT * FROM character_sheets       WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # The Room console (docs/ROTATION.md). rotation_rounds is the pair
+      # history — who sat with whom, per cohort; room_events is the ONE
+      # fairness log every instrument writes to (picked / spoke / points /
+      # prompt used). STAFF ONLY: a round names which children were grouped
+      # together, so neither table may ever join the by_guardian stream.
+      - SELECT * FROM rotation_rounds        WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM room_events            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
