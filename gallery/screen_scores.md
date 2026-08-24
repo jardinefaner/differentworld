@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-149 screens scored · worst-first · `tool/score_screens.py`
+151 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **100.0** · ship-confident: 149
+Average: **100.0** · ship-confident: 151
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -14,6 +14,7 @@ Average: **100.0** · ship-confident: 149
 | 100 | ship-confident | `activity_forge` | — |
 | 100 | ship-confident | `activity_lens` | — |
 | 100 | ship-confident | `activity_match` | — |
+| 100 | ship-confident | `alumni` | — |
 | 100 | ship-confident | `attendance` | — |
 | 100 | ship-confident | `block_edit` | — |
 | 100 | ship-confident | `block_run` | — |
@@ -105,6 +106,7 @@ Average: **100.0** · ship-confident: 149
 | 100 | ship-confident | `role_deck` | — |
 | 100 | ship-confident | `role_game` | — |
 | 100 | ship-confident | `roles` | — |
+| 100 | ship-confident | `rollover` | — |
 | 100 | ship-confident | `room_story` | — |
 | 100 | ship-confident | `routine_script_editor` | — |
 | 100 | ship-confident | `routines` | — |

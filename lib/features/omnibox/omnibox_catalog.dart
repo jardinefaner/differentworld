@@ -97,6 +97,47 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning', 'afternoon'],
       onSelect: (ctx, _) => ctx.push('/run-day'),
     ),
+    // Year rollover + its receipt. Director-only, and reachable by the
+    // words a director actually uses in August ("new year", "move up",
+    // "graduate") rather than the feature's own name.
+    if (viewer.canManageSpace)
+      OmniboxEntry(
+        id: 'page.rollover',
+        label: 'Start a new year',
+        category: OmniboxCategory.page,
+        icon: Icons.event_repeat_outlined,
+        keywords: const [
+          'new year',
+          'school year',
+          'rollover',
+          'roll over',
+          'move up',
+          'promote',
+          'graduate',
+          'new term',
+          'new session',
+          'start of year',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/rollover'),
+      ),
+    if (viewer.canManageSpace)
+      OmniboxEntry(
+        id: 'page.alumni',
+        label: 'Past children',
+        category: OmniboxCategory.page,
+        icon: Icons.history_outlined,
+        keywords: const [
+          'alumni',
+          'past',
+          'former',
+          'graduated',
+          'left',
+          'old kids',
+          'last year',
+          'archive',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/alumni'),
+      ),
     // Drafting a day writes the schedule — gated to the day-authoring tier.
     if (viewer.canManageSchedule)
       OmniboxEntry(

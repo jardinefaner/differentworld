@@ -11,9 +11,15 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
     with _$SubjectsDaoMixin {
   SubjectsDao(super.attachedDatabase);
 
+  /// A room's CURRENT children. Alumni are excluded here rather than at
+  /// each call site — every daily surface (attendance, the pickers, the
+  /// arrangement engine) reads through this, and a rollover has to actually
+  /// clear the room or it hasn't done anything (docs/ROLLOVER.md).
   Stream<List<Subject>> watchInGroup(String groupId) {
     return (select(subjects)
-          ..where((s) => s.groupId.equals(groupId))
+          ..where(
+            (s) => s.groupId.equals(groupId) & s.status.equals('enrolled'),
+          )
           ..orderBy([
             (s) => OrderingTerm(expression: s.firstName),
             (s) => OrderingTerm(expression: s.lastName),
@@ -21,11 +27,26 @@ class SubjectsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  /// Every Subject in a space, ordered by name. Used by space-wide
-  /// surfaces (survey list, future "all kids" rosters).
+  /// Every ENROLLED Subject in a space, ordered by name. Used by space-wide
+  /// surfaces (survey list, rosters). Alumni are reached deliberately via
+  /// [watchAlumniInSpace], never by accident.
   Stream<List<Subject>> watchInSpace(String spaceId) {
     return (select(subjects)
-          ..where((s) => s.spaceId.equals(spaceId))
+          ..where(
+            (s) => s.spaceId.equals(spaceId) & s.status.equals('enrolled'),
+          )
+          ..orderBy([
+            (s) => OrderingTerm(expression: s.firstName),
+            (s) => OrderingTerm(expression: s.lastName),
+          ]))
+        .watch();
+  }
+
+  /// Past children, most recently updated first. They keep every record
+  /// they ever had; this is the door back to it.
+  Stream<List<Subject>> watchAlumniInSpace(String spaceId) {
+    return (select(subjects)
+          ..where((s) => s.spaceId.equals(spaceId) & s.status.equals('alumni'))
           ..orderBy([
             (s) => OrderingTerm(expression: s.firstName),
             (s) => OrderingTerm(expression: s.lastName),

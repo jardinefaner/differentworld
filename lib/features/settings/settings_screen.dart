@@ -137,6 +137,29 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/settings/program'),
+                ),
+              // Year rollover + its receipt. Grouped with Program because
+              // both change the shape of the program rather than a day.
+              if (viewer.canManageSpace)
+                ListTile(
+                  leading: const Icon(Icons.event_repeat_outlined),
+                  title: const Text('Start a new year'),
+                  subtitle: const Text(
+                    'Move everyone up, retire who has moved on — '
+                    'nothing is deleted',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/rollover'),
+                ),
+              if (viewer.canManageSpace)
+                ListTile(
+                  leading: const Icon(Icons.history_outlined),
+                  title: const Text('Past children'),
+                  subtitle: const Text(
+                    'Everyone who moved on — their books still open',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/alumni'),
                 )
               else
                 const CapabilityLockedTile(

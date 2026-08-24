@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Mission, Subject;
@@ -127,6 +126,8 @@ import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/rollover/alumni_screen.dart';
+import 'package:differentworld/features/rollover/rollover_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
@@ -966,6 +967,23 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Program',
                   child: ProgramSettingsScreen(),
+                ),
+              ),
+              // Year rollover (docs/ROLLOVER.md). Under settings because it
+              // is a once-a-year director ceremony, not a daily surface —
+              // and next to Program because it IS a program-shape change.
+              GoRoute(
+                path: 'rollover',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Start a new year',
+                  child: RolloverScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'alumni',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Past children',
+                  child: AlumniScreen(),
                 ),
               ),
               GoRoute(
