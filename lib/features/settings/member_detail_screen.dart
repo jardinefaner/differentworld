@@ -215,6 +215,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       onTap: (canManage || me?.id == member.id)
                           ? () => PhotoSourceSheet.show(
                               context,
+                              ref,
                               entity: PhotoEntity.member,
                               entityId: member.id,
                               hasExisting: member.avatarUrl != null,

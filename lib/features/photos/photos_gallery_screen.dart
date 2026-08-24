@@ -1,5 +1,6 @@
 import 'dart:async';
-
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
@@ -59,6 +60,19 @@ class _PhotosGalleryScreenState extends ConsumerState<PhotosGalleryScreen> {
     }
     final labels = ref.watch(verticalLabelsProvider);
     final photosAsync = ref.watch(spacePhotosProvider);
+    // A child whose family declined never reaches this wall — see
+    // photo_consent.dart. The program's declared default only decides the
+    // children nobody has answered for yet.
+    final spaceDefaultAllowsPhotos =
+        ref
+            .watch(viewerProvider)
+            .space
+            ?.caps
+            .getBool(
+              SpaceCaps.photoDefaultConsent,
+              fallback: true,
+            ) ??
+        true;
     final subjects =
         ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
@@ -78,6 +92,7 @@ class _PhotosGalleryScreenState extends ConsumerState<PhotosGalleryScreen> {
             subjectsById: subjectsById,
             groupId: _groupId,
             subjectId: _subjectId,
+            spaceDefaultAllowsPhotos: spaceDefaultAllowsPhotos,
           );
           final days = groupGalleryByDay(filtered);
           return CustomScrollView(

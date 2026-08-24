@@ -205,6 +205,24 @@ class SubjectCapActions {
     await db.subjectsDao.updateCapabilities(subjectId, caps.toJson());
   }
 
+  /// Remove a cap entirely, so the key reads as ABSENT rather than false.
+  ///
+  /// Needed wherever "nobody answered" is a distinct state from "no" —
+  /// photo consent being the case that forced it (docs/CONSENT.md).
+  Future<void> clearCap({
+    required String subjectId,
+    required String key,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final s = await (db.select(
+      db.subjects,
+    )..where((row) => row.id.equals(subjectId))).getSingleOrNull();
+    if (s == null) return;
+    // `setting(key, null)` removes the key — see Capabilities.setting.
+    final caps = s.caps.setting(key, null);
+    await db.subjectsDao.updateCapabilities(subjectId, caps.toJson());
+  }
+
   /// Set a boolean cap. Always writes a literal `true` or `false`
   /// (rather than removing the key when false) so consumers can
   /// `.getBool` with a known default without ambiguity.

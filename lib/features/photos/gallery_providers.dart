@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/photos/photo_consent.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The program-wide Photos gallery data layer (route `/photos`).
@@ -53,9 +54,20 @@ List<Attachment> filterGalleryPhotos(
   required Map<String, Subject> subjectsById,
   String? groupId,
   String? subjectId,
+  // Consent is applied at RENDER, not only at capture: a family can
+  // withdraw permission after a photo was taken, and the honest answer to
+  // "please stop using our child's picture" is that it leaves the wall —
+  // not that it stays because it predates the ask. Defaults true so an
+  // un-migrated caller can't silently drop the filter open.
+  bool spaceDefaultAllowsPhotos = true,
 }) {
+  final permitted = withoutDeclinedSubjects(
+    all,
+    subjectsById: subjectsById,
+    spaceDefaultAllows: spaceDefaultAllowsPhotos,
+  );
   return [
-    for (final a in all)
+    for (final a in permitted)
       if (switch (source) {
         GallerySource.moments => !_isVehicle(a),
         GallerySource.observations => a.entityKind == 'entry',

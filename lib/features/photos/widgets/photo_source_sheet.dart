@@ -1,4 +1,6 @@
+import 'package:differentworld/features/photos/photo_consent.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
@@ -23,13 +25,36 @@ class PhotoSourceSheet extends ConsumerStatefulWidget {
   final bool hasExisting;
   final String displayName;
 
+  /// Open the picker — unless this child's family has declined photography.
+  ///
+  /// The refusal lives HERE, at the one door every person-photo path goes
+  /// through, rather than in each caller: a gate that has to be remembered
+  /// is a gate that gets forgotten. A recorded "no" is never overridden by
+  /// the program's default posture.
   static Future<void> show(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
     required PhotoEntity entity,
     required String entityId,
     required bool hasExisting,
     required String displayName,
-  }) {
+  }) async {
+    if (entity == PhotoEntity.subject) {
+      final subject = ref.read(subjectByIdProvider(entityId)).value;
+      if (subject != null && recordedConsent(subject).isDeclined) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$displayName\u2019s family asked for no photos. '
+              'Change it on their record if that\u2019s out of date.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+    if (!context.mounted) return;
     return showGlassSheet<void>(
       context: context,
       isScrollControlled: true,

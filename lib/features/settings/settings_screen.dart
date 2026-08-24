@@ -79,6 +79,7 @@ class SettingsScreen extends ConsumerWidget {
                       ? null
                       : () => PhotoSourceSheet.show(
                           context,
+                          ref,
                           entity: PhotoEntity.member,
                           entityId: member.id,
                           hasExisting: member.avatarUrl != null,

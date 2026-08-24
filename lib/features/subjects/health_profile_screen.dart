@@ -1,8 +1,8 @@
 import 'dart:async';
-
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/photos/photo_consent.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -180,6 +180,35 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
     }
   }
 
+  /// Write the three-state consent. `unknown` REMOVES the key rather than
+  /// storing a third value, so "not asked" stays genuinely absent and the
+  /// program default keeps applying.
+  Future<void> _setConsent(String subjectId, PhotoConsent next) async {
+    final actions = ref.read(subjectCapActionsProvider);
+    if (next == PhotoConsent.unknown) {
+      await actions.clearCap(
+        subjectId: subjectId,
+        key: SubjectCaps.photoConsent,
+      );
+    } else {
+      await actions.setBoolCap(
+        subjectId: subjectId,
+        key: SubjectCaps.photoConsent,
+        value: next == PhotoConsent.allowed,
+      );
+    }
+  }
+
+  Widget _label(BuildContext context, String text) => Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final s = widget.subject;
@@ -193,6 +222,53 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
               title: 'Health & medical',
               subtitle: '${s.firstName} ${s.lastName}',
             ),
+            // Photo consent. THREE states on purpose: on the first day most
+            // children genuinely have no answer yet, and folding that
+            // silence into "no" makes the app unusable while folding it
+            // into "yes" is the thing a regulator objects to. Saves on tap
+            // like the rest of this screen's caps — no draft state.
+            _label(context, 'Photos'),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<PhotoConsent>(
+                segments: const [
+                  ButtonSegment(
+                    value: PhotoConsent.unknown,
+                    label: Text('Not asked'),
+                  ),
+                  ButtonSegment(
+                    value: PhotoConsent.allowed,
+                    label: Text('Allowed'),
+                    icon: Icon(Icons.check),
+                  ),
+                  ButtonSegment(
+                    value: PhotoConsent.declined,
+                    label: Text('No photos'),
+                    icon: Icon(Icons.block),
+                  ),
+                ],
+                selected: {recordedConsent(s)},
+                onSelectionChanged: (sel) =>
+                    unawaited(_setConsent(s.id, sel.first)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              switch (recordedConsent(s)) {
+                PhotoConsent.declined =>
+                  'The camera refuses, the photo wall hides '
+                      '${s.firstName}, and exports leave them out.',
+                PhotoConsent.allowed => 'Recorded. Photos are fine.',
+                PhotoConsent.unknown =>
+                  'Nobody has answered yet, so the program default applies. '
+                      'Worth asking while the family is here.',
+              },
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 20),
             TextField(
               controller: _allergies,
               textCapitalization: TextCapitalization.sentences,

@@ -309,6 +309,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                     radius: 48,
                                     onTap: () => PhotoSourceSheet.show(
                                       context,
+                                      ref,
                                       entity: PhotoEntity.subject,
                                       entityId: subject.id,
                                       hasExisting: subject.photoUrl != null,
