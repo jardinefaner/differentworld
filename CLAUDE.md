@@ -366,6 +366,40 @@ Don't invent new fields — propose them if you need them.
   can't see (e.g., "Lauren has no entry point to today's photos").
   Run weekly or after major feature waves.
 
+### Keeping the registries current — per WAVE, not per session
+
+`docs/FEATURES.md`, `docs/SCHEMA.md` and `gallery/README.md` are only
+authoritative if they are true. All three went stale in one long session
+(SCHEMA.md by seven weeks, the component bible by five months), and the
+reason is worth knowing:
+
+**The stop-hook fires once per session.** `feature-registry-stop-gate.sh`
+writes a sentinel the first time it nags, then exits silently for the rest
+of the session. In a short session that is fine. In a session that ships ten
+features it means the reminder arrived hours before nine of them existed.
+Touching `docs/FEATURES.md` or `docs/SCHEMA.md` within the last five minutes
+also satisfies it — so the nag can be true and the docs still wrong.
+
+So the safety net does NOT cover a long session. The rule:
+
+- **Update the registries in the same wave as the code**, alongside the
+  commit — not at the end of the session, and never on the assumption that
+  the hook will catch it.
+- **A new synced table** gets a `docs/SCHEMA.md` section in the same commit
+  as its migration. A **changed column** on an existing table gets its bullet
+  updated (`subjects.status` and `groups.status` were both missed this way).
+- **A new shared widget** gets a `gallery/README.md` row and a plate in the
+  same wave. A component with no plate is invisible to the gallery-critic.
+- **Never restate a completeness claim you have not just verified.** The
+  bible claimed "ALL CATALOGUED" while six widgets had no plate; SCHEMA.md's
+  counts were wrong by three. Prefer a command that re-derives the number
+  over a number someone has to trust.
+
+Feature widgets are NOT in the bible by design — but when one gains its
+second consumer outside its own feature it is a promotion candidate, and by
+its third it is overdue. `PersonPhotoNetwork` (14 consumers) and
+`PhotoViewer` (8) are both overdue; the queue lives in `gallery/README.md`.
+
 ### The workflow
 
 When you ADD a feature:

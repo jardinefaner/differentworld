@@ -770,7 +770,8 @@ surface — preferences + roster + fleet, not primary workflows.
 **Depends on**: Supabase Storage client, Subjects (`subjectByIdProvider`, viewer gate), PhotoViewer.
 **Consumed by**: Members, Subjects (folder link), Entries (attachment display), Family, World (DrawSelfScreen → `CharacterSheetActions.setDrawnAvatar` → `PhotoService.uploadOnly`; CharacterSheetScreen → `PersonAvatar` for signed-URL render of the drawn avatar), Action Words (GrowthArcScreen weaves `attachmentsCapturedByProvider` shots into the growth-arc reel).
 - *Program photo wall* — `lib/features/photos/photos_gallery_screen.dart`. `/photos`: every room's photos, day-grouped grid, room/kid/source filter chips (vehicles hidden unless asked), name chip per tile, keeper hearts; tap → shared full-screen viewer with composite caption; long-press → metadata sheet (kid, room, time, source, shot-by, added-by). Staff-only; windowed to the latest 500 via `attachmentsDao.watchImagesInSpace` (backed by the `attachments_space` local index). Discovery: route `/photos`, omnibox `page.photos` (photos / gallery / pictures / photo wall / camera roll), drawer "Photos" after Captures. Pure filter/group core pinned by `test/unit/gallery_providers_test.dart`.
-**Last verified**: 2026-07-13
+- *Photo consent* — `photo_consent.dart`. THREE states, because blank is not "no": unknown / allowed / declined. A recorded NO is never overridden by the program default. Enforced at capture (PhotoSourceSheet refuses and says why), at RENDER (the gallery filters at read time, because consent can be withdrawn AFTER a photo was taken — and that filter covers who TOOK the photo too), and recorded on the health profile where "not asked" CLEARS the key. `SubjectCaps.photoConsent` existed with ZERO call sites until 2026-08-24.
+**Last verified**: 2026-08-24
 
 ---
 
@@ -1619,3 +1620,81 @@ _Incremental reconcile: 2026-06-14 (Reflections + Settings Calm layout) — **Re
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._
+
+## Rotation
+**Path**: `lib/features/rotation/`
+**Purpose**: The relationship rotator. Not a randomiser with history — its object is the PAIR, so "shuffle" means *give these children a configuration they have not recently had*. Plus Coverage: who in this room has still never worked with whom.
+**Personas served**: Maya, Coach Sam, Brianna (the "split them up" moment, ten times a week).
+**Discovery surfaces**:
+- Routes: `/groups/:id/arrange`, `/groups/:id/coverage`
+- Omnibox: yes — per-cohort "Make groups · {Room}" (keywords: arrange, make groups, split, partners, pairs, teams, shuffle, mix them up)
+- Slash: none
+- Drawer: no (per-room, reached from the room)
+- Settings: no
+**Capabilities**: staff; no caps required.
+**Data**: [rotation_rounds](SCHEMA.md#rotation_rounds), [groups](SCHEMA.md#groups), [subjects](SCHEMA.md#subjects), [attendance_records](SCHEMA.md#attendance_records) (via `presentSubjectsProvider`).
+**Surfaces**:
+- *Make groups* — `arrange_screen.dart`. Groups-of-N vs N-groups as separate controls (one number field silently picks one); named leftover policy; reveal reports the MIX ("10 new · 2 unavoidable repeats") and says WHEN a repeated pair last met; ~700ms deliberate reveal; "Keep it" stores the round.
+- *Coverage* — `coverage_screen.dart`. Never-met pairs plus the arithmetic that decides whether the promise is reachable at all (21 children ≈ 20 sessions in pairs, ≈ 7 in fours).
+- *Engine* — `rotation_engine.dart`. Recency-weighted history (weights HALVE each round back), repeat load squared PER CHILD, keep-together merged transitively into atomic units, keep-apart as infinite cost, balance-by-tag, seeded. Graded against brute force over all 105 perfect matchings of eight children (`test/unit/rotation_engine_test.dart`).
+**Depends on**: Groups, Subjects, Attendance.
+**Consumed by**: [Readiness](FEATURES.md#readiness) (offers a first round to a cohort that has never been arranged).
+**Last verified**: 2026-08-24
+
+## Rollover
+**Path**: `lib/features/rollover/`
+**Purpose**: Start a new year without deleting anyone. A child either carries forward into a room or becomes an alumnus who keeps every record they ever had — there is no third option and no code path that removes anything.
+**Personas served**: Maya, Pat (the September cleanup that used to destroy a year).
+**Discovery surfaces**:
+- Routes: `/settings/rollover`, `/settings/alumni`
+- Omnibox: yes — "Start a new year" (new year, school year, rollover, move up, promote, graduate) and "Past children" (alumni, former, graduated, last year, archive)
+- Slash: none
+- Drawer: no
+- Settings: yes — "Start a new year" and "Past children", beside Program
+**Capabilities**: director (`canManageSpace`).
+**Data**: [terms](SCHEMA.md#terms), [placements](SCHEMA.md#placements), [subjects](SCHEMA.md#subjects) (`status`), [groups](SCHEMA.md#groups).
+**Surfaces**:
+- *Start a new year* — `rollover_screen.dart`. Children grouped by current room with a destination chip; defaults to everyone carrying forward unchanged; period name suggested from the current one; footer states the receipt BEFORE committing ("N carry forward · N become alumni · 0 records deleted"); Undo offered in the result snackbar.
+- *Past children* — `alumni_screen.dart`. The proof the promise held; every row opens that child's book.
+- *Plan logic* — `rollover_plan.dart`. Silence means carry forward, never removal.
+**Depends on**: Subjects, Groups.
+**Consumed by**: Nothing yet. Rotation history is per-cohort and survives a rollover.
+**Last verified**: 2026-08-24
+
+## Rooms
+**Path**: `lib/features/rooms/`
+**Purpose**: The room as a PLACE, not a roster — how full it is against its own legal limits, what it is doing today, who is on it, and the two attention instruments (Pick someone, Talk time).
+**Personas served**: Maya (ratio/capacity — the number an inspector asks for), Coach Sam and Brianna (the instruments).
+**Discovery surfaces**:
+- Routes: `/groups/:id/turns`, `/groups/:id/talk`, `/settings/closed-rooms`
+- Omnibox: yes — per-cohort "Pick someone · {Room}" (pick, cold call, whose turn, volunteer) and "Talk time · {Room}" (talk, who has spoken, quiet, airtime); plus "Closed rooms" (retired, archived, reopen)
+- Slash: none
+- Drawer: no
+- Settings: yes — "Closed rooms"
+**Capabilities**: staff; closing a room is director-only.
+**Data**: [room_events](SCHEMA.md#room_events), [groups](SCHEMA.md#groups) (`status` + the capacity/ratio caps), [group_members](SCHEMA.md#group_members), [schedule_blocks](SCHEMA.md#schedule_blocks), [attendance_records](SCHEMA.md#attendance_records).
+**Surfaces**:
+- *RoomLoadBar* — `widgets/room_load_bar.dart`. Ratio + capacity, on the room. Renders nothing until the numbers are set. Honest that it counts staff ASSIGNED, not present (there is no clock-in).
+- *RoomTodayStrip* — `widgets/room_today_strip.dart`. The blocks still ahead + how many adults are on the room.
+- *Pick someone* / *Talk time* — `turns_screen.dart`. Favours whoever has gone longest without (a child with NO entry outranks one with a single turn) and names who is still waiting; talk time is one tap to start-and-stop.
+- *Closed rooms* — `closed_rooms_screen.dart`. The way back; closing is only safe as the primary action because reopening is one tap.
+- *Logic* — `room_load.dart` (ceiling division, unset ≠ unlimited), `fair_turns.dart`.
+**Depends on**: Groups, Subjects, Attendance, Schedule.
+**Consumed by**: [Readiness](FEATURES.md#readiness) (a ratio breach leads the briefing).
+**Last verified**: 2026-08-24
+
+## Readiness
+**Path**: `lib/features/readiness/`
+**Purpose**: What today needs, without being asked. The app already knows what a complete child record looks like and what a running day needs, so it shows the DIFFERENCE — and shows nothing once there isn't one.
+**Personas served**: Maya, Jordan, Pat (the first morning of a year, and any day with gaps).
+**Discovery surfaces**:
+- Routes: none — it renders inside [Today](FEATURES.md#today)
+- Omnibox / Slash / Drawer / Settings: no
+**Capabilities**: staff.
+**Data**: [subjects](SCHEMA.md#subjects), [subject_guardians](SCHEMA.md#subject_guardians), [groups](SCHEMA.md#groups), [rotation_rounds](SCHEMA.md#rotation_rounds).
+**Surfaces**:
+- *ReadinessCard* — `widgets/readiness_card.dart`. Rows NAME people rather than counting them; ordered by what it costs to miss (a ratio breach first — the only regulatory item — then unreachable child, medical unknown, then the two things only collectable while the family is present); renders `SizedBox.shrink()` when there is nothing to do.
+- *Logic* — `readiness.dart`. A child nobody may photograph is not "missing a photo"; blank allergies is a question, not an answer; alumni are excluded.
+**Depends on**: Subjects, Guardians, Groups, Rooms, Rotation, Photos (consent).
+**Consumed by**: [Today](FEATURES.md#today).
+**Last verified**: 2026-08-24

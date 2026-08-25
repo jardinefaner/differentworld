@@ -157,7 +157,7 @@ a drive-by.
 consumer outside its own feature, it is a promotion candidate. When it
 gains its third, it is overdue.
 
-## Catalogued — 48 component plates + 156 screen plates (all light + dark)
+## Catalogued — 48 component plates + 157 screen plates (all light + dark)
 
 ### Atoms
 

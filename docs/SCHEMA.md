@@ -41,7 +41,7 @@ of the SQL.
 **RLS gist**: relaxed (`current_user = 'authenticated'`); GRANT-level scoping does the real gating.
 **Sync rule**: `by_space` stream; `WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`.
 **Natural-key index**: `attendance_records_subject_date_key UNIQUE (subject_id, date)` — added by migration `20260607000001_attendance_subject_date_unique.sql` after de-duplicating existing collisions. This is the index the PowerSync connector's `_naturalKeyByTable['attendance_records'] = 'subject_id,date'` upsert path relies on; without it, concurrent writes from two devices could produce duplicate rows for the same child + day.
-**Consumers**: [Attendance](FEATURES.md#attendance), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (direct PostgREST via `familyAttendanceForSubjectProvider` — not in `by_guardian` stream; 2-level subquery deferred), [Today](FEATURES.md#today) (`arrivalProgressProvider` — cross-cohort rollup of in-building vs. still-out counts, read by `contextLeadProvider` during the arrival phase to show "M of N in · K to go" in the contextual lead).
+**Consumers**: [Attendance](FEATURES.md#attendance), [Rotation](FEATURES.md#rotation) + [Rooms](FEATURES.md#rooms) (via `presentSubjectsProvider` — the shared "who is actually here today" filter; `late` counts as present, and an unmarked room falls back to the whole roster), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (direct PostgREST via `familyAttendanceForSubjectProvider` — not in `by_guardian` stream; 2-level subquery deferred), [Today](FEATURES.md#today) (`arrivalProgressProvider` — cross-cohort rollup of in-building vs. still-out counts, read by `contextLeadProvider` during the arrival phase to show "M of N in · K to go" in the contextual lead).
 **Last verified**: 2026-06-15
 
 ---
@@ -191,6 +191,8 @@ of the SQL.
 - `name` (text)
 - `capabilities` (jsonb — `age_band`, `tracks_diapers`, `tracks_naps`, `nap_schedule`, `bilingual_languages`, etc.)
 - `created_at` (timestamptz)
+- `status` (text, NOT NULL default `active` — `active` | `closed`). A room is never deleted to get it out of the way: SIX tables cascade off `groups`, so erasing one takes its entire schedule, weekly plan, arrangements and fairness log with it. Same NULL-counts-as-active rule as `subjects.status`.
+- `capabilities` also carries the two REGULATED numbers (`licensed_capacity`, `ratio_children_per_adult`) — per-room rather than per-program because they are set by age band. Unset means UNCHECKED, never unlimited.
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
 **Consumers**: [Groups](FEATURES.md#groups), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Schedule](FEATURES.md#schedule), [Subjects](FEATURES.md#subjects), [Today](FEATURES.md#today), [Entities](FEATURES.md#entities) (READ-ONLY — `groupsProvider` feeds `entityIndexProvider` to autotag cohort names in prose).
@@ -417,6 +419,7 @@ of the SQL.
 - `capabilities` (jsonb — `allergies`, `dietary`, `medications`, `has_iep`, `photo_consent`, `pickup_strict`, `authorized_pickup_guardian_ids`, `pickup_people`, `comfort_items`, etc.)
 - `enrolled_at` (timestamptz)
 - `withdrawn_at` (timestamptz, nullable)
+- `status` (text, NOT NULL default `enrolled` — `enrolled` | `alumni`). A child is NEVER deleted to make room for a new intake; the year rollover turns them into an alumnus and they keep every record they ever had. **Nullable client-side on purpose**: PowerSync columns always are, and a newly-added one reads NULL for every row already on the device — so every roster query treats NULL as enrolled, or an app update would hide the whole program until the next sync.
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST through `subject_guardians` join.
 **Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
 **Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [Incidents](FEATURES.md#incidents) (log screen reads `subjectsInSpaceProvider` to resolve child identity on each card), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name), [Cockpit](FEATURES.md#cockpit) (`subjectsInSpaceProvider` read by `ConductorScreen` to build the every-child-book grid), [ChildWorld](FEATURES.md#childworld) (reads `subjectByIdProvider` for the child's first name; subject_detail_screen.dart hosts the "Their world" EdgeAction), [Entities](FEATURES.md#entities) (READ-ONLY — `subjectsInSpaceProvider` feeds `entityIndexProvider`; first names indexed only when unambiguous in the visible roster; the peek shows cohort + age + allergies and navigates to the full profile).
@@ -650,3 +653,99 @@ _Incremental reconcile: 2026-06-19 (Role deck + battle — commits cc25d30 / 949
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
+
+## rotation_rounds
+**Purpose**: One ARRANGEMENT of a cohort — who was grouped with whom, in which round. The pair history is DERIVED by folding these rows rather than stored in a second table, so undo is a plain delete with nothing orphaned and there is exactly one place a round can be wrong.
+**Key columns**:
+- `id` (uuid, PK)
+- `space_id` (uuid, NOT NULL → spaces.id)
+- `group_id` (uuid, NOT NULL → groups.id, ON DELETE CASCADE)
+- `round_no` (integer — monotonic per group, minted from `max+1`, NEVER a count: minting from a count collides straight after an undo)
+- `mode` (text — groups_of / number_of_groups), `n` (integer), `remainder` (text — absorb / sit_out / own_group)
+- `groups` (jsonb — `[["subjectId","subjectId"],…]`), `sat_out` (jsonb)
+- `seed` (bigint — stored so the arrangement is reproducible and provably unrigged; rides as TEXT locally)
+- `new_pairs` / `repeat_pairs` (integer)
+**RLS gist**: relaxed (`for all to authenticated`), consistent with the ES256 `auth.uid()`-null workaround.
+**Sync rule**: `by_space` only. **Never `by_guardian`** — a round names which children were grouped together.
+**Local index**: `rotation_rounds_group (group_id, round_no DESC)` — the table grows every session and is watched newest-first.
+**Consumers**: [Rotation](FEATURES.md#rotation), [Readiness](FEATURES.md#readiness) (`arrangedGroupIdsProvider` — which cohorts have never been arranged).
+**Last verified**: 2026-08-24
+
+## room_events
+**Purpose**: The ONE fairness log every Room instrument writes to — picked, spoke_first, spoke, points, prompt_used. They all ask the same question (who has had their share, and how recently), so separate stores would have made cross-instrument fairness impossible and turned five instruments into five apps in a trench coat.
+**Key columns**:
+- `id` (uuid, PK)
+- `space_id` (uuid, NOT NULL → spaces.id)
+- `group_id` (uuid, NOT NULL → groups.id, ON DELETE CASCADE)
+- `subject_id` (uuid, nullable → subjects.id — null when the event is about the room rather than a child, e.g. a prompt being used)
+- `kind` (text — see `RoomEventKinds`; typed constants, because a typo would silently split one history into two)
+- `value` (integer — kind-dependent magnitude: seconds spoken, points awarded, else 1)
+- `detail` (text — the non-person payload)
+- `occurred_at` (timestamptz)
+**RLS gist**: relaxed (`for all to authenticated`).
+**Sync rule**: `by_space` only. **Never `by_guardian`** — it names children.
+**Local index**: `room_events_group (group_id, occurred_at DESC)` — grows every session, watched newest-first.
+**Consumers**: [Rooms](FEATURES.md#rooms) (Pick someone, Talk time).
+**Last verified**: 2026-08-24
+
+## terms
+**Purpose**: A named period — '2026–27' or 'Summer 2026'. ONE table serves a school year and a session, because an afterschool program needs both words and the shape is identical; nesting years over terms would buy nothing but joins.
+**Key columns**:
+- `id` (uuid, PK)
+- `space_id` (uuid, NOT NULL → spaces.id)
+- `name` (text), `starts_on` (date), `ends_on` (date, nullable = open-ended)
+- `is_current` (boolean — a partial unique index `terms_one_current_per_space` enforces exactly one per program in the DATABASE rather than in whichever screen last set the flag)
+**RLS gist**: relaxed (`for all to authenticated`).
+**Sync rule**: `by_space` only.
+**Consumers**: [Rollover](FEATURES.md#rollover).
+**Last verified**: 2026-08-24
+
+## placements
+**Purpose**: One child, in one room, for one period — the history that makes a new intake ADDITIVE instead of a delete. `subjects.group_id` remains the CURRENT room so every existing roster query keeps working; this sits beside it.
+**NOT named `enrollments`**: that name has meant staff↔classroom since the foundation migration. Reusing it collided at every layer and failed a migration — see the CLAUDE.md gotcha.
+**Key columns**:
+- `id` (uuid, PK)
+- `space_id` (uuid, NOT NULL → spaces.id)
+- `subject_id` (uuid, NOT NULL → subjects.id, ON DELETE CASCADE)
+- `group_id` (uuid, nullable → groups.id, ON DELETE SET NULL — null = enrolled for the period but not yet placed)
+- `term_id` (uuid, NOT NULL → terms.id)
+- `started_at` (timestamptz), `ended_at` (timestamptz, nullable = still open — rollover CLOSES rather than deletes)
+**RLS gist**: relaxed (`for all to authenticated`).
+**Sync rule**: `by_space` only. **Never `by_guardian`** — a placement names which child sat in which room.
+**Consumers**: [Rollover](FEATURES.md#rollover).
+**Last verified**: 2026-08-24
+
+## events
+**Purpose**: One-off program events (a closure day, a visiting performer, picture day) that sit outside the repeating schedule. Scoped to whole cohorts rather than individual children.
+**Key columns**:
+- `id` (uuid, PK), `space_id` (uuid, NOT NULL → spaces.id)
+- `date` (text, ISO `YYYY-MM-DD`), `start_at` / `end_at` (nullable — an all-day event has neither)
+- `title`, `description` (nullable), `color` (nullable)
+- `group_ids` (text — JSON array of group ids; an event can span cohorts, so it is a list in a cell rather than a join table. See the CLAUDE.md gotcha on serialising list-in-a-cell writes.)
+**RLS gist**: relaxed (`for all to authenticated`).
+**Sync rule**: `by_space`.
+**Consumers**: [Schedule](FEATURES.md#schedule), [Today](FEATURES.md#today).
+**Last verified**: 2026-08-24
+
+## weekly_templates
+**Purpose**: A named, reusable shape for a week — "Standard week", "Summer week" — that a director applies to generate schedule blocks rather than authoring each day.
+**Key columns**:
+- `id` (uuid, PK), `space_id` (uuid, NOT NULL → spaces.id)
+- `name` (text), `created_by` (uuid, nullable → members.id)
+**RLS gist**: relaxed (`for all to authenticated`).
+**Sync rule**: `by_space`.
+**Consumers**: [Schedule](FEATURES.md#schedule).
+**Last verified**: 2026-08-24
+
+## weekly_template_blocks
+**Purpose**: One repeating block inside a [weekly_template](SCHEMA.md#weekly_templates) — this cohort, this weekday, this time. Applying a template stamps these into real [schedule_blocks](SCHEMA.md#schedule_blocks).
+**Key columns**:
+- `id` (uuid, PK), `space_id` (uuid, NOT NULL → spaces.id)
+- `template_id` (uuid, NOT NULL → weekly_templates.id, ON DELETE CASCADE)
+- `group_id` (uuid, NOT NULL → groups.id, ON DELETE CASCADE — so erasing a room takes its weekly plan with it, which is why rooms are CLOSED rather than deleted)
+- `day_of_week` (integer), `start_time` / `end_time` (text, `HH:mm` — time-of-day only, since the local store has no TIME type)
+- `activity_id`, `lead_member_id`, `location_override_id` (all nullable)
+**RLS gist**: relaxed (`for all to authenticated`).
+**Sync rule**: `by_space`.
+**Consumers**: [Schedule](FEATURES.md#schedule).
+**Last verified**: 2026-08-24
