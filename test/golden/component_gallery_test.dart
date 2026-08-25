@@ -1,9 +1,4 @@
 import 'dart:convert';
-
-// The organism plates pull in a seeded viewer + local DB + (for AppShell)
-// a real GoRouter, so the full-screen layout/chrome organisms render for
-// real rather than as bare plates — hence the core/ + features/ + drift +
-// go_router imports below.
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/db/app_database.dart';
@@ -19,6 +14,7 @@ import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
+import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -66,7 +62,6 @@ import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-
 import '_helpers.dart';
 
 /// THE COMPONENT BIBLE renderer (see gallery/README.md). Every catalogued
@@ -457,6 +452,46 @@ void main() {
   );
 
   // ── MOLECULES ────────────────────────────────────────────────────────────
+  // The Calm "one left edge" ROW — the panel-weight sibling is
+  // molecules/accent_card_tile. Both states shown: the neutral rule that
+  // just means "an item", and an accented rule that means "an item with a
+  // state" (a repeat, a breach, someone leaving).
+  _plate(
+    'molecules/accent_edge_row',
+    height: 420,
+    (context) => Column(
+      children: [
+        const AccentEdgeRow(
+          title: 'Ava · Liam · Nia',
+          subtitle: 'all new to each other',
+        ),
+        AccentEdgeRow(
+          accent: Theme.of(context).colorScheme.tertiary,
+          title: 'Owen · Theo · Priya',
+          subtitle: 'Owen + Theo were together in round 6',
+          subtitleColor: Theme.of(context).colorScheme.tertiary,
+        ),
+        AccentEdgeRow(
+          accent: Theme.of(context).colorScheme.error,
+          title: '14 children here · 1 adult assigned',
+          subtitle: 'Ratio needs 2 adults at 1:8 — 1 more.',
+          subtitleColor: Theme.of(context).colorScheme.error,
+        ),
+        AccentEdgeRow(
+          title: 'Liam Okafor',
+          subtitle: 'moving on — keeps everything',
+          trailing: const Chip(label: Text('Alumni')),
+          onTap: () {},
+        ),
+        const AccentEdgeRow(
+          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          title: 'Esme',
+          trailing: Text('3:05'),
+        ),
+      ],
+    ),
+  );
+
   _plate(
     'molecules/feature_card',
     height: 460,

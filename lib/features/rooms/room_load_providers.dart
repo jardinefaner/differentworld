@@ -2,11 +2,9 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
-import 'package:differentworld/features/attendance/attendance_providers.dart';
+import 'package:differentworld/features/attendance/present_today.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/rooms/room_load.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Staff assigned to a room. Assignment, not presence — the app has no
@@ -29,22 +27,7 @@ final roomLoadProvider = Provider.autoDispose.family<RoomLoad, String>((
   ref,
   groupId,
 ) {
-  final roster =
-      ref.watch(subjectsInGroupProvider(groupId)).value ?? const <Subject>[];
-  final records =
-      ref
-          .watch(
-            attendanceForDayProvider((groupId: groupId, date: todayKey())),
-          )
-          .value ??
-      const <AttendanceRecord>[];
-  final away = {
-    for (final r in records)
-      if (r.status != 'present' && r.status != 'late') r.subjectId,
-  };
-  final present = records.isEmpty
-      ? roster.length
-      : roster.where((s) => !away.contains(s.id)).length;
+  final present = ref.watch(presentSubjectsProvider(groupId)).length;
 
   final staff = ref.watch(staffOnGroupProvider(groupId)).value ?? const [];
   final group = (ref.watch(groupsProvider).value ?? const <Group>[])

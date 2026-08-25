@@ -1,5 +1,6 @@
 import 'package:differentworld/features/rooms/room_load.dart';
 import 'package:differentworld/features/rooms/room_load_providers.dart';
+import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,23 +28,12 @@ class RoomLoadBar extends ConsumerWidget {
     final bad = load.breached;
     final colour = bad ? theme.colorScheme.error : theme.colorScheme.primary;
 
-    return Container(
+    return AccentEdgeRow(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.only(left: 12),
-      decoration: BoxDecoration(
-        border: Border(left: BorderSide(width: 2, color: colour)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(_headline(load), style: theme.textTheme.bodyLarge),
-          const SizedBox(height: 1),
-          Text(
-            _detail(load),
-            style: theme.textTheme.bodySmall?.copyWith(color: colour),
-          ),
-        ],
-      ),
+      accent: colour,
+      title: _headline(load),
+      subtitle: _detail(load),
+      subtitleColor: colour,
     );
   }
 

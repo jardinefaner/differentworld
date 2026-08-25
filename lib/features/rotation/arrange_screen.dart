@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/features/attendance/attendance_providers.dart';
+import 'package:differentworld/features/attendance/present_today.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/rotation/rotation_engine.dart';
 import 'package:differentworld/features/rotation/rotation_providers.dart';
-import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
-import 'package:differentworld/shared/widgets/shell_metrics.dart';
+import 'package:differentworld/shared/widgets/thumb_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,31 +42,6 @@ class _ArrangeScreenState extends ConsumerState<ArrangeScreen> {
   RotationResult? _result;
   bool _revealing = false;
   bool _kept = false;
-
-  /// Only the children actually here. Absence is the most common real-world
-  /// need by a wide margin — nobody wants to remove a child because they
-  /// have the flu today.
-  List<Subject> _present(List<Subject> roster) {
-    final records =
-        ref
-            .watch(
-              attendanceForDayProvider((
-                groupId: widget.groupId,
-                date: todayKey(),
-              )),
-            )
-            .value ??
-        const <AttendanceRecord>[];
-    if (records.isEmpty) return roster;
-    final away = {
-      for (final r in records)
-        if (r.status != 'present' && r.status != 'late') r.subjectId,
-    };
-    return [
-      for (final s in roster)
-        if (!away.contains(s.id)) s,
-    ];
-  }
 
   Future<void> _shuffle(List<Subject> present) async {
     if (_revealing) return;
@@ -133,7 +107,7 @@ class _ArrangeScreenState extends ConsumerState<ArrangeScreen> {
     final roster =
         ref.watch(subjectsInGroupProvider(widget.groupId)).value ??
         const <Subject>[];
-    final present = _present(roster);
+    final present = ref.watch(presentSubjectsProvider(widget.groupId));
     final names = {for (final s in roster) s.id: s.firstName};
     final result = _result;
     final sizes = RotationEngine.planSizes(
@@ -201,16 +175,7 @@ class _ArrangeScreenState extends ConsumerState<ArrangeScreen> {
                 // body's bottom edge (see ShellMetrics.liveStripHeight) —
                 // the same seam that buried the message composer.
                 if (present.length >= 2)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      4,
-                      16,
-                      12 +
-                          (ref.watch(liveBlockProvider) != null
-                              ? ShellMetrics.liveStripHeight
-                              : 0),
-                    ),
+                  ThumbBar(
                     child: Row(
                       children: [
                         if (result != null && !_kept) ...[
@@ -495,37 +460,14 @@ class _GroupCard extends StatelessWidget {
           child: child,
         ),
       ),
-      child: Container(
+      child: AccentEdgeRow(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.only(left: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(
-              width: 2,
-              color: hasRepeat
-                  ? theme.colorScheme.tertiary
-                  : theme.colorScheme.primary,
-            ),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              members.map((id) => names[id] ?? '?').join(' · '),
-              style: theme.textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 1),
-            Text(
-              hasRepeat ? notes.first : 'all new to each other',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: hasRepeat
-                    ? theme.colorScheme.tertiary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+        accent: hasRepeat
+            ? theme.colorScheme.tertiary
+            : theme.colorScheme.primary,
+        title: members.map((id) => names[id] ?? '?').join(' · '),
+        subtitle: hasRepeat ? notes.first : 'all new to each other',
+        subtitleColor: hasRepeat ? theme.colorScheme.tertiary : null,
       ),
     );
   }

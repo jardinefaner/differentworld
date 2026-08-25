@@ -1,18 +1,16 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/features/attendance/attendance_providers.dart';
+import 'package:differentworld/features/attendance/present_today.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/rooms/fair_turns.dart';
 import 'package:differentworld/features/rooms/room_events_providers.dart';
-import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
-import 'package:differentworld/shared/widgets/shell_metrics.dart';
+import 'package:differentworld/shared/widgets/thumb_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,28 +38,6 @@ class TurnsScreen extends ConsumerStatefulWidget {
 class _TurnsScreenState extends ConsumerState<TurnsScreen> {
   String? _picked;
   bool _revealing = false;
-
-  List<Subject> _present(List<Subject> roster) {
-    final records =
-        ref
-            .watch(
-              attendanceForDayProvider((
-                groupId: widget.groupId,
-                date: todayKey(),
-              )),
-            )
-            .value ??
-        const <AttendanceRecord>[];
-    if (records.isEmpty) return roster;
-    final away = {
-      for (final r in records)
-        if (r.status != 'present' && r.status != 'late') r.subjectId,
-    };
-    return [
-      for (final s in roster)
-        if (!away.contains(s.id)) s,
-    ];
-  }
 
   Future<void> _pick(List<Subject> present, Map<String, int> counts) async {
     if (_revealing || present.isEmpty) return;
@@ -102,7 +78,7 @@ class _TurnsScreenState extends ConsumerState<TurnsScreen> {
     final roster =
         ref.watch(subjectsInGroupProvider(widget.groupId)).value ??
         const <Subject>[];
-    final present = _present(roster);
+    final present = ref.watch(presentSubjectsProvider(widget.groupId));
     final names = {for (final s in roster) s.id: s.firstName};
     final counts = ref.watch(
       turnCountsProvider((
@@ -175,16 +151,7 @@ class _TurnsScreenState extends ConsumerState<TurnsScreen> {
                   ),
                 ),
                 if (present.isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      4,
-                      16,
-                      12 +
-                          (ref.watch(liveBlockProvider) != null
-                              ? ShellMetrics.liveStripHeight
-                              : 0),
-                    ),
+                  ThumbBar(
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
@@ -340,31 +307,18 @@ class _TalkRow extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
-      child: Container(
+      child: AccentEdgeRow(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(
-              width: 2,
-              color: speaking
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.outlineVariant,
-            ),
+        accent: speaking ? theme.colorScheme.primary : null,
+        title: name,
+        trailing: Text(
+          talkClock(seconds),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: speaking
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(child: Text(name, style: theme.textTheme.bodyLarge)),
-            Text(
-              talkClock(seconds),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: speaking
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
         ),
       ),
     );

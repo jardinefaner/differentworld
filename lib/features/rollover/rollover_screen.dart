@@ -9,6 +9,7 @@ import 'package:differentworld/features/rollover/rollover_plan.dart';
 import 'package:differentworld/features/rollover/rollover_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -302,66 +303,38 @@ class _CandidateRow extends StatelessWidget {
         .map((g) => g.name)
         .firstOrNull;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.only(left: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            width: 2,
-            color: leaving
-                ? theme.colorScheme.tertiary
-                : theme.colorScheme.outlineVariant,
+    return AccentEdgeRow(
+      accent: leaving ? theme.colorScheme.tertiary : null,
+      title: candidate.name,
+      subtitle: leaving
+          ? 'moving on — keeps everything'
+          : destination == null
+          ? 'no room yet'
+          : 'into $destination',
+      subtitleColor: leaving ? theme.colorScheme.tertiary : null,
+      trailing: PopupMenuButton<String>(
+        tooltip: 'Where they go',
+        onSelected: (value) => onChanged(
+          value == '_alumni'
+              ? const RolloverChoice(fate: Fate.becomesAlumni)
+              : RolloverChoice(
+                  fate: Fate.carriesForward,
+                  groupId: value == '_none' ? null : value,
+                ),
+        ),
+        itemBuilder: (_) => [
+          for (final g in groups)
+            PopupMenuItem(value: g.id, child: Text(g.name)),
+          const PopupMenuItem(value: '_none', child: Text('No room yet')),
+          const PopupMenuDivider(),
+          const PopupMenuItem(value: '_alumni', child: Text('Alumni')),
+        ],
+        child: Chip(
+          label: Text(
+            leaving ? 'Alumni' : destination ?? 'No room',
+            style: theme.textTheme.bodySmall,
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(candidate.name, style: theme.textTheme.bodyLarge),
-                Text(
-                  leaving
-                      ? 'moving on — keeps everything'
-                      : destination == null
-                      ? 'no room yet'
-                      : 'into $destination',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: leaving
-                        ? theme.colorScheme.tertiary
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            tooltip: 'Where they go',
-            onSelected: (value) => onChanged(
-              value == '_alumni'
-                  ? const RolloverChoice(fate: Fate.becomesAlumni)
-                  : RolloverChoice(
-                      fate: Fate.carriesForward,
-                      groupId: value == '_none' ? null : value,
-                    ),
-            ),
-            itemBuilder: (_) => [
-              for (final g in groups)
-                PopupMenuItem(value: g.id, child: Text(g.name)),
-              const PopupMenuItem(value: '_none', child: Text('No room yet')),
-              const PopupMenuDivider(),
-              const PopupMenuItem(value: '_alumni', child: Text('Alumni')),
-            ],
-            child: Chip(
-              label: Text(
-                leaving ? 'Alumni' : destination ?? 'No room',
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
