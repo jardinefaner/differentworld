@@ -73,7 +73,9 @@ streams:
       - SELECT * FROM spaces             WHERE id        IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM members            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM groups             WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
-      - SELECT * FROM enrollments        WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # `enrollments` (the legacy staff↔classroom join) is no longer synced —
+      # superseded by group_members, never read by any Dart code, and removed
+      # from the publication in 20260824000004. The server table remains.
       - SELECT * FROM subjects           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM guardians          WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM subject_guardians  WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())

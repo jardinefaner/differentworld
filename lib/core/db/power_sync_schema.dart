@@ -36,13 +36,10 @@ const appSchema = Schema([
     // NULL reads as active (docs/ROOMS.md).
     Column.text('status'),
   ]),
-  Table('enrollments', [
-    Column.text('member_id'),
-    Column.text('group_id'),
-    Column.text('space_id'),
-    Column.text('role'),
-    Column.text('created_at'),
-  ]),
+  // The legacy staff↔classroom `enrollments` table is no longer declared:
+  // superseded by group_members, never queried from Dart, and dropped from
+  // the publication in migration 20260824000004. Declaring it here created a
+  // local table nothing ever read.
   Table('subjects', [
     Column.text('space_id'),
     Column.text('group_id'),
