@@ -1060,6 +1060,31 @@ sync/live feature, run the two probes above (plus `auth/v1/health`).
 The sync-health sheet (tap the cloud pill) surfaces the PowerSync half
 on-device; Realtime has no in-app surface yet.
 
+### Sync rules reference publication tables — so the drop comes LAST
+
+Removing a table from the `powersync` publication while the DEPLOYED sync
+rules still reference it breaks the running instance immediately:
+
+```
+Table "public"."enrollments" is not part of publication 'powersync'.
+```
+
+The repo's `sync_rules.yaml` is only a source of truth; the **dashboard is
+the runtime**. So editing the YAML to drop a table does nothing until it is
+deployed — and the migration that drops the table from the publication takes
+effect the moment it is pushed. Push first and the live instance references a
+table that is no longer published.
+
+**The order is one-way:**
+1. Edit `sync_rules.yaml` to stop referencing the table.
+2. **Deploy the rules on the PowerSync dashboard.**
+3. *Then* `alter publication powersync drop table …`.
+
+Restoring is free and safe (`alter publication powersync add table …`) — a
+published table that no rule selects is simply never streamed — so when in
+doubt, add it back and re-drop after the deploy. The same ordering applies to
+dropping a COLUMN that a sync rule's `SELECT *` covers.
+
 ### A new table name can collide with one Dart never sees
 
 `supabase db push` refused a migration because `enrollments` already
