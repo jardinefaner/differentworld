@@ -37,6 +37,7 @@ import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/form_save_button.dart';
+import 'package:differentworld/shared/widgets/generated_portrait.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
@@ -48,6 +49,7 @@ import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/person_face_wrap.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:differentworld/shared/widgets/responsive_grid.dart';
@@ -580,6 +582,92 @@ void main() {
               label: const Text('Make groups'),
             ),
           ),
+        ),
+      ],
+    ),
+  );
+
+  // Drawn portraits, seeded per person. Two rows on purpose: the top row is
+  // list size (where silhouette is the ONLY thing separating two children)
+  // and the bottom is reveal size. No beards and no glasses — see the
+  // widget's doc for why that is a correctness decision, not a style one.
+  _plate(
+    'atoms/generated_portrait',
+    height: 300,
+    (context) => Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final n in [
+              'Amara Okafor',
+              'Ben Kaur',
+              'Chidi Adeyemi',
+              'Dara Mensah',
+              'Eli Nakamura',
+              'Farah Sultana',
+              'Grace Thompson',
+              'Hana Lindqvist',
+            ])
+              GeneratedPortrait(seed: n),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (final n in ['Amara Okafor', 'Ben Kaur', 'Chidi Adeyemi'])
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: GeneratedPortrait(seed: n, size: 88),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  // A wrapped row of faces with names — "who is still waiting", "who is
+  // here". The overflow chip is shown because a list that silently
+  // truncates reads as a complete list.
+  _plate(
+    'molecules/person_face_wrap',
+    height: 340,
+    (context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Still waiting — 7 of 14',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const PersonFaceWrap(
+          people: [
+            FacePerson(name: 'Ben Kaur'),
+            FacePerson(name: 'Chidi Adeyemi'),
+            FacePerson(name: 'Dara Mensah'),
+            FacePerson(name: 'Eli Nakamura'),
+            FacePerson(name: 'Farah Sultana'),
+            FacePerson(name: 'Grace Thompson'),
+            FacePerson(name: 'Hana Lindqvist'),
+          ],
+        ),
+        const SizedBox(height: 28),
+        const PersonFaceWrap(
+          max: 4,
+          people: [
+            FacePerson(name: 'Ana Ruiz'),
+            FacePerson(name: 'Bo Chen'),
+            FacePerson(name: 'Cai Ng'),
+            FacePerson(name: 'Dev Patel'),
+            FacePerson(name: 'Elif Yilmaz'),
+            FacePerson(name: 'Finn Murray'),
+          ],
         ),
       ],
     ),

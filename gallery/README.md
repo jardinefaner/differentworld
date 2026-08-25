@@ -157,7 +157,7 @@ a drive-by.
 consumer outside its own feature, it is a promotion candidate. When it
 gains its third, it is overdue.
 
-## Catalogued — 48 component plates + 157 screen plates (all light + dark)
+## Catalogued — 50 component plates + 157 screen plates (all light + dark)
 
 ### Atoms
 
@@ -165,6 +165,7 @@ gains its third, it is overdue.
 |---|---|---|---|---|
 | Action buttons | [primary_action_button.dart], [secondary_action_button.dart], [destructive_button.dart] + themed Filled/Tonal/Outlined/Text | pill actions, all button kinds, destructive | ✅ | [light](atoms/action_buttons__light.png) · [dark](atoms/action_buttons__dark.png) |
 | PersonAvatar | [person_avatar.dart] | initials, 3 radii | ✅ | [light](atoms/person_avatar__light.png) · [dark](atoms/person_avatar__dark.png) |
+| GeneratedPortrait | [generated_portrait.dart] | 8 seeds at list size · 3 at reveal size | ✅ content-driven | [light](atoms/generated_portrait__light.png) · [dark](atoms/generated_portrait__dark.png) |
 | StatusDot | [status_dot.dart] | calm · progress · needsAttention · neutral | ✅ | [light](atoms/status_dot__light.png) · [dark](atoms/status_dot__dark.png) |
 | ProgressDots | [progress_dots.dart] | step indicators (0 of N, current position) | ✅ | [light](atoms/progress_dots__light.png) · [dark](atoms/progress_dots__dark.png) |
 | DwWordmark | [dw_wordmark.dart] | logotype + tagline | ✅ | [light](atoms/dw_wordmark__light.png) · [dark](atoms/dw_wordmark__dark.png) |
@@ -190,6 +191,7 @@ gains its third, it is overdue.
 | CapSwitch | [cap_switch.dart] | on · off+disabled | ✅ | [light](molecules/cap_switch__light.png) · [dark](molecules/cap_switch__dark.png) |
 | AccentCardTile | [accent_card_tile.dart] | activity-palettes (teal, pink, amber) | ✅ | [light](molecules/accent_card_tile__light.png) · [dark](molecules/accent_card_tile__dark.png) |
 | AccentEdgeRow | [accent_edge_row.dart] | neutral rule · accented state · trailing · tappable | ✅ one-edge | [light](molecules/accent_edge_row__light.png) · [dark](molecules/accent_edge_row__dark.png) |
+| PersonFaceWrap | [person_face_wrap.dart] | 7 faces with names · overflow "+N" chip | ✅ | [light](molecules/person_face_wrap__light.png) · [dark](molecules/person_face_wrap__dark.png) |
 | AccentEdgeCard | [accent_edge_card.dart] | eyebrow + icon, two accents | ✅ one-edge | [light](molecules/accent_edge_card__light.png) · [dark](molecules/accent_edge_card__dark.png) |
 | DestructiveButton | [destructive_button.dart] | enabled · disabled | ✅ | [light](molecules/destructive_button__light.png) · [dark](molecules/destructive_button__dark.png) |
 | Save controls | [form_save_button.dart] | ready · blocked-by-empty-field | ✅ | [light](molecules/save_controls__light.png) · [dark](molecules/save_controls__dark.png) |
@@ -272,7 +274,7 @@ the running app, light + dark, in `gallery/screens/`. Montage:
 
 ## Not yet catalogued
 
-`lib/shared/widgets/` is **63 files**; **48 component plates** catalogued.
+`lib/shared/widgets/` is **65 files**; **50 component plates** catalogued.
 
 Counts drift, so verify rather than trust them:
 
@@ -314,6 +316,8 @@ under `pumpAndSettle` (leave that state to widget tests — see FormSaveButton
 [feedback in CLAUDE.md]: ../CLAUDE.md
 [docs/THEME_ADHERENCE.md]: ../docs/THEME_ADHERENCE.md
 [accent_edge_row.dart]: ../lib/shared/widgets/accent_edge_row.dart
+[generated_portrait.dart]: ../lib/shared/widgets/generated_portrait.dart
+[person_face_wrap.dart]: ../lib/shared/widgets/person_face_wrap.dart
 [accent_edge_card.dart]: ../lib/shared/widgets/accent_edge_card.dart
 [destructive_button.dart]: ../lib/shared/widgets/destructive_button.dart
 [form_save_button.dart]: ../lib/shared/widgets/form_save_button.dart

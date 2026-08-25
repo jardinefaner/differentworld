@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/features/photos/person_photo_url.dart';
+import 'package:differentworld/features/settings/generated_portraits_setting.dart';
+import 'package:differentworld/shared/widgets/generated_portrait.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,20 +65,28 @@ class PersonAvatar extends ConsumerWidget {
         ? Colors.white
         : Colors.black87;
 
-    final fallback = Container(
-      width: radius * 2,
-      height: radius * 2,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
-      child: Text(
-        _initials(name),
-        style: TextStyle(
-          fontSize: radius * 0.8,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
-      ),
-    );
+    // Seeded on the NAME, never an id. The same person must present the
+    // same face on every screen — a portrait that changes between the roster
+    // and the picker is the one bug people notice instantly. Two children
+    // with identical full names share a face, which is exactly what they
+    // already do with initials.
+    final drawn = ref.watch(generatedPortraitsProvider).value ?? false;
+    final fallback = drawn
+        ? GeneratedPortrait(seed: name, size: radius * 2)
+        : Container(
+            width: radius * 2,
+            height: radius * 2,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
+            child: Text(
+              _initials(name),
+              style: TextStyle(
+                fontSize: radius * 0.8,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
+            ),
+          );
 
     // Path-or-null gate. We don't even subscribe to the signed-URL
     // provider when there's nothing to resolve — saves Supabase calls

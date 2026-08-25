@@ -4,6 +4,7 @@
 
 import 'package:differentworld/features/live_board/board_game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -97,14 +98,19 @@ void main() {
   });
 
   // A realistic room-screen size; the auto-fit stages scale to fill it.
-  Widget host(BoardState state) => MaterialApp(
-    home: Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: 640,
-          height: 360,
-          child: Builder(
-            builder: (context) => game.buildStage(context, state),
+  // ProviderScope because the board's stages render PersonAvatar, which
+  // watches the drawn-portraits setting on every build — not only when a
+  // photo is present.
+  Widget host(BoardState state) => ProviderScope(
+    child: MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 640,
+            height: 360,
+            child: Builder(
+              builder: (context) => game.buildStage(context, state),
+            ),
           ),
         ),
       ),

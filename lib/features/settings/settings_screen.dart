@@ -21,6 +21,7 @@ import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
+import 'package:differentworld/features/settings/generated_portraits_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
@@ -336,6 +337,7 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _ChildDayBentoTile(),
               const _SettingsDivider(),
+              const _GeneratedPortraitsTile(),
               const _ScheduleGridTile(),
               const _SettingsDivider(),
               const _ScheduleDeckTile(),
@@ -674,6 +676,29 @@ class _ChildDayBentoTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(childDayBentoProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Toggles drawn portraits as the no-photo avatar (`GeneratedPortrait`).
+/// Off by default — initials claim nothing about a child, a drawn face does.
+class _GeneratedPortraitsTile extends ConsumerWidget {
+  const _GeneratedPortraitsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(generatedPortraitsProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.face_retouching_natural_outlined),
+      title: const Text('Drawn faces instead of initials'),
+      subtitle: const Text(
+        'Children without a photo get a generated portrait — easier to match '
+        'against the room than two letters',
+      ),
+      value: on,
+      onChanged: (v) => unawaited(
+        ref.read(generatedPortraitsProvider.notifier).set(value: v),
+      ),
     );
   }
 }
