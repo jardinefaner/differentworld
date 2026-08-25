@@ -14,12 +14,14 @@ import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
+import 'package:differentworld/shared/widgets/accent_edge_card.dart';
 import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/desktop_nav_rail.dart';
@@ -34,6 +36,7 @@ import 'package:differentworld/shared/widgets/floating_actions.dart';
 import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
+import 'package:differentworld/shared/widgets/form_save_button.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
@@ -55,6 +58,8 @@ import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
+import 'package:differentworld/shared/widgets/sticky_save_bar.dart';
+import 'package:differentworld/shared/widgets/thumb_bar.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -452,6 +457,134 @@ void main() {
   );
 
   // ── MOLECULES ────────────────────────────────────────────────────────────
+  // Widgets that existed but had never been rendered — a component with no
+  // plate is a component nobody can review.
+  _plate(
+    'molecules/accent_edge_card',
+    height: 300,
+    (context) => Column(
+      // Stretch, or each card sizes to its own text and the plate
+      // misrepresents how the widget actually lays out in a form.
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AccentEdgeCard(
+          accent: Theme.of(context).colorScheme.primary,
+          eyebrow: 'today',
+          eyebrowIcon: Icons.wb_sunny_outlined,
+          children: [
+            Text(
+              'Ask each child what they want to build.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ),
+        const SizedBox(height: Insets.sm),
+        AccentEdgeCard(
+          accent: Theme.of(context).colorScheme.tertiary,
+          eyebrow: 'mission',
+          children: [
+            Text(
+              'Catch someone being kind.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/destructive_button',
+    height: 200,
+    (_) => Column(
+      children: [
+        DestructiveButton(label: 'Erase permanently', onPressed: () {}),
+        const SizedBox(height: Insets.sm),
+        const DestructiveButton(label: 'Erase permanently', onPressed: null),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/save_controls',
+    height: 260,
+    (_) => Column(
+      children: [
+        FormSaveButton(
+          requiredField: TextEditingController(text: 'Sparrows'),
+          onSave: () {},
+          label: 'Save room',
+        ),
+        const SizedBox(height: Insets.sm),
+        FormSaveButton(
+          requiredField: TextEditingController(),
+          onSave: () {},
+          label: 'Save room',
+        ),
+        // No `saving: true` variant: it renders an indefinite
+        // CircularProgressIndicator, which pumpAndSettle can never settle.
+        // The in-flight state is covered by widget tests instead.
+      ],
+    ),
+  );
+
+  // StickySaveBar is a Positioned — it is built to sit in a Stack over a
+  // scrolling form, so the plate gives it that host rather than a Column.
+  _plate(
+    'molecules/sticky_save_bar',
+    height: 220,
+    (context) => Stack(
+      children: [
+        Positioned.fill(
+          child: ColoredBox(color: Theme.of(context).colorScheme.surface),
+        ),
+        StickySaveBar(saving: false, onSave: () {}, label: 'Save changes'),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/catalog_card',
+    height: 260,
+    (_) => CatalogGrid(
+      children: [
+        CatalogCard(
+          leading: const Icon(Icons.palette_outlined),
+          title: 'Make a pattern',
+          subtitle: 'Ten minutes · no supplies',
+          chips: const [Chip(label: Text('quiet'))],
+          onTap: () {},
+        ),
+        CatalogCard(
+          leading: const Icon(Icons.directions_run_outlined),
+          title: 'Beat the letter',
+          subtitle: 'Five minutes · whole room',
+          onTap: () {},
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/thumb_bar',
+    height: 180,
+    (_) => Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        ThumbBar(
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.shuffle),
+              label: const Text('Make groups'),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
   // The Calm "one left edge" ROW — the panel-weight sibling is
   // molecules/accent_card_tile. Both states shown: the neutral rule that
   // just means "an item", and an accented rule that means "an item with a
@@ -460,6 +593,7 @@ void main() {
     'molecules/accent_edge_row',
     height: 420,
     (context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const AccentEdgeRow(
           title: 'Ava · Liam · Nia',
