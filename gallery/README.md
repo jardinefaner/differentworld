@@ -126,7 +126,38 @@ The bible mirrors the architecture's two layers:
 
 ---
 
-## Catalogued — 39 shared widgets + 7 surfaces + 79 screens (all light + dark)
+## What this bible does NOT cover — and the promotion queue
+
+The catalogue below tracks `lib/shared/widgets/` (63 files). There are
+also **65 widgets inside feature folders** (`lib/features/*/widgets/`),
+which are deliberately out of scope: a widget built for one screen has no
+business in a design system.
+
+But some of them stopped being feature-local a long time ago. These are
+referenced from OTHER features, which makes them shared infrastructure
+that happens to live in a feature folder — unplated, unreviewed, and
+invisible to the gallery-critic:
+
+| Widget | Feature folder | Used by N other features |
+|---|---|---|
+| `PersonPhotoNetwork` | photos | **14** |
+| `PhotoViewer` | photos | **8** |
+| `GroupChipRow` | groups | 2 |
+| `AttachmentPhotoThumb` | photos | 2 |
+| `PhotoSourceSheet` | photos | 2 |
+| `NowNextStrip` | schedule | 2 |
+
+`PersonPhotoNetwork` is the clearest case: every surface that renders a
+person's photo goes through it, so it is an atom in everything but
+location. Promoting it means moving the file and updating 14 imports —
+mechanical, but it should be a deliberate change with its own plate, not
+a drive-by.
+
+**The rule going forward:** when a feature widget gains its second
+consumer outside its own feature, it is a promotion candidate. When it
+gains its third, it is overdue.
+
+## Catalogued — 48 component plates + 156 screen plates (all light + dark)
 
 ### Atoms
 
@@ -158,6 +189,13 @@ The bible mirrors the architecture's two layers:
 | ErrorBanner | [error_banner.dart] | message + retry + dismiss | ✅ | [light](molecules/error_banner__light.png) · [dark](molecules/error_banner__dark.png) |
 | CapSwitch | [cap_switch.dart] | on · off+disabled | ✅ | [light](molecules/cap_switch__light.png) · [dark](molecules/cap_switch__dark.png) |
 | AccentCardTile | [accent_card_tile.dart] | activity-palettes (teal, pink, amber) | ✅ | [light](molecules/accent_card_tile__light.png) · [dark](molecules/accent_card_tile__dark.png) |
+| AccentEdgeRow | [accent_edge_row.dart] | neutral rule · accented state · trailing · tappable | ✅ one-edge | [light](molecules/accent_edge_row__light.png) · [dark](molecules/accent_edge_row__dark.png) |
+| AccentEdgeCard | [accent_edge_card.dart] | eyebrow + icon, two accents | ✅ one-edge | [light](molecules/accent_edge_card__light.png) · [dark](molecules/accent_edge_card__dark.png) |
+| DestructiveButton | [destructive_button.dart] | enabled · disabled | ✅ | [light](molecules/destructive_button__light.png) · [dark](molecules/destructive_button__dark.png) |
+| Save controls | [form_save_button.dart] | ready · blocked-by-empty-field | ✅ | [light](molecules/save_controls__light.png) · [dark](molecules/save_controls__dark.png) |
+| StickySaveBar | [sticky_save_bar.dart] | over a scrolling form (needs a Stack) | ✅ | [light](molecules/sticky_save_bar__light.png) · [dark](molecules/sticky_save_bar__dark.png) |
+| CatalogCard | [catalog_card.dart] | in CatalogGrid, with + without chips | ✅ | [light](molecules/catalog_card__light.png) · [dark](molecules/catalog_card__dark.png) |
+| ThumbBar | [thumb_bar.dart] | fixed control clearing the LIVE strip | ✅ | [light](molecules/thumb_bar__light.png) · [dark](molecules/thumb_bar__dark.png) |
 | CapabilityLockedTile | [capability_locked_tile.dart] | locked card overlay | ✅ | [light](molecules/capability_locked_tile__light.png) · [dark](molecules/capability_locked_tile__dark.png) |
 | CollapsibleSection | [collapsible_section.dart] | collapsed · expanded states | ✅ one-edge | [light](molecules/collapsible_section__light.png) · [dark](molecules/collapsible_section__dark.png) |
 | NoAccess | [no_access.dart] | access denied state | ✅ | [light](molecules/no_access__light.png) · [dark](molecules/no_access__dark.png) |
@@ -232,34 +270,56 @@ the running app, light + dark, in `gallery/screens/`. Montage:
 
 ---
 
-## Not yet catalogued (the curator tracks these)
+## Not yet catalogued
 
-`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **39 plates
-catalogued** — all atoms + ALL molecules + ALL organisms. Every cataloguable
-shared widget now has a light + dark plate; the only widgets without one are
-the non-visual / behavioural classes below.
-The `_platePumped` / `_scenePlate` helpers (fixed-frame pump) cover forever-
-animations (shimmer / spinner / the live-strip's breathing dot);
-**`BackdropFilter` blur DOES capture in goldens** (glass frost renders properly).
+`lib/shared/widgets/` is **63 files**; **48 component plates** catalogued.
 
-**Atoms** (0 remaining — ALL CATALOGUED). ✅
+Counts drift, so verify rather than trust them:
 
-**Molecules** (0 remaining — ALL CATALOGUED). ✅ GlassDragHandle renders on a seeded `GlassSheetScope(bottomSheet)` so its grab-pill shows.
+```sh
+ls lib/shared/widgets/*.dart | wc -l                       # source files
+ls gallery/{atoms,molecules,organisms}/*__light.png | wc -l  # plates
+ls gallery/screens/*__light.png | wc -l                      # screen plates
+```
 
-**Organisms** (0 remaining — ALL CATALOGUED). ✅ The six that need a
-`ProviderScope` + routing world (EdgeScaffold, AppShell, MainDrawer,
-DesktopNavRail, LiveBlockStrip, SliverResponsiveGrid) now render through the
-`_scenePlate` seeded harness — a director `Viewer` over an in-memory DB with
-the Drift watch-streams overridden (so no pending Timer at teardown), plus a
-real GoRouter for AppShell. AppShell injects a live block so the strip shows
-without starting the 30s tick provider.
+An earlier version of this section claimed atoms, molecules and organisms
+were ALL catalogued. That was not true — a 2026-08-24 audit found six
+visual widgets with no plate at all (AccentEdgeCard, DestructiveButton,
+FormSaveButton, StickySaveBar, CatalogCard, and the then-new ThumbBar).
+They are catalogued now, and the claim is not being restated: this list is
+what remains.
+
+**Still unplated, and why**
+
+| Widget | Why not |
+|---|---|
+| `CameraChrome` | needs a live camera; nothing to rasterise |
+| `DrawingPad` | needs real gestures — an empty canvas plate says nothing |
+| `CapPickerSheet`, `SubjectPickerSheet` | modal sheets needing a seeded route + data; plate as a scene when one is written |
+| `BentoModule`, `DayToolsBento`, `SlideBlock` | composed surfaces with heavy data needs; covered indirectly by the screen plates that use them |
 
 **Non-visual / behavioural (no plate, do not catalogue)** — CenterOrScroll,
 DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle,
-GlassSheetScope.
+GlassSheetScope, ShellMetrics, RouteChrome, NavDestinations.
+
+The `_platePumped` / `_scenePlate` helpers (fixed-frame pump) cover forever-
+animations (shimmer / spinner / the live-strip's breathing dot);
+**`BackdropFilter` blur DOES capture in goldens** (glass frost renders
+properly). Two things a plate cannot do, learned the hard way: a widget that
+is a `Positioned` asserts outside a `Stack` (give it one — see
+StickySaveBar), and an indefinite `CircularProgressIndicator` never settles
+under `pumpAndSettle` (leave that state to widget tests — see FormSaveButton
+`saving: true`).
 
 [feedback in CLAUDE.md]: ../CLAUDE.md
 [docs/THEME_ADHERENCE.md]: ../docs/THEME_ADHERENCE.md
+[accent_edge_row.dart]: ../lib/shared/widgets/accent_edge_row.dart
+[accent_edge_card.dart]: ../lib/shared/widgets/accent_edge_card.dart
+[destructive_button.dart]: ../lib/shared/widgets/destructive_button.dart
+[form_save_button.dart]: ../lib/shared/widgets/form_save_button.dart
+[sticky_save_bar.dart]: ../lib/shared/widgets/sticky_save_bar.dart
+[catalog_card.dart]: ../lib/shared/widgets/catalog_card.dart
+[thumb_bar.dart]: ../lib/shared/widgets/thumb_bar.dart
 [test/golden/component_gallery_test.dart]: ../test/golden/component_gallery_test.dart
 [test/golden/game_gallery_test.dart]: ../test/golden/game_gallery_test.dart
 [game_stage.dart]: ../lib/features/games/game_stage.dart
