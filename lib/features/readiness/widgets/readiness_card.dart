@@ -60,6 +60,7 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final urgent =
+        item.kind == ReadinessKind.roomOverLimit ||
         item.kind == ReadinessKind.missingGuardian ||
         item.kind == ReadinessKind.missingAllergyAnswer;
 
@@ -110,6 +111,7 @@ class _Row extends StatelessWidget {
     ReadinessKind.missingConsent => Icons.verified_user_outlined,
     ReadinessKind.missingPhoto => Icons.photo_camera_outlined,
     ReadinessKind.neverArranged => Icons.groups_outlined,
+    ReadinessKind.roomOverLimit => Icons.report_problem_outlined,
   };
 
   String get _title => switch (item.kind) {
@@ -131,6 +133,8 @@ class _Row extends StatelessWidget {
           : '${item.count} have no photo',
     ReadinessKind.neverArranged =>
       '${item.groupName ?? 'A room'} has never been arranged',
+    ReadinessKind.roomOverLimit =>
+      '${item.groupName ?? 'A room'} is over its limit',
   };
 
   String get _detail => switch (item.kind) {
@@ -141,6 +145,8 @@ class _Row extends StatelessWidget {
     ReadinessKind.missingPhoto => _names('every family is here right now'),
     ReadinessKind.neverArranged =>
       'Mix the strangers — ${item.count} here today',
+    ReadinessKind.roomOverLimit =>
+      item.names.isEmpty ? 'Check the room' : item.names.first,
   };
 
   String _namesRaw() {
@@ -157,7 +163,8 @@ class _Row extends StatelessWidget {
 
   void _go(BuildContext context) {
     final groupId = item.groupId;
-    if (item.kind == ReadinessKind.neverArranged) {
+    if (item.kind == ReadinessKind.neverArranged ||
+        item.kind == ReadinessKind.roomOverLimit) {
       if (groupId != null) unawaited(context.push('/groups/$groupId'));
       return;
     }

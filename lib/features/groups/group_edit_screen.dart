@@ -44,6 +44,8 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _ageRangeController;
+  late final TextEditingController _capacity;
+  late final TextEditingController _ratio;
 
   Capabilities _caps = const Capabilities.empty();
   String _ageBand = AgeBands.preschool;
@@ -57,6 +59,8 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     super.initState();
     _nameController = TextEditingController();
     _ageRangeController = TextEditingController();
+    _capacity = TextEditingController();
+    _ratio = TextEditingController();
     if (!widget.isEdit) {
       _caps = Capabilities(AgeBandDefaults.forBand(_ageBand));
     }
@@ -66,6 +70,8 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   void dispose() {
     _nameController.dispose();
     _ageRangeController.dispose();
+    _capacity.dispose();
+    _ratio.dispose();
     super.dispose();
   }
 
@@ -75,6 +81,10 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     _ageRangeController.text = g.ageRange ?? '';
     final initial = g.caps;
     _ageBand = initial.getString(GroupCaps.ageBand) ?? AgeBands.preschool;
+    _capacity.text =
+        initial.getInt(GroupCaps.licensedCapacity)?.toString() ?? '';
+    _ratio.text =
+        initial.getInt(GroupCaps.ratioChildrenPerAdult)?.toString() ?? '';
     _caps = Capabilities(
       AgeBandDefaults.forBand(_ageBand),
     ).mergedWith(initial.toMap());
@@ -103,6 +113,20 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
 
   void _setBool(String key, bool value) {
     setState(() => _caps = _caps.setting(key, value));
+  }
+
+  /// Set (or clear) one of the room's regulated numbers. An empty field
+  /// CLEARS the key rather than storing 0 — "not set" and "a limit of zero"
+  /// are different states, and only one of them is a real room.
+  void _setNumber(String key, String raw) {
+    final trimmed = raw.trim();
+    final parsed = int.tryParse(trimmed);
+    setState(() {
+      _caps = _caps.setting(
+        key,
+        trimmed.isEmpty || parsed == null || parsed <= 0 ? null : parsed,
+      );
+    });
   }
 
   Future<void> _save() async {
@@ -289,6 +313,34 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                   ),
                 );
 
+                // The two regulated numbers (docs/ROOMS.md). Per-room, not
+                // per-program, because they are set by age band: an infant
+                // room and an 8-12 room in one building carry completely
+                // different limits.
+                final capacityField = TextField(
+                  key: const ValueKey('group-edit-capacity'),
+                  controller: _capacity,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Licensed capacity',
+                    hintText: 'How many children this room may hold',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) => _setNumber(GroupCaps.licensedCapacity, v),
+                );
+                final ratioField = TextField(
+                  key: const ValueKey('group-edit-ratio'),
+                  controller: _ratio,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Children per adult',
+                    hintText: 'e.g. 8 for 1:8',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) =>
+                      _setNumber(GroupCaps.ratioChildrenPerAdult, v),
+                );
+
                 // Capability toggles — short, pairable in 2-col mode.
                 final diapersSwitch = CapSwitch(
                   key: const ValueKey('group-edit-cap-diapers'),
@@ -349,9 +401,11 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                     ? <Widget>[
                         _row(nameField, ageBandField),
                         const SizedBox(height: 12),
-                        // Age range pairs with an empty cell so it keeps
-                        // half-width alignment with the row above.
-                        _row(ageRangeField, const SizedBox.shrink()),
+                        // Age range pairs with capacity so the row stays
+                        // half-width aligned with the one above.
+                        _row(ageRangeField, capacityField),
+                        const SizedBox(height: 12),
+                        _row(ratioField, const SizedBox.shrink()),
                       ]
                     : [
                         nameField,
@@ -359,6 +413,10 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                         ageBandField,
                         const SizedBox(height: 12),
                         ageRangeField,
+                        const SizedBox(height: 12),
+                        capacityField,
+                        const SizedBox(height: 12),
+                        ratioField,
                       ];
 
                 final capChildren = twoCol

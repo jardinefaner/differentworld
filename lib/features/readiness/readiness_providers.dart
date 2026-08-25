@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/readiness/readiness.dart';
+import 'package:differentworld/features/rooms/room_load_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,11 +64,25 @@ final Provider<List<ReadinessItem>> readinessProvider =
                 fallback: true,
               ) ??
           true;
+      // Ratio / capacity breaches, phrased once here so the card just
+      // renders them.
+      final breaches = <String, String>{};
+      for (final g in groups) {
+        final load = ref.watch(roomLoadProvider(g.id));
+        if (!load.breached) continue;
+        breaches[g.id] = load.overCapacity
+            ? 'over the licensed limit of ${load.licensedCapacity}'
+            : 'needs ${load.staffShort} more adult'
+                  '${load.staffShort == 1 ? '' : 's'} at '
+                  '1:${load.ratioChildrenPerAdult}';
+      }
+
       return computeReadiness(
         roster: roster,
         subjectIdsWithGuardian: withGuardian,
         spaceDefaultAllowsPhotos: defaultAllows,
         groups: groups,
         arrangedGroupIds: arranged,
+        roomBreaches: breaches,
       );
     });

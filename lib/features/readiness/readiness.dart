@@ -38,6 +38,11 @@ enum ReadinessKind {
   /// with whoever they arrived with; this is the one round that decides
   /// whether they meet anybody else.
   neverArranged,
+
+  /// A room over its licensed capacity, or under its staffing ratio. The
+  /// only item here that is a REGULATORY problem rather than an incomplete
+  /// record, which is why it sorts above everything else.
+  roomOverLimit,
 }
 
 class ReadinessItem {
@@ -77,6 +82,11 @@ List<ReadinessItem> computeReadiness({
   required bool spaceDefaultAllowsPhotos,
   List<Group> groups = const [],
   Set<String> arrangedGroupIds = const {},
+
+  /// Room id → the one-line reason it is over its limit. Computed by the
+  /// caller (it needs staffing and attendance), passed in so this stays
+  /// pure.
+  Map<String, String> roomBreaches = const {},
 }) {
   // Alumni are not today's problem. They keep every record they ever had,
   // and none of it needs completing. Anything that is not explicitly
@@ -139,9 +149,20 @@ List<ReadinessItem> computeReadiness({
   ];
 
   return [
-    // Ordered by what it costs to miss: somebody unreachable in an
-    // emergency, then a medical unknown, then the two things only
-    // collectable while the family is physically present.
+    // Ordered by what it costs to miss. A ratio breach outranks everything:
+    // it is the only line here that is a regulatory event rather than an
+    // incomplete record, and it is happening right now.
+    for (final g in groups)
+      if (roomBreaches.containsKey(g.id))
+        ReadinessItem(
+          kind: ReadinessKind.roomOverLimit,
+          count: 1,
+          names: [roomBreaches[g.id]!],
+          groupId: g.id,
+          groupName: g.name,
+        ),
+    // Then: somebody unreachable in an emergency, a medical unknown, and
+    // the two things only collectable while the family is here.
     ?item(ReadinessKind.missingGuardian, noGuardian),
     ?item(ReadinessKind.missingAllergyAnswer, noAllergyAnswer),
     ?item(ReadinessKind.missingConsent, noConsent),

@@ -45,12 +45,14 @@ void main() {
     bool defaultAllows = true,
     List<Group> groups = const [],
     Set<String> arranged = const {},
+    Map<String, String> breaches = const {},
   }) => computeReadiness(
     roster: roster,
     subjectIdsWithGuardian: withGuardian,
     spaceDefaultAllowsPhotos: defaultAllows,
     groups: groups,
     arrangedGroupIds: arranged,
+    roomBreaches: breaches,
   );
 
   test('a complete roster produces NOTHING', () {
@@ -125,6 +127,41 @@ void main() {
 
   test('alumni are not today’s problem', () {
     final items = run(roster: [kid('old', status: 'alumni')]);
+    expect(items, isEmpty);
+  });
+
+  test('a room over its limit outranks every paperwork gap', () {
+    // The only regulatory item in the briefing, so it sorts first even when
+    // children are missing guardians and photos.
+    final items = run(
+      roster: [
+        kid('a', groupId: 'g1'),
+        kid('b', groupId: 'g1'),
+      ],
+      groups: [room('g1', 'Sparrows')],
+      arranged: {'g1'},
+      breaches: {'g1': 'needs 1 more adult at 1:8'},
+    );
+    expect(items.first.kind, ReadinessKind.roomOverLimit);
+    expect(items.first.groupName, 'Sparrows');
+    expect(items.first.names.first, 'needs 1 more adult at 1:8');
+  });
+
+  test('a room within its limits says nothing', () {
+    final items = run(
+      roster: [
+        kid(
+          'a',
+          photo: 'p.jpg',
+          allergies: 'None',
+          consent: true,
+          groupId: 'g1',
+        ),
+      ],
+      withGuardian: {'a'},
+      groups: [room('g1', 'Sparrows')],
+      arranged: {'g1'},
+    );
     expect(items, isEmpty);
   });
 

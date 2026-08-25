@@ -294,6 +294,19 @@ abstract class MemberCaps {
 
 abstract class GroupCaps {
   static const ageBand = 'age_band';
+
+  /// The most regulated numbers in the building.
+  ///
+  /// [licensedCapacity] — how many children this room may legally hold.
+  /// [ratioChildrenPerAdult] — how many children one adult may supervise.
+  ///
+  /// Both are per-ROOM rather than per-program because they are set by age
+  /// band: an infant room and an 8-12 room in the same building carry
+  /// completely different numbers. Null means "not set", which is a real
+  /// state and never treated as unlimited — an unset room simply cannot be
+  /// checked, and says so.
+  static const licensedCapacity = 'licensed_capacity';
+  static const ratioChildrenPerAdult = 'ratio_children_per_adult';
   static const tracksDiapers = 'tracks_diapers';
   static const tracksNaps = 'tracks_naps';
   static const tracksMealsDetailed = 'tracks_meals_detailed';
