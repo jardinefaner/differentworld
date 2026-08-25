@@ -391,6 +391,15 @@ when it does not, and re-arms on every commit — both its sentinels are keyed
 to HEAD, and a commit that touches a trigger path counts as a trigger, so
 each wave gets exactly one check.
 
+**The hook is GLOBAL, so its scope is deliberate.** A project with no
+`docs/FEATURES.md` is untouched. A project that has one but no
+`scripts/check_registries.sh` keeps the gentler once-per-session behaviour —
+per-commit re-arming is earned by having a checker that can name a real gap,
+not granted by default, because a timestamp guess repeated every commit is
+noise wearing a badge. To give a new project the teeth, copy
+`scripts/check_registries.sh`; it no-ops on whichever of the three checks
+that repo lacks.
+
 The rule the tooling now enforces:
 
 - **Update the registries in the same wave as the code**, alongside the
