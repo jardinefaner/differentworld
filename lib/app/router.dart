@@ -129,6 +129,7 @@ import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
 import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
+import 'package:differentworld/features/rooms/turns_screen.dart';
 import 'package:differentworld/features/rotation/arrange_screen.dart';
 import 'package:differentworld/features/rotation/coverage_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
@@ -447,6 +448,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => RouteTitle(
                       title: 'Make groups',
                       child: ArrangeScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'turns',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Pick someone',
+                      child: TurnsScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'talk',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Talk time',
+                      child: TalkScreen(
                         groupId: state.pathParameters['id']!,
                       ),
                     ),

@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-153 screens scored · worst-first · `tool/score_screens.py`
+156 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **100.0** · ship-confident: 153
+Average: **100.0** · ship-confident: 156
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -33,6 +33,7 @@ Average: **100.0** · ship-confident: 153
 | 100 | ship-confident | `child_photos_folder` | — |
 | 100 | ship-confident | `child_trail` | — |
 | 100 | ship-confident | `child_world` | — |
+| 100 | ship-confident | `closed_rooms` | — |
 | 100 | ship-confident | `collection` | — |
 | 100 | ship-confident | `conductor` | — |
 | 100 | ship-confident | `coverage` | — |
@@ -132,6 +133,7 @@ Average: **100.0** · ship-confident: 153
 | 100 | ship-confident | `survey_index` | — |
 | 100 | ship-confident | `survey_table` | — |
 | 100 | ship-confident | `survey_take` | — |
+| 100 | ship-confident | `talk` | — |
 | 100 | ship-confident | `task` | — |
 | 100 | ship-confident | `tasks` | — |
 | 100 | ship-confident | `team` | — |
@@ -146,6 +148,7 @@ Average: **100.0** · ship-confident: 153
 | 100 | ship-confident | `toolkit_tool` | — |
 | 100 | ship-confident | `tools` | — |
 | 100 | ship-confident | `trip_detail` | — |
+| 100 | ship-confident | `turns` | — |
 | 100 | ship-confident | `vehicle_detail` | — |
 | 100 | ship-confident | `vehicle_edit` | — |
 | 100 | ship-confident | `vehicle_inspection` | — |

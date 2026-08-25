@@ -121,6 +121,43 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/groups/${g.id}/arrange'),
       ),
+    // The attention instruments, per cohort — the two scarce things the
+    // rotation engine does not spread.
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.turns.${g.id}',
+        label: 'Pick someone · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.touch_app_outlined,
+        keywords: [
+          'pick',
+          'pick someone',
+          'choose',
+          'cold call',
+          'whose turn',
+          'turn',
+          'volunteer',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/turns'),
+      ),
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.talk.${g.id}',
+        label: 'Talk time · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.record_voice_over_outlined,
+        keywords: [
+          'talk',
+          'talk time',
+          'who has spoken',
+          'quiet',
+          'airtime',
+          'speaking',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/talk'),
+      ),
     // Year rollover + its receipt. Director-only, and reachable by the
     // words a director actually uses in August ("new year", "move up",
     // "graduate") rather than the feature's own name.

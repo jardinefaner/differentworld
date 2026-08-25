@@ -113,6 +113,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   unawaited(context.push('/groups/$groupId/arrange'));
                 case 'coverage':
                   unawaited(context.push('/groups/$groupId/coverage'));
+                case 'turns':
+                  unawaited(context.push('/groups/$groupId/turns'));
+                case 'talk':
+                  unawaited(context.push('/groups/$groupId/talk'));
                 case 'edit':
                   unawaited(context.push('/groups/$groupId/edit'));
               }
@@ -133,6 +137,22 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 child: ListTile(
                   leading: Icon(Icons.groups_2_outlined),
                   title: Text('Make groups'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'turns',
+                child: ListTile(
+                  leading: Icon(Icons.touch_app_outlined),
+                  title: Text('Pick someone'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'talk',
+                child: ListTile(
+                  leading: Icon(Icons.record_voice_over_outlined),
+                  title: Text('Talk time'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),

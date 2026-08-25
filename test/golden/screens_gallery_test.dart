@@ -107,6 +107,8 @@ import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
+import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
+import 'package:differentworld/features/rooms/turns_screen.dart';
 import 'package:differentworld/features/rotation/arrange_screen.dart';
 import 'package:differentworld/features/rotation/coverage_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
@@ -681,6 +683,12 @@ void main() {
     'screens/coverage',
     (db) async => const CoverageScreen(groupId: 'g1'),
   );
+
+  // The attention instruments (docs/ROTATION.md).
+  _richPlate('screens/turns', (db) async => const TurnsScreen(groupId: 'g1'));
+  _richPlate('screens/talk', (db) async => const TalkScreen(groupId: 'g1'));
+  // Rooms retired rather than erased (docs/ROOMS.md).
+  _richPlate('screens/closed_rooms', (db) async => const ClosedRoomsScreen());
 
   // Year rollover + its receipt (docs/ROLLOVER.md).
   _richPlate('screens/rollover', (db) async => const RolloverScreen());
