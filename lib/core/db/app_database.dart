@@ -79,6 +79,15 @@ class Groups extends Table {
   TextColumn get ageRange => text().nullable()();
   TextColumn get color => text().nullable()();
   TextColumn get capabilities => text()();
+
+  /// `active` | `closed`. A room is never deleted to get it out of the way —
+  /// deleting one cascades through six tables and takes its whole schedule
+  /// with it (docs/ROOMS.md).
+  ///
+  /// Nullable to match the local reality: PowerSync columns always are, and
+  /// a newly-added one reads NULL for every row already on the device.
+  /// NULL counts as active everywhere.
+  TextColumn get status => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

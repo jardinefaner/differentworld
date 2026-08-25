@@ -146,6 +146,23 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ),
     if (viewer.canManageSpace)
       OmniboxEntry(
+        id: 'page.closed-rooms',
+        label: 'Closed rooms',
+        category: OmniboxCategory.page,
+        icon: Icons.archive_outlined,
+        keywords: const [
+          'closed',
+          'closed rooms',
+          'retired',
+          'archived',
+          'reopen',
+          'old room',
+          'shut',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/closed-rooms'),
+      ),
+    if (viewer.canManageSpace)
+      OmniboxEntry(
         id: 'page.alumni',
         label: 'Past children',
         category: OmniboxCategory.page,

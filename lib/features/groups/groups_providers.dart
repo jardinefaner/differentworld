@@ -96,8 +96,32 @@ class GroupActions {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.groupsDao.deleteById(id);
   }
+
+  /// Retire a room, keeping everything (docs/ROOMS.md).
+  Future<void> closeRoom(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.groupsDao.closeRoom(id, DateTime.now().toIso8601String());
+  }
+
+  Future<void> reopenRoom(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.groupsDao.reopenRoom(id, DateTime.now().toIso8601String());
+  }
 }
 
 /// Long-lived singleton. Intentionally not `autoDispose` — Actions hold a
 /// `Ref` and are reused for the life of the app.
+/// Rooms that have been closed. Reached deliberately from Settings — the
+/// way back from a close, so retiring a room is never a one-way door.
+final StreamProvider<List<Group>> closedGroupsProvider =
+    StreamProvider.autoDispose<List<Group>>((ref) async* {
+      final spaceId = ref.watch(viewerProvider).spaceId;
+      if (spaceId == null) {
+        yield const [];
+        return;
+      }
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.groupsDao.watchClosedInSpace(spaceId);
+    });
+
 final groupActionsProvider = Provider<GroupActions>(GroupActions.new);

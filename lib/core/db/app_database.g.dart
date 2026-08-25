@@ -1045,6 +1045,15 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1075,6 +1084,7 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     ageRange,
     color,
     capabilities,
+    status,
     createdAt,
     updatedAt,
   ];
@@ -1134,6 +1144,12 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     } else if (isInserting) {
       context.missing(_capabilitiesMeta);
     }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1183,6 +1199,10 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         DriftSqlType.string,
         data['${effectivePrefix}capabilities'],
       )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -1207,6 +1227,15 @@ class Group extends DataClass implements Insertable<Group> {
   final String? ageRange;
   final String? color;
   final String capabilities;
+
+  /// `active` | `closed`. A room is never deleted to get it out of the way —
+  /// deleting one cascades through six tables and takes its whole schedule
+  /// with it (docs/ROOMS.md).
+  ///
+  /// Nullable to match the local reality: PowerSync columns always are, and
+  /// a newly-added one reads NULL for every row already on the device.
+  /// NULL counts as active everywhere.
+  final String? status;
   final String createdAt;
   final String updatedAt;
   const Group({
@@ -1216,6 +1245,7 @@ class Group extends DataClass implements Insertable<Group> {
     this.ageRange,
     this.color,
     required this.capabilities,
+    this.status,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1232,6 +1262,9 @@ class Group extends DataClass implements Insertable<Group> {
       map['color'] = Variable<String>(color);
     }
     map['capabilities'] = Variable<String>(capabilities);
+    if (!nullToAbsent || status != null) {
+      map['status'] = Variable<String>(status);
+    }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -1249,6 +1282,9 @@ class Group extends DataClass implements Insertable<Group> {
           ? const Value.absent()
           : Value(color),
       capabilities: Value(capabilities),
+      status: status == null && nullToAbsent
+          ? const Value.absent()
+          : Value(status),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1266,6 +1302,7 @@ class Group extends DataClass implements Insertable<Group> {
       ageRange: serializer.fromJson<String?>(json['ageRange']),
       color: serializer.fromJson<String?>(json['color']),
       capabilities: serializer.fromJson<String>(json['capabilities']),
+      status: serializer.fromJson<String?>(json['status']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -1280,6 +1317,7 @@ class Group extends DataClass implements Insertable<Group> {
       'ageRange': serializer.toJson<String?>(ageRange),
       'color': serializer.toJson<String?>(color),
       'capabilities': serializer.toJson<String>(capabilities),
+      'status': serializer.toJson<String?>(status),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -1292,6 +1330,7 @@ class Group extends DataClass implements Insertable<Group> {
     Value<String?> ageRange = const Value.absent(),
     Value<String?> color = const Value.absent(),
     String? capabilities,
+    Value<String?> status = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => Group(
@@ -1301,6 +1340,7 @@ class Group extends DataClass implements Insertable<Group> {
     ageRange: ageRange.present ? ageRange.value : this.ageRange,
     color: color.present ? color.value : this.color,
     capabilities: capabilities ?? this.capabilities,
+    status: status.present ? status.value : this.status,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1314,6 +1354,7 @@ class Group extends DataClass implements Insertable<Group> {
       capabilities: data.capabilities.present
           ? data.capabilities.value
           : this.capabilities,
+      status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1328,6 +1369,7 @@ class Group extends DataClass implements Insertable<Group> {
           ..write('ageRange: $ageRange, ')
           ..write('color: $color, ')
           ..write('capabilities: $capabilities, ')
+          ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1342,6 +1384,7 @@ class Group extends DataClass implements Insertable<Group> {
     ageRange,
     color,
     capabilities,
+    status,
     createdAt,
     updatedAt,
   );
@@ -1355,6 +1398,7 @@ class Group extends DataClass implements Insertable<Group> {
           other.ageRange == this.ageRange &&
           other.color == this.color &&
           other.capabilities == this.capabilities &&
+          other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1366,6 +1410,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<String?> ageRange;
   final Value<String?> color;
   final Value<String> capabilities;
+  final Value<String?> status;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -1376,6 +1421,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.ageRange = const Value.absent(),
     this.color = const Value.absent(),
     this.capabilities = const Value.absent(),
+    this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1387,6 +1433,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.ageRange = const Value.absent(),
     this.color = const Value.absent(),
     required String capabilities,
+    this.status = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -1403,6 +1450,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Expression<String>? ageRange,
     Expression<String>? color,
     Expression<String>? capabilities,
+    Expression<String>? status,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -1414,6 +1462,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       if (ageRange != null) 'age_range': ageRange,
       if (color != null) 'color': color,
       if (capabilities != null) 'capabilities': capabilities,
+      if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1427,6 +1476,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Value<String?>? ageRange,
     Value<String?>? color,
     Value<String>? capabilities,
+    Value<String?>? status,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -1438,6 +1488,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       ageRange: ageRange ?? this.ageRange,
       color: color ?? this.color,
       capabilities: capabilities ?? this.capabilities,
+      status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1465,6 +1516,9 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     if (capabilities.present) {
       map['capabilities'] = Variable<String>(capabilities.value);
     }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -1486,6 +1540,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
           ..write('ageRange: $ageRange, ')
           ..write('color: $color, ')
           ..write('capabilities: $capabilities, ')
+          ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -28650,6 +28705,7 @@ typedef $$GroupsTableCreateCompanionBuilder =
       Value<String?> ageRange,
       Value<String?> color,
       required String capabilities,
+      Value<String?> status,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -28662,6 +28718,7 @@ typedef $$GroupsTableUpdateCompanionBuilder =
       Value<String?> ageRange,
       Value<String?> color,
       Value<String> capabilities,
+      Value<String?> status,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -28703,6 +28760,11 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<String> get capabilities => $composableBuilder(
     column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -28756,6 +28818,11 @@ class $$GroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -28795,6 +28862,9 @@ class $$GroupsTableAnnotationComposer
     column: $table.capabilities,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -28837,6 +28907,7 @@ class $$GroupsTableTableManager
                 Value<String?> ageRange = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<String> capabilities = const Value.absent(),
+                Value<String?> status = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -28847,6 +28918,7 @@ class $$GroupsTableTableManager
                 ageRange: ageRange,
                 color: color,
                 capabilities: capabilities,
+                status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -28859,6 +28931,7 @@ class $$GroupsTableTableManager
                 Value<String?> ageRange = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 required String capabilities,
+                Value<String?> status = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -28869,6 +28942,7 @@ class $$GroupsTableTableManager
                 ageRange: ageRange,
                 color: color,
                 capabilities: capabilities,
+                status: status,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

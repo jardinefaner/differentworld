@@ -153,6 +153,16 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               if (viewer.canManageSpace)
                 ListTile(
+                  leading: const Icon(Icons.archive_outlined),
+                  title: const Text('Closed rooms'),
+                  subtitle: const Text(
+                    'Rooms you have retired — reopen any of them',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/closed-rooms'),
+                ),
+              if (viewer.canManageSpace)
+                ListTile(
                   leading: const Icon(Icons.history_outlined),
                   title: const Text('Past children'),
                   subtitle: const Text(

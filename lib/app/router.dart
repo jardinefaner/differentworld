@@ -128,6 +128,7 @@ import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
+import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
 import 'package:differentworld/features/rotation/arrange_screen.dart';
 import 'package:differentworld/features/rotation/coverage_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
@@ -999,6 +1000,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Start a new year',
                   child: RolloverScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'closed-rooms',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Closed rooms',
+                  child: ClosedRoomsScreen(),
                 ),
               ),
               GoRoute(

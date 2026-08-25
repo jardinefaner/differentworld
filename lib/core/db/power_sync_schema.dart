@@ -32,6 +32,9 @@ const appSchema = Schema([
     Column.text('capabilities'),
     Column.text('created_at'),
     Column.text('updated_at'),
+    // active | closed. Nullable locally like every PowerSync column;
+    // NULL reads as active (docs/ROOMS.md).
+    Column.text('status'),
   ]),
   Table('enrollments', [
     Column.text('member_id'),

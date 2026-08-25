@@ -170,18 +170,65 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     });
   }
 
+  /// Retire a room without destroying it — the action a director actually
+  /// wants at the end of a year (docs/ROOMS.md).
+  Future<void> _close() async {
+    if (!ref.read(viewerProvider).canManageSpace) return;
+    if (!widget.isEdit) return;
+    final g = ref.read(_groupByIdProvider(widget.groupId!)).value;
+    if (g == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await confirmDestructive(
+      context,
+      title: 'Close ${g.name}?',
+      message:
+          'It stops appearing in today’s rosters, schedules and pickers, '
+          'and keeps everything — its schedule, its groupings, its whole '
+          'history. You can reopen it any time.',
+      confirmLabel: 'Close the room',
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _saving = true);
+    final ok = await runReported(
+      library: 'groups',
+      action: () => ref.read(groupActionsProvider).closeRoom(g.id),
+    );
+    if (!mounted) return;
+    if (ok) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('${g.name} closed. Nothing was deleted.')),
+      );
+      context.pop();
+      if (!mounted) return;
+      if (context.canPop()) context.pop();
+      return;
+    }
+    setState(() {
+      _saving = false;
+      _error = 'Could not close the room. Please try again.';
+    });
+  }
+
   Future<void> _delete() async {
     if (!ref.read(viewerProvider).canManageSpace) return;
     if (!widget.isEdit) return;
     final g = ref.read(_groupByIdProvider(widget.groupId!)).value;
     if (g == null) return;
+    // TRUTHFUL COPY (2026-08-24). This said only that "assignments will be
+    // removed" — but SIX tables cascade off groups, so deleting a room also
+    // takes its entire schedule, its weekly template blocks, every
+    // arrangement and its fairness log. Children genuinely do survive
+    // (subjects.group_id is ON DELETE SET NULL), which is why the old copy
+    // read as harmless.
     final confirmed = await confirmDestructive(
       context,
-      title: 'Delete this classroom?',
+      title: 'Erase ${g.name} permanently?',
       message:
-          '${g.name} and its assignments will be removed for everyone '
-          "on your team. Students stay; they just won't be in a classroom.",
-      confirmLabel: 'Delete classroom',
+          'This is NOT how you retire a room — use Close instead.\n\n'
+          'Erasing deletes its whole schedule, its weekly plan, every '
+          'grouping it has ever made and its staff assignments. Children '
+          'survive but end up in no room at all.',
+      confirmLabel: 'Erase permanently',
     );
     if (!confirmed || !mounted) return;
     setState(() => _saving = true);
@@ -484,9 +531,34 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: DestructiveButton(
-                          label: 'Delete classroom',
-                          onPressed: _saving ? null : _delete,
+                        // Close leads; erase is the small print underneath.
+                        // Retiring a room is the common act at year end;
+                        // erasing one is a mistake being corrected.
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _saving ? null : _close,
+                              icon: const Icon(Icons.archive_outlined),
+                              label: const Text('Close this room'),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Keeps everything — the schedule, the '
+                              'groupings, the whole history.',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(height: 20),
+                            DestructiveButton(
+                              label: 'Erase permanently',
+                              onPressed: _saving ? null : _delete,
+                            ),
+                          ],
                         ),
                       ),
                     ],

@@ -10,7 +10,11 @@ class GroupsDao extends DatabaseAccessor<AppDatabase> with _$GroupsDaoMixin {
 
   Stream<List<Group>> watchInSpace(String spaceId) {
     return (select(groups)
-          ..where((g) => g.spaceId.equals(spaceId))
+          ..where(
+            (g) =>
+                g.spaceId.equals(spaceId) &
+                (g.status.equals('active') | g.status.isNull()),
+          )
           ..orderBy([(g) => OrderingTerm(expression: g.name)]))
         .watch();
   }
@@ -36,6 +40,10 @@ class GroupsDao extends DatabaseAccessor<AppDatabase> with _$GroupsDaoMixin {
         ageRange: Value(ageRange),
         color: Value(color),
         capabilities: capabilitiesJson,
+        // Explicit — the server column is NOT NULL and a default only
+        // applies to an OMITTED column, so a local null would fail the
+        // insert forever (see SubjectsDao.create for the same trap).
+        status: const Value('active'),
         createdAt: now,
         updatedAt: now,
       ),
@@ -62,6 +70,35 @@ class GroupsDao extends DatabaseAccessor<AppDatabase> with _$GroupsDaoMixin {
       ),
     );
   }
+
+  /// Rooms that have been closed. Reached deliberately, never by accident.
+  Stream<List<Group>> watchClosedInSpace(String spaceId) {
+    return (select(groups)
+          ..where((g) => g.spaceId.equals(spaceId) & g.status.equals('closed'))
+          ..orderBy([(g) => OrderingTerm(expression: g.name)]))
+        .watch();
+  }
+
+  /// Close a room. It keeps its schedule, its arrangements, its staff
+  /// assignments and its history — it simply stops appearing in the
+  /// surfaces that describe today (docs/ROOMS.md).
+  ///
+  /// NOT `close()`: that is Drift's own DatabaseConnectionUser.close.
+  Future<void> closeRoom(String id, String nowIso) =>
+      (update(groups)..where((g) => g.id.equals(id))).write(
+        GroupsCompanion(
+          status: const Value('closed'),
+          updatedAt: Value(nowIso),
+        ),
+      );
+
+  Future<void> reopenRoom(String id, String nowIso) =>
+      (update(groups)..where((g) => g.id.equals(id))).write(
+        GroupsCompanion(
+          status: const Value('active'),
+          updatedAt: Value(nowIso),
+        ),
+      );
 
   Future<void> deleteById(String id) async {
     await (delete(groups)..where((g) => g.id.equals(id))).go();
