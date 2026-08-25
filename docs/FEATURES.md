@@ -1698,3 +1698,88 @@ you're also updating the agent's view of truth._
 **Depends on**: Subjects, Guardians, Groups, Rooms, Rotation, Photos (consent).
 **Consumed by**: [Today](FEATURES.md#today).
 **Last verified**: 2026-08-24
+
+## ActivityForge
+**Path**: `lib/features/activity_forge/`
+**Purpose**: An activity is not a whole pre-written experience pulled from a finite list — it is FOUR atomic parts recombined: a VERB (the action), a NOUN (the thing), a CONSTRAINT (the twist that turns noise into play), and a TIME (the box). "A library runs out, a formula doesn't" (docs/VISION.md #3).
+**Personas served**: Coach Sam, Brianna, Jordan (the "I need something in ten minutes" moment).
+**Discovery surfaces**:
+- Routes: `/activity/forge` (`activity_forge_screen.dart`), `/activity/lens` (`activity_lens_screen.dart`)
+- Omnibox: yes (activity entries)
+- Slash / Drawer / Settings: no
+**Capabilities**: staff.
+**Data**: none of its own — composes from [content_items](SCHEMA.md#content_items) and the verb/noun catalogues.
+**Surfaces**: *Forge* (recombine the four parts), *Lens* (view an activity through a different frame).
+**Depends on**: ActionWords (verbs), GameContent.
+**Consumed by**: ActivityRuntime.
+**Last verified**: 2026-08-24
+
+## Games
+**Path**: `lib/features/games/`
+**Purpose**: The host-run game engine — one registry (`game_registry.dart`) resolves a game id to its `GameDefinition`, so a cast session, a join-by-code and the launcher all render the same game without navigating to its route first. ~20 games, plus the deck-seeded picture-card games (docs/CARD_GAMES.md).
+**Personas served**: Coach Sam, Brianna, Ava (the room-facing moments).
+**Discovery surfaces**:
+- Routes: `/activity/<id>` (solo) and `/live/<id>` (cast) per game; `/present` (hub)
+- Omnibox: yes — per game
+- Drawer: yes — "Present" and "Brain Breaks"
+- Settings: no
+**Capabilities**: staff; kid-facing surfaces run in kid mode.
+**Data**: [content_items](SCHEMA.md#content_items) (the content bank), plus per-game local state.
+**Surfaces**: *Present hub* (`present_hub_screen.dart`), the per-game screens under `games/`, `game_scaffold.dart` / `game_stage.dart` (the shared shell + raw stage), `game_registry.dart` (add a game in ONE place).
+**Depends on**: GameContent, LiveSession (casting), ActivityRuntime.
+**Consumed by**: [LiveSession](FEATURES.md#livesession) (the cast receiver resolves games through the registry).
+**Last verified**: 2026-08-24
+
+## Identity
+**Path**: `lib/features/identity/`
+**Purpose**: The self-authored archetype — "how you show up" on a staff profile. Decorates, never gates: it has no effect on capabilities and is editable only on your OWN profile.
+**Personas served**: all staff.
+**Discovery surfaces**:
+- Routes: none of its own — renders inside [Settings](FEATURES.md#settings)' member detail
+- Omnibox / Slash / Drawer / Settings: no
+**Capabilities**: editable only by the member themselves (`me?.id == member.id`).
+**Data**: [members](SCHEMA.md#members) `capabilities` (`MemberCaps.archetype`, a string cap).
+**Surfaces**: *ArchetypeCard* — `widgets/archetype_card.dart`, plus `showArchetypePicker`.
+**Depends on**: Settings, Members.
+**Consumed by**: Settings (member detail).
+**Last verified**: 2026-08-24
+
+## Launch
+**Path**: `lib/features/launch/`
+**Purpose**: The boot surface, and the readiness signals that decide what a signed-in member lands on.
+**Personas served**: everyone, once per launch.
+**Discovery surfaces**:
+- Routes: `/launch`
+- Omnibox / Slash / Drawer / Settings: no
+**Capabilities**: none — it runs before the viewer is resolved.
+**Data**: reads [subjects](SCHEMA.md#subjects), [schedule_blocks](SCHEMA.md#schedule_blocks) and the day templates to decide readiness.
+**Surfaces**: *LaunchScreen* (`launch_screen.dart`), *launch readiness* (`launch_readiness.dart`).
+**Depends on**: Auth, Schedule, Subjects.
+**Consumed by**: the router's redirect.
+**Last verified**: 2026-08-24
+
+## Runtime
+**Path**: `lib/features/runtime/`
+**Purpose**: The reactive, indexed rule evaluator behind the semantic graph (docs/SEMANTIC_GRAPH.md). Rules are indexed by `(nounType, event)` at construction so a fired event consults only the matching handful — a ruleset that grows must never slow a single write.
+**Personas served**: none directly — infrastructure the content surfaces sit on.
+**Discovery surfaces**: none (no routes, by design).
+**Capabilities**: n/a.
+**Data**: none of its own.
+**Surfaces**: `rule_engine.dart` (the evaluator), `noun_rule.dart` (the rule shape), `rules/` (the ruleset).
+**Depends on**: nothing.
+**Consumed by**: ActivityForge, GameContent.
+**Last verified**: 2026-08-24
+
+## DevFlags
+**Path**: `lib/features/dev_flags/`
+**Purpose**: The in-app "flag this screen" button — DEBUG BUILDS ONLY. Each tap appends `{route, label, note, timestamp}` to a JSON file in the app's sandbox, so on-device testing produces a list of exactly which screens to revisit instead of "that one screen I meant".
+**Personas served**: the developer.
+**Discovery surfaces**:
+- Routes: none — a floating flag rendered by AppShell, gated on `kDebugMode`
+- Omnibox / Slash / Drawer / Settings: no
+**Capabilities**: n/a (debug only).
+**Data**: none synced — a local JSON file, pulled with `scripts/read_dev_flags.sh`.
+**Surfaces**: `dev_flags.dart`.
+**Depends on**: AppShell.
+**Consumed by**: nothing at runtime.
+**Last verified**: 2026-08-24

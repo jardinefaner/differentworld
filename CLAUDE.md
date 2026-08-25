@@ -373,14 +373,25 @@ authoritative if they are true. All three went stale in one long session
 (SCHEMA.md by seven weeks, the component bible by five months), and the
 reason is worth knowing:
 
-**The stop-hook fires once per session.** `feature-registry-stop-gate.sh`
-writes a sentinel the first time it nags, then exits silently for the rest
-of the session. In a short session that is fine. In a session that ships ten
-features it means the reminder arrived hours before nine of them existed.
-Touching `docs/FEATURES.md` or `docs/SCHEMA.md` within the last five minutes
-also satisfies it — so the nag can be true and the docs still wrong.
+**There is now a checker with teeth** — run it any time:
 
-So the safety net does NOT cover a long session. The rule:
+```sh
+scripts/check_registries.sh    # exit 0 = registries match the code
+```
+
+It diffs the Drift table classes against `docs/SCHEMA.md`'s sections, the
+feature folders against `docs/FEATURES.md`'s, and the gallery's claimed
+plate counts against what is on disk — and NAMES what is missing.
+
+`feature-registry-stop-gate.sh` runs it before you stop (rewritten
+2026-08-24). It used to nag once per session and be satisfied by merely
+TOUCHING the docs, which is how months of drift accumulated underneath it.
+Now it stays SILENT when the checker passes, blocks with the actual gap list
+when it does not, and re-arms on every commit — both its sentinels are keyed
+to HEAD, and a commit that touches a trigger path counts as a trigger, so
+each wave gets exactly one check.
+
+The rule the tooling now enforces:
 
 - **Update the registries in the same wave as the code**, alongside the
   commit — not at the end of the session, and never on the assumption that
