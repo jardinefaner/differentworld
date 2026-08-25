@@ -440,10 +440,11 @@ void main() {
 
   // Two param'd detail screens the param-free harness can't reach — seeded
   // with a cohort + roster so they render populated.
-  _rosterPlate(
+  // Uses the RICH seed (schedule blocks + staff) so the room's today-strip
+  // and load bar are actually exercised rather than rendering empty.
+  _richPlate(
     'screens/group_detail',
-    const GroupDetailScreen(groupId: 'g1'),
-    const Size(440, 900),
+    (db) async => const GroupDetailScreen(groupId: 'g1'),
   );
   _rosterPlate(
     'screens/subject_detail',

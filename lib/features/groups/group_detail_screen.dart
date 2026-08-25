@@ -13,6 +13,7 @@ import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skin_picker.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/rooms/widgets/room_load_bar.dart';
+import 'package:differentworld/features/rooms/widgets/room_today_strip.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
@@ -342,6 +343,13 @@ class _RoomIdentity extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: RoomLoadBar(groupId: group.id),
+          ),
+        // What the room is doing today, and who is on it. A room that can't
+        // show its own day is a list of names, not a place (docs/ROOMS.md).
+        if (group != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: RoomTodayStrip(groupId: group.id),
           ),
         // The room's permanent theme skin (docs/VISION.md).
         if (group != null)

@@ -594,11 +594,11 @@
     "score": 100,
     "band": "ship-confident",
     "is_raw": false,
-    "delta": 0.8337298631668091,
-    "dead": 0.75,
+    "delta": 0.8314646482467651,
+    "dead": 0.67,
     "solid": 0,
     "states": 3,
-    "low_contrast_evidence": 43,
+    "low_contrast_evidence": 61,
     "deductions": []
   },
   {
