@@ -82,7 +82,10 @@ class _CastScreenState extends ConsumerState<CastScreen> {
 
   @override
   void dispose() {
-    _immersive.exit();
+    // Deferred — see CastImmersive. A synchronous write here throws when the
+    // screen is disposed during a build/finalize pass.
+    final immersive = _immersive;
+    unawaited(Future.microtask(immersive.exit));
     super.dispose();
   }
 

@@ -15,8 +15,33 @@ class CastImmersive extends Notifier<bool> {
   @override
   bool build() => false;
 
-  void enter() => state = true;
-  void exit() => state = false;
+  /// Reference-counted, so the state cannot depend on the ORDER in which two
+  /// screens' deferred lifecycle calls happen to drain.
+  ///
+  /// Both `enter` and `exit` are deferred out of the build phase by the
+  /// mixin below. When one immersive screen replaces another, that leaves
+  /// two microtasks in flight — an outgoing `exit` and an incoming `enter` —
+  /// and a plain boolean gets the wrong answer whenever they drain in the
+  /// order enter-then-exit: chrome reappears over a fullscreen surface.
+  /// Counting depth makes the result the same either way.
+  int _depth = 0;
+
+  void enter() {
+    _depth++;
+    if (!ref.mounted) return;
+    state = true;
+  }
+
+  void exit() {
+    if (_depth > 0) _depth--;
+    // Both calls are DEFERRED by their callers, so either can land after the
+    // provider itself is gone — a container teardown, or the last listener
+    // dropping. Writing `state` then throws UnmountedRefException. The depth
+    // still decrements: it costs nothing and keeps the count honest if the
+    // provider is somehow revived.
+    if (!ref.mounted) return;
+    state = _depth > 0;
+  }
 }
 
 final castImmersiveProvider = NotifierProvider<CastImmersive, bool>(
@@ -54,8 +79,23 @@ mixin CastImmersiveScreenState<T extends ConsumerStatefulWidget>
 
   @override
   void dispose() {
-    _immersive.exit();
-    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    // DEFERRED, like `enter` — and for the same reason. A synchronous write
+    // here throws "Tried to modify a provider while the widget tree was
+    // building" whenever the screen is torn down during a build/finalize
+    // pass, which is exactly what a route pop does. Seen on device
+    // (block_present_screen, 2026-08-24).
+    //
+    // No `mounted` guard: the whole point is that this runs AFTER dispose.
+    // Safety comes from the depth counter above, not from a guard.
+    final immersive = _immersive;
+    unawaited(
+      Future.microtask(() {
+        immersive.exit();
+        unawaited(
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
+        );
+      }),
+    );
     super.dispose();
   }
 }

@@ -55,8 +55,20 @@ class _BlockPresentScreenState extends ConsumerState<BlockPresentScreen> {
 
   @override
   void dispose() {
-    _immersive.exit();
-    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    // Deferred: a synchronous provider write here throws "Tried to modify a
+    // provider while the widget tree was building" when the screen is torn
+    // down during a build/finalize pass — which is what a route pop does.
+    // Seen on device 2026-08-24. Safety comes from CastImmersive's depth
+    // counter, not from a mounted guard (this must run AFTER dispose).
+    final immersive = _immersive;
+    unawaited(
+      Future.microtask(() {
+        immersive.exit();
+        unawaited(
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
+        );
+      }),
+    );
     super.dispose();
   }
 

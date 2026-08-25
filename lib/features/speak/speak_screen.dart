@@ -61,7 +61,11 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
 
   @override
   void dispose() {
-    _immersive.exit(); // never leave the omnibox hidden after we leave
+    // Deferred — a synchronous provider write during teardown throws when
+    // the pop happens inside a build/finalize pass. Never leave the omnibox
+    // hidden after we leave; the depth counter keeps that true.
+    final immersive = _immersive;
+    unawaited(Future.microtask(immersive.exit));
     _controller.dispose();
     unawaited(_service.dispose());
     super.dispose();
