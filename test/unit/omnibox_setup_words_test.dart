@@ -53,7 +53,7 @@ void main() {
     }
   });
 
-  group('the scorer\'s shape — why short queries win', () {
+  group("the scorer's shape — why short queries win", () {
     final e = entry('Add a classroom', const ['create room']);
 
     test('a substring of the label scores high', () {
