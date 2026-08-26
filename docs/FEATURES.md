@@ -727,17 +727,18 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Onboarding
 **Path**: `lib/features/onboarding/`
-**Purpose**: Post-auth, pre-space flow (join or create) PLUS the first-run starter spine on Today — day one proving the app instead of touring it (docs/BRAND.md "undeniable" onboarding).
+**Purpose**: Post-auth, pre-space flow (join or create) PLUS the first-run starter spine on Today — day one proving the app instead of touring it (docs/BRAND.md "undeniable" onboarding). PLUS **starting simple** (docs/STARTING_SIMPLE.md) — the nav trimmed to three destinations for someone who joined a program they did not create, so 21 destinations are not the first thing a new teacher meets.
 **Personas served**: Brianna (joining), Maya (creating + the day-one spine), Jordan (teacher welcome card).
 **Discovery surfaces**:
 - Routes: `/onboarding/join-or-create` (and any sub-routes); the spine renders on `/` (Today) — no route of its own
 - Omnibox: no — pre-space / first-run surfaces
 - Slash: none
 - Drawer: no — drawer only mounts after space is selected
-- Settings: no
+- Settings: yes — Preferences → "Start simple" (the trim's off switch; it is ADOPTED at invite redemption, never discovered here)
 **Capabilities**: Spine full form requires `can_manage_space`; other staff get the one-card welcome. State keys: `SpaceCaps.onboarding*` (synced) + a per-device teacher-welcome flag.
 **Data**: [spaces](SCHEMA.md#spaces) (capabilities JSON carries spine state), [members](SCHEMA.md#members), [invites](SCHEMA.md#invites), [subjects](SCHEMA.md#subjects) + [entries](SCHEMA.md#entries) (the seeded sample child)
 **Surfaces**:
+- *Starting simple* — `lib/features/settings/starting_simple_setting.dart` + `lib/features/settings/widgets/starting_simple_note.dart`. Trims `buildNavDestinations` to Today / Observations / Captures + Settings. Adopted by `InviteActions.redeem` (the one moment a newcomer is certain), never by inference; `adoptForNewcomer` writes only when the preference is unset so a second redemption cannot override a choice. Removes NOTHING — the omnibox catalogue is independent of the nav list, so all 116 entries stay searchable and every route stays deep-linkable. `StartingSimpleNote` on Today explains the short menu once, because otherwise it reads as a broken install.
 - *Join-or-create screen* — `lib/features/onboarding/join_or_create_screen.dart`. Two paths: enter an invite code, or create a new program. Pushes Create when the user chooses to start fresh.
 - *Create space screen* — `lib/features/onboarding/create_space_screen.dart`. Bare-minimum form (program name + vertical). Inserts the `spaces` row + flips the current member into it, then seeds Sam (the sample child).
 - *Starter spine* — `lib/features/onboarding/widgets/starter_spine.dart`. Self-retiring day-one section on Today: cast a game / open the sample child's story / add the first room, then the team-invites closer. Cards collapse to check rows as they complete; "Hide setup" dismisses. Teachers get a one-card welcome instead.
