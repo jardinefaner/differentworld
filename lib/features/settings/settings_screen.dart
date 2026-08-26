@@ -23,6 +23,7 @@ import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/generated_portraits_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
@@ -337,6 +338,7 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _ChildDayBentoTile(),
               const _SettingsDivider(),
+              const _StartingSimpleTile(),
               const _GeneratedPortraitsTile(),
               const _ScheduleGridTile(),
               const _SettingsDivider(),
@@ -676,6 +678,29 @@ class _ChildDayBentoTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(childDayBentoProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Trims the nav to the first-week essentials. The subtitle names the escape
+/// hatch on purpose — a person is far more willing to try a smaller app when
+/// they can see, before they tap, that nothing is being taken away.
+class _StartingSimpleTile extends ConsumerWidget {
+  const _StartingSimpleTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(startingSimpleProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.filter_list_outlined),
+      title: const Text('Start simple'),
+      subtitle: const Text(
+        'Show only Today, Observations and Captures in the menu. Everything '
+        'else still opens from search',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(startingSimpleProvider.notifier).set(value: v)),
     );
   }
 }

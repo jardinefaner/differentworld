@@ -12,6 +12,7 @@ import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/accent_edge_card.dart';
@@ -1414,6 +1415,41 @@ void main() {
     ),
   );
 
+  // The same drawer under the first-week trim. Worth a plate of its own
+  // precisely because the value of this feature is a VISUAL claim — either
+  // the short list reads as a calm starting point or it reads as a broken
+  // install, and that is not something the unit tests can tell you.
+  _scenePlate(
+    'organisms/main_drawer_simple',
+    width: 360,
+    height: 780,
+    tree: (theme) => ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => _organismDb),
+        viewerProvider.overrideWithValue(_seededViewer),
+        _emptyCaptures,
+        _emptyTasks,
+        startingSimpleProvider.overrideWith(_AlwaysSimple.new),
+      ],
+      child: MaterialApp(
+        theme: theme,
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              _glassBackdrop(),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: MainDrawer(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+
   // MainDrawer: the mobile / tablet hamburger drawer — same nav source as
   // the rail, presented as an overlay glass sheet.
   _scenePlate(
@@ -2331,4 +2367,11 @@ void _scenePlate(
       skip: !runGoldens,
     );
   }
+}
+
+/// Forces the first-week trim on for its plate, without touching the real
+/// SharedPreferences-backed notifier.
+class _AlwaysSimple extends StartingSimpleNotifier {
+  @override
+  Future<bool> build() async => true;
 }

@@ -1,5 +1,6 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
@@ -40,7 +41,8 @@ class DesktopNavRail extends ConsumerWidget {
     // renders each band. Desktop has the vertical room, so groups start
     // expanded here (still collapsible for a user who wants focus) where
     // the phone drawer opens them collapsed.
-    final nav = buildNavLayout(viewer);
+    final simple = ref.watch(startingSimpleProvider).value ?? false;
+    final nav = buildNavLayout(viewer, startingSimple: simple);
 
     return GlassPanel(
       child: SafeArea(

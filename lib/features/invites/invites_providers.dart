@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -199,6 +200,18 @@ class InviteActions {
       ..invalidate(currentMemberProvider)
       ..invalidate(currentGuardianProvider)
       ..invalidate(myChildSubjectIdsProvider);
+
+    // Someone who redeems an invite is joining a program they did not
+    // build — a newcomer, at the one moment we can know it for certain.
+    // Trim their menu to the first-week essentials so 21 destinations
+    // aren't the first thing they meet. Nothing is removed or disabled:
+    // search still reaches everything and Settings turns it off in a tap.
+    //
+    // Harmless on the guardian path — the family side renders
+    // GuardianDrawer, which does not read the staff nav at all — so this
+    // stays unconditional rather than racing the viewer's isGuardian
+    // resolution, which the invalidates above have only just kicked off.
+    await _ref.read(startingSimpleProvider.notifier).adoptForNewcomer();
     // viewerProvider doesn't need an explicit invalidate — it
     // recomputes from the three above via ref.watch.
   }

@@ -23,6 +23,7 @@ class NavDestination {
     this.group,
     this.onlyFor,
     this.countProvider,
+    this.essential = false,
   });
 
   final IconData icon;
@@ -43,6 +44,16 @@ class NavDestination {
   /// If set, the destination only shows when the viewer passes this
   /// check (e.g. Observations needs `canObserve`).
   final bool Function(Viewer viewer)? onlyFor;
+
+  /// Survives the first-week trim (`startingSimpleProvider`).
+  ///
+  /// The bar is deliberately brutal: a destination is essential only if a
+  /// teacher who has been here one day would be worse off without it on
+  /// screen. Everything else is still reachable by search and by deep link
+  /// — this flag decides what is PUT IN FRONT of someone, not what they are
+  /// allowed to do. Marking a fourth or fifth thing essential is how the
+  /// wall comes back one plausible item at a time.
+  final bool essential;
 
   /// Optional open-item count shown as a badge (e.g. Captures awaiting
   /// triage, open Tasks). Defined here so both surfaces badge the same
@@ -93,8 +104,8 @@ class NavLayout {
 /// Split the canonical (capability-filtered) destination list into
 /// spine / groups / footer. Empty groups (every item gated out) are
 /// dropped so a viewer never sees an empty collapsible header.
-NavLayout buildNavLayout(Viewer viewer) {
-  final all = buildNavDestinations(viewer);
+NavLayout buildNavLayout(Viewer viewer, {bool startingSimple = false}) {
+  final all = buildNavDestinations(viewer, startingSimple: startingSimple);
   final spine = <NavDestination>[];
   final footer = <NavDestination>[];
   final byGroup = <String, List<NavDestination>>{};
@@ -138,8 +149,11 @@ final Provider<int> _openTasksCountProvider = Provider.autoDispose<int>(
 /// first), filtered to those the [viewer] can access. Capability-gated
 /// items carry [NavDestination.onlyFor]; Settings is always last,
 /// preceded by a section break.
-List<NavDestination> buildNavDestinations(Viewer viewer) {
-  return <NavDestination>[
+List<NavDestination> buildNavDestinations(
+  Viewer viewer, {
+  bool startingSimple = false,
+}) {
+  final all = <NavDestination>[
     // ── Spine: the daily-workflow core (group: null → always visible,
     //    flat at the top). Six destinations a teacher / director touches
     //    every shift; everything else lives one tap down in a group.
@@ -147,6 +161,7 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       icon: Icons.today_outlined,
       label: 'Today',
       route: '/',
+      essential: true,
     ),
     const NavDestination(
       icon: Icons.calendar_month_outlined,
@@ -158,12 +173,14 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       label: 'Observations',
       route: '/observations',
       onlyFor: (v) => v.canObserve,
+      essential: true,
     ),
     NavDestination(
       icon: Icons.inbox_outlined,
       label: 'Captures',
       route: '/captures',
       countProvider: _openCapturesCountProvider,
+      essential: true,
     ),
     const NavDestination(
       icon: Icons.photo_library_outlined,
@@ -270,6 +287,15 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       route: '/settings',
     ),
   ].where((d) => d.onlyFor == null || d.onlyFor!(viewer)).toList();
+
+  if (!startingSimple) return all;
+  // Settings always survives — it is the only way back out of the trim, and
+  // a mode you cannot leave from inside the UI is a trap rather than a
+  // starting point.
+  return [
+    for (final d in all)
+      if (d.essential || d.route == navFooterRoute) d,
+  ];
 }
 
 /// The open-count badge shown on the trailing edge of a nav tile.
