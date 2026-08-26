@@ -47,6 +47,33 @@ import 'package:go_router/go_router.dart';
 /// Capability-gated: entries the viewer can't access are filtered
 /// out at the catalog layer, not at the results UI. Saves the user
 /// from seeing "Permission denied" snackbars after tapping.
+/// What a person types when they want a new room.
+///
+/// Kept as a named constant so `test/unit/omnibox_setup_words_test.dart`
+/// exercises the REAL list rather than a copy that can drift away from it.
+///
+/// **Plurals are listed explicitly and that is not redundant.** The scorer
+/// asks whether the KEYWORD contains the QUERY, so "room" does not match a
+/// search for "rooms" — the longer string has to be the stored one. Typing
+/// the plural is exactly what someone does when they are looking for the
+/// list, and it returned nothing at all until this was measured.
+const List<String> kRoomCreationKeywords = [
+  'room',
+  'rooms',
+  'new room',
+  'add a room',
+  'make a room',
+  'create room',
+  'set up a room',
+  'new group',
+  'groups',
+  'classroom',
+  'classrooms',
+  'new class',
+  'add a class',
+  'crew',
+];
+
 final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final viewer = ref.watch(viewerProvider);
   final labels = ref.watch(verticalLabelsProvider);
@@ -1666,7 +1693,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         // labels. A construction user might still type "classroom"
         // out of habit if they came from childcare; we don't want
         // omnibox to miss them.
-        keywords: const ['new group', 'create room', 'classroom', 'crew'],
+        keywords: kRoomCreationKeywords,
         onSelect: (ctx, _) {
           unawaited(ctx.push('/groups/new'));
         },
