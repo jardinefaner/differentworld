@@ -91,6 +91,7 @@ import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/groups/room_setup_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/heroes/role_deck_screen.dart';
@@ -414,6 +415,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   groupId: state.pathParameters['id']!,
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'setup',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Set up the room',
+                      child: RoomSetupScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
                   GoRoute(
                     path: 'edit',
                     builder: (_, state) => RouteTitle(

@@ -100,6 +100,32 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // Make groups, per cohort. Emitted per-room like the other per-cohort
     // entries, and keyed to the words staff use ("partners", "teams",
     // "split them up") rather than the feature's name.
+    // Setting up a room — the seven-screens-in-one page. Keywords cover
+    // what people actually call this job rather than what the screen is
+    // named: nobody searches "room setup", they search "add a kid".
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.room-setup.${g.id}',
+        label: 'Set up · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.tune_outlined,
+        keywords: [
+          'set up',
+          'setup',
+          'add a child',
+          'add a kid',
+          'add children',
+          'new student',
+          'enrol',
+          'enroll',
+          'assign staff',
+          'who is in this room',
+          'roster',
+          'class list',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/setup'),
+      ),
     for (final g in groups)
       OmniboxEntry(
         id: 'page.arrange.${g.id}',

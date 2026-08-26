@@ -117,6 +117,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   unawaited(context.push('/groups/$groupId/turns'));
                 case 'talk':
                   unawaited(context.push('/groups/$groupId/talk'));
+                case 'setup':
+                  unawaited(context.push('/groups/$groupId/setup'));
                 case 'edit':
                   unawaited(context.push('/groups/$groupId/edit'));
               }
@@ -164,6 +166,15 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
+              if (group != null && viewer.canManageSpace)
+                const PopupMenuItem(
+                  value: 'setup',
+                  child: ListTile(
+                    leading: Icon(Icons.tune_outlined),
+                    title: Text('Set up the room'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               if (group != null && viewer.canManageSpace)
                 const PopupMenuItem(
                   value: 'edit',

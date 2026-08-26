@@ -1486,6 +1486,102 @@ once it has a home.
   catalog under `verbs.dart`; the future progression view + the growth arc it feeds),
   a new `skill_measurements` table when (b) lands.
 
+- **2026-08-26** — **One of the things this app could be: a facilitation +
+  continuity system rather than a learning app kids operate.** Kept here at the
+  user's explicit instruction — *"keep this in the vision because this is one of
+  the things this app could be"* — as a direction worth holding, not a ratified
+  redefinition of the product. The one line: *"This app helps a room do
+  something together, helps an adult guide it, and helps meaningful moments
+  survive."* And the thesis it closes on:
+
+  > **Google Classroom remembers assignments. Student information systems
+  > remember records. Photo apps remember pictures. Your system is trying to
+  > remember becoming.**
+
+  **The five-function core — a PIPELINE, not a taxonomy.** Worth contrasting
+  with the Safe / Noticed / Heard / Made / Shared buckets floated in the same
+  session: those were five bins to sort features into, whereas these five are a
+  *loop*, which is why they answer "how does this connect to impact" and the
+  buckets did not. Return closes the circle:
+
+  | Function | What it does | Why it matters |
+  |---|---|---|
+  | **Guide** | Controls what the room sees and what happens next | Keeps the adult in charge of pacing |
+  | **Engage** | Turns prompts into shared action, noticing, discussion, movement, play | Learning becomes lived instead of completed |
+  | **Capture** | Saves a meaningful moment without interrupting the room | Important moments stop disappearing |
+  | **Keep** | Attaches a selected moment to a child or the class | Children develop continuity over time |
+  | **Return** | Brings old moments back into future experiences | Past learning becomes useful again |
+
+  **Return is the load-bearing one**, and the least built. *"September: Maliya
+  says, 'Hard doesn't mean impossible.' November: the class hits another hard
+  challenge. The screen says: someone here said something about hard things
+  before."* That is what turns memory into curriculum — the system stops asking
+  *what lesson should this child receive next* and starts asking **what part of
+  this child's own history should return now.**
+
+  **The problem being solved:** a lot happens around children that is meaningful
+  but temporary. Schools preserve attendance, scores, grades, incident reports.
+  They do not preserve thinking, curiosity, attempts, questions, growth, voice,
+  relationships, meaning. *"It captures development without turning development
+  into constant measurement."*
+
+  **Design laws that fall out of it, each a constraint on future work:**
+  - **The screen is a shared point of attention, never a per-child device.** The
+    question is not "how do we get every child interacting with software" but
+    "how can software help children interact more meaningfully with the room,
+    the adult, the material, and each other."
+  - **Capture must not turn the adult into a documentarian.** *Most things
+    should not be captured.* A capture surface that rewards volume has failed.
+  - **An activity is a sequence of beats, not a slideshow:** experience →
+    response → change → reflection. Not page → question → answer.
+  - **Reveal makes information itself the reward** — anticipation without
+    points, streaks or badges.
+  - **Shift changes the rules midway** so children learn that *solutions depend
+    on conditions*, not that there is one correct answer.
+  - **Then / Now shows growth without quantifying it.** Two drawings side by
+    side. No "+37% drawing ability". Just: look.
+  - **AI stays backstage.** It suggests a Keep that connects to today, surfaces
+    a child who has not participated, drafts a family update — it never
+    addresses the room. *"AI supports the adult's awareness rather than
+    replacing their judgment."*
+  - **The room itself has memory**, not only the children: things we wondered,
+    words we learned, questions we have not answered yet.
+  - **The wedge is better activities with less preparation** — worksheet → shared
+    experience (circle→choose, match→connect, sort→move, write→tell/build,
+    compare→stand-between, sequence→arrange, exit-ticket→one thing worth
+    keeping). Educators can want that long before they care about continuity.
+
+  **Status (measured against the code, 2026-08-26, not estimated):**
+
+  - **Guide — largely shipped.** Cast + present, the beat-by-beat runnable
+    session decks (`SessionScript` / `SessionBeat`), the room-facing slide
+    spine. The phone-as-remote already exists.
+  - **Engage — largely shipped.** 21 `/activity/*` runtimes, the games, the
+    live board. DO / NOTICE / Reveal / Shift are present as instruments even
+    where they are not named as such.
+  - **Capture — shipped.** Captures, observations, attachments, the deferred
+    photo-turn hold. The "don't become a documentarian" law is already
+    enforced by the heart-to-keep gate on turn shots.
+  - **Keep — partial, and NOT schema-blocked.** `entries.group_id` is
+    nullable and sits alongside `subject_id`, so an entry attached to a
+    CLASS rather than a child is already representable — class memory needs
+    UI, not a migration. What is genuinely missing is multi-subject Keeps
+    ("Keep → Chelsy + Aliya") and any surface that reads the class's own
+    accumulated memory back.
+  - **Return — partly built, and closer than it looks.** `growth_arc.dart`
+    already compiles a child's whole story into a castable run of beats.
+    That is *retrospective* Return: look back at the arc. What does not
+    exist is **contextual Return** — the right past moment surfacing inside
+    a live activity at the moment it is useful ("someone here said something
+    about hard things before"). That is the highest-leverage gap in the
+    product, and it is a matching problem on data that already exists rather
+    than a new subsystem.
+
+  **Lives in:** lib/features/live_session/ + curricula/ (Guide), the activity
+  runtimes (Engage), captures/ + observations/ + photos/ (Capture), entries +
+  attachments + book/ (Keep), growth_arc.dart (retrospective Return).
+  Contextual Return has no home yet.
+
 ---
 
 ## How to keep this alive (for future me)

@@ -73,6 +73,7 @@ import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/groups/room_setup_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/heroes/role_deck_screen.dart';
@@ -686,6 +687,10 @@ void main() {
 
   // The attention instruments (docs/ROTATION.md).
   _richPlate('screens/turns', (db) async => const TurnsScreen(groupId: 'g1'));
+  _richPlate(
+    'screens/room_setup',
+    (db) async => const RoomSetupScreen(groupId: 'g1'),
+  );
   _richPlate('screens/talk', (db) async => const TalkScreen(groupId: 'g1'));
   // Rooms retired rather than erased (docs/ROOMS.md).
   _richPlate('screens/closed_rooms', (db) async => const ClosedRoomsScreen());
