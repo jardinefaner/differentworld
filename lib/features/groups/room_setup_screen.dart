@@ -67,6 +67,8 @@ class RoomSetupScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 96),
                     children: [
                       _RoomHeader(group: group),
+                      const SizedBox(height: 16),
+                      _Instruments(groupId: group.id),
                       const SizedBox(height: 20),
                       _ChildrenBand(group: group),
                       const SizedBox(height: 22),
@@ -77,6 +79,70 @@ class RoomSetupScreen extends ConsumerWidget {
                   ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The daily verbs, on the room, visible.
+///
+/// These used to live behind a `⋯` holding seven items, which is where a
+/// feature goes to not be found — and two identical overflow menus on one
+/// screen is worse than the buttons they replaced. They cause things
+/// (take a register, pick a child, write something down), so they are
+/// pressable shapes rather than links.
+class _Instruments extends ConsumerWidget {
+  const _Instruments({required this.groupId});
+
+  final String groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    final items = <({IconData icon, String label, String route})>[
+      if (viewer.canTakeAttendance)
+        (
+          icon: Icons.fact_check_outlined,
+          label: 'Attendance',
+          route: '/groups/$groupId/attendance',
+        ),
+      if (viewer.canObserve)
+        (
+          icon: Icons.visibility_outlined,
+          label: 'Observations',
+          route: '/groups/$groupId/observations',
+        ),
+      (
+        icon: Icons.touch_app_outlined,
+        label: 'Pick me',
+        route: '/groups/$groupId/turns',
+      ),
+      (
+        icon: Icons.groups_2_outlined,
+        label: 'Make groups',
+        route: '/groups/$groupId/arrange',
+      ),
+      (
+        icon: Icons.record_voice_over_outlined,
+        label: 'Talk time',
+        route: '/groups/$groupId/talk',
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final i in items)
+            ActionChip(
+              key: ValueKey('instrument-${i.route}'),
+              avatar: Icon(i.icon, size: 18),
+              label: Text(i.label),
+              onPressed: () => unawaited(context.push(i.route)),
+            ),
+        ],
       ),
     );
   }
@@ -240,6 +306,10 @@ class _ChildrenBand extends ConsumerWidget {
           else
             PersonFaceWrap(
               radius: 18,
+              // No overflow cap on the room's own page: "+9" is right on an
+              // instrument, where the point is a glance, and wrong here,
+              // where the point is the whole class.
+              max: 200,
               people: [
                 for (final s in roster)
                   FacePerson(
@@ -255,9 +325,26 @@ class _ChildrenBand extends ConsumerWidget {
               ],
             ),
           const SizedBox(height: 12),
-          InlineAdd(
-            hint: 'Add a child',
-            onSubmit: (v) => _add(ref, v),
+          Row(
+            children: [
+              InlineAdd(
+                hint: 'Add a child',
+                onSubmit: (v) => _add(ref, v),
+              ),
+              if (roster.length > 8) ...[
+                const SizedBox(width: 8),
+                // Search earns its place only once the faces stop being
+                // scannable. Below that it is a control nobody needs, sitting
+                // where a control you DO need could be.
+                TextButton.icon(
+                  onPressed: () => unawaited(
+                    context.push('/groups/${group.id}/roster'),
+                  ),
+                  icon: const Icon(Icons.search, size: 18),
+                  label: const Text('Search'),
+                ),
+              ],
+            ],
           ),
         ],
       ),

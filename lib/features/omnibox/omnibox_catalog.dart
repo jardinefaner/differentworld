@@ -124,7 +124,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'class list',
           g.name.toLowerCase(),
         ],
-        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/setup'),
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}'),
       ),
     for (final g in groups)
       OmniboxEntry(

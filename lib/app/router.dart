@@ -408,20 +408,24 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'groups/:id',
-                // Dynamic title (group name) is set INSIDE GroupDetailScreen
-                // — see its build method. Same pattern for student detail
-                // and member detail below.
-                builder: (_, state) => GroupDetailScreen(
+                // The room IS the consolidated page. Tapping a room on Today
+                // lands here and everything about that room is on it — the
+                // daily instruments, who is in it, who is on it, and the day's
+                // shape. Setting a room up used to be seven screens across
+                // four feature folders; landing on a page that hid the useful
+                // one behind a seven-item overflow menu was not an
+                // improvement on that.
+                builder: (_, state) => RoomSetupScreen(
                   groupId: state.pathParameters['id']!,
                 ),
                 routes: [
+                  // The searchable roster grid — the old room screen, kept
+                  // because a 30-child room genuinely needs search, and
+                  // reached from the children band rather than a menu.
                   GoRoute(
-                    path: 'setup',
-                    builder: (_, state) => RouteTitle(
-                      title: 'Set up the room',
-                      child: RoomSetupScreen(
-                        groupId: state.pathParameters['id']!,
-                      ),
+                    path: 'roster',
+                    builder: (_, state) => GroupDetailScreen(
+                      groupId: state.pathParameters['id']!,
                     ),
                   ),
                   GoRoute(
