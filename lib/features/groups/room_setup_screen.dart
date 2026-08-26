@@ -16,6 +16,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/inline_add.dart';
+import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/person_face_wrap.dart';
 import 'package:flutter/material.dart';
@@ -176,7 +177,20 @@ class _RoomHeader extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 2),
-          Text(group.name, style: theme.textTheme.headlineSmall),
+          // UPDATE happens where the thing is DISPLAYED. Renaming a room is
+          // one field, so sending someone to a form for it is the same
+          // mistake create was making. The deeper settings keep their form
+          // below, because they genuinely are one.
+          InlineEditableText(
+            value: group.name,
+            placeholder: 'Name this room',
+            style: theme.textTheme.headlineSmall,
+            editable: ref.watch(viewerProvider).canManageSpace,
+            onCommit: (next) async {
+              final db = await ref.read(appDatabaseProvider.future);
+              await db.groupsDao.update_(id: group.id, name: next);
+            },
+          ),
           if (ageBand != null && ageBand.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(
@@ -192,8 +206,12 @@ class _RoomHeader extends ConsumerWidget {
             child: TextButton.icon(
               onPressed: () =>
                   unawaited(context.push('/groups/${group.id}/edit')),
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Rename, skin, limits'),
+              icon: const Icon(Icons.tune_outlined, size: 18),
+              // DELETE is deliberately not offered here. A room holds
+              // children, so the verb that belongs in reach is CLOSE —
+              // reversible, keeps every record — and it lives with the
+              // other settings rather than one tap from the roster.
+              label: const Text('Age range, limits, closing'),
             ),
           ),
         ],

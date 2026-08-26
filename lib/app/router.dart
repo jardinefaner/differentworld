@@ -91,6 +91,7 @@ import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/groups/room_create_screen.dart';
 import 'package:differentworld/features/groups/room_setup_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
@@ -401,9 +402,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'groups/new',
+                // Create is ONE field and then you are inside the room —
+                // not the eleven-field edit form asked at the moment you
+                // know least about it. GroupEditScreen still owns UPDATE,
+                // at groups/:id/edit.
                 builder: (_, _) => const RouteTitle(
                   title: 'New classroom',
-                  child: GroupEditScreen(),
+                  child: RoomCreateScreen(),
                 ),
               ),
               GoRoute(
