@@ -9,11 +9,14 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/photos/photo_consent_providers.dart';
 import 'package:differentworld/features/rooms/room_load_providers.dart';
+import 'package:differentworld/features/schedule/block_edit_screen.dart'
+    show BlockEditArgs;
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/inline_add.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/person_face_wrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -301,13 +304,104 @@ class _StaffBand extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () => unawaited(context.push('/team')),
-            icon: const Icon(Icons.person_add_outlined, size: 18),
-            label: const Text('Assign an adult'),
-          ),
+          _AssignAdult(groupId: group.id, assigned: assigned),
         ],
       ),
+    );
+  }
+}
+
+/// Assigning an adult is TAPPING one, not visiting the team screen.
+///
+/// The people already exist — the whole job is "put that person on this
+/// room", and routing to /team to do it is what made room setup a tour of
+/// the app. Everyone not already on the room shows as a tappable chip; tap
+/// and they are on it.
+class _AssignAdult extends ConsumerStatefulWidget {
+  const _AssignAdult({required this.groupId, required this.assigned});
+
+  final String groupId;
+  final List<GroupMember> assigned;
+
+  @override
+  ConsumerState<_AssignAdult> createState() => _AssignAdultState();
+}
+
+class _AssignAdultState extends ConsumerState<_AssignAdult> {
+  bool _open = false;
+
+  Future<void> _assign(Member m) async {
+    final spaceId = ref.read(viewerProvider).spaceId;
+    if (spaceId == null) return;
+    final db = await ref.read(appDatabaseProvider.future);
+    await db.groupMembersDao.assign(
+      groupId: widget.groupId,
+      memberId: m.id,
+      spaceId: spaceId,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onRoom = {for (final g in widget.assigned) g.memberId};
+    final available = [
+      for (final m
+          in ref.watch(membersInSpaceProvider).value ?? const <Member>[])
+        if (!onRoom.contains(m.id)) m,
+    ];
+
+    if (!_open) {
+      return TextButton.icon(
+        onPressed: () => setState(() => _open = true),
+        icon: const Icon(Icons.person_add_outlined, size: 18),
+        label: const Text('Assign an adult'),
+      );
+    }
+    if (available.isEmpty) {
+      return Text(
+        'Everyone on the team is already on this room.',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // An instruction that exists only while it is NEWS — it appears
+        // when you open the picker and goes when you close it, rather than
+        // living on the screen forever as a sign on a wall.
+        Text(
+          'Tap whoever is on this room.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final m in available)
+              ActionChip(
+                key: ValueKey('assign-${m.id}'),
+                avatar: PersonAvatar(
+                  name: m.displayName,
+                  photoUrl: m.avatarUrl,
+                  radius: 12,
+                ),
+                label: Text(m.displayName),
+                onPressed: () => unawaited(_assign(m)),
+              ),
+            ActionChip(
+              key: const ValueKey('assign-done'),
+              label: const Text('Done'),
+              onPressed: () => setState(() => _open = false),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -349,6 +443,41 @@ class _TimeBand extends ConsumerWidget {
 
   final Group group;
 
+  /// A day is built in SEQUENCE, so a new block starts when the last one
+  /// ends. Asking for two timestamps per block is what turns "add lunch" into
+  /// a form; the times stay editable by tapping the row, which is the rare
+  /// case rather than the default one.
+  Future<void> _addBlock(
+    WidgetRef ref,
+    List<ScheduleBlock> blocks,
+    String title,
+  ) async {
+    final spaceId = ref.read(viewerProvider).spaceId;
+    if (spaceId == null) return;
+    final now = DateTime.now();
+    final lastEnd = blocks.isEmpty
+        ? null
+        : blocks
+              .map((b) => DateTime.tryParse(b.endAt))
+              .whereType<DateTime>()
+              .fold<DateTime?>(
+                null,
+                (a, b) => a == null || b.isAfter(a) ? b : a,
+              );
+    // Falls back to the afterschool program start, which is when a day with
+    // nothing in it almost always begins here.
+    final start = lastEnd ?? DateTime(now.year, now.month, now.day, 15, 45);
+    final db = await ref.read(appDatabaseProvider.future);
+    await db.scheduleDao.create(
+      spaceId: spaceId,
+      groupId: group.id,
+      date: todayKey(),
+      startAt: start,
+      endAt: start.add(const Duration(minutes: 45)),
+      title: title,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -378,35 +507,56 @@ class _TimeBand extends ConsumerWidget {
             )
           else
             for (final b in blocks)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 58,
-                      child: Text(
-                        _time(b.startAt),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+              InkWell(
+                key: ValueKey('block-${b.id}'),
+                // BlockEditScreen takes its arguments through go_router's
+                // `extra`, NOT a query id — a `?id=` link silently falls
+                // back to the schedule screen, which is a tap that navigates
+                // somewhere the user did not ask to go.
+                onTap: () => unawaited(
+                  context.push<void>(
+                    '/schedule/block',
+                    extra:
+                        (
+                              groupId: group.id,
+                              defaultStart:
+                                  DateTime.tryParse(b.startAt) ??
+                                  DateTime.now(),
+                              existing: b,
+                              prefillCurriculumSlug: null,
+                            )
+                            as BlockEditArgs,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 58,
+                        child: Text(
+                          _time(b.startAt),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        b.title?.trim().isNotEmpty ?? false
-                            ? b.title!
-                            : _kindLabel(b.kind),
-                        style: theme.textTheme.bodyMedium,
+                      Expanded(
+                        child: Text(
+                          b.title?.trim().isNotEmpty ?? false
+                              ? b.title!
+                              : _kindLabel(b.kind),
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-          const SizedBox(height: 10),
-          TextButton.icon(
-            onPressed: () => unawaited(context.push('/schedule')),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add a block'),
+          const SizedBox(height: 12),
+          InlineAdd(
+            hint: 'Add a block',
+            onSubmit: (v) => _addBlock(ref, blocks, v),
           ),
         ],
       ),
