@@ -43,7 +43,7 @@ class RoomTodayStrip extends ConsumerWidget {
     // and history is not what you glance at a room for.
     final upcoming = [
       for (final b in blocks)
-        if ((DateTime.tryParse(b.endAt) ?? now).isAfter(now)) b,
+        if ((DateTime.tryParse(b.endAt)?.toLocal() ?? now).isAfter(now)) b,
     ];
 
     if (blocks.isEmpty && staff.isEmpty) return const SizedBox.shrink();
@@ -96,7 +96,7 @@ class _BlockRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final start = DateTime.tryParse(block.startAt);
+    final start = DateTime.tryParse(block.startAt)?.toLocal();
     return InkWell(
       onTap: () => unawaited(context.push('/schedule')),
       child: Padding(

@@ -563,7 +563,7 @@ class _TimeBand extends ConsumerWidget {
     final lastEnd = blocks.isEmpty
         ? null
         : blocks
-              .map((b) => DateTime.tryParse(b.endAt))
+              .map((b) => DateTime.tryParse(b.endAt)?.toLocal())
               .whereType<DateTime>()
               .fold<DateTime?>(
                 null,
@@ -669,7 +669,7 @@ class _TimeBand extends ConsumerWidget {
   }
 
   String _time(String iso) {
-    final dt = DateTime.tryParse(iso);
+    final dt = DateTime.tryParse(iso)?.toLocal();
     return dt == null ? '' : timeOfDay(dt);
   }
 
