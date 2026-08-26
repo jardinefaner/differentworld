@@ -51,6 +51,7 @@ import 'package:differentworld/features/calm/calm_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/child_world/child_world_screen.dart';
+import 'package:differentworld/features/class_memory/class_memory_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
@@ -427,6 +428,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   // The searchable roster grid — the old room screen, kept
                   // because a 30-child room genuinely needs search, and
                   // reached from the children band rather than a menu.
+                  GoRoute(
+                    path: 'memory',
+                    builder: (_, state) => RouteTitle(
+                      title: 'What this room remembers',
+                      child: ClassMemoryScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
                   GoRoute(
                     path: 'roster',
                     builder: (_, state) => GroupDetailScreen(

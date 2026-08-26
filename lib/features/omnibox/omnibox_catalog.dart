@@ -130,6 +130,31 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // Setting up a room — the seven-screens-in-one page. Keywords cover
     // what people actually call this job rather than what the screen is
     // named: nobody searches "room setup", they search "add a kid".
+    // What a room remembers. Keywords lean on what people would actually
+    // search for — nobody types "class memory", they type "questions" or
+    // "what we wondered".
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.class-memory.${g.id}',
+        label: 'Remembers · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.auto_stories_outlined,
+        keywords: [
+          'remember',
+          'remembers',
+          'memory',
+          'class memory',
+          'questions',
+          'question',
+          'what we wondered',
+          'wondered',
+          'discovered',
+          'words we learned',
+          'words',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/memory'),
+      ),
     for (final g in groups)
       OmniboxEntry(
         id: 'page.room-setup.${g.id}',

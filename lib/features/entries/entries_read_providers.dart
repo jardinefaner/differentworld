@@ -42,6 +42,12 @@ class EntryKind {
   /// `entries` sync — no migration (docs/ROADMAP field-trip headcounts).
   static const String tripHeadcount = 'trip_headcount';
 
+  /// Something the ROOM remembers, not a child (docs/VISION.md — Keep).
+  /// `groupId` set, `subjectId` NULL, `details` = {sort, context?} where
+  /// sort is one of question / discovery / word. No migration was needed:
+  /// entries.group_id has always been nullable alongside subject_id.
+  static const String classMemory = 'class_memory';
+
   /// A day's Action Words (docs/ACTION_WORDS.md). One row per (subject,
   /// date). `details` = {verb_picks:[3], done:[…], note, word_of_day,
   /// world_name?}. The revealed world is DERIVED from verb_picks via

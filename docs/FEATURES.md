@@ -166,6 +166,26 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## ClassMemory
+**Path**: `lib/features/class_memory/`
+**Purpose**: What a ROOM remembers — questions it hasn't answered, things it discovered, words it started using. Not everything worth keeping belongs to a child; until this existed, every artifact was subject-tagged and a room accumulated nothing of its own.
+**Personas served**: All staff running a cohort (Coach Sam, Jordan); the room itself is the subject.
+**Discovery surfaces**:
+- Routes: `/groups/:id/memory`
+- Omnibox: yes — "Remembers · {Group.name}" per cohort, keyed on what people search for ("questions", "what we wondered", "words") rather than the feature's name
+- Slash: no
+- Drawer: no — reached from the room, which is where the room's memory belongs
+- Settings: no
+**Capabilities**: none — any staffer in the room can keep something
+**Data**: [entries](SCHEMA.md#entries) with `kind = 'class_memory'`, `group_id` set and `subject_id` NULL. **No migration**: `entries.group_id` has always been nullable alongside `subject_id`, so a room-owned entry was representable before the surface existed.
+**Surfaces**:
+- *What this room remembers* — `class_memory_screen.dart`. Three bands (question / discovery / word), each with an inline capture. Every heading renders even when empty — a heading is a prompt as much as a label.
+**Depends on**: Groups, Entries.
+**Consumed by**: nothing yet. `returnableQuestionProvider` exposes the oldest still-open question for contextual Return (docs/VISION.md), which is NOT built — that card exists only as mockup 005.
+**Last verified**: 2026-08-26
+
+---
+
 ## Attendance
 **Path**: `lib/features/attendance/`
 **Purpose**: Daily check-in / check-out for one cohort at a time.

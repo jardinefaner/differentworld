@@ -128,6 +128,11 @@ class _Instruments extends ConsumerWidget {
         label: 'Talk time',
         route: '/groups/$groupId/talk',
       ),
+      (
+        icon: Icons.auto_stories_outlined,
+        label: 'Remembers',
+        route: '/groups/$groupId/memory',
+      ),
     ];
 
     return Padding(

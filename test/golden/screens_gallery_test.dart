@@ -48,6 +48,7 @@ import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/child_world/child_world_screen.dart';
+import 'package:differentworld/features/class_memory/class_memory_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
@@ -688,6 +689,10 @@ void main() {
 
   // The attention instruments (docs/ROTATION.md).
   _richPlate('screens/turns', (db) async => const TurnsScreen(groupId: 'g1'));
+  _richPlate(
+    'screens/class_memory',
+    (db) async => const ClassMemoryScreen(groupId: 'g1'),
+  );
   _richPlate(
     'screens/room_create',
     (db) async => const RoomCreateScreen(),
