@@ -42,6 +42,7 @@ import 'package:differentworld/shared/widgets/generated_portrait.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
+import 'package:differentworld/shared/widgets/inline_add.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/live_block_strip.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
@@ -625,6 +626,40 @@ void main() {
                 child: GeneratedPortrait(seed: n, size: 88),
               ),
           ],
+        ),
+      ],
+    ),
+  );
+
+  // Both states side by side — the collapsed affordance and the open field
+  // it becomes. The whole idea is that these are the SAME control, so seeing
+  // them apart is the only way to judge whether that reads.
+  _plate(
+    'molecules/inline_add',
+    height: 260,
+    (context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Closed', style: Theme.of(context).textTheme.labelSmall),
+        const SizedBox(height: 6),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: InlineAdd(hint: 'Add a child', onSubmit: _noopAdd),
+        ),
+        const SizedBox(height: 24),
+        Text('Open', style: Theme.of(context).textTheme.labelSmall),
+        const SizedBox(height: 6),
+        const SizedBox(
+          width: 200,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Add a child',
+              isDense: true,
+              border: OutlineInputBorder(),
+              suffixIcon: Icon(Icons.close, size: 18),
+            ),
+          ),
         ),
       ],
     ),
@@ -2375,3 +2410,6 @@ class _AlwaysSimple extends StartingSimpleNotifier {
   @override
   Future<bool> build() async => true;
 }
+
+/// The plate renders the control, not its behaviour — submit is a no-op.
+Future<void> _noopAdd(String _) async {}

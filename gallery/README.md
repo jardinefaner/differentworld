@@ -157,7 +157,7 @@ a drive-by.
 consumer outside its own feature, it is a promotion candidate. When it
 gains its third, it is overdue.
 
-## Catalogued — 51 component plates + 157 screen plates (all light + dark)
+## Catalogued — 52 component plates + 158 screen plates (all light + dark)
 
 ### Atoms
 
@@ -192,6 +192,7 @@ gains its third, it is overdue.
 | AccentCardTile | [accent_card_tile.dart] | activity-palettes (teal, pink, amber) | ✅ | [light](molecules/accent_card_tile__light.png) · [dark](molecules/accent_card_tile__dark.png) |
 | AccentEdgeRow | [accent_edge_row.dart] | neutral rule · accented state · trailing · tappable | ✅ one-edge | [light](molecules/accent_edge_row__light.png) · [dark](molecules/accent_edge_row__dark.png) |
 | PersonFaceWrap | [person_face_wrap.dart] | 7 faces with names · overflow "+N" chip | ✅ | [light](molecules/person_face_wrap__light.png) · [dark](molecules/person_face_wrap__dark.png) |
+| InlineAdd | [inline_add.dart] | collapsed "+" · open field (add without leaving the page) | ✅ | [light](molecules/inline_add__light.png) · [dark](molecules/inline_add__dark.png) |
 | AccentEdgeCard | [accent_edge_card.dart] | eyebrow + icon, two accents | ✅ one-edge | [light](molecules/accent_edge_card__light.png) · [dark](molecules/accent_edge_card__dark.png) |
 | DestructiveButton | [destructive_button.dart] | enabled · disabled | ✅ | [light](molecules/destructive_button__light.png) · [dark](molecules/destructive_button__dark.png) |
 | Save controls | [form_save_button.dart] | ready · blocked-by-empty-field | ✅ | [light](molecules/save_controls__light.png) · [dark](molecules/save_controls__dark.png) |
@@ -275,7 +276,7 @@ the running app, light + dark, in `gallery/screens/`. Montage:
 
 ## Not yet catalogued
 
-`lib/shared/widgets/` is **65 files**; **51 component plates** catalogued.
+`lib/shared/widgets/` is **65 files**; **52 component plates** catalogued.
 
 Counts drift, so verify rather than trust them:
 
@@ -319,6 +320,7 @@ under `pumpAndSettle` (leave that state to widget tests — see FormSaveButton
 [accent_edge_row.dart]: ../lib/shared/widgets/accent_edge_row.dart
 [generated_portrait.dart]: ../lib/shared/widgets/generated_portrait.dart
 [person_face_wrap.dart]: ../lib/shared/widgets/person_face_wrap.dart
+[inline_add.dart]: ../lib/shared/widgets/inline_add.dart
 [accent_edge_card.dart]: ../lib/shared/widgets/accent_edge_card.dart
 [destructive_button.dart]: ../lib/shared/widgets/destructive_button.dart
 [form_save_button.dart]: ../lib/shared/widgets/form_save_button.dart
