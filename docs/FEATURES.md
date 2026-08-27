@@ -166,6 +166,26 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Roles
+**Path**: `lib/features/roles/`
+**Purpose**: "What you can do" — this person's own capabilities, derived from the same getters the gates read. Every other permission surface in the app is about somebody else (the roles reference describes roles in general; the member editor is a director configuring a teammate); nobody could see their own.
+**Personas served**: everyone, and most of all whoever just joined.
+**Discovery surfaces**:
+- Routes: `/you`
+- Omnibox: yes — "What you can do", keyed on what a blocked person types ("why cant i", "permissions", "locked")
+- Slash: no
+- Drawer: yes — tapping your own name in the identity row. It used to open the director's editor FOR you, which is a config form aimed at someone else's needs and, for a non-director, a page of switches they cannot move.
+- Settings: no
+**Capabilities**: none — it reports capabilities, it does not require any
+**Data**: none. Pure derivation over `Viewer`; no reads, no writes.
+**Surfaces**:
+- *What you can do* — `your_work_screen.dart`. Four bands ordered by how often you touch them, not by permission tier. THREE states, not two: **can**, **needs a certificate** (yours to fix), **needs someone** (names who to ask). Only open items carry a route — offering a tap into a screen that will refuse you is the dead end this exists to remove.
+**Depends on**: Viewer / capabilities.
+**Consumed by**: nothing — it is a leaf, by design.
+**Last verified**: 2026-08-26
+
+---
+
 ## ClassMemory
 **Path**: `lib/features/class_memory/`
 **Purpose**: What a ROOM remembers — questions it hasn't answered, things it discovered, words it started using. Not everything worth keeping belongs to a child; until this existed, every artifact was subject-tagged and a room accumulated nothing of its own.

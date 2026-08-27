@@ -127,6 +127,26 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // Make groups, per cohort. Emitted per-room like the other per-cohort
     // entries, and keyed to the words staff use ("partners", "teams",
     // "split them up") rather than the feature's name.
+    // Your own permissions. Keywords are what a blocked person actually
+    // types — "why can't I", "permissions" — not the screen's name.
+    OmniboxEntry(
+      id: 'page.your-work',
+      label: 'What you can do',
+      category: OmniboxCategory.page,
+      icon: Icons.verified_user_outlined,
+      keywords: const [
+        'what can i do',
+        'permissions',
+        'my role',
+        'role',
+        'access',
+        'why cant i',
+        'why can i not',
+        'locked',
+        'blocked',
+      ],
+      onSelect: (ctx, _) => ctx.push('/you'),
+    ),
     // Setting up a room — the seven-screens-in-one page. Keywords cover
     // what people actually call this job rather than what the screen is
     // named: nobody searches "room setup", they search "add a kid".

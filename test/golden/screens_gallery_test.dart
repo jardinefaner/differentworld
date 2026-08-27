@@ -108,6 +108,7 @@ import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/roles/your_work_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
 import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
@@ -689,6 +690,7 @@ void main() {
 
   // The attention instruments (docs/ROTATION.md).
   _richPlate('screens/turns', (db) async => const TurnsScreen(groupId: 'g1'));
+  _richPlate('screens/your_work', (db) async => const YourWorkScreen());
   _richPlate(
     'screens/class_memory',
     (db) async => const ClassMemoryScreen(groupId: 'g1'),

@@ -129,6 +129,7 @@ import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/roles/your_work_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
 import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
@@ -400,6 +401,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                 ],
+              ),
+              GoRoute(
+                path: 'you',
+                builder: (_, _) => const RouteTitle(
+                  title: 'What you can do',
+                  child: YourWorkScreen(),
+                ),
               ),
               GoRoute(
                 path: 'groups/new',

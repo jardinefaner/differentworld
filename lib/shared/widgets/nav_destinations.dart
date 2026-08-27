@@ -292,6 +292,13 @@ List<NavDestination> buildNavDestinations(
   // Settings always survives — it is the only way back out of the trim, and
   // a mode you cannot leave from inside the UI is a trap rather than a
   // starting point.
+  //
+  // `essential` is already capability-filtered above, which is what makes
+  // the trim role-aware for free: a Kitchen Staff member has no
+  // Observations to keep, so their three is a different three. A fixed list
+  // would have shown everyone the same starting point regardless of what
+  // they are allowed to touch — the first thing a newcomer sees promising
+  // work they cannot do.
   return [
     for (final d in all)
       if (d.essential || d.route == navFooterRoute) d,

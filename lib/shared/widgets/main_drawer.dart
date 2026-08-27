@@ -106,9 +106,15 @@ class MainDrawer extends ConsumerWidget {
                             ? null
                             : () {
                                 Navigator.of(context).pop(); // close drawer
-                                unawaited(
-                                  context.push('/settings/team/${member.id}'),
-                                );
+                                // Your own name answers "what can I do
+                                // here", not "configure this teammate".
+                                // It used to open the director's editor for
+                                // you, which is a config form aimed at
+                                // somebody else's needs — and for a
+                                // non-director it is a page of switches they
+                                // cannot move. The editor is still one tap
+                                // away in Settings → Team.
+                                unawaited(context.push('/you'));
                               },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
