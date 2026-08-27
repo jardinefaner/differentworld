@@ -1,0 +1,13 @@
+:root{--surface-0:#F2EFE7;--surface-1:#EDE9DF;--surface-2:#FBFAF6;--text-primary:#221F1A;
+--text-secondary:#5F5C54;--text-muted:#8A867C;--border:#DAD5C8;--border-strong:#C4BEAE;
+--text-accent:#0F6E56;--bg-accent:#D8EFE6;--text-danger:#A32D2D;--bg-danger:#FBE4E4;
+--text-warning:#854F0B;--bg-warning:#FAEEDA;--text-success:#3B6D11;--bg-success:#EAF3DE;
+--text-pro:#534AB7;--bg-pro:#EEEDFE;--radius:8px;
+--font-sans:'Space Grotesk',-apple-system,system-ui,sans-serif;
+--font-voice:'Fraunces',Georgia,serif}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:var(--surface-0);color:var(--text-primary);
+font-family:var(--font-sans);font-size:16px;line-height:1.7;width:440px}
+h1,h2,h3{font-weight:500;margin:0}
+table{border-collapse:collapse}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}

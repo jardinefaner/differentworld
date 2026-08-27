@@ -254,3 +254,59 @@ This is a living catalog. When a new feature gets added:
 Don't add a capability you can't toggle yet — features-without-UI is
 how the catalog rots. If the feature isn't being built, don't list
 its capability.
+
+## Capabilities that gate nothing (audited 2026-08-26)
+
+Six keys ship in the role bundles and are read by **nothing** outside the
+roles reference and the member editor. They are intentions, not gates:
+
+| Key | Status |
+|---|---|
+| ~~`can_record_meal`~~ | **RETIRED 2026-08-26** — infant-care verb, ages 5-12 |
+| ~~`can_record_nap`~~ | **RETIRED** |
+| ~~`can_record_diaper`~~ | **RETIRED** |
+| `can_administer_medication` | appears only in `certifications_providers` (granting it), never enforcing it |
+| `can_open_building` | nothing reads it; `/runbook` is open to everyone |
+| `can_close_building` | same |
+
+**Why this matters beyond tidiness.** A director toggling "Record meals"
+off for a Substitute believes they have restricted something. They have
+not. The switch moves, the roles screen renders a sentence about it, and
+the app behaves identically — which is worse than an absent feature,
+because it looks like a control.
+
+`/you` deliberately omits the first four (offering work the app cannot do
+is a claim a newcomer cannot check) and shows the runbook as OPEN rather
+than blocked, because it genuinely is. Telling someone they are blocked
+from something they can walk straight into is the same lie in the other
+direction.
+
+**Before adding a capability key**, check it will actually be read. A key
+with no reader is a promise the UI makes on the app's behalf.
+
+## Retired 2026-08-26
+
+`can_record_meal` / `can_record_nap` / `can_record_diaper` are gone, and
+the **`kitchen` role** with them — its entire bundle was
+`canRecordMeal: true`, so once the verb went the role granted nothing at
+all.
+
+Deleted rather than kept "for a future infant vertical". Keeping unread
+keys around for later is exactly how they accumulated; if infant care is
+ever built they come back WITH the screens that read them.
+
+**What survives, and why:**
+- **`can_administer_medication` stays.** EpiPens, inhalers and ADHD meds
+  are ordinary in an afterschool program — unlike diapers, this is a real
+  5-12 need. It still gates nothing, which is now a known gap rather than
+  a vestige.
+- **`kitchen` stays a valid Postgres enum value.** Enum values cannot be
+  dropped without recreating the type, and a legacy `role='kitchen'` row
+  must keep syncing — blocking it in `members_dao._allowedRoles` would
+  stall that member's entire upload queue. It is no longer OFFERED by
+  `RoleBundles.rolesFor`, and its label is absent so such a row falls back
+  to the default — the cue to move that person to another role. Same shape
+  as the earlier `assistant` retirement.
+- **Orphaned jsonb values are harmless.** Existing `members.capabilities`
+  rows may still carry `can_record_meal`; nothing reads it, and no
+  migration is needed to clean it up.

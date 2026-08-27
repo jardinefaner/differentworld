@@ -176,17 +176,45 @@ abstract class CoreCaps {
   static const canViewAuditLog = 'can_view_audit_log';
   static const canActAsDirector = 'can_act_as_director';
   static const canManageSchedule = 'can_manage_schedule';
+
+  /// Declare the structural facts of the building — locations, rooms,
+  /// vehicles, terms, and who is enrolled where.
+  ///
+  /// Split out of the director role because `canManageSpace` was never a
+  /// capability at all: it is `=> isDirector`, with no key behind it and no
+  /// way to grant it. A director who wanted a Group Leader to add "the back
+  /// field" had exactly one option — hand over `can_act_as_director`, which
+  /// also grants billing, the audit log and role editing.
+  ///
+  /// The tier is drawn on what a bad row COSTS, not on entity type. A
+  /// duplicate location is not clutter: two cohorts booked into "Gym" and
+  /// "Gym B" stop colliding, which silently disables the schedule's only
+  /// contention warning. A wrong room corrupts every ratio and capacity
+  /// count downstream. Those are administrative facts about the building.
+  ///
+  /// Deliberately NOT covering activities (a reusable idea anyone should be
+  /// able to contribute — ownership guards those instead) or schedule
+  /// blocks (`canManageSchedule`, already seeded true for Counselors).
+  static const canManageStructure = 'can_manage_structure';
   static const isSpecialist = 'is_specialist';
 }
 
 /// Childcare-specific verbs. A construction app would never set
 /// these; a healthcare app would replace `canAuthorizePickup` with
-/// `canSignRelease`, replace `canRecord{Meal,Nap,Diaper}` with
+/// `canSignRelease`, replace the retired `canRecord{Meal,Nap,Diaper}` with
 /// chart-note kinds, etc.
 abstract class ChildcareCaps {
-  static const canRecordMeal = 'can_record_meal';
-  static const canRecordNap = 'can_record_nap';
-  static const canRecordDiaper = 'can_record_diaper';
+  // RETIRED 2026-08-26 — canRecordMeal / canRecordNap / canRecordDiaper.
+  // Infant-care verbs in an app for ages 5-12. They gated NOTHING: no
+  // route, no screen, no feature folder, in any vertical. A director could
+  // toggle "Record meals" off for a substitute and believe they had
+  // restricted something, while the app behaved identically — a switch
+  // that moves and changes nothing is worse than an absent feature.
+  //
+  // Deliberately deleted rather than kept "for a future infant vertical".
+  // Keeping unread keys around for later is exactly how these accumulated;
+  // if infant care is ever built they come back WITH the screens that read
+  // them. Orphaned values left in members.capabilities jsonb are harmless.
   static const canAdministerMedication = 'can_administer_medication';
   static const canAuthorizePickup = 'can_authorize_pickup';
 
@@ -253,7 +281,7 @@ abstract class SpecialtyKeys {
 }
 
 /// Alias for backward compatibility. Lets the existing call sites
-/// (`MemberCaps.canObserve`, `MemberCaps.canRecordDiaper`, etc.)
+/// (`MemberCaps.canObserve`, `MemberCaps.canAuthorizePickup`, etc.)
 /// keep working while new code migrates to `CoreCaps` / `ChildcareCaps`.
 /// All keys forward to the same string values — no runtime change.
 ///
@@ -284,9 +312,6 @@ abstract class MemberCaps {
 
   // Childcare-specific (kept here for compat; prefer ChildcareCaps
   // in new code so it's grep-able by vertical)
-  static const String canRecordMeal = ChildcareCaps.canRecordMeal;
-  static const String canRecordNap = ChildcareCaps.canRecordNap;
-  static const String canRecordDiaper = ChildcareCaps.canRecordDiaper;
   static const String canAdministerMedication =
       ChildcareCaps.canAdministerMedication;
   static const String canAuthorizePickup = ChildcareCaps.canAuthorizePickup;
@@ -501,13 +526,19 @@ abstract class RoleBundles {
         'qa',
         'maintenance',
       ],
+      // 'kitchen' RETIRED 2026-08-26 alongside the meal/nap/diaper caps —
+      // its entire bundle was `canRecordMeal: true`, so once that verb went
+      // the role granted nothing at all. It stays a valid Postgres enum
+      // value (enum values cannot be dropped without recreating the type,
+      // and existing rows must keep writing), so `members_dao._allowedRoles`
+      // deliberately still permits it. It is simply no longer OFFERED.
+      // Same shape as the earlier `assistant` retirement.
       _ => const [
         'director',
         'lead_teacher',
         'teacher',
         'substitute',
         'specialist',
-        'kitchen',
       ],
     };
   }
@@ -521,11 +552,9 @@ abstract class RoleBundles {
 
   static const Map<String, Map<String, dynamic>> _childcare = {
     'director': {
+      CoreCaps.canManageStructure: true,
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canOpenBuilding: true,
       CoreCaps.canCloseBuilding: true,
       ChildcareCaps.canAuthorizePickup: true,
@@ -539,11 +568,15 @@ abstract class RoleBundles {
       CoreCaps.canDrive: false,
     },
     'lead_teacher': {
+      // A lead is the person who discovers the back field is usable this
+      // term. They already author the schedule, and a block cannot point at
+      // a place that does not exist — so withholding this made every new
+      // location a director errand in the middle of someone else's job.
+      // They still do not get billing, invites, the audit log, or
+      // act-as-director; that separation is the whole point of the key.
+      CoreCaps.canManageStructure: true,
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canOpenBuilding: true,
       CoreCaps.canCloseBuilding: true,
       ChildcareCaps.canAuthorizePickup: true,
@@ -552,9 +585,6 @@ abstract class RoleBundles {
     'teacher': {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canManageSchedule: true,
     },
     // Substitute: temporary coverage (filling in for the day / shift).
@@ -565,7 +595,6 @@ abstract class RoleBundles {
     'substitute': {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
     },
     // Specialist: subject-matter staff (coach / tutor / health aide /
     // behavior / inclusion / reading / bilingual). Sees assigned
@@ -575,16 +604,24 @@ abstract class RoleBundles {
     'specialist': {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      CoreCaps.canManageSchedule: false,
-      ChildcareCaps.canAuthorizePickup: false,
+      // TRUE since 2026-08-26. A specialist runs their own block — the art
+      // room, the soccer session — and is the one person who knows what
+      // goes in it. Leaving this false made the program manager a
+      // scheduling clerk for the staff who knew the activity best, and
+      // every rain-day swap a request. They author their own block; they
+      // still cannot declare structure (see canManageStructure).
+      CoreCaps.canManageSchedule: true,
+      // TRUE since 2026-08-26. I had this false on the theory that
+      // releasing a child belongs to whoever "holds the room" — but the
+      // journey decides it: a specialist running the last block of the day
+      // IS the adult in the room when the parent walks in. Making them
+      // fetch someone else to release a child they have been with all
+      // afternoon is not a safety control, it is a queue.
+      ChildcareCaps.canAuthorizePickup: true,
     },
     // Kitchen staff: meals only. Doesn't observe, doesn't take
     // attendance, doesn't see family contacts. The narrowest staff
     // role in the childcare bundle.
-    'kitchen': {
-      ChildcareCaps.canRecordMeal: true,
-    },
   };
 
   /// Construction: PM owns the project + finances; foreman runs the

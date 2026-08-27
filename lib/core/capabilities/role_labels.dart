@@ -50,6 +50,11 @@ abstract class RoleLabels {
   // member rows + the engine's vertical-agnostic contract; the
   // LABELS shift to the afterschool lexicon.
   //
+  // `kitchen` is absent for the same reason as `assistant`: retired
+  // 2026-08-26 when the meal/nap/diaper caps went, since its whole bundle
+  // was `canRecordMeal`. A legacy `role='kitchen'` row falls back to the
+  // default label, which is the cue to move that person to another role.
+  //
   // `assistant` is intentionally absent — the role was retired and
   // replaced by `substitute`. Any legacy `role='assistant'` rows
   // will fall back to the default "Signed in" label, which is the
@@ -60,7 +65,6 @@ abstract class RoleLabels {
     'teacher': 'Counselor',
     'substitute': 'Substitute',
     'specialist': 'Specialist',
-    'kitchen': 'Kitchen Staff',
   };
 
   static const Map<String, String> _construction = {

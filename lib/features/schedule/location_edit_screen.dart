@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -11,6 +12,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/form_save_button.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +35,19 @@ class LocationEditScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Guard the SCREEN, not just the button. Every one of these was
+    // reachable by deep link and by search with no check at all, so
+    // hiding the entry point was never the same as gating the action.
+    if (!ref.watch(viewerProvider).canManageStructure) {
+      return const EdgeScaffold(
+        backFallbackRoute: '/settings/locations',
+        body: NoAccess(
+          title: 'Only program managers can add places.',
+          message:
+              'A duplicate place quietly stops the schedule warning about two groups booked into the same room, so this one stays with whoever runs the program.',
+        ),
+      );
+    }
     if (locationId == null) {
       return const _LocationEditForm(existing: null);
     }

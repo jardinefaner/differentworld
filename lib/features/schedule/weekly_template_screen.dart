@@ -13,6 +13,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,19 @@ class WeeklyTemplateScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Guard the SCREEN, not just the button. Every one of these was
+    // reachable by deep link and by search with no check at all, so
+    // hiding the entry point was never the same as gating the action.
+    if (!ref.watch(viewerProvider).canManageSchedule) {
+      return const EdgeScaffold(
+        backFallbackRoute: '/schedule',
+        body: NoAccess(
+          title: 'You can’t edit the weekly shape yet.',
+          message:
+              'This sets what repeats every week for the whole program. Ask whoever runs the schedule.',
+        ),
+      );
+    }
     final viewer = ref.watch(viewerProvider);
     final spaceId = viewer.spaceId;
     final dbAsync = ref.watch(appDatabaseProvider);

@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,19 @@ class DayTemplatesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Guard the SCREEN, not just the button. Every one of these was
+    // reachable by deep link and by search with no check at all, so
+    // hiding the entry point was never the same as gating the action.
+    if (!ref.watch(viewerProvider).canManageSchedule) {
+      return const EdgeScaffold(
+        backFallbackRoute: '/schedule',
+        body: NoAccess(
+          title: 'You can’t edit day shapes yet.',
+          message:
+              'Day templates apply to the whole program. Ask whoever runs the schedule.',
+        ),
+      );
+    }
     final templates = ref.watch(dayTemplatesProvider);
     final spaceId = ref.watch(viewerProvider).spaceId;
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch

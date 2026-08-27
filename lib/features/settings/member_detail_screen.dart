@@ -353,6 +353,20 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             ),
                             const SizedBox(height: 24),
                             const MemberSectionLabel(label: 'Core abilities'),
+                            // First in the list because it is the one a
+                            // director actually reaches for: "let this lead
+                            // add the back field" used to require handing
+                            // over billing and the audit log with it.
+                            CapSwitch(
+                              label: 'Add rooms and places',
+                              subtitle:
+                                  'Create rooms, places and vehicles, and '
+                                  'enrol children',
+                              enabled: canManage,
+                              value: caps.getBool(CoreCaps.canManageStructure),
+                              onChanged: (v) =>
+                                  _setCap(CoreCaps.canManageStructure, v),
+                            ),
                             CapSwitch(
                               label: 'Observe',
                               subtitle: 'Record developmental observations',
@@ -463,38 +477,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             if (vertical == 'childcare') ...[
                               const SizedBox(height: 16),
                               const MemberSectionLabel(
-                                label: 'Childcare verbs',
-                              ),
-                              CapSwitch(
-                                label: 'Record meals',
-                                enabled: canManage,
-                                value: caps.getBool(
-                                  ChildcareCaps.canRecordMeal,
-                                ),
-                                onChanged: (v) => _setCap(
-                                  ChildcareCaps.canRecordMeal,
-                                  v,
-                                ),
-                              ),
-                              CapSwitch(
-                                label: 'Record naps',
-                                enabled: canManage,
-                                value: caps.getBool(
-                                  ChildcareCaps.canRecordNap,
-                                ),
-                                onChanged: (v) =>
-                                    _setCap(ChildcareCaps.canRecordNap, v),
-                              ),
-                              CapSwitch(
-                                label: 'Record diaper changes',
-                                enabled: canManage,
-                                value: caps.getBool(
-                                  ChildcareCaps.canRecordDiaper,
-                                ),
-                                onChanged: (v) => _setCap(
-                                  ChildcareCaps.canRecordDiaper,
-                                  v,
-                                ),
+                                label: 'Certificated',
                               ),
                               CapSwitch(
                                 label: 'Administer medication',

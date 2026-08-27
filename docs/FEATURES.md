@@ -166,6 +166,46 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Roles
+**Path**: `lib/features/roles/`
+**Purpose**: "What you can do" — this person's own capabilities, derived from the same getters the gates read. Every other permission surface in the app is about somebody else (the roles reference describes roles in general; the member editor is a director configuring a teammate); nobody could see their own.
+**Personas served**: everyone, and most of all whoever just joined.
+**Discovery surfaces**:
+- Routes: `/you`
+- Omnibox: yes — "What you can do", keyed on what a blocked person types ("why cant i", "permissions", "locked")
+- Slash: no
+- Drawer: yes — tapping your own name in the identity row. It used to open the director's editor FOR you, which is a config form aimed at someone else's needs and, for a non-director, a page of switches they cannot move.
+- Settings: no
+**Capabilities**: none — it reports capabilities, it does not require any
+**Data**: none. Pure derivation over `Viewer`; no reads, no writes.
+**Surfaces**:
+- *What you can do* — `your_work_screen.dart`. Four bands ordered by how often you touch them, not by permission tier. THREE states, not two: **can**, **needs a certificate** (yours to fix), **needs someone** (names who to ask). Only open items carry a route — offering a tap into a screen that will refuse you is the dead end this exists to remove.
+**Depends on**: Viewer / capabilities.
+**Consumed by**: nothing — it is a leaf, by design.
+**Last verified**: 2026-08-26
+
+---
+
+## ClassMemory
+**Path**: `lib/features/class_memory/`
+**Purpose**: What a ROOM remembers — questions it hasn't answered, things it discovered, words it started using. Not everything worth keeping belongs to a child; until this existed, every artifact was subject-tagged and a room accumulated nothing of its own.
+**Personas served**: All staff running a cohort (Coach Sam, Jordan); the room itself is the subject.
+**Discovery surfaces**:
+- Routes: `/groups/:id/memory`
+- Omnibox: yes — "Remembers · {Group.name}" per cohort, keyed on what people search for ("questions", "what we wondered", "words") rather than the feature's name
+- Slash: no
+- Drawer: no — reached from the room, which is where the room's memory belongs
+- Settings: no
+**Capabilities**: none — any staffer in the room can keep something
+**Data**: [entries](SCHEMA.md#entries) with `kind = 'class_memory'`, `group_id` set and `subject_id` NULL. **No migration**: `entries.group_id` has always been nullable alongside `subject_id`, so a room-owned entry was representable before the surface existed.
+**Surfaces**:
+- *What this room remembers* — `class_memory_screen.dart`. Three bands (question / discovery / word), each with an inline capture. Every heading renders even when empty — a heading is a prompt as much as a label.
+**Depends on**: Groups, Entries.
+**Consumed by**: nothing yet. `returnableQuestionProvider` exposes the oldest still-open question for contextual Return (docs/VISION.md), which is NOT built — that card exists only as mockup 005.
+**Last verified**: 2026-08-26
+
+---
+
 ## Attendance
 **Path**: `lib/features/attendance/`
 **Purpose**: Daily check-in / check-out for one cohort at a time.
@@ -727,17 +767,18 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Onboarding
 **Path**: `lib/features/onboarding/`
-**Purpose**: Post-auth, pre-space flow (join or create) PLUS the first-run starter spine on Today — day one proving the app instead of touring it (docs/BRAND.md "undeniable" onboarding).
+**Purpose**: Post-auth, pre-space flow (join or create) PLUS the first-run starter spine on Today — day one proving the app instead of touring it (docs/BRAND.md "undeniable" onboarding). PLUS **starting simple** (docs/STARTING_SIMPLE.md) — the nav trimmed to three destinations for someone who joined a program they did not create, so 21 destinations are not the first thing a new teacher meets.
 **Personas served**: Brianna (joining), Maya (creating + the day-one spine), Jordan (teacher welcome card).
 **Discovery surfaces**:
 - Routes: `/onboarding/join-or-create` (and any sub-routes); the spine renders on `/` (Today) — no route of its own
 - Omnibox: no — pre-space / first-run surfaces
 - Slash: none
 - Drawer: no — drawer only mounts after space is selected
-- Settings: no
+- Settings: yes — Preferences → "Start simple" (the trim's off switch; it is ADOPTED at invite redemption, never discovered here)
 **Capabilities**: Spine full form requires `can_manage_space`; other staff get the one-card welcome. State keys: `SpaceCaps.onboarding*` (synced) + a per-device teacher-welcome flag.
 **Data**: [spaces](SCHEMA.md#spaces) (capabilities JSON carries spine state), [members](SCHEMA.md#members), [invites](SCHEMA.md#invites), [subjects](SCHEMA.md#subjects) + [entries](SCHEMA.md#entries) (the seeded sample child)
 **Surfaces**:
+- *Starting simple* — `lib/features/settings/starting_simple_setting.dart` + `lib/features/settings/widgets/starting_simple_note.dart`. Trims `buildNavDestinations` to Today / Observations / Captures + Settings. Adopted by `InviteActions.redeem` (the one moment a newcomer is certain), never by inference; `adoptForNewcomer` writes only when the preference is unset so a second redemption cannot override a choice. Removes NOTHING — the omnibox catalogue is independent of the nav list, so all 116 entries stay searchable and every route stays deep-linkable. `StartingSimpleNote` on Today explains the short menu once, because otherwise it reads as a broken install.
 - *Join-or-create screen* — `lib/features/onboarding/join_or_create_screen.dart`. Two paths: enter an invite code, or create a new program. Pushes Create when the user chooses to start fresh.
 - *Create space screen* — `lib/features/onboarding/create_space_screen.dart`. Bare-minimum form (program name + vertical). Inserts the `spaces` row + flips the current member into it, then seeds Sam (the sample child).
 - *Starter spine* — `lib/features/onboarding/widgets/starter_spine.dart`. Self-retiring day-one section on Today: cast a game / open the sample child's story / add the first room, then the team-invites closer. Cards collapse to check rows as they complete; "Hide setup" dismisses. Teachers get a one-card welcome instead.

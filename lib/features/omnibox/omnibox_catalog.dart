@@ -47,6 +47,33 @@ import 'package:go_router/go_router.dart';
 /// Capability-gated: entries the viewer can't access are filtered
 /// out at the catalog layer, not at the results UI. Saves the user
 /// from seeing "Permission denied" snackbars after tapping.
+/// What a person types when they want a new room.
+///
+/// Kept as a named constant so `test/unit/omnibox_setup_words_test.dart`
+/// exercises the REAL list rather than a copy that can drift away from it.
+///
+/// **Plurals are listed explicitly and that is not redundant.** The scorer
+/// asks whether the KEYWORD contains the QUERY, so "room" does not match a
+/// search for "rooms" — the longer string has to be the stored one. Typing
+/// the plural is exactly what someone does when they are looking for the
+/// list, and it returned nothing at all until this was measured.
+const List<String> kRoomCreationKeywords = [
+  'room',
+  'rooms',
+  'new room',
+  'add a room',
+  'make a room',
+  'create room',
+  'set up a room',
+  'new group',
+  'groups',
+  'classroom',
+  'classrooms',
+  'new class',
+  'add a class',
+  'crew',
+];
+
 final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final viewer = ref.watch(viewerProvider);
   final labels = ref.watch(verticalLabelsProvider);
@@ -100,6 +127,77 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // Make groups, per cohort. Emitted per-room like the other per-cohort
     // entries, and keyed to the words staff use ("partners", "teams",
     // "split them up") rather than the feature's name.
+    // Your own permissions. Keywords are what a blocked person actually
+    // types — "why can't I", "permissions" — not the screen's name.
+    OmniboxEntry(
+      id: 'page.your-work',
+      label: 'What you can do',
+      category: OmniboxCategory.page,
+      icon: Icons.verified_user_outlined,
+      keywords: const [
+        'what can i do',
+        'permissions',
+        'my role',
+        'role',
+        'access',
+        'why cant i',
+        'why can i not',
+        'locked',
+        'blocked',
+      ],
+      onSelect: (ctx, _) => ctx.push('/you'),
+    ),
+    // Setting up a room — the seven-screens-in-one page. Keywords cover
+    // what people actually call this job rather than what the screen is
+    // named: nobody searches "room setup", they search "add a kid".
+    // What a room remembers. Keywords lean on what people would actually
+    // search for — nobody types "class memory", they type "questions" or
+    // "what we wondered".
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.class-memory.${g.id}',
+        label: 'Remembers · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.auto_stories_outlined,
+        keywords: [
+          'remember',
+          'remembers',
+          'memory',
+          'class memory',
+          'questions',
+          'question',
+          'what we wondered',
+          'wondered',
+          'discovered',
+          'words we learned',
+          'words',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/memory'),
+      ),
+    for (final g in groups)
+      OmniboxEntry(
+        id: 'page.room-setup.${g.id}',
+        label: 'Set up · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.tune_outlined,
+        keywords: [
+          'set up',
+          'setup',
+          'add a child',
+          'add a kid',
+          'add children',
+          'new student',
+          'enrol',
+          'enroll',
+          'assign staff',
+          'who is in this room',
+          'roster',
+          'class list',
+          g.name.toLowerCase(),
+        ],
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}'),
+      ),
     for (final g in groups)
       OmniboxEntry(
         id: 'page.arrange.${g.id}',
@@ -337,23 +435,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning'],
       onSelect: (ctx, _) => ctx.push('/schedule'),
     ),
-    OmniboxEntry(
-      id: 'page.day-templates',
-      label: 'Day templates',
-      category: OmniboxCategory.page,
-      icon: Icons.view_timeline_outlined,
-      keywords: const [
-        'day template',
-        'day templates',
-        'shape of the day',
-        'time blocks',
-        'timeline',
-        'rhythm',
-        'routine',
-        'schedule template',
-      ],
-      onSelect: (ctx, _) => ctx.push('/schedule/day-templates'),
-    ),
+    // Day templates write PROGRAM-WIDE config. The schedule screen hid
+    // its shortcut behind the schedule cap, but this omnibox path was
+    // open — so a substitute could search their way into an editor for
+    // a space-level setting.
+    if (viewer.canManageSchedule)
+      OmniboxEntry(
+        id: 'page.day-templates',
+        label: 'Day templates',
+        category: OmniboxCategory.page,
+        icon: Icons.view_timeline_outlined,
+        keywords: const [
+          'day template',
+          'day templates',
+          'shape of the day',
+          'time blocks',
+          'timeline',
+          'rhythm',
+          'routine',
+          'schedule template',
+        ],
+        onSelect: (ctx, _) => ctx.push('/schedule/day-templates'),
+      ),
     OmniboxEntry(
       id: 'page.checklist',
       label: 'Morning checklist',
@@ -1640,7 +1743,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         // labels. A construction user might still type "classroom"
         // out of habit if they came from childcare; we don't want
         // omnibox to miss them.
-        keywords: const ['new group', 'create room', 'classroom', 'crew'],
+        keywords: kRoomCreationKeywords,
         onSelect: (ctx, _) {
           unawaited(ctx.push('/groups/new'));
         },

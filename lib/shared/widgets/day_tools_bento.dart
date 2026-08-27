@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +49,10 @@ class DayToolsBento extends ConsumerWidget {
 
     // Capability-gated already — buildNavDestinations applies every `onlyFor`
     // against the viewer, so we render exactly what the drawer would.
-    final destinations = buildNavDestinations(viewer);
+    final destinations = buildNavDestinations(
+      viewer,
+      startingSimple: ref.watch(startingSimpleProvider).value ?? false,
+    );
 
     // The prepended first-class actions that aren't nav destinations. Capture
     // is the daily verb (matches role_tools `_capture` → `/captures/new`).

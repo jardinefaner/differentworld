@@ -51,6 +51,7 @@ import 'package:differentworld/features/calm/calm_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/child_world/child_world_screen.dart';
+import 'package:differentworld/features/class_memory/class_memory_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
@@ -91,6 +92,8 @@ import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/groups/room_create_screen.dart';
+import 'package:differentworld/features/groups/room_setup_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/heroes/role_deck_screen.dart';
@@ -126,6 +129,7 @@ import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/roles/your_work_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
 import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
@@ -399,21 +403,54 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ],
               ),
               GoRoute(
+                path: 'you',
+                builder: (_, _) => const RouteTitle(
+                  title: 'What you can do',
+                  child: YourWorkScreen(),
+                ),
+              ),
+              GoRoute(
                 path: 'groups/new',
+                // Create is ONE field and then you are inside the room —
+                // not the eleven-field edit form asked at the moment you
+                // know least about it. GroupEditScreen still owns UPDATE,
+                // at groups/:id/edit.
                 builder: (_, _) => const RouteTitle(
                   title: 'New classroom',
-                  child: GroupEditScreen(),
+                  child: RoomCreateScreen(),
                 ),
               ),
               GoRoute(
                 path: 'groups/:id',
-                // Dynamic title (group name) is set INSIDE GroupDetailScreen
-                // — see its build method. Same pattern for student detail
-                // and member detail below.
-                builder: (_, state) => GroupDetailScreen(
+                // The room IS the consolidated page. Tapping a room on Today
+                // lands here and everything about that room is on it — the
+                // daily instruments, who is in it, who is on it, and the day's
+                // shape. Setting a room up used to be seven screens across
+                // four feature folders; landing on a page that hid the useful
+                // one behind a seven-item overflow menu was not an
+                // improvement on that.
+                builder: (_, state) => RoomSetupScreen(
                   groupId: state.pathParameters['id']!,
                 ),
                 routes: [
+                  // The searchable roster grid — the old room screen, kept
+                  // because a 30-child room genuinely needs search, and
+                  // reached from the children band rather than a menu.
+                  GoRoute(
+                    path: 'memory',
+                    builder: (_, state) => RouteTitle(
+                      title: 'What this room remembers',
+                      child: ClassMemoryScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'roster',
+                    builder: (_, state) => GroupDetailScreen(
+                      groupId: state.pathParameters['id']!,
+                    ),
+                  ),
                   GoRoute(
                     path: 'edit',
                     builder: (_, state) => RouteTitle(

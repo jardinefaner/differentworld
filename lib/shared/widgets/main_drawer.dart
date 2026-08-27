@@ -5,6 +5,7 @@ import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/identity/archetypes.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/features/today/role_tools.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -47,7 +48,8 @@ class MainDrawer extends ConsumerWidget {
     // counts, and grouping all live in nav_destinations; the drawer
     // just renders each band. On a phone the groups collapse so the
     // drawer opens to the short daily spine instead of a 16-item wall.
-    final nav = buildNavLayout(viewer);
+    final simple = ref.watch(startingSimpleProvider).value ?? false;
+    final nav = buildNavLayout(viewer, startingSimple: simple);
 
     // Role-tailored shortcut cluster — rehomed from Today's old YourToolsStrip
     // (briefing reorg cut it from the home screen; the drawer is the right
@@ -104,9 +106,15 @@ class MainDrawer extends ConsumerWidget {
                             ? null
                             : () {
                                 Navigator.of(context).pop(); // close drawer
-                                unawaited(
-                                  context.push('/settings/team/${member.id}'),
-                                );
+                                // Your own name answers "what can I do
+                                // here", not "configure this teammate".
+                                // It used to open the director's editor for
+                                // you, which is a config form aimed at
+                                // somebody else's needs — and for a
+                                // non-director it is a page of switches they
+                                // cannot move. The editor is still one tap
+                                // away in Settings → Team.
+                                unawaited(context.push('/you'));
                               },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
@@ -283,7 +291,13 @@ class MainDrawer extends ConsumerWidget {
                     // (archetype-ordered). COLLAPSED by default, like the nav
                     // groups, so it never re-lengthens the drawer; tap to
                     // reveal. Self-hides when the role has no tools.
-                    if (tools.isNotEmpty)
+                    // Hidden under the first-week trim. It is one collapsed
+                    // row, which is exactly why it is tempting to keep — and
+                    // exactly how the wall comes back. The role palette is
+                    // tailored to a role you already understand; the person
+                    // who needs the trim is the person most likely to open
+                    // the mystery drawer and land back in all of it.
+                    if (tools.isNotEmpty && !simple)
                       CollapsibleSection(
                         key: const ValueKey('nav-your-tools'),
                         title: archetype == null

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/attendance/present_today.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/photos/photo_consent_providers.dart';
 import 'package:differentworld/features/rooms/fair_turns.dart';
 import 'package:differentworld/features/rooms/room_events_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -10,6 +11,8 @@ import 'package:differentworld/shared/widgets/accent_edge_row.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/person_face_wrap.dart';
 import 'package:differentworld/shared/widgets/thumb_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -79,7 +82,11 @@ class _TurnsScreenState extends ConsumerState<TurnsScreen> {
         ref.watch(subjectsInGroupProvider(widget.groupId)).value ??
         const <Subject>[];
     final present = ref.watch(presentSubjectsProvider(widget.groupId));
-    final names = {for (final s in roster) s.id: s.firstName};
+    final byId = {for (final s in roster) s.id: s};
+    // Consent covers being SHOWN, not only being photographed — and this
+    // screen is pointed at the room. A declining family's child is picked
+    // exactly as often as anyone else; they just appear as initials.
+    final defaultAllows = ref.watch(spaceDefaultAllowsPhotosProvider);
     final counts = ref.watch(
       turnCountsProvider((
         groupId: widget.groupId,
@@ -90,6 +97,7 @@ class _TurnsScreenState extends ConsumerState<TurnsScreen> {
       for (final s in present)
         if ((counts[s.id] ?? 0) == 0) s,
     ];
+    final chosen = _picked == null ? null : byId[_picked];
 
     return EdgeScaffold(
       backFallbackRoute: '/groups/${widget.groupId}',
@@ -118,34 +126,82 @@ class _TurnsScreenState extends ConsumerState<TurnsScreen> {
                               'choose between.',
                         )
                       else ...[
-                        if (_revealing)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 48),
-                            child: Center(child: CircularProgressIndicator()),
-                          )
-                        else if (_picked != null)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Text(
-                              names[_picked] ?? '',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.displaySmall,
-                            ),
+                        // The reveal slot is a FIXED height whether it is
+                        // empty, spinning or filled. Letting it grow would
+                        // shove the waiting row down the screen on every
+                        // press of a button you press over and over — and
+                        // after a re-arrangement the only question anyone
+                        // has is what moved.
+                        SizedBox(
+                          height: 200,
+                          child: Center(
+                            child: _revealing
+                                ? const CircularProgressIndicator()
+                                : chosen == null
+                                ? const SizedBox.shrink()
+                                : Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      PersonAvatar(
+                                        name: chosen.firstName,
+                                        photoUrl: consentedPhotoUrl(
+                                          chosen,
+                                          defaultAllows: defaultAllows,
+                                        ),
+                                        radius: 54,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        chosen.firstName,
+                                        textAlign: TextAlign.center,
+                                        style: theme.textTheme.displaySmall,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _turnLabel(counts[chosen.id] ?? 1),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                           ),
-                        const SizedBox(height: 8),
-                        // The reason to use this instead of a wheel app:
-                        // it can name who has never been chosen.
+                        ),
+                        const SizedBox(height: 12),
+                        // The reason to use this instead of a wheel app: it
+                        // can name who has never been chosen. Faces rather
+                        // than a comma list, because matching seven faces
+                        // against the room takes a glance and reading seven
+                        // names does not.
                         Text(
                           waiting.isEmpty
                               ? 'Everyone here has had a turn.'
-                              : 'Still waiting for a turn: '
-                                    '${waiting.map((s) => s.firstName).join(', ')}',
+                              : 'Still waiting — ${waiting.length} of '
+                                    '${present.length}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: waiting.isEmpty
                                 ? theme.colorScheme.onSurfaceVariant
                                 : theme.colorScheme.primary,
                           ),
                         ),
+                        if (waiting.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          PersonFaceWrap(
+                            people: [
+                              for (final s in waiting)
+                                FacePerson(
+                                  name: s.firstName,
+                                  photoUrl: consentedPhotoUrl(
+                                    s,
+                                    defaultAllows: defaultAllows,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -170,6 +226,10 @@ class _TurnsScreenState extends ConsumerState<TurnsScreen> {
       ),
     );
   }
+
+  /// No "today" in this label — the room log is not day-scoped, so claiming
+  /// it would be a number the screen cannot back up.
+  String _turnLabel(int turns) => turns <= 1 ? 'first turn' : 'turn $turns';
 }
 
 /// Talk time — who has spoken, and for how long (docs/ROTATION.md).

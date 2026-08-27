@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
@@ -228,9 +229,31 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
     if (ok) navigator.pop<String>(createdOrEditedId);
   }
 
+  /// Whether this activity is mine to retire.
+  ///
+  /// A director can archive anything — someone has to be able to tidy up
+  /// after a member leaves. An activity with NO owner (rows created before
+  /// the column was populated) stays editable by anyone, because locking
+  /// legacy rows behind an owner nobody has would strand them permanently.
+  bool _mine(Activity? a) {
+    if (a == null) return false;
+    final viewer = ref.read(viewerProvider);
+    if (viewer.isDirector) return true;
+    final owner = a.ownerMemberId;
+    if (owner == null || owner.isEmpty) return true;
+    return owner == viewer.memberId;
+  }
+
   Future<void> _archive() async {
     final id = widget.activityId;
     if (id == null) return;
+    // Ownership, finally read. `activities.owner_member_id` has been
+    // populated on every create since the camp-scheduling migration and
+    // nothing has ever looked at it — the migration's own comment says
+    // "activities own themselves through owner_member_id" and that was
+    // never implemented. Anyone could archive anyone's activity, including
+    // one another teacher was mid-run against.
+    if (!_mine(ref.read(activityByIdProvider(id)).value)) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -650,7 +673,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                         _RoutineSection(activityId: a.id)
                       else
                         _RoutinePlaceholder(),
-                      if (widget.isEdit && a != null) ...[
+                      if (widget.isEdit && a != null && _mine(a)) ...[
                         const SizedBox(height: 24),
                         const Divider(),
                         const SizedBox(height: 12),

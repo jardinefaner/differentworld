@@ -12,6 +12,7 @@ import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
+import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/accent_edge_card.dart';
@@ -37,9 +38,11 @@ import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/form_save_button.dart';
+import 'package:differentworld/shared/widgets/generated_portrait.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
+import 'package:differentworld/shared/widgets/inline_add.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/live_block_strip.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
@@ -48,6 +51,7 @@ import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/person_face_wrap.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:differentworld/shared/widgets/responsive_grid.dart';
@@ -580,6 +584,126 @@ void main() {
               label: const Text('Make groups'),
             ),
           ),
+        ),
+      ],
+    ),
+  );
+
+  // Drawn portraits, seeded per person. Two rows on purpose: the top row is
+  // list size (where silhouette is the ONLY thing separating two children)
+  // and the bottom is reveal size. No beards and no glasses — see the
+  // widget's doc for why that is a correctness decision, not a style one.
+  _plate(
+    'atoms/generated_portrait',
+    height: 300,
+    (context) => Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final n in [
+              'Amara Okafor',
+              'Ben Kaur',
+              'Chidi Adeyemi',
+              'Dara Mensah',
+              'Eli Nakamura',
+              'Farah Sultana',
+              'Grace Thompson',
+              'Hana Lindqvist',
+            ])
+              GeneratedPortrait(seed: n),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (final n in ['Amara Okafor', 'Ben Kaur', 'Chidi Adeyemi'])
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: GeneratedPortrait(seed: n, size: 88),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  // Both states side by side — the collapsed affordance and the open field
+  // it becomes. The whole idea is that these are the SAME control, so seeing
+  // them apart is the only way to judge whether that reads.
+  _plate(
+    'molecules/inline_add',
+    height: 260,
+    (context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Closed', style: Theme.of(context).textTheme.labelSmall),
+        const SizedBox(height: 6),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: InlineAdd(hint: 'Add a child', onSubmit: _noopAdd),
+        ),
+        const SizedBox(height: 24),
+        Text('Open', style: Theme.of(context).textTheme.labelSmall),
+        const SizedBox(height: 6),
+        const SizedBox(
+          width: 200,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Add a child',
+              isDense: true,
+              border: OutlineInputBorder(),
+              suffixIcon: Icon(Icons.close, size: 18),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  // A wrapped row of faces with names — "who is still waiting", "who is
+  // here". The overflow chip is shown because a list that silently
+  // truncates reads as a complete list.
+  _plate(
+    'molecules/person_face_wrap',
+    height: 340,
+    (context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Still waiting — 7 of 14',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const PersonFaceWrap(
+          people: [
+            FacePerson(name: 'Ben Kaur'),
+            FacePerson(name: 'Chidi Adeyemi'),
+            FacePerson(name: 'Dara Mensah'),
+            FacePerson(name: 'Eli Nakamura'),
+            FacePerson(name: 'Farah Sultana'),
+            FacePerson(name: 'Grace Thompson'),
+            FacePerson(name: 'Hana Lindqvist'),
+          ],
+        ),
+        const SizedBox(height: 28),
+        const PersonFaceWrap(
+          max: 4,
+          people: [
+            FacePerson(name: 'Ana Ruiz'),
+            FacePerson(name: 'Bo Chen'),
+            FacePerson(name: 'Cai Ng'),
+            FacePerson(name: 'Dev Patel'),
+            FacePerson(name: 'Elif Yilmaz'),
+            FacePerson(name: 'Finn Murray'),
+          ],
         ),
       ],
     ),
@@ -1318,6 +1442,41 @@ void main() {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(width: 240, child: DesktopNavRail()),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+
+  // The same drawer under the first-week trim. Worth a plate of its own
+  // precisely because the value of this feature is a VISUAL claim — either
+  // the short list reads as a calm starting point or it reads as a broken
+  // install, and that is not something the unit tests can tell you.
+  _scenePlate(
+    'organisms/main_drawer_simple',
+    width: 360,
+    height: 780,
+    tree: (theme) => ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => _organismDb),
+        viewerProvider.overrideWithValue(_seededViewer),
+        _emptyCaptures,
+        _emptyTasks,
+        startingSimpleProvider.overrideWith(_AlwaysSimple.new),
+      ],
+      child: MaterialApp(
+        theme: theme,
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              _glassBackdrop(),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: MainDrawer(),
               ),
             ],
           ),
@@ -2244,3 +2403,13 @@ void _scenePlate(
     );
   }
 }
+
+/// Forces the first-week trim on for its plate, without touching the real
+/// SharedPreferences-backed notifier.
+class _AlwaysSimple extends StartingSimpleNotifier {
+  @override
+  Future<bool> build() async => true;
+}
+
+/// The plate renders the control, not its behaviour — submit is a no-op.
+Future<void> _noopAdd(String _) async {}

@@ -5,9 +5,11 @@
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/photos/photo_consent.dart';
+import 'package:differentworld/features/photos/photo_consent_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  _renderGate();
   const now = '2026-08-24T08:00:00Z';
 
   Subject kid(String id, {bool? consent}) => Subject(
@@ -125,6 +127,50 @@ void main() {
         spaceDefaultAllows: false,
       );
       expect(kept, isEmpty);
+    });
+  });
+}
+
+// `consentedPhotoUrl` is the render-side gate. It exists because consent
+// covers being SHOWN, not only being photographed — and Pick Me points a
+// child's face at the whole room.
+void _renderGate() {
+  const now = '2026-08-24T08:00:00Z';
+  Subject kid(String id, {bool? consent, String? photo}) => Subject(
+    id: id,
+    spaceId: 'sp1',
+    firstName: 'Kid',
+    lastName: id,
+    status: 'enrolled',
+    photoUrl: photo,
+    capabilities: consent == null ? '{}' : '{"photo_consent":$consent}',
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  group('consentedPhotoUrl', () {
+    test('a declining family is never shown, whatever the program default', () {
+      final s = kid('a', consent: false, photo: 'sp1/subject/a/x.jpg');
+      expect(consentedPhotoUrl(s, defaultAllows: true), isNull);
+      expect(consentedPhotoUrl(s, defaultAllows: false), isNull);
+    });
+
+    test('an allowed family is shown even when the default is no', () {
+      final s = kid('a', consent: true, photo: 'sp1/subject/a/x.jpg');
+      expect(consentedPhotoUrl(s, defaultAllows: false), isNotNull);
+    });
+
+    test('unknown follows the program default, both ways', () {
+      final s = kid('a', photo: 'sp1/subject/a/x.jpg');
+      expect(consentedPhotoUrl(s, defaultAllows: true), isNotNull);
+      expect(consentedPhotoUrl(s, defaultAllows: false), isNull);
+    });
+
+    test('no photo on file stays null rather than becoming a broken URL', () {
+      expect(
+        consentedPhotoUrl(kid('a', consent: true), defaultAllows: true),
+        isNull,
+      );
     });
   });
 }

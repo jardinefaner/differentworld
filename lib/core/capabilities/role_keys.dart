@@ -29,7 +29,10 @@ abstract class RoleKey {
   /// field lives on the Member's caps.
   static const String specialist = 'specialist';
 
-  /// Kitchen staff. Childcare-vertical-specific but engine-known.
+  /// Kitchen staff. RETIRED 2026-08-26 — kept as a constant because the
+  /// Postgres `member_role` enum still carries the value and legacy rows
+  /// must keep resolving, but it is no longer offered by
+  /// `RoleBundles.rolesFor` and has no capability bundle.
   static const String kitchen = 'kitchen';
 
   /// Family-side viewer. Engine-universal; the guardian's

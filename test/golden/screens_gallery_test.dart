@@ -48,6 +48,7 @@ import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/child_world/child_world_screen.dart';
+import 'package:differentworld/features/class_memory/class_memory_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
@@ -73,6 +74,8 @@ import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/groups/room_create_screen.dart';
+import 'package:differentworld/features/groups/room_setup_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/heroes/role_deck_screen.dart';
@@ -105,6 +108,7 @@ import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/roles/your_work_screen.dart';
 import 'package:differentworld/features/rollover/alumni_screen.dart';
 import 'package:differentworld/features/rollover/rollover_screen.dart';
 import 'package:differentworld/features/rooms/closed_rooms_screen.dart';
@@ -686,6 +690,19 @@ void main() {
 
   // The attention instruments (docs/ROTATION.md).
   _richPlate('screens/turns', (db) async => const TurnsScreen(groupId: 'g1'));
+  _richPlate('screens/your_work', (db) async => const YourWorkScreen());
+  _richPlate(
+    'screens/class_memory',
+    (db) async => const ClassMemoryScreen(groupId: 'g1'),
+  );
+  _richPlate(
+    'screens/room_create',
+    (db) async => const RoomCreateScreen(),
+  );
+  _richPlate(
+    'screens/room_setup',
+    (db) async => const RoomSetupScreen(groupId: 'g1'),
+  );
   _richPlate('screens/talk', (db) async => const TalkScreen(groupId: 'g1'));
   // Rooms retired rather than erased (docs/ROOMS.md).
   _richPlate('screens/closed_rooms', (db) async => const ClosedRoomsScreen());

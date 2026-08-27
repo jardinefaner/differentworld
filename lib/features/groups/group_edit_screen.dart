@@ -173,7 +173,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   /// Retire a room without destroying it — the action a director actually
   /// wants at the end of a year (docs/ROOMS.md).
   Future<void> _close() async {
-    if (!ref.read(viewerProvider).canManageSpace) return;
+    if (!ref.read(viewerProvider).canManageStructure) return;
     if (!widget.isEdit) return;
     final g = ref.read(_groupByIdProvider(widget.groupId!)).value;
     if (g == null) return;
@@ -210,7 +210,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   }
 
   Future<void> _delete() async {
-    if (!ref.read(viewerProvider).canManageSpace) return;
+    if (!ref.read(viewerProvider).canManageStructure) return;
     if (!widget.isEdit) return;
     final g = ref.read(_groupByIdProvider(widget.groupId!)).value;
     if (g == null) return;
@@ -526,7 +526,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                     ],
                     const SizedBox(height: 24),
                     if (widget.isEdit &&
-                        ref.watch(viewerProvider).canManageSpace) ...[
+                        ref.watch(viewerProvider).canManageStructure) ...[
                       const Divider(),
                       const SizedBox(height: 12),
                       Padding(

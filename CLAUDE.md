@@ -1367,6 +1367,71 @@ live together so they stay in lockstep. Reference:
 `lib/features/action_words/world_present_screen.dart`. (Caught by the
 lifecycle guard on the world-cast screen, Wave C.)
 
+### `canManageSpace` is `isDirector` — structure has its own key now
+
+`canManageSpace` was never a capability. It is literally
+`bool get canManageSpace => isDirector;` and `can_manage_space` appears
+**zero times** in `lib/` or `supabase/`. So there was no middle setting: a
+director who wanted a Group Leader to add a location had exactly one option
+— grant `can_act_as_director`, which also hands over billing, the audit log
+and role editing.
+
+**`CoreCaps.canManageStructure` is the grantable tier**: locations, rooms,
+vehicles, terms, enrolment. It falls through to `isDirector`, so no existing
+member loses anything and no migration was needed (caps are jsonb).
+
+The tier is drawn on **what a bad row costs**, not entity type:
+- **Declare** (`canManageStructure`) — locations / rooms / vehicles / terms.
+  A duplicate location is not clutter: two cohorts booked into "Gym" and
+  "Gym B" stop colliding, which silently disables the schedule's only
+  contention warning.
+- **Book** (`canManageSchedule`) — schedule blocks. Already seeded TRUE for
+  Counselors; a "leads only" model would regress the shipped bundle.
+- **Contribute** (ownership) — activities. Anyone may add one;
+  `activities.owner_member_id` decides who may archive it.
+
+**The deeper rule this exposed: the app hid buttons instead of guarding
+actions.** Five structural screens had ZERO capability reads and were
+reachable by deep link and by omnibox search — `location_edit`,
+`room_create`, `day_templates`, `weekly_template`, `block_edit`. Hiding an
+entry point is not gating an action. New structural screens get a
+screen-level `NoAccess` guard (the pattern in `vehicle_edit_screen.dart`),
+not just a hidden button.
+
+**These gates are UI-honest, not a security boundary.** Every structural
+table is still `using (true) with check (true)` because of the ES256
+`auth.uid()`-null workaround above. Don't assume RLS is backing them.
+
+### A parsed stored timestamp is UTC — reading `.hour` off it shows the wrong time
+
+Every timestamp in this app is stored as a **UTC ISO string**
+(`startAt.toUtc().toIso8601String()`). So `DateTime.tryParse(row.startAt)`
+returns a DateTime with `isUtc == true`, and reading `.hour` / `.day` /
+`.year` off it gives **UTC components** — a block at 16:30 local rendered as
+whatever 16:30 is in UTC, and near midnight `dateKey` returned the wrong
+calendar day.
+
+Comparisons are **safe** — `isAfter` / `isBefore` / `difference` compare
+absolute instants, so a UTC value and a local `DateTime.now()` compare
+correctly. Only **component reads** are broken.
+
+`dateKey()` and `timeOfDay()` now call `.toLocal()` internally, so anything
+going through them is correct by construction. That was deliberate: the
+correct-but-forgettable `DateTime.tryParse(x)?.toLocal()` dance was already
+missing from several surfaces, and a formatter that is only right when every
+caller remembers something will be wrong again.
+
+Rules:
+- **Format through `dateKey` / `timeOfDay`**, never hand-rolled `.hour`
+  padding. Those are the only two places `.toLocal()` needs to live.
+- If you must read a component directly off a parsed stored value, write
+  `DateTime.tryParse(x)?.toLocal()` — and ask first whether a formatter
+  should own it instead.
+- A test fixture built with `DateTime(2026, 8, 26, 16, 30)` is **local** and
+  passes either way. Pin timezone behaviour against a PARSED stored string
+  (`test/unit/date_keys_timezone_test.dart` is the template) or the test
+  proves nothing.
+
 ### Drift ↔ PowerSync ambiguous `Column` import
 Both packages export a `Column` class. Importing
 `package:powersync/powersync.dart` unqualified inside any file with Drift

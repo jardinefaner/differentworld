@@ -23,6 +23,7 @@ import 'package:differentworld/features/readiness/widgets/readiness_card.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
+import 'package:differentworld/features/settings/widgets/starting_simple_note.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
@@ -1037,6 +1038,10 @@ class TodayBody extends ConsumerWidget {
               ? Theme.of(context).colorScheme.error
               : null,
         ),
+        // Above everything, and only for someone who just joined: a short
+        // menu has to explain itself before it is read as a broken install.
+        // Self-retiring — both of its buttons end it for good.
+        const StartingSimpleNote(),
         // What today needs — self-retiring like the spine below it, and
         // above it because these are the things only fixable while the
         // families are still in the room (docs/READINESS.md).
