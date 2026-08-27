@@ -146,12 +146,18 @@ List<WorkGroup> workFor(Viewer viewer, {String? primaryGroupId}) {
           route: '/pickup',
           blockedNote: 'Belongs to whoever holds the room',
         ),
+        // NOT gated on canOpenBuilding / canCloseBuilding, and that is
+        // deliberate rather than an oversight: nothing in the app reads
+        // either capability. The runbook is open to everyone today, so
+        // showing a Counselor "you cannot do this" would be the same lie
+        // in the other direction — telling someone they are blocked from
+        // something they can walk straight into. When the caps start
+        // gating the runbook, gate this row with them.
         ?gated(
-          allowed: viewer.canOpenBuilding || viewer.canCloseBuilding,
+          allowed: viewer.isSignedIn,
           label: 'Open or close the building',
           journey: 'You are first in, or last out',
           route: '/runbook',
-          blockedNote: 'Ask whoever runs the program',
         ),
       ],
     ),

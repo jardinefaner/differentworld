@@ -254,3 +254,32 @@ This is a living catalog. When a new feature gets added:
 Don't add a capability you can't toggle yet — features-without-UI is
 how the catalog rots. If the feature isn't being built, don't list
 its capability.
+
+## Capabilities that gate nothing (audited 2026-08-26)
+
+Six keys ship in the role bundles and are read by **nothing** outside the
+roles reference and the member editor. They are intentions, not gates:
+
+| Key | Status |
+|---|---|
+| `can_record_meal` | no route, no screen, no feature folder |
+| `can_record_nap` | same |
+| `can_record_diaper` | same |
+| `can_administer_medication` | appears only in `certifications_providers` (granting it), never enforcing it |
+| `can_open_building` | nothing reads it; `/runbook` is open to everyone |
+| `can_close_building` | same |
+
+**Why this matters beyond tidiness.** A director toggling "Record meals"
+off for a Substitute believes they have restricted something. They have
+not. The switch moves, the roles screen renders a sentence about it, and
+the app behaves identically — which is worse than an absent feature,
+because it looks like a control.
+
+`/you` deliberately omits the first four (offering work the app cannot do
+is a claim a newcomer cannot check) and shows the runbook as OPEN rather
+than blocked, because it genuinely is. Telling someone they are blocked
+from something they can walk straight into is the same lie in the other
+direction.
+
+**Before adding a capability key**, check it will actually be read. A key
+with no reader is a promise the UI makes on the app's behalf.
