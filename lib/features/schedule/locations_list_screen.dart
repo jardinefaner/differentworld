@@ -30,7 +30,7 @@ class LocationsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationsAsync = ref.watch(locationsProvider);
-    final canEdit = ref.watch(viewerProvider).canManageSpace;
+    final canEdit = ref.watch(viewerProvider).canManageStructure;
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
     // (no per-screen toggle). When on, the locations re-lay as a dense
     // responsive card grid (2-up on a phone) over the SAME provider data; off

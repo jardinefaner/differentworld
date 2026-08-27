@@ -415,23 +415,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning'],
       onSelect: (ctx, _) => ctx.push('/schedule'),
     ),
-    OmniboxEntry(
-      id: 'page.day-templates',
-      label: 'Day templates',
-      category: OmniboxCategory.page,
-      icon: Icons.view_timeline_outlined,
-      keywords: const [
-        'day template',
-        'day templates',
-        'shape of the day',
-        'time blocks',
-        'timeline',
-        'rhythm',
-        'routine',
-        'schedule template',
-      ],
-      onSelect: (ctx, _) => ctx.push('/schedule/day-templates'),
-    ),
+    // Day templates write PROGRAM-WIDE config. The schedule screen hid
+    // its shortcut behind the schedule cap, but this omnibox path was
+    // open — so a substitute could search their way into an editor for
+    // a space-level setting.
+    if (viewer.canManageSchedule)
+      OmniboxEntry(
+        id: 'page.day-templates',
+        label: 'Day templates',
+        category: OmniboxCategory.page,
+        icon: Icons.view_timeline_outlined,
+        keywords: const [
+          'day template',
+          'day templates',
+          'shape of the day',
+          'time blocks',
+          'timeline',
+          'rhythm',
+          'routine',
+          'schedule template',
+        ],
+        onSelect: (ctx, _) => ctx.push('/schedule/day-templates'),
+      ),
     OmniboxEntry(
       id: 'page.checklist',
       label: 'Morning checklist',

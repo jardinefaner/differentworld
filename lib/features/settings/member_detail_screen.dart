@@ -353,6 +353,20 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             ),
                             const SizedBox(height: 24),
                             const MemberSectionLabel(label: 'Core abilities'),
+                            // First in the list because it is the one a
+                            // director actually reaches for: "let this lead
+                            // add the back field" used to require handing
+                            // over billing and the audit log with it.
+                            CapSwitch(
+                              label: 'Add rooms and places',
+                              subtitle:
+                                  'Create rooms, places and vehicles, and '
+                                  'enrol children',
+                              enabled: canManage,
+                              value: caps.getBool(CoreCaps.canManageStructure),
+                              onChanged: (v) =>
+                                  _setCap(CoreCaps.canManageStructure, v),
+                            ),
                             CapSwitch(
                               label: 'Observe',
                               subtitle: 'Record developmental observations',

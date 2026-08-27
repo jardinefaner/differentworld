@@ -5,6 +5,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,6 +97,19 @@ class _RoomCreateScreenState extends ConsumerState<RoomCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Guard the SCREEN, not just the button. Every one of these was
+    // reachable by deep link and by search with no check at all, so
+    // hiding the entry point was never the same as gating the action.
+    if (!ref.watch(viewerProvider).canManageStructure) {
+      return const EdgeScaffold(
+        backFallbackRoute: '/program',
+        body: NoAccess(
+          title: 'Only program managers can add rooms.',
+          message:
+              'A room sets the licensed capacity and ratio it is judged on. Ask whoever runs the program.',
+        ),
+      );
+    }
     final theme = Theme.of(context);
     final labels = ref.watch(verticalLabelsProvider);
     final noun = labels.group.toLowerCase();

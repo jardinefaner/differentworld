@@ -160,6 +160,17 @@ class Viewer {
   /// name so screens read intent, not impl.
   bool get canManageSpace => isDirector;
 
+  /// May declare the building's structural facts — locations, rooms,
+  /// vehicles, terms, enrolment (docs/CAPABILITIES.md).
+  ///
+  /// Falls through to `isDirector`, so behaviour is unchanged for every
+  /// existing member: nobody loses anything by this key appearing. What it
+  /// adds is the ability to GRANT it — previously the only way to let a lead
+  /// add a location was `can_act_as_director`, which also handed over
+  /// billing and the audit log.
+  bool get canManageStructure =>
+      isDirector || memberCaps.getBool(CoreCaps.canManageStructure);
+
   /// True when this viewer sees every classroom in the space implicitly
   /// (directors), regardless of group_members assignment. Non-directors
   /// are scoped to their assignments.
@@ -296,6 +307,9 @@ class GuardianViewer extends Viewer {
   bool get isDirector => false;
   @override
   bool get canManageSpace => false;
+
+  @override
+  bool get canManageStructure => false;
   @override
   bool get canManageSchedule => false;
   @override

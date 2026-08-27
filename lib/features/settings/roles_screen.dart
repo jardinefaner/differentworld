@@ -372,6 +372,8 @@ class _CertGatedNote extends StatelessWidget {
 /// echo of the key for unknowns so unrecognized values still render.
 String _capLabel(String key) {
   return switch (key) {
+    CoreCaps.canManageStructure =>
+      'Add rooms, places, vehicles and enrol children',
     CoreCaps.canObserve => 'Log observations + write to families',
     CoreCaps.canTakeAttendance => 'Take attendance',
     CoreCaps.canDrive => 'Drive program vehicles',

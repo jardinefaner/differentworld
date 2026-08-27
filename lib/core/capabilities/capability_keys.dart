@@ -176,6 +176,26 @@ abstract class CoreCaps {
   static const canViewAuditLog = 'can_view_audit_log';
   static const canActAsDirector = 'can_act_as_director';
   static const canManageSchedule = 'can_manage_schedule';
+
+  /// Declare the structural facts of the building — locations, rooms,
+  /// vehicles, terms, and who is enrolled where.
+  ///
+  /// Split out of the director role because `canManageSpace` was never a
+  /// capability at all: it is `=> isDirector`, with no key behind it and no
+  /// way to grant it. A director who wanted a Group Leader to add "the back
+  /// field" had exactly one option — hand over `can_act_as_director`, which
+  /// also grants billing, the audit log and role editing.
+  ///
+  /// The tier is drawn on what a bad row COSTS, not on entity type. A
+  /// duplicate location is not clutter: two cohorts booked into "Gym" and
+  /// "Gym B" stop colliding, which silently disables the schedule's only
+  /// contention warning. A wrong room corrupts every ratio and capacity
+  /// count downstream. Those are administrative facts about the building.
+  ///
+  /// Deliberately NOT covering activities (a reusable idea anyone should be
+  /// able to contribute — ownership guards those instead) or schedule
+  /// blocks (`canManageSchedule`, already seeded true for Counselors).
+  static const canManageStructure = 'can_manage_structure';
   static const isSpecialist = 'is_specialist';
 }
 
@@ -521,6 +541,7 @@ abstract class RoleBundles {
 
   static const Map<String, Map<String, dynamic>> _childcare = {
     'director': {
+      CoreCaps.canManageStructure: true,
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
       ChildcareCaps.canRecordMeal: true,

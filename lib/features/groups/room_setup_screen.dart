@@ -286,8 +286,15 @@ class _ChildrenBand extends ConsumerWidget {
   final Group group;
 
   Future<void> _add(WidgetRef ref, String value) async {
-    final spaceId = ref.read(viewerProvider).spaceId;
-    if (spaceId == null) return;
+    final viewer = ref.read(viewerProvider);
+    final spaceId = viewer.spaceId;
+    // Enrolment is a structural fact, not a note: a child in a room moves
+    // licensed capacity and the ratio the room is judged on. This gate was
+    // MISSING when the inline add shipped, which made adding a child from
+    // here more permissive than the identical action in search — not a
+    // policy, just an oversight. Guarding the ACTION, not only the button,
+    // because the button is not the only way in.
+    if (spaceId == null || !viewer.canManageStructure) return;
     // One field, not a form: a first name is enough to exist. Everything
     // else about a child can be filled in later from their own page, and
     // demanding it up front is what makes adding fourteen children a chore
@@ -350,10 +357,11 @@ class _ChildrenBand extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              InlineAdd(
-                hint: 'Add a child',
-                onSubmit: (v) => _add(ref, v),
-              ),
+              if (ref.watch(viewerProvider).canManageStructure)
+                InlineAdd(
+                  hint: 'Add a child',
+                  onSubmit: (v) => _add(ref, v),
+                ),
               if (roster.length > 8) ...[
                 const SizedBox(width: 8),
                 // Search earns its place only once the faces stop being
@@ -414,7 +422,8 @@ class _StaffBand extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: 12),
-          _AssignAdult(groupId: group.id, assigned: assigned),
+          if (ref.watch(viewerProvider).canManageStructure)
+            _AssignAdult(groupId: group.id, assigned: assigned),
         ],
       ),
     );
@@ -441,8 +450,9 @@ class _AssignAdultState extends ConsumerState<_AssignAdult> {
   bool _open = false;
 
   Future<void> _assign(Member m) async {
-    final spaceId = ref.read(viewerProvider).spaceId;
-    if (spaceId == null) return;
+    final viewer = ref.read(viewerProvider);
+    final spaceId = viewer.spaceId;
+    if (spaceId == null || !viewer.canManageStructure) return;
     final db = await ref.read(appDatabaseProvider.future);
     await db.groupMembersDao.assign(
       groupId: widget.groupId,
@@ -664,10 +674,11 @@ class _TimeBand extends ConsumerWidget {
                 ),
               ),
           const SizedBox(height: 12),
-          InlineAdd(
-            hint: 'Add a block',
-            onSubmit: (v) => _addBlock(ref, blocks, v),
-          ),
+          if (ref.watch(viewerProvider).canManageSchedule)
+            InlineAdd(
+              hint: 'Add a block',
+              onSubmit: (v) => _addBlock(ref, blocks, v),
+            ),
         ],
       ),
     );

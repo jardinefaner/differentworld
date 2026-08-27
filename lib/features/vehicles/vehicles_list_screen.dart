@@ -27,7 +27,7 @@ class VehiclesListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
-    final canEditFleet = viewer.canManageSpace;
+    final canEditFleet = viewer.canManageStructure;
     final vehiclesAsync = ref.watch(vehiclesProvider);
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
     // (no per-screen toggle). When on, the fleet re-lays as a denser 2-up
