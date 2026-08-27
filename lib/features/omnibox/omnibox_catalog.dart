@@ -690,6 +690,16 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         'launch',
         'what do i need',
         'before 9',
+        // The page now answers three questions, so it must be findable by
+        // all three — a director asking "what needs attention" is looking
+        // for the same screen as one asking "how do I get started".
+        'where do we stand',
+        'needs attention',
+        'attention',
+        'what needs doing',
+        'step by step',
+        'steps',
+        'checklist',
       ],
       onSelect: (ctx, _) => ctx.push('/ready'),
     ),
