@@ -156,6 +156,17 @@ class _WorkRow extends StatelessWidget {
                     color: item.open ? null : scheme.onSurfaceVariant,
                   ),
                 ),
+                // The journey, not the feature name. An open row explains
+                // WHY you would land there; a blocked one still shows the
+                // moment, then who to ask — so you know what you are
+                // missing, not just that something is missing.
+                if (item.journey != null)
+                  Text(
+                    item.journey!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 if (item.note != null)
                   Text(
                     item.note!,

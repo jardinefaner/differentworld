@@ -98,10 +98,15 @@ void main() {
       expect(bundle('specialist')[CoreCaps.canManageSchedule], isTrue);
     });
 
-    test('but a Specialist still cannot authorize a pickup', () {
-      // A different axis on purpose: releasing a child to an adult belongs
-      // to whoever holds the room, not whoever runs the activity in it.
-      expect(bundle('specialist')[ChildcareCaps.canAuthorizePickup], isFalse);
+    test('a Specialist can release a child they have been with', () {
+      // The journey decided this: a specialist running the last block IS
+      // the adult in the room when the parent arrives.
+      expect(bundle('specialist')[ChildcareCaps.canAuthorizePickup], isTrue);
+    });
+
+    test('but a Specialist still does not declare structure', () {
+      // Running your own block is not the same as deciding what rooms and
+      // places the program has.
       expect(bundle('specialist')[CoreCaps.canManageStructure], isNot(true));
     });
   });

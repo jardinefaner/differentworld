@@ -611,10 +611,13 @@ abstract class RoleBundles {
       // every rain-day swap a request. They author their own block; they
       // still cannot declare structure (see canManageStructure).
       CoreCaps.canManageSchedule: true,
-      // Stays false, deliberately and on a different axis: releasing a
-      // child to an adult is a safety decision that belongs to whoever
-      // holds the room, not to whoever is running the activity in it.
-      ChildcareCaps.canAuthorizePickup: false,
+      // TRUE since 2026-08-26. I had this false on the theory that
+      // releasing a child belongs to whoever "holds the room" — but the
+      // journey decides it: a specialist running the last block of the day
+      // IS the adult in the room when the parent walks in. Making them
+      // fetch someone else to release a child they have been with all
+      // afternoon is not a safety control, it is a queue.
+      ChildcareCaps.canAuthorizePickup: true,
     },
     // Kitchen staff: meals only. Doesn't observe, doesn't take
     // attendance, doesn't see family contacts. The narrowest staff

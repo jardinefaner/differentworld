@@ -29,12 +29,19 @@ class WorkItem {
   const WorkItem({
     required this.label,
     required this.kind,
+    this.journey,
     this.route,
     this.note,
   });
 
   final String label;
   final WorkKind kind;
+
+  /// The JOURNEY — what is happening when a person needs this. Written as
+  /// the moment, not the feature: "an adult arrives for a child", not
+  /// "pickup management". A row that cannot describe its moment is a
+  /// capability key wearing a button, and this list had two of those.
+  final String? journey;
 
   /// Where to go and do it. Null when blocked — offering a route into a
   /// screen that will refuse you is worse than offering none.
@@ -59,103 +66,142 @@ List<WorkGroup> workFor(Viewer viewer, {String? primaryGroupId}) {
   String? inRoom(String suffix) =>
       room == null ? null : '/groups/$room/$suffix';
 
-  WorkItem gated({
+  // Returns null when the work has nowhere to happen — a person with no
+  // room cannot "pick someone fairly", and showing it as available with a
+  // dead tap is the exact failure this list exists to prevent. Blocked
+  // items still render: knowing you are missing something is the point.
+  WorkItem? gated({
     required bool allowed,
     required String label,
+    required String journey,
     String? route,
     String? blockedNote,
     WorkKind blockedKind = WorkKind.needsSomeone,
   }) => allowed
-      ? WorkItem(label: label, kind: WorkKind.can, route: route)
-      : WorkItem(label: label, kind: blockedKind, note: blockedNote);
+      ? (route == null
+            ? null
+            : WorkItem(
+                label: label,
+                kind: WorkKind.can,
+                journey: journey,
+                route: route,
+              ))
+      : WorkItem(
+          label: label,
+          kind: blockedKind,
+          journey: journey,
+          note: blockedNote,
+        );
 
   return [
     (
       title: 'Every day',
-      items: [
-        gated(
+      items: <WorkItem>[
+        ?gated(
           allowed: viewer.canTakeAttendance,
           label: 'Take attendance',
+          journey: 'Your block is starting and you need the register',
           route: inRoom('attendance') ?? '/checklist',
           blockedNote: 'Ask whoever runs the program',
         ),
-        gated(
+        ?gated(
           allowed: viewer.canObserve,
           label: 'Write an observation',
-          route: '/captures/new',
+          journey: 'A child did something worth remembering',
+          route: inRoom('observations') ?? '/observations',
           blockedNote: 'Ask whoever runs the program',
         ),
-        gated(
-          allowed: viewer.canRecordMeal,
-          label: 'Record a meal',
-          route: inRoom('attendance'),
+        // Deliberately routes to the capture form, not the inbox: this is
+        // the "hands full, write it down now" moment, and landing on a
+        // triage list would make you find the button yourself.
+        ?gated(
+          allowed: viewer.canObserve,
+          label: 'Capture a moment',
+          journey: 'No time to write it up properly — file it later',
+          route: '/captures/new',
           blockedNote: 'Ask whoever runs the program',
         ),
       ],
     ),
     (
-      title: 'The room',
-      items: [
-        gated(
+      title: 'Running the room',
+      items: <WorkItem>[
+        ?gated(
           allowed: viewer.canManageSchedule,
-          label: 'Add and change blocks',
+          label: 'Change the day',
+          journey: 'It rained, or a session needs moving',
           route: '/schedule',
           blockedNote: 'Ask whoever runs the schedule',
         ),
-        gated(
+        ?gated(
+          allowed: true,
+          label: 'Pick someone fairly',
+          journey: 'You need one child and want it to be fair',
+          route: inRoom('turns'),
+        ),
+        ?gated(
           allowed: viewer.canAuthorizePickup,
-          label: 'Authorize a pickup',
+          label: 'Release a child',
+          journey: 'An adult has arrived for someone',
           route: '/pickup',
           blockedNote: 'Belongs to whoever holds the room',
         ),
-        gated(
+        ?gated(
           allowed: viewer.canOpenBuilding || viewer.canCloseBuilding,
-          label: 'Open and close the building',
+          label: 'Open or close the building',
+          journey: 'You are first in, or last out',
           route: '/runbook',
           blockedNote: 'Ask whoever runs the program',
         ),
       ],
     ),
     (
-      title: 'The program',
-      items: [
-        gated(
+      title: 'Setting things up',
+      items: <WorkItem>[
+        // Three destinations, not one vague "/program" — you arrive at each
+        // for a different reason and they are different screens.
+        ?gated(
           allowed: viewer.canManageStructure,
-          label: 'Add rooms, places and vehicles',
-          route: '/program',
+          label: 'Add a room',
+          journey: 'A new cohort needs somewhere to be',
+          route: '/groups/new',
           blockedNote: 'Ask whoever runs the program',
         ),
-        gated(
+        ?gated(
+          allowed: viewer.canManageStructure,
+          label: 'Add a place',
+          journey: 'You discovered the back field is usable',
+          route: '/settings/locations',
+          blockedNote: 'Ask whoever runs the program',
+        ),
+        ?gated(
           allowed: viewer.canManageStructure,
           label: 'Enrol a child',
-          route: '/program',
+          journey: 'Somebody new started today',
+          route: inRoom('students/new'),
           blockedNote: 'Ask whoever runs the program',
         ),
-        gated(
+        ?gated(
           allowed: viewer.canInviteStaff,
           label: 'Invite a teammate',
-          route: '/settings/team',
+          journey: 'Someone joined the staff',
+          route: '/settings/team/invite/new',
           blockedNote: 'Program managers only',
         ),
       ],
     ),
     (
-      title: 'Needs a certificate',
-      items: [
-        // Cert-gated, so even a Program Manager ships FALSE. These are the
-        // only blocks a person can clear THEMSELVES, which is why they get
-        // their own heading instead of sitting among the "ask someone" rows
-        // looking identical to a wall.
-        gated(
-          allowed: viewer.canAdministerMedication,
-          label: 'Give medication',
-          route: '/settings/team',
-          blockedKind: WorkKind.needsCert,
-          blockedNote: 'Add a certificate to your profile',
-        ),
-        gated(
+      title: 'Needs a licence',
+      items: <WorkItem>[
+        // canDrive is the ONLY cert-gated capability with a real feature
+        // behind it. `canAdministerMedication` was here too and has been
+        // removed: it has no route, no screen and no feature folder
+        // anywhere in the app, so offering it was promising work the app
+        // cannot do — which is worse than a wrong link.
+        ?gated(
           allowed: viewer.canDrive,
           label: 'Drive program vehicles',
+          journey: 'A field trip needs a driver',
           route: '/vehicles',
           blockedKind: WorkKind.needsCert,
           blockedNote: 'Add a licence to your profile',
