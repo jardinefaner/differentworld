@@ -1367,6 +1367,29 @@ live together so they stay in lockstep. Reference:
 `lib/features/action_words/world_present_screen.dart`. (Caught by the
 lifecycle guard on the world-cast screen, Wave C.)
 
+### `.value ?? const []` renders a FAILED read as an EMPTY one
+
+The idiom is everywhere and it is right most of the time — but on any
+surface that says something CONFIDENT about absence, it makes the app lie:
+
+- Class memory said **"nothing kept yet"** about a history a teacher had
+  spent weeks building.
+- The room page showed an **empty roster** to someone standing in a full
+  room, with "Add a child" underneath it — inviting duplicate enrolment,
+  which is a far worse outcome than a visible error.
+
+Both read as certainty. Neither was.
+
+Rule: if a screen's empty state makes a CLAIM ("nobody yet", "nothing
+kept"), it must first check `hasError` and say something different — and
+where the empty state carries an ACTION, hide the action too. A person who
+cannot see the current data must not be invited to add to it.
+
+`test/unit/swallowed_error_test.dart` guards the pattern on the screens that
+watch async data. It is deliberately crude — a screen can pass and still be
+wrong — but the failure mode is silent by nature, so a coarse net beats
+none. `docs/SCREEN_RUBRIC.md` B3 is the full rule and marks it a blocker.
+
 ### Dead links don't throw — go_router renders a fallback instead
 
 `context.push('/a/route/that/does/not/exist')` does **not** crash. go_router
