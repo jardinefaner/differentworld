@@ -179,6 +179,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: none — it reports capabilities, it does not require any
 **Data**: none. Pure derivation over `Viewer`; no reads, no writes.
 **Surfaces**:
+- *See the app as someone else* — `preview_banner.dart`. Director-only role preview, promoted from the dev-only Wave 168 toggle. The lens only ever NARROWS: it swaps in a role's DEFAULT bundle, and only a director can set it, so previewing is never a way to grant yourself access. A banner announces it on every route and exits in one tap — a lens you can forget you are wearing would make a director conclude the app broke.
 - *What you can do* — `your_work_screen.dart`. Four bands ordered by how often you touch them, not by permission tier. THREE states, not two: **can**, **needs a certificate** (yours to fix), **needs someone** (names who to ask). Only open items carry a route — offering a tap into a screen that will refuse you is the dead end this exists to remove.
 **Depends on**: Viewer / capabilities.
 **Consumed by**: nothing — it is a leaf, by design.

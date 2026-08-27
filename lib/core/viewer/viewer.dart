@@ -247,17 +247,29 @@ final viewerProvider = Provider<Viewer>((ref) {
   final member = ref.watch(currentMemberProvider).value;
   final base = Viewer(member: member, space: space);
 
-  // Wave 168 — dev-only role impersonation. The toggle in the chrome
-  // action pill writes to viewerKindOverrideProvider; when set + the
-  // real viewer has a member row, swap in a synthetic Viewer with the
-  // chosen role's default cap bundle. Gated on kDebugMode so a
-  // release build literally can't honor a stale override value.
-  if (kDebugMode) {
-    final override = ref.watch(viewerKindOverrideProvider);
-    if (override != null && override.isNotEmpty) {
-      final swapped = buildOverrideViewer(base, override);
-      if (swapped != null) return swapped;
-    }
+  // Role PREVIEW — "see what each role sees".
+  //
+  // Was dev-only (Wave 168, gated on kDebugMode). Promoted 2026-08-27
+  // because a director genuinely needs it: each role's home differs, and
+  // the only way to know whether a new counselor can actually do their job
+  // is to look through their eyes. Guessing from a capability matrix is how
+  // you ship a role that cannot reach its own work.
+  //
+  // Now gated on being a REAL director. That is the safety property: a
+  // counselor cannot preview as a director and thereby grant themselves
+  // anything, because the override only ever swaps in a role's DEFAULT
+  // bundle and only a director can set it. Preview is a lens, never a
+  // promotion — and a director previewing DOWN loses capabilities, which is
+  // the direction that cannot be abused.
+  //
+  // kDebugMode is kept as an OR so the existing dev workflow (impersonating
+  // a guardian without signing out) survives on non-director test accounts.
+  final override = ref.watch(viewerKindOverrideProvider);
+  if (override != null &&
+      override.isNotEmpty &&
+      (kDebugMode || base.isDirector)) {
+    final swapped = buildOverrideViewer(base, override);
+    if (swapped != null) return swapped;
   }
   return base;
 });
