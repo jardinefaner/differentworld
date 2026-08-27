@@ -54,7 +54,7 @@ enum FeatureCardTone {
 ///   leading: PersonAvatar(name: kid.name, photoUrl: kid.photoUrl),
 ///   title: kid.name,
 ///   subtitle: 'Tap to view today',
-///   onTap: () => context.push('/family/${kid.id}'),
+///   onTap: () => context.push('/children/${kid.id}'),
 /// )
 /// ```
 ///
