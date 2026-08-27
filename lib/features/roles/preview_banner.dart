@@ -18,6 +18,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// timeout, no subtlety — this is the one place where a permanent banner is
 /// correct, because the state it describes is permanent until dismissed and
 /// silently wrong the whole time it is not.
+///
+/// **What it does NOT simulate, and this matters when reading what you
+/// see:** only `role` and `capabilities` are swapped. Your member id flows
+/// through unchanged, so anything keyed to WHO YOU ARE rather than what you
+/// may do stays yours — your room assignments, your certifications, your
+/// own observations.
+///
+/// The visible consequence is worth knowing in advance:
+/// `seesAllClassrooms` is `isDirector`, so the moment you preview as
+/// anything else the room list stops showing everything and falls back to
+/// the rooms YOU are personally assigned to via `group_members`. A director
+/// is usually staffed to none, so previewing often shows an EMPTY room
+/// list. That is not a bug in the preview and not what a real counselor
+/// sees — it is you, with a counselor's permissions.
+///
+/// Faking an assignment would be worse: you would be looking at a room
+/// nobody is really in and drawing conclusions from it. So the banner says
+/// what the lens covers instead.
 class PreviewBanner extends ConsumerWidget {
   const PreviewBanner({super.key});
 
@@ -42,11 +60,24 @@ class PreviewBanner extends ConsumerWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Seeing the app as ${RoleLabels.of(override)}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Seeing the app as ${RoleLabels.of(override)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onTertiaryContainer,
+                      ),
+                    ),
+                    // Naming the limit is the difference between a useful
+                    // lens and a misleading one.
+                    Text(
+                      'Their permissions, your rooms and data',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onTertiaryContainer,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Text(
@@ -75,10 +106,19 @@ Future<void> pickPreviewRole(BuildContext context, WidgetRef ref) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('See the app as…'),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('See the app as…'),
+                SizedBox(height: 2),
+                Text(
+                  'You get their permissions. Your own rooms, certificates '
+                  'and notes stay yours — so the room list may look emptier '
+                  'than a real teammate’s.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
             ),
           ),
           for (final r in roles)

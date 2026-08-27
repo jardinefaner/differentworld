@@ -58,6 +58,28 @@ void main() {
     });
   });
 
+  group('what the lens does NOT change', () {
+    test('the member id flows through — so YOUR data stays yours', () {
+      // The honest limit. Room assignments, certifications and authored
+      // observations are all keyed on member.id, which is unchanged, so
+      // preview simulates PERMISSIONS and not MEMBERSHIP.
+      final swapped = buildOverrideViewer(person('director'), 'teacher');
+      expect(swapped!.memberId, 'm1');
+      expect(swapped.displayName, 'Dee');
+    });
+
+    test('seesAllClassrooms goes FALSE, which is the visible consequence', () {
+      // groupsProvider falls back to `group_members` for this member when
+      // seesAllClassrooms is false — and a director is usually staffed to
+      // no room, so previewing often shows an EMPTY room list. Pinned so
+      // nobody later "fixes" it by faking an assignment, which would mean
+      // drawing conclusions from a room nobody is really in.
+      expect(person('director').seesAllClassrooms, isTrue);
+      final swapped = buildOverrideViewer(person('director'), 'teacher');
+      expect(swapped!.seesAllClassrooms, isFalse);
+    });
+  });
+
   group('the previewable list', () {
     test('offers the roles a real person on this team could be', () {
       expect(
