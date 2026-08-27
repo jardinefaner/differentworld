@@ -14,6 +14,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -217,7 +218,7 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
           selected: {_mode},
           onSelectionChanged: (s) => setState(() => _mode = s.first),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 24),
         if (eligible.isEmpty)
           EmptyState(
             icon: Icons.casino_outlined,
@@ -249,7 +250,7 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerLow,
             border: Border(
@@ -259,19 +260,65 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
           child: Column(
             children: [
               Text(
-                _freshRound ? "FRESH ROUND — EVERYONE'S BACK IN" : 'NEXT UP',
-                style: theme.textTheme.labelSmall?.copyWith(
+                _freshRound ? "Fresh round — everyone's back in" : 'Next up',
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: 0.6,
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                names.isEmpty ? '—' : names.join('  &  '),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.displaySmall,
+              const SizedBox(height: 20),
+              // The reveal ANIMATES. This is the emotional peak of the
+              // screen and it used to be a single-frame text swap, which
+              // reads as a glitch rather than a result — the room cannot
+              // tell a new name from a re-render. Faces fade and rise in
+              // together; 420ms is long enough to register as "dealt out"
+              // and short enough not to be theatre.
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 420),
+                switchInCurve: Curves.easeOutCubic,
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.12),
+                      end: Offset.zero,
+                    ).animate(anim),
+                    child: child,
+                  ),
+                ),
+                child: names.isEmpty
+                    ? Text(
+                        '—',
+                        key: const ValueKey('picker-empty'),
+                        style: theme.textTheme.displaySmall,
+                      )
+                    : Column(
+                        // Keyed on the NAMES, so re-picking the same child
+                        // does not silently skip the animation.
+                        key: ValueKey('picked-${names.join("|")}'),
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 20,
+                            runSpacing: 16,
+                            children: [
+                              for (final n in names)
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    PersonAvatar(name: n, radius: 44),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      n.split(' ').first,
+                                      style: theme.textTheme.headlineSmall,
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               Text(
                 '$pickedCount of ${eligible.length} picked this round',
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -281,7 +328,7 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -305,7 +352,7 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
           ],
         ),
         if (bag.picked.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
             'Already picked',
             style: theme.textTheme.labelMedium?.copyWith(
@@ -355,7 +402,7 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
             ],
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         FilledButton.icon(
           onPressed: () => _shuffleTeams(eligible),
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
@@ -363,11 +410,11 @@ class _NamePickerScreenState extends ConsumerState<NamePickerScreen> {
           label: Text(teams == null ? 'Make the teams' : 'Shuffle again'),
         ),
         if (teams != null) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 24),
           for (var t = 0; t < teams.length; t++) ...[
             Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerLow,
                 border: Border(
