@@ -61,9 +61,13 @@ void main() {
   group('the seeded bundles', () {
     Map<String, dynamic> bundle(String role) => RoleBundles.defaultsFor(role);
 
-    test('only the Program Manager is seeded with structure', () {
+    test('Program Manager and Group Leader declare structure', () {
+      // The lead is the person who discovers the back field is usable this
+      // term, and they already author the schedule — a block cannot point
+      // at a place that does not exist.
       expect(bundle('director')[CoreCaps.canManageStructure], isTrue);
-      for (final r in ['lead_teacher', 'teacher', 'substitute', 'specialist']) {
+      expect(bundle('lead_teacher')[CoreCaps.canManageStructure], isTrue);
+      for (final r in ['teacher', 'substitute', 'specialist']) {
         expect(
           bundle(r)[CoreCaps.canManageStructure],
           isNot(true),
@@ -72,17 +76,33 @@ void main() {
       }
     });
 
+    test('structure is NOT the same as running the business', () {
+      // The whole reason the key exists: a lead can add a room without
+      // seeing billing or inviting staff.
+      final lead = bundle('lead_teacher');
+      expect(lead[CoreCaps.canViewBilling], isNot(true));
+      expect(lead[CoreCaps.canInviteStaff], isNot(true));
+      expect(lead[CoreCaps.canActAsDirector], isNot(true));
+    });
+
     test('Counselors keep schedule authoring — this was already shipped', () {
       // Guard against a "leads only" model quietly regressing the bundle
       // that is already live on real devices.
       expect(bundle('teacher')[CoreCaps.canManageSchedule], isTrue);
     });
 
-    test('a Specialist still cannot manage the schedule', () {
-      // Documented as a real stranding, NOT fixed here: the art specialist
-      // cannot schedule the art block. Pinned so the decision is visible
-      // rather than forgotten.
-      expect(bundle('specialist')[CoreCaps.canManageSchedule], isFalse);
+    test('a Specialist authors their own block', () {
+      // Changed 2026-08-26 on the user's call. Leaving this false made the
+      // program manager a scheduling clerk for the staff who knew the
+      // activity best.
+      expect(bundle('specialist')[CoreCaps.canManageSchedule], isTrue);
+    });
+
+    test('but a Specialist still cannot authorize a pickup', () {
+      // A different axis on purpose: releasing a child to an adult belongs
+      // to whoever holds the room, not whoever runs the activity in it.
+      expect(bundle('specialist')[ChildcareCaps.canAuthorizePickup], isFalse);
+      expect(bundle('specialist')[CoreCaps.canManageStructure], isNot(true));
     });
   });
 }

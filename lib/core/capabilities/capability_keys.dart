@@ -560,6 +560,13 @@ abstract class RoleBundles {
       CoreCaps.canDrive: false,
     },
     'lead_teacher': {
+      // A lead is the person who discovers the back field is usable this
+      // term. They already author the schedule, and a block cannot point at
+      // a place that does not exist — so withholding this made every new
+      // location a director errand in the middle of someone else's job.
+      // They still do not get billing, invites, the audit log, or
+      // act-as-director; that separation is the whole point of the key.
+      CoreCaps.canManageStructure: true,
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
       ChildcareCaps.canRecordMeal: true,
@@ -597,7 +604,16 @@ abstract class RoleBundles {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
       ChildcareCaps.canRecordMeal: true,
-      CoreCaps.canManageSchedule: false,
+      // TRUE since 2026-08-26. A specialist runs their own block — the art
+      // room, the soccer session — and is the one person who knows what
+      // goes in it. Leaving this false made the program manager a
+      // scheduling clerk for the staff who knew the activity best, and
+      // every rain-day swap a request. They author their own block; they
+      // still cannot declare structure (see canManageStructure).
+      CoreCaps.canManageSchedule: true,
+      // Stays false, deliberately and on a different axis: releasing a
+      // child to an adult is a safety decision that belongs to whoever
+      // holds the room, not to whoever is running the activity in it.
       ChildcareCaps.canAuthorizePickup: false,
     },
     // Kitchen staff: meals only. Doesn't observe, doesn't take
