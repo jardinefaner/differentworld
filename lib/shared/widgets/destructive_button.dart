@@ -43,6 +43,46 @@ Future<void> deleteWithUndo(
     );
 }
 
+/// Any write that a mis-tap should be able to take back.
+///
+/// [deleteWithUndo] is shaped for deletes; this is the same guarantee for a
+/// CHANGE. It exists because the fix-in-place controls on the readiness card
+/// write on a single tap — "No" against a child's photo consent is one
+/// thumb-width from "Yes", and consent is exactly the answer you would hate
+/// to set wrong silently.
+///
+/// The snackbar rides the root messenger, so undo survives navigating away;
+/// pass closures that capture the DAO and the PREVIOUS value, never
+/// the build context.
+/// Takes a [messenger] rather than a [BuildContext] on purpose: callers
+/// routinely need an `await` (a DAO future) before the write, and reading
+/// the messenger off a context after that gap is the exact
+/// use_build_context_synchronously trap. Capturing it up front makes the
+/// safe thing the only thing.
+Future<void> writeWithUndo({
+  required ScaffoldMessengerState messenger,
+  required String message,
+  required Future<void> Function() onWrite,
+  required Future<void> Function() onUndo,
+  Duration duration = const Duration(seconds: 6),
+}) async {
+  unawaited(HapticFeedback.selectionClick());
+  await onWrite();
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: duration,
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => unawaited(onUndo()),
+        ),
+      ),
+    );
+}
+
 /// Shows a confirm-destructive dialog and returns `true` if the user
 /// confirmed. Reserve for IRREVERSIBLE / cascading deletes — for a reversible
 /// delete, reach for [deleteWithUndo] instead (no modal).

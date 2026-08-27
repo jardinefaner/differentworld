@@ -676,7 +676,11 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     ),
     OmniboxEntry(
       id: 'page.ready',
-      label: 'Ready to run',
+      // Matches the screen's own title. They drifted the moment I retitled
+      // the screen and left the catalogue alone — so search offered "Ready
+      // to run" and you arrived at "Where you stand", which reads as
+      // landing on the wrong page.
+      label: 'Where you stand',
       category: OmniboxCategory.page,
       icon: Icons.checklist_rtl_outlined,
       keywords: const [

@@ -6,6 +6,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/photos/photo_consent.dart';
 import 'package:differentworld/features/readiness/readiness.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -76,22 +77,51 @@ class _FixRow extends ConsumerWidget {
   final Subject subject;
   final ReadinessKind kind;
 
-  Future<void> _consent(WidgetRef ref, {required bool allowed}) async {
-    await ref
-        .read(subjectCapActionsProvider)
-        .setBoolCap(
-          subjectId: subject.id,
-          key: SubjectCaps.photoConsent,
-          value: allowed,
-        );
+  /// Both writes are UNDOABLE. These are one-tap controls where "No" sits a
+  /// thumb-width from "Yes", and a consent answer set by accident is exactly
+  /// the kind of silent wrong state this whole screen exists to surface.
+  Future<void> _consent(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool allowed,
+  }) async {
+    final actions = ref.read(subjectCapActionsProvider);
+    await writeWithUndo(
+      messenger: ScaffoldMessenger.of(context),
+      message: allowed
+          ? '${subject.firstName} — photos allowed'
+          : '${subject.firstName} — photos declined',
+      onWrite: () => actions.setBoolCap(
+        subjectId: subject.id,
+        key: SubjectCaps.photoConsent,
+        value: allowed,
+      ),
+      // Back to UNKNOWN, not to the opposite answer. Undoing "declined"
+      // must not silently mean "allowed" — the state before the tap was
+      // nobody having answered, and that is what has to come back.
+      onUndo: () => actions.clearCap(
+        subjectId: subject.id,
+        key: SubjectCaps.photoConsent,
+      ),
+    );
   }
 
-  Future<void> _noAllergies(WidgetRef ref) async {
+  Future<void> _noAllergies(BuildContext context, WidgetRef ref) async {
+    // Messenger captured BEFORE the await — writeWithUndo reads it from the
+    // context, and the DB future is a real async gap.
+    final messenger = ScaffoldMessenger.of(context);
     final db = await ref.read(appDatabaseProvider.future);
-    // "None" typed by a person is a real answer; blank is not. That
-    // distinction is the whole reason this item exists, so the button
-    // writes an explicit value rather than clearing the field.
-    await db.subjectsDao.update_(id: subject.id, allergies: 'None');
+    final previous = subject.allergies;
+    await writeWithUndo(
+      messenger: messenger,
+      message: '${subject.firstName} — no allergies recorded',
+      // "None" typed by a person is a real answer; blank is not. That
+      // distinction is the whole reason this item exists, so the button
+      // writes an explicit value rather than clearing the field.
+      onWrite: () => db.subjectsDao.update_(id: subject.id, allergies: 'None'),
+      onUndo: () =>
+          db.subjectsDao.update_(id: subject.id, allergies: previous ?? ''),
+    );
   }
 
   @override
@@ -109,16 +139,17 @@ class _FixRow extends ConsumerWidget {
           ),
           if (kind == ReadinessKind.missingConsent) ...[
             TextButton(
-              onPressed: () => unawaited(_consent(ref, allowed: true)),
+              onPressed: () => unawaited(_consent(context, ref, allowed: true)),
               child: const Text('Yes'),
             ),
             TextButton(
-              onPressed: () => unawaited(_consent(ref, allowed: false)),
+              onPressed: () =>
+                  unawaited(_consent(context, ref, allowed: false)),
               child: const Text('No'),
             ),
           ] else
             TextButton(
-              onPressed: () => unawaited(_noAllergies(ref)),
+              onPressed: () => unawaited(_noAllergies(context, ref)),
               child: const Text('None'),
             ),
         ],

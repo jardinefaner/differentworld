@@ -1714,7 +1714,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/ready',
             builder: (_, _) => const RouteTitle(
-              title: 'Ready to run',
+              title: 'Where you stand',
               child: LaunchScreen(),
             ),
           ),
