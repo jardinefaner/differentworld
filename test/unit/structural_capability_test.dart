@@ -7,11 +7,13 @@
 // and, more importantly, pin that NOBODY LOSES ANYTHING by it existing.
 
 import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/capabilities/role_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  _retired();
   const now = '2026-08-26T08:00:00Z';
 
   Viewer staff({String role = 'teacher', String caps = '{}'}) => Viewer(
@@ -108,6 +110,51 @@ void main() {
       // Running your own block is not the same as deciding what rooms and
       // places the program has.
       expect(bundle('specialist')[CoreCaps.canManageStructure], isNot(true));
+    });
+  });
+}
+
+// Retired 2026-08-26: the infant-care verbs and the role that existed only
+// to hold one of them. Pinned so they cannot drift back in as unread keys.
+void _retired() {
+  Map<String, dynamic> bundle(String role) => RoleBundles.defaultsFor(role);
+
+  group('retired for ages 5-12', () {
+    test('no role is seeded with meal, nap or diaper verbs', () {
+      for (final r in RoleBundles.rolesFor('childcare')) {
+        for (final k in [
+          'can_record_meal',
+          'can_record_nap',
+          'can_record_diaper',
+        ]) {
+          expect(
+            bundle(r).containsKey(k),
+            isFalse,
+            reason: '$r still carries $k',
+          );
+        }
+      }
+    });
+
+    test('kitchen is no longer OFFERED as a role', () {
+      expect(RoleBundles.rolesFor('childcare'), isNot(contains('kitchen')));
+    });
+
+    test('but kitchen stays writable — the Postgres enum still has it', () {
+      // Enum values cannot be dropped without recreating the type, so a
+      // legacy row with role='kitchen' must keep syncing. Blocking it here
+      // would stall that member's whole upload queue.
+      expect(RoleKey.kitchen, 'kitchen');
+    });
+
+    test('medication survives — a real need at 5-12, unlike diapers', () {
+      // EpiPens, inhalers and ADHD meds are ordinary in an afterschool
+      // program. The key stays; that it gates nothing YET is recorded in
+      // docs/CAPABILITIES.md rather than silently deleted.
+      expect(
+        bundle('director').containsKey('can_administer_medication'),
+        isTrue,
+      );
     });
   });
 }

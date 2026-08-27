@@ -477,38 +477,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             if (vertical == 'childcare') ...[
                               const SizedBox(height: 16),
                               const MemberSectionLabel(
-                                label: 'Childcare verbs',
-                              ),
-                              CapSwitch(
-                                label: 'Record meals',
-                                enabled: canManage,
-                                value: caps.getBool(
-                                  ChildcareCaps.canRecordMeal,
-                                ),
-                                onChanged: (v) => _setCap(
-                                  ChildcareCaps.canRecordMeal,
-                                  v,
-                                ),
-                              ),
-                              CapSwitch(
-                                label: 'Record naps',
-                                enabled: canManage,
-                                value: caps.getBool(
-                                  ChildcareCaps.canRecordNap,
-                                ),
-                                onChanged: (v) =>
-                                    _setCap(ChildcareCaps.canRecordNap, v),
-                              ),
-                              CapSwitch(
-                                label: 'Record diaper changes',
-                                enabled: canManage,
-                                value: caps.getBool(
-                                  ChildcareCaps.canRecordDiaper,
-                                ),
-                                onChanged: (v) => _setCap(
-                                  ChildcareCaps.canRecordDiaper,
-                                  v,
-                                ),
+                                label: 'Certificated',
                               ),
                               CapSwitch(
                                 label: 'Administer medication',

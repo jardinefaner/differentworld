@@ -385,9 +385,6 @@ String _capLabel(String key) {
     CoreCaps.canActAsDirector => 'Act as a director',
     CoreCaps.canManageSchedule => 'Plan and edit the schedule',
     CoreCaps.isSpecialist => 'Marked as a specialist',
-    ChildcareCaps.canRecordMeal => 'Log meals',
-    ChildcareCaps.canRecordNap => 'Log naps',
-    ChildcareCaps.canRecordDiaper => 'Log diaper changes',
     ChildcareCaps.canAdministerMedication => 'Administer medication',
     ChildcareCaps.canAuthorizePickup => 'Authorize pickup',
     _ =>

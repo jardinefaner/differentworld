@@ -201,12 +201,20 @@ abstract class CoreCaps {
 
 /// Childcare-specific verbs. A construction app would never set
 /// these; a healthcare app would replace `canAuthorizePickup` with
-/// `canSignRelease`, replace `canRecord{Meal,Nap,Diaper}` with
+/// `canSignRelease`, replace the retired `canRecord{Meal,Nap,Diaper}` with
 /// chart-note kinds, etc.
 abstract class ChildcareCaps {
-  static const canRecordMeal = 'can_record_meal';
-  static const canRecordNap = 'can_record_nap';
-  static const canRecordDiaper = 'can_record_diaper';
+  // RETIRED 2026-08-26 — canRecordMeal / canRecordNap / canRecordDiaper.
+  // Infant-care verbs in an app for ages 5-12. They gated NOTHING: no
+  // route, no screen, no feature folder, in any vertical. A director could
+  // toggle "Record meals" off for a substitute and believe they had
+  // restricted something, while the app behaved identically — a switch
+  // that moves and changes nothing is worse than an absent feature.
+  //
+  // Deliberately deleted rather than kept "for a future infant vertical".
+  // Keeping unread keys around for later is exactly how these accumulated;
+  // if infant care is ever built they come back WITH the screens that read
+  // them. Orphaned values left in members.capabilities jsonb are harmless.
   static const canAdministerMedication = 'can_administer_medication';
   static const canAuthorizePickup = 'can_authorize_pickup';
 
@@ -273,7 +281,7 @@ abstract class SpecialtyKeys {
 }
 
 /// Alias for backward compatibility. Lets the existing call sites
-/// (`MemberCaps.canObserve`, `MemberCaps.canRecordDiaper`, etc.)
+/// (`MemberCaps.canObserve`, `MemberCaps.canAuthorizePickup`, etc.)
 /// keep working while new code migrates to `CoreCaps` / `ChildcareCaps`.
 /// All keys forward to the same string values — no runtime change.
 ///
@@ -304,9 +312,6 @@ abstract class MemberCaps {
 
   // Childcare-specific (kept here for compat; prefer ChildcareCaps
   // in new code so it's grep-able by vertical)
-  static const String canRecordMeal = ChildcareCaps.canRecordMeal;
-  static const String canRecordNap = ChildcareCaps.canRecordNap;
-  static const String canRecordDiaper = ChildcareCaps.canRecordDiaper;
   static const String canAdministerMedication =
       ChildcareCaps.canAdministerMedication;
   static const String canAuthorizePickup = ChildcareCaps.canAuthorizePickup;
@@ -521,13 +526,19 @@ abstract class RoleBundles {
         'qa',
         'maintenance',
       ],
+      // 'kitchen' RETIRED 2026-08-26 alongside the meal/nap/diaper caps —
+      // its entire bundle was `canRecordMeal: true`, so once that verb went
+      // the role granted nothing at all. It stays a valid Postgres enum
+      // value (enum values cannot be dropped without recreating the type,
+      // and existing rows must keep writing), so `members_dao._allowedRoles`
+      // deliberately still permits it. It is simply no longer OFFERED.
+      // Same shape as the earlier `assistant` retirement.
       _ => const [
         'director',
         'lead_teacher',
         'teacher',
         'substitute',
         'specialist',
-        'kitchen',
       ],
     };
   }
@@ -544,9 +555,6 @@ abstract class RoleBundles {
       CoreCaps.canManageStructure: true,
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canOpenBuilding: true,
       CoreCaps.canCloseBuilding: true,
       ChildcareCaps.canAuthorizePickup: true,
@@ -569,9 +577,6 @@ abstract class RoleBundles {
       CoreCaps.canManageStructure: true,
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canOpenBuilding: true,
       CoreCaps.canCloseBuilding: true,
       ChildcareCaps.canAuthorizePickup: true,
@@ -580,9 +585,6 @@ abstract class RoleBundles {
     'teacher': {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canManageSchedule: true,
     },
     // Substitute: temporary coverage (filling in for the day / shift).
@@ -593,7 +595,6 @@ abstract class RoleBundles {
     'substitute': {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
     },
     // Specialist: subject-matter staff (coach / tutor / health aide /
     // behavior / inclusion / reading / bilingual). Sees assigned
@@ -603,7 +604,6 @@ abstract class RoleBundles {
     'specialist': {
       CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
-      ChildcareCaps.canRecordMeal: true,
       // TRUE since 2026-08-26. A specialist runs their own block — the art
       // room, the soccer session — and is the one person who knows what
       // goes in it. Leaving this false made the program manager a
@@ -622,9 +622,6 @@ abstract class RoleBundles {
     // Kitchen staff: meals only. Doesn't observe, doesn't take
     // attendance, doesn't see family contacts. The narrowest staff
     // role in the childcare bundle.
-    'kitchen': {
-      ChildcareCaps.canRecordMeal: true,
-    },
   };
 
   /// Construction: PM owns the project + finances; foreman runs the

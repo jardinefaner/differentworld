@@ -87,12 +87,6 @@ class Viewer {
       isDirector || memberCaps.getBool(MemberCaps.canObserve);
   bool get canTakeAttendance =>
       isDirector || memberCaps.getBool(MemberCaps.canTakeAttendance);
-  bool get canRecordMeal =>
-      isDirector || memberCaps.getBool(MemberCaps.canRecordMeal);
-  bool get canRecordNap =>
-      isDirector || memberCaps.getBool(MemberCaps.canRecordNap);
-  bool get canRecordDiaper =>
-      isDirector || memberCaps.getBool(MemberCaps.canRecordDiaper);
 
   // Cert-gated — director role alone is not enough.
   bool get canAdministerMedication =>
@@ -212,12 +206,10 @@ class Viewer {
   // ---------------------------------------------------------------------
 
   /// Can this viewer take ANY kind of daily-log action?
-  bool get isDailyLogger =>
-      canTakeAttendance ||
-      canRecordMeal ||
-      canRecordNap ||
-      canRecordDiaper ||
-      canObserve;
+  ///
+  /// Was four verbs; the meal / nap / diaper three were retired 2026-08-26
+  /// as infant-care in an app for ages 5-12, and they gated nothing anyway.
+  bool get isDailyLogger => canTakeAttendance || canObserve;
 
   /// Can this viewer see the team management surface? Everyone in a
   /// space can see who's on it; editing is separately gated.
