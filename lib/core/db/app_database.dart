@@ -1112,11 +1112,11 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// Drift marks `createMigrator` test-only because production schema is
   /// PowerSync's job — true for the real database, and exactly why the
-  /// detached one has to do it itself. Kept as a named method so that
-  /// suppression lives in ONE documented place instead of at every call
-  /// site that happens to need a throwaway database.
+  /// detached one has to do it itself. Kept as a named method because
+  /// calling it from OUTSIDE this class trips the test-only lint at every
+  /// call site; in here it is simply allowed, so the suppression that a
+  /// caller would otherwise need disappears entirely.
   Future<void> materializeSchema() async {
-    // ignore: invalid_use_of_visible_for_testing_member
     await createMigrator().createAll();
   }
 
