@@ -1094,6 +1094,32 @@ class AppDatabase extends _$AppDatabase {
   @visibleForTesting
   AppDatabase.forTesting(super.e);
 
+  /// A DETACHED database — same schema, no PowerSync, nothing to sync to.
+  ///
+  /// Ships in release builds, unlike [AppDatabase.forTesting], because the
+  /// sandbox is a real user-facing feature: a pretend program a director can
+  /// walk through as any role. Reusing the test constructor for it would
+  /// mean shipping code that reads as accidental.
+  ///
+  /// The isolation is structural rather than enforced. There is no connector
+  /// attached, so rows written here have nowhere to go — you cannot leak a
+  /// pretend child into a real roster because no code path exists between
+  /// them. Callers materialize the schema themselves with
+  /// `await db.createMigrator().createAll()`.
+  AppDatabase.detached(super.e);
+
+  /// Build the tables for a [AppDatabase.detached] database.
+  ///
+  /// Drift marks `createMigrator` test-only because production schema is
+  /// PowerSync's job — true for the real database, and exactly why the
+  /// detached one has to do it itself. Kept as a named method so that
+  /// suppression lives in ONE documented place instead of at every call
+  /// site that happens to need a throwaway database.
+  Future<void> materializeSchema() async {
+    // ignore: invalid_use_of_visible_for_testing_member
+    await createMigrator().createAll();
+  }
+
   @override
   int get schemaVersion => 1;
 
