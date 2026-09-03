@@ -41,9 +41,17 @@ class SandboxMember extends Notifier<String?> {
 /// without a warning dialog: the worst case is that they change something
 /// that evaporates.
 class SandboxScope extends ConsumerStatefulWidget {
-  const SandboxScope({required this.child, super.key});
+  const SandboxScope({
+    required this.child,
+    this.day = SandboxDay.running,
+    super.key,
+  });
 
   final Widget child;
+
+  /// Which pretend program to build — a running Monday, or a brand-new
+  /// program's first screen.
+  final SandboxDay day;
 
   @override
   ConsumerState<SandboxScope> createState() => _SandboxScopeState();
@@ -63,7 +71,11 @@ class _SandboxScopeState extends ConsumerState<SandboxScope> {
     try {
       final db = AppDatabase.detached(NativeDatabase.memory());
       await db.materializeSchema();
-      await seedSandbox(db, nowIso: DateTime.now().toUtc().toIso8601String());
+      await seedSandbox(
+        db,
+        nowIso: DateTime.now().toUtc().toIso8601String(),
+        day: widget.day,
+      );
       // The screen can pop while the seed is still running — close the
       // database rather than leaking it, and do not touch State after that.
       if (!mounted) {

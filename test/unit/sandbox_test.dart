@@ -8,12 +8,16 @@
 // roster. These tests pin the seed, and pin that the pretend staff are
 // genuinely assigned to rooms — which is the whole difference from preview.
 
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/sandbox/sandbox_data.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('day one', _dayOneTests);
+
   late AppDatabase db;
 
   setUp(() async {
@@ -79,4 +83,65 @@ void main() {
     expect(spaces.single.id, sandboxSpaceId);
     expect(spaces.single.name, contains('sandbox'));
   });
+}
+
+// The day-one sandbox exists for a question the app otherwise cannot answer
+// about itself: "what does someone who has never seen this land on?" A real
+// program can never show it again, because the starter spine is gated on
+// `onboarding_started` and that marker is only ever written when a space is
+// CREATED. So these pin the two things that make the answer trustworthy —
+// that day one is genuinely empty, and that it is spine-eligible for the same
+// reason a real new program is.
+void _dayOneTests() {
+  late AppDatabase db;
+
+  setUp(() async {
+    db = AppDatabase.detached(NativeDatabase.memory());
+    await db.materializeSchema();
+    await seedSandbox(
+      db,
+      nowIso: '2026-08-27T08:00:00Z',
+      day: SandboxDay.dayOne,
+    );
+  });
+
+  tearDown(() async => db.close());
+
+  test('day one has nothing set up yet', () async {
+    final rooms = await db.select(db.groups).get();
+    final staff = await db.select(db.members).get();
+    expect(rooms, isEmpty, reason: 'a new program has no rooms');
+    expect(
+      staff.length,
+      1,
+      reason: 'a new program has exactly the director who made it',
+    );
+    expect(staff.single.role, 'director');
+  });
+
+  test('day one is spine-eligible, and for the real reason', () async {
+    final space = await db.spacesDao.findById(sandboxSpaceId);
+    expect(space, isNotNull);
+    // Set by seedSampleChild — the SAME call the real create-space flow
+    // makes. If this ever goes false the sandbox stops showing the first run
+    // even though it still looks empty, which is the failure that would be
+    // hardest to notice.
+    expect(space!.caps.getBool(SpaceCaps.onboardingStarted), isTrue);
+    expect(
+      space.caps.getString(SpaceCaps.onboardingSampleSubjectId),
+      isNotNull,
+      reason: 'the spine points at Sam; without the id its card cannot open',
+    );
+  });
+
+  test(
+    'day one still has Sam, so the story card has something to show',
+    () async {
+      final kids = await db.select(db.subjects).get();
+      expect(kids.length, 1);
+      expect(kids.single.firstName, 'Sam');
+      final entries = await db.select(db.entries).get();
+      expect(entries, isNotEmpty, reason: "Sam's six weeks of moments");
+    },
+  );
 }

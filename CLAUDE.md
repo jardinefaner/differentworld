@@ -763,7 +763,20 @@ dark/light + "white-on-light pill" defects. Read color from
   CI) fails on a NEW hardcode in a themed surface; the **Flutter Theme
   Guard** agent runs in the Review Council for the judgment the regex
   can't. A genuinely-new raw canvas gets added to the allowlist in the
-  same change.
+  same change — and to `scripts/check_type_adherence.sh`, its sibling,
+  which shares the SAME allowlist so the two can never disagree about
+  what counts as a raw canvas.
+  - **Type has teeth too, since 2026-09-03.**
+    `scripts/check_type_adherence.sh` fails on a NEW uppercase label or
+    w800+ weight in a themed surface (BRAND.md law 4). It did not exist
+    before, which is how 61 themed files drifted back to the retired
+    Jost-era eyebrow (46 uppercase, 25 w800+) while colour was enforced
+    three different ways and BRAND.md claimed all five laws were
+    "mechanically enforced". Those 61 are the standing backlog — the
+    guard is diff-scoped and structurally cannot see them. **Use
+    `SectionEyebrow` (`lib/shared/widgets/section_eyebrow.dart`) for the
+    label above a title**; it exists precisely because there was nowhere
+    to import the treatment from, so every screen re-derived it wrong.
   - **The allowlist is FILE-scoped, not folder-scoped.** Whole-folder
     entries (`^lib/features/live_session/`, etc.) used to exempt themed
     surfaces that happened to share a folder with a raw stage — that's
@@ -1101,13 +1114,33 @@ kept working, so nothing errored loudly):
   PowerSync dashboard → revive/recreate the instance → update `.env` →
   **paste sync_rules.yaml into the dashboard and Deploy** (fresh instance
   has no rules) → rebuild.
-- **"Cast to screen / use device as screen not working"** = Supabase
-  **Realtime returning 500** while Auth (200) and REST were healthy. Cast
-  rides Realtime channels exclusively — a wedged Realtime kills both
-  directions with zero app-side errors worth grepping. Diagnose:
-  `curl -s -o /dev/null -w "%{http_code}" "$SUPABASE_URL/realtime/v1/websocket?apikey=$ANON"`
-  — healthy rejects with 403/426; **500 = server-side**. Fix: Supabase
-  dashboard → Settings → General → **Restart project**.
+- **"Cast to screen / use device as screen not working"** — Cast rides
+  Realtime channels exclusively, so a wedged Realtime kills both directions
+  with zero app-side errors worth grepping. **Probe it with a real WebSocket
+  handshake over HTTP/1.1** — `101 Switching Protocols` means healthy:
+
+  ```sh
+  curl -s -i --http1.1 \
+    -H "Connection: Upgrade" -H "Upgrade: websocket" \
+    -H "Sec-WebSocket-Version: 13" \
+    -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+    "$SUPABASE_URL/realtime/v1/websocket?apikey=$ANON&vsn=1.0.0" | head -1
+  ```
+
+  **A plain GET on that URL ALWAYS returns 500 — it is not a diagnosis.**
+  This file used to document the plain probe with "500 = server-side", and it
+  cost a wasted Supabase project restart on 2026-09-03: the plain form returns
+  `500` + Cloudflare `error code: 1101` ("worker threw an exception") on a
+  perfectly healthy instance, because a WebSocket endpoint is being asked to
+  serve an ordinary HTTP/2 request. It reproduces 3/3 while the correct probe
+  returns `101` 3/3. `curl` also negotiates HTTP/2 by default, which cannot
+  carry a WS upgrade at all — `--http1.1` is required, not optional.
+
+  If the handshake really does fail: Supabase dashboard → Settings → General →
+  **Restart project**. Expect Postgres to be unreachable for ~30 s afterwards
+  (PostgREST 503) and PowerSync to log `connection failed` / `postgres query
+  failed` / `the database system is shutting down` — that is the restart, not
+  a new fault, and it clears itself once Postgres accepts connections again.
 
 Rule: before auditing app code for a "stopped working" report on any
 sync/live feature, run the two probes above (plus `auth/v1/health`).

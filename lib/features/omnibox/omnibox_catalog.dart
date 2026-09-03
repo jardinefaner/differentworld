@@ -1656,6 +1656,30 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ],
       onSelect: (ctx, _) => ctx.push('/settings/roles'),
     ),
+    if (viewer.isDirector)
+      OmniboxEntry(
+        id: 'page.sandbox',
+        label: 'Try it out',
+        category: OmniboxCategory.setting,
+        icon: Icons.science_outlined,
+        // Broad on purpose — people look for this by what they want to DO
+        // ("test", "practice", "what does a new person see"), never by the
+        // word "sandbox".
+        keywords: const [
+          'sandbox',
+          'try it out',
+          'test',
+          'practice',
+          'demo',
+          'pretend',
+          'day one',
+          'first run',
+          'new director',
+          'what does it look like',
+          'see as',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/sandbox'),
+      ),
     if (viewer is GuardianViewer && viewer.childSubjectIds.isNotEmpty)
       OmniboxEntry(
         id: 'page.messages',

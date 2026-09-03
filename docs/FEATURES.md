@@ -1837,20 +1837,15 @@ you're also updating the agent's view of truth._
 
 ## Sandbox
 **Path**: `lib/features/sandbox/`
-**Purpose**: A throwaway in-memory program a director can walk through as any role, so the difference between "can this role reach their work" (role preview) and "what does their Monday actually look like" (a real room with real room assignments) is visible without touching live data. Isolation is structural: the database is `NativeDatabase.memory()` with no PowerSync connector, so nothing written here can reach the server.
-**Personas served**: Maya (directors setting up a new role configuration).
+**Purpose**: A throwaway pretend program a director can walk through, so two questions the app cannot otherwise answer about itself become answerable. (1) *"What does someone who has never seen this land on?"* — the day-one program. A real space can never show its own first run again, because the starter spine is gated on `onboarding_started` and that marker is only written when a space is CREATED; without the sandbox you would have to sign out and make a real program to review your own onboarding. (2) *"Can this role reach their work?"* — role preview swaps capabilities but keeps YOUR member id, so your room assignments stay yours and previewing as a counselor usually shows an empty room list; here you become a real member of a real (pretend) room. Isolation is structural, not a promise: the database is `NativeDatabase.memory()` with no PowerSync connector, so there is no code path from anything done here to the server.
+**Personas served**: Maya, Pat (directors reviewing onboarding or a role configuration).
 **Discovery surfaces**:
-- Routes: none — `SandboxScope` widget and `sandboxMemberIdProvider` are shipped; no route is wired yet.
-- Omnibox: no
-- Slash: none
-- Drawer: no
-- Settings: no
-**Status**: stub — providers and seed widget shipped, no user-facing route wired yet.
-**Capabilities**: n/a (no gates — not yet reachable from UI).
-**Data**: none synced. Writes to an isolated `AppDatabase.detached(NativeDatabase.memory())` that has no PowerSync connector; rows evaporate on close.
-**Surfaces**: None — providers only, consumed by other features.
-- `sandbox_data.dart` — `sandboxSpaceId`, `sandboxStaff`, `seedSandbox(db, {nowIso})` seeding function that inserts one space, two rooms (Sparrows, Herons), five staff at five roles, and nine children.
-- `sandbox_scope.dart` — `SandboxScope` (`ConsumerStatefulWidget` that builds the in-memory DB, seeds it, and overrides `appDatabaseProvider` in a nested `ProviderScope`), `sandboxMemberIdProvider` (which pretend staffer you are), `sandboxViewer(members, spaces, id)` helper.
-**Depends on**: core db (`AppDatabase.detached`, `materializeSchema`), Capabilities (seeds role defaults via `RoleBundles.defaultsFor`).
-**Consumed by**: nothing yet — integration into a route is the deferred next step.
+- **Routes**: `/settings/sandbox` (picker), `/settings/sandbox/day-one`, `/settings/sandbox/as/:memberId`
+- **Omnibox**: "Try it out" (`page.sandbox`, director-gated) — keyed on what people actually search for (test / practice / demo / day one / first run / new director), never the word "sandbox"
+- **Settings**: Programme group, beneath "Roles & permissions"
+**Capabilities**: director-only, matching role preview — a screen-level `NoAccess` guard, not just a hidden entry point. Not a security boundary (there is no real data behind it); the wrong tool to hand a counselor.
+**Data**: none synced. Writes to an isolated `AppDatabase.detached(NativeDatabase.memory())`; rows evaporate when the screen pops.
+**Surfaces**: *SandboxScreen* (the picker), *SandboxRunScreen* + `_SandboxIdentity` (overrides `currentMemberProvider` / `currentSpaceProvider` so the whole provider graph resolves against the sandbox — `currentMemberProvider` keys off the real auth session id, which never matches a pretend `sb-m*` id), *SandboxScope* (builds and seeds the detached db), `seedSandbox(day:)` in `sandbox_data.dart`.
+**Depends on**: core db (`AppDatabase.detached`, `materializeSchema`), Capabilities (`RoleBundles.defaultsFor`), Onboarding (`seedSampleChild` — the day-one seed calls the SAME function the real create-space flow does, so the first run cannot drift from the real one), Cockpit (`NowCockpitScreen` is what both variants render).
+**Consumed by**: Settings, Omnibox.
 **Last verified**: 2026-09-03

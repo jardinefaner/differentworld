@@ -104,7 +104,7 @@ ContextLead? computeContextLead({
   if (live != null) {
     if (live.kind == BlockKind.fieldTrip) {
       return ContextLead(
-        eyebrow: 'ON A TRIP',
+        eyebrow: 'On a trip',
         title: live.title,
         line: 'Check the vehicle out before departure.',
         icon: Icons.directions_bus_outlined,
@@ -127,7 +127,7 @@ ContextLead? computeContextLead({
     // count. Lead with it; the run / capture move drops to a chip.
     if (live.isOutdoor) {
       return ContextLead(
-        eyebrow: 'OUTSIDE',
+        eyebrow: 'Outside',
         title: live.title,
         line: "Keep a head count — you're away from the room.",
         icon: Icons.wb_sunny_outlined,
@@ -156,7 +156,7 @@ ContextLead? computeContextLead({
     // On-site activity. A running curriculum world → lead with the run;
     // otherwise the most useful bare move is to capture the moment.
     return ContextLead(
-      eyebrow: 'RIGHT NOW',
+      eyebrow: 'Right now',
       title: live.title,
       line: worldName != null
           ? 'In $worldName — full-screen, step by step.'
@@ -201,7 +201,7 @@ ContextLead? computeContextLead({
                 : '${prog.inBuilding} of ${prog.total} in · ${prog.stillOut} to go')
           : 'Check $kids in as they arrive.';
       return ContextLead(
-        eyebrow: 'RIGHT NOW',
+        eyebrow: 'Right now',
         title: 'Arrival',
         line: line,
         icon: Icons.login,
@@ -214,7 +214,7 @@ ContextLead? computeContextLead({
       );
     case DayPhase.pickup:
       return ContextLead(
-        eyebrow: 'RIGHT NOW',
+        eyebrow: 'Right now',
         title: 'Pickup',
         line: 'Release $kids to authorized pickup.',
         icon: Icons.directions_walk,
@@ -227,7 +227,7 @@ ContextLead? computeContextLead({
       );
     case DayPhase.prep:
       return const ContextLead(
-        eyebrow: 'COMING UP',
+        eyebrow: 'Coming up',
         title: 'Getting ready',
         line: 'Peek at today’s plan before the rush.',
         icon: Icons.wb_twilight_outlined,
@@ -244,7 +244,7 @@ ContextLead? computeContextLead({
       // A director's most-reached surface here is program status, so give
       // them Insights one tap away (it left QuickActions in the reorg).
       return ContextLead(
-        eyebrow: 'RIGHT NOW',
+        eyebrow: 'Right now',
         title: 'Program time',
         line: 'Nothing scheduled — want something to do?',
         icon: Icons.bolt_outlined,

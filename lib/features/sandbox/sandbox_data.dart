@@ -1,6 +1,7 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/onboarding/sample_child.dart';
 import 'package:drift/drift.dart' show Value;
 
 /// A whole pretend program, seeded into a throwaway database.
@@ -57,7 +58,29 @@ const _kids = <({String id, String first, String last, String room})>[
 ];
 
 /// Fill a fresh database with the pretend program.
-Future<void> seedSandbox(AppDatabase db, {required String nowIso}) async {
+/// Which pretend program to build.
+enum SandboxDay {
+  /// A program mid-term: two rooms, nine children, five staff with real room
+  /// assignments. Answers "what does this person's Monday look like".
+  running,
+
+  /// A program created sixty seconds ago: one director, no rooms, no roster,
+  /// and the sample child the real onboarding seeds. Answers "can somebody
+  /// who has never seen this app get started without being told how".
+  ///
+  /// Faithful by construction — it calls the SAME [seedSampleChild] the real
+  /// create-space flow calls, which is what sets `onboarding_started` and
+  /// therefore what makes the starter spine appear. A hand-rolled imitation
+  /// would drift from the real first run, which is the one thing this must
+  /// not do.
+  dayOne,
+}
+
+Future<void> seedSandbox(
+  AppDatabase db, {
+  required String nowIso,
+  SandboxDay day = SandboxDay.running,
+}) async {
   await db
       .into(db.spaces)
       .insert(
@@ -72,6 +95,29 @@ Future<void> seedSandbox(AppDatabase db, {required String nowIso}) async {
           settings: '{}',
         ),
       );
+
+  if (day == SandboxDay.dayOne) {
+    // One director, nothing set up, plus Sam — exactly what a real new
+    // program contains before anybody has done anything.
+    final maya = sandboxStaff.first;
+    await db
+        .into(db.members)
+        .insert(
+          MembersCompanion.insert(
+            id: maya.id,
+            displayName: maya.name,
+            role: maya.role,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+            spaceId: const Value(sandboxSpaceId),
+            capabilities: Capabilities(
+              RoleBundles.defaultsFor(maya.role),
+            ).toJson(),
+          ),
+        );
+    await seedSampleChild(db, spaceId: sandboxSpaceId, memberId: maya.id);
+    return;
+  }
 
   for (final r in _rooms) {
     await db.groupsDao.create(

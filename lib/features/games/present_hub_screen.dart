@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -120,7 +121,7 @@ class PresentHubScreen extends ConsumerWidget {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: ContentHeader(
                 title: 'Present',
-                subtitle: 'Put it on the big screen — control from your phone',
+                subtitle: 'Tap to open · hold to put it on the screen',
               ),
             ),
             Padding(
@@ -144,7 +145,7 @@ class PresentHubScreen extends ConsumerWidget {
         crossAxisSpacing: 12,
         // Cell grows with text scale so the title/tagline never clip
         // (the fixed-childAspectRatio trap; see brain_breaks).
-        mainAxisExtent: 140 + 64 * _textScale(context),
+        mainAxisExtent: 64 + 64 * _textScale(context),
       ),
       children: [
         for (final card in _cards)
@@ -154,6 +155,7 @@ class PresentHubScreen extends ConsumerWidget {
             title: card.title,
             tagline: card.tagline,
             onTap: () => unawaited(context.push(card.route)),
+            onLongPress: () => unawaited(_castCard(context, card)),
           ),
       ],
     );
@@ -165,10 +167,10 @@ class PresentHubScreen extends ConsumerWidget {
   /// equal-weight destinations reads as a uniform grid (docs/GRID.md), and a
   /// full-width lead avoids the gap a 2-row hero would leave at desktop where
   /// `Wrap` won't back-fill. Each tile bounds the [AccentCardTile] in a
-  /// text-scale-aware height because the tile body uses a `Spacer` (an
-  /// unbounded bento cell would otherwise throw; see docs/GRID.md).
+  /// text-scale-aware height: the tile hugs its content now, but a bento cell
+  /// still needs a bound (see docs/GRID.md).
   Widget _bentoGrid(BuildContext context) {
-    final tileHeight = 140 + 64 * _textScale(context);
+    final tileHeight = 64 + 64 * _textScale(context);
     return BentoGrid(
       tiles: [
         for (var i = 0; i < _cards.length; i++)
@@ -186,12 +188,23 @@ class PresentHubScreen extends ConsumerWidget {
                 title: _cards[i].title,
                 tagline: _cards[i].tagline,
                 onTap: () => unawaited(context.push(_cards[i].route)),
+                onLongPress: () => unawaited(_castCard(context, _cards[i])),
               ),
             ),
           ),
       ],
     );
   }
+}
+
+/// Every card is a route, and [showCastToRoom] is route-generic — so the whole
+/// deck is castable without per-activity work.
+Future<void> _castCard(BuildContext context, _PresentCard card) {
+  return showCastToRoom(
+    context,
+    mirrorRoute: card.route,
+    mirrorLabel: 'Put “${card.title}” on the screen',
+  );
 }
 
 class _PresentCard {

@@ -725,6 +725,7 @@ Future<void> _pumpAndShoot(
   Widget appChild,
   Size size,
 ) async {
+  beginOverflowWatch();
   await tester.binding.setSurfaceSize(size);
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -769,9 +770,7 @@ Future<void> _pumpAndShoot(
   // (the camera scanner). The plate is already written; these don't affect
   // it. A genuine build-time crash would surface as a red error box IN the
   // captured PNG, which the visual review catches — so this can't hide one.
-  while (tester.takeException() != null) {
-    // drained
-  }
+  drainExpectedExceptions(tester);
 }
 
 Widget _app(String mode, GoRouter router) => MaterialApp.router(
@@ -911,6 +910,7 @@ void _bentoPlate(String name, Size size) {
         ),
       );
 
+      beginOverflowWatch();
       await tester.binding.setSurfaceSize(size);
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -950,9 +950,7 @@ void _bentoPlate(String name, Size size) {
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
-      while (tester.takeException() != null) {
-        // drained
-      }
+      drainExpectedExceptions(tester);
       await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
     }, skip: !runGoldens);
   }
@@ -1033,6 +1031,7 @@ void _rosterPlate(String name, Widget screen, Size size) {
       )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: s);
 
+      beginOverflowWatch();
       await tester.binding.setSurfaceSize(size);
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -1079,9 +1078,7 @@ void _rosterPlate(String name, Widget screen, Size size) {
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
-      while (tester.takeException() != null) {
-        // drained
-      }
+      drainExpectedExceptions(tester);
       await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
     }, skip: !runGoldens);
   }
@@ -1307,6 +1304,7 @@ void _richPlate(
           ? const <Object>[]
           : await extraOverrides(db);
 
+      beginOverflowWatch();
       await tester.binding.setSurfaceSize(size);
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -1356,9 +1354,7 @@ void _richPlate(
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
-      while (tester.takeException() != null) {
-        // drained
-      }
+      drainExpectedExceptions(tester);
       await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
     }, skip: !runGoldens);
   }
@@ -1469,6 +1465,7 @@ void _scheduleGridPlate(String name, Size size) {
       )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: s);
 
+      beginOverflowWatch();
       await tester.binding.setSurfaceSize(size);
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -1506,9 +1503,7 @@ void _scheduleGridPlate(String name, Size size) {
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
-      while (tester.takeException() != null) {
-        // drained
-      }
+      drainExpectedExceptions(tester);
       await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
     }, skip: !runGoldens);
   }

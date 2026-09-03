@@ -93,6 +93,17 @@ not palettes:
 
 - `scripts/check_theme_adherence.sh` + Flutter Theme Guard — no
   hardcoded colors on themed surfaces (docs/THEME_ADHERENCE.md).
+- `scripts/check_type_adherence.sh` — law 4, made checkable: no NEW
+  uppercase labels or w800+ weights on a themed surface. Added
+  2026-09-03, because until then this section claimed all five laws
+  were "mechanically enforced" while type had **no checker at all** —
+  nothing in the repo grepped for a weight, a `.toUpperCase()`, or a
+  font family. 61 themed files had drifted back to the retired
+  Jost-era treatment (46 uppercase, 25 w800+) and nothing said so.
+  Diff-scoped, so it gates new drift; those 61 are the standing
+  backlog. Reach for `SectionEyebrow` rather than retyping the
+  label-above-a-title treatment — that widget exists because sixty-one
+  files had nowhere to import it from.
 - `docs/SCREEN_RUBRIC.md` + Screen Rubric agent — chrome clearance,
   four states, primitives, a11y.
 - `tool/score_screens.py` → `gallery/screen_scores.md` — the measured

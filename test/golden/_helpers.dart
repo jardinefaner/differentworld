@@ -48,8 +48,18 @@ const Map<String, Size> goldenBreakpoints = <String, Size>{
 /// so golden suites can be loaded in isolation without depending on
 /// the full app boot.
 Future<void> ensureGoldenBootstrap() async {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues(<String, Object>{});
+
+  // Text-scale stress applies HERE, suite-wide, rather than in [pumpAt] — the
+  // big gallery suites build and pump their trees inline instead of going
+  // through that helper, so a hook there silently covers almost nothing (it
+  // reported a clean run at 6x text, which is how this was caught). The
+  // platform dispatcher is the one lever every MaterialApp reads, whoever
+  // pumped it.
+  if (stressTextScale case final scale?) {
+    binding.platformDispatcher.textScaleFactorTestValue = scale;
+  }
 
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(
@@ -136,6 +146,86 @@ Future<void> pumpAt(
   await tester.pumpAndSettle(settle);
 }
 
+/// Text-scale stress mode — the overflow gate.
+///
+/// A golden compares pixels, but an overflow **throws**: Flutter reports a
+/// `RenderFlex overflowed by N pixels` error, and the test binding turns that
+/// into a failure. So proving "no content overflows on any device" needs no new
+/// PNGs at all — it needs the screens we ALREADY build re-pumped at the cruel
+/// end of the range.
+///
+///     STRESS_TEXT_SCALE=2.0 flutter test test/golden/
+///
+/// Every gallery screen re-renders at 200% text across all four breakpoints
+/// (390dp wide × 200% is the genuinely brutal combination), and any screen that
+/// cannot reflow fails by name. Golden comparison is skipped in this mode — the
+/// pixels are expected to differ; the assertion is simply that nothing
+/// overflowed, threw, or clipped its way out of the layout.
+///
+/// Null when the variable is unset, so normal runs are untouched.
+/// `String.fromEnvironment` is resolved at COMPILE time and never sees a shell
+/// variable, so the process environment is the only thing that works here.
+final double? stressTextScale = _readStressScale();
+
+double? _readStressScale() {
+  final raw = Platform.environment['STRESS_TEXT_SCALE'];
+  if (raw == null || raw.isEmpty) return null;
+  return double.tryParse(raw);
+}
+
+/// Drain the exceptions a plate legitimately produces — a screen's direct
+/// Postgrest read, a missing plugin channel — while REFUSING to swallow a
+/// layout overflow.
+///
+/// The gallery suites used to drain with a bare
+/// `while (tester.takeException() != null) {}`, on the reasoning that a real
+/// failure would show up as a red box in the captured PNG. That holds for a
+/// build crash and does not hold for `RenderFlex overflowed by N pixels`: the
+/// plate still renders, the stripes sit below the fold or inside a clipped
+/// cell, and nobody reviewing 310 plates catches it. At 100% text the app
+/// reports zero overflows, so this gate costs nothing today — and it is what
+/// makes `STRESS_TEXT_SCALE=2.0` able to fail instead of merely log.
+void drainExpectedExceptions(WidgetTester tester) {
+  while (tester.takeException() != null) {
+    // Genuinely expected: a screen's direct Postgrest read, a missing plugin
+    // channel. Overflows are NOT handled here — see [recordedOverflows].
+  }
+  if (recordedOverflows.isEmpty) return;
+  final found = List<String>.of(recordedOverflows);
+  recordedOverflows.clear();
+  throw StateError(
+    'Layout overflow (${found.length}) - content cannot fit this viewport '
+    'and is being clipped:\n  ${found.join('\n  ')}',
+  );
+}
+
+/// Start watching for layout overflow. Call at the TOP of a plate, with
+/// [drainExpectedExceptions] at the bottom.
+///
+/// This has to run per-TEST, not once in `setUpAll`: `testWidgets` installs its
+/// own `FlutterError.onError` for every test, so a handler chained in
+/// `setUpAll` is replaced before the first plate renders — it reported zero
+/// while 96 overflows printed to the console.
+void beginOverflowWatch() {
+  recordedOverflows.clear();
+  final previous = FlutterError.onError;
+  FlutterError.onError = (details) {
+    final text = details.exceptionAsString();
+    if (text.contains('overflowed by')) {
+      recordedOverflows.add(text.split('\n').first);
+    }
+    previous?.call(details);
+  };
+}
+
+/// Overflows seen since [beginOverflowWatch], asserted by
+/// [drainExpectedExceptions].
+final List<String> recordedOverflows = <String>[];
+
+/// True while the suite is running as an overflow stress pass rather than a
+/// pixel-comparison pass.
+bool get isStressRun => stressTextScale != null;
+
 /// Wrap a bare screen widget in `ProviderScope > MaterialApp > screen`
 /// using the app's theme. Suitable for screens with no provider
 /// overrides; screens that need overrides should build the tree
@@ -163,6 +253,11 @@ Future<void> expectGolden(
   required String screen,
   required String breakpoint,
 }) async {
+  // In stress mode the pixels are SUPPOSED to differ (200% text reflows
+  // everything) — the assertion that matters already happened during pump:
+  // an overflow would have thrown. Comparing here would fail every screen for
+  // the wrong reason and bury the real signal.
+  if (isStressRun) return;
   await expectLater(
     find.byType(MaterialApp),
     matchesGoldenFile('goldens/${screen}__$breakpoint.png'),

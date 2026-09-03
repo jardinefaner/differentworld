@@ -23,6 +23,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
+import 'package:differentworld/shared/widgets/section_eyebrow.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -261,15 +262,11 @@ class _NowNextModule extends ConsumerWidget {
               BentoModuleIcon(icon: lead.icon, tint: accent),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  lead.eyebrow.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: fg.withValues(alpha: 0.78),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // 0.78 alpha keeps it ≥4.5:1 against the container even in
+                // the high-contrast outdoor theme.
+                child: SectionEyebrow(
+                  lead.eyebrow,
+                  color: fg.withValues(alpha: 0.78),
                 ),
               ),
             ],
