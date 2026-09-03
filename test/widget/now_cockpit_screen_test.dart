@@ -22,7 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 const _lead = ContextLead(
-  eyebrow: 'RIGHT NOW',
+  eyebrow: 'Right now',
   title: 'ABC Time',
   line: 'In World of Water — full-screen, step by step.',
   icon: Icons.play_circle_outline,

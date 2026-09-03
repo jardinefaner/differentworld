@@ -763,7 +763,20 @@ dark/light + "white-on-light pill" defects. Read color from
   CI) fails on a NEW hardcode in a themed surface; the **Flutter Theme
   Guard** agent runs in the Review Council for the judgment the regex
   can't. A genuinely-new raw canvas gets added to the allowlist in the
-  same change.
+  same change — and to `scripts/check_type_adherence.sh`, its sibling,
+  which shares the SAME allowlist so the two can never disagree about
+  what counts as a raw canvas.
+  - **Type has teeth too, since 2026-09-03.**
+    `scripts/check_type_adherence.sh` fails on a NEW uppercase label or
+    w800+ weight in a themed surface (BRAND.md law 4). It did not exist
+    before, which is how 61 themed files drifted back to the retired
+    Jost-era eyebrow (46 uppercase, 25 w800+) while colour was enforced
+    three different ways and BRAND.md claimed all five laws were
+    "mechanically enforced". Those 61 are the standing backlog — the
+    guard is diff-scoped and structurally cannot see them. **Use
+    `SectionEyebrow` (`lib/shared/widgets/section_eyebrow.dart`) for the
+    label above a title**; it exists precisely because there was nowhere
+    to import the treatment from, so every screen re-derived it wrong.
   - **The allowlist is FILE-scoped, not folder-scoped.** Whole-folder
     entries (`^lib/features/live_session/`, etc.) used to exempt themed
     surfaces that happened to share a folder with a raw stage — that's

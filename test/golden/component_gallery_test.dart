@@ -60,6 +60,7 @@ import 'package:differentworld/shared/widgets/scale_bar.dart';
 import 'package:differentworld/shared/widgets/search_bar_pill.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
+import 'package:differentworld/shared/widgets/section_eyebrow.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:differentworld/shared/widgets/sticky_save_bar.dart';
@@ -313,6 +314,22 @@ void main() {
           StatusDot(kind: StatusDotKind.needsAttention, size: 18),
         ),
         _Labeled('neutral', StatusDot(kind: StatusDotKind.neutral, size: 18)),
+      ],
+    ),
+  );
+
+  _plate(
+    'atoms/section_eyebrow',
+    height: 210,
+    (_) => const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SectionEyebrow('Right now'),
+        SizedBox(height: Insets.lg),
+        SectionEyebrow('Question of the day', icon: Icons.help_outline),
+        SizedBox(height: Insets.lg),
+        SectionEyebrow('On a trip', icon: Icons.directions_bus_outlined),
       ],
     ),
   );

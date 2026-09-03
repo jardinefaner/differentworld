@@ -58,6 +58,15 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
           bash scripts/check_theme_adherence.sh "$BASE"
 
+      # Same shape, the other half of the brand's visual laws: no NEW
+      # uppercase labels or w800+ weights in a themed surface (BRAND.md law 4).
+      # Colour had three enforcement mechanisms and type had none, which is how
+      # 61 files drifted back to the retired Jost-era treatment unnoticed.
+      - name: Type adherence
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          bash scripts/check_type_adherence.sh "$BASE"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:

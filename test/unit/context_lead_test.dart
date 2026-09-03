@@ -109,7 +109,7 @@ void main() {
         ),
         worldName: 'Through My Eyes',
       );
-      expect(lead!.eyebrow, 'OUTSIDE');
+      expect(lead!.eyebrow, 'Outside');
       expect(lead.primary.label, 'Head count');
       expect(lead.primary.route, '/groups/g4/attendance');
       // Even with a world live, the run is secondary outdoors — headcount wins.

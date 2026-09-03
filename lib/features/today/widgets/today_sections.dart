@@ -35,6 +35,7 @@ import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
+import 'package:differentworld/shared/widgets/section_eyebrow.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
@@ -206,15 +207,11 @@ class _RightNowCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    // 0.78 not 0.7 — keeps the eyebrow ≥4.5:1 against the
+                    // container even in the high-contrast outdoor theme.
+                    SectionEyebrow(
                       lead.eyebrow,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        // 0.78 not 0.7 — keeps the eyebrow ≥4.5:1 against the
-                        // container even in the high-contrast outdoor theme.
-                        color: onContainer.withValues(alpha: 0.78),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
+                      color: onContainer.withValues(alpha: 0.78),
                     ),
                     const SizedBox(height: 2),
                     Text(
