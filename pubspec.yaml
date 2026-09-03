@@ -50,6 +50,12 @@ dependencies:
   app_links: ^6.4.1
   intl: ^0.20.2
 
+  # Direct because the sandbox's WEB database needs WasmSqlite3 +
+  # InMemoryFileSystem by name (lib/features/sandbox/sandbox_db_web.dart).
+  # It already arrives transitively via drift; this makes the dependency
+  # honest rather than relying on someone else's transitive pin.
+  sqlite3: ^3.3.1
+
   # Photo capture + display
   image_picker: ^1.1.2
   image: ^4.5.4

@@ -202,10 +202,9 @@ class DayTemplateActions {
     (l) => _replace(l, templateId, (t) {
       final blocks = List<DayBlock>.of(t.blocks);
       if (oldIndex < 0 || oldIndex >= blocks.length) return t;
-      // ReorderableListView's newIndex is post-removal-adjusted.
-      var target = newIndex;
-      if (target > oldIndex) target -= 1;
-      target = target.clamp(0, blocks.length - 1);
+      // onReorderItem's newIndex is already the FINAL index — the framework
+      // does the post-removal adjustment that onReorder left to callers.
+      final target = newIndex.clamp(0, blocks.length - 1);
       final moved = blocks.removeAt(oldIndex);
       blocks.insert(target, moved);
       return t.copyWith(blocks: blocks);

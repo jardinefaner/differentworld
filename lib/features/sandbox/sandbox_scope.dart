@@ -4,7 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/sandbox/sandbox_data.dart';
-import 'package:drift/native.dart';
+import 'package:differentworld/features/sandbox/sandbox_db.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,7 +69,7 @@ class _SandboxScopeState extends ConsumerState<SandboxScope> {
 
   Future<void> _build() async {
     try {
-      final db = AppDatabase.detached(NativeDatabase.memory());
+      final db = AppDatabase.detached(openSandboxDatabase());
       await db.materializeSchema();
       await seedSandbox(
         db,

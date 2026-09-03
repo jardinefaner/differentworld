@@ -182,9 +182,10 @@ class _RoutineScriptEditorScreenState
   void _reorderSteps(int oldIndex, int newIndex) {
     setState(() {
       final steps = _drafts[_selected]!.steps;
-      var target = newIndex;
-      if (target > oldIndex) target -= 1;
-      target = target.clamp(0, steps.length - 1);
+      // onReorderItem hands us the FINAL index — the framework does the
+      // post-removal adjustment the deprecated onReorder made every caller
+      // repeat (and get subtly wrong).
+      final target = newIndex.clamp(0, steps.length - 1);
       final moved = steps.removeAt(oldIndex);
       steps.insert(target, moved);
     });
@@ -301,7 +302,7 @@ class _RoutineScriptEditorScreenState
                     physics: const NeverScrollableScrollPhysics(),
                     buildDefaultDragHandles: false,
                     itemCount: draft.steps.length,
-                    onReorder: _reorderSteps,
+                    onReorderItem: _reorderSteps,
                     itemBuilder: (context, i) {
                       final ctrl = draft.steps[i];
                       return Padding(

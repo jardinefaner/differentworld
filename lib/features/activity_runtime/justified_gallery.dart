@@ -49,7 +49,8 @@ List<JustifiedRow> computeJustifiedRows({
       }
     }
     final rowArs = [
-      for (var k = i; k < j; k++) aspectRatios[k] <= 0 ? 1.0 : aspectRatios[k],
+      for (var k = i; k < j; k++)
+        if (aspectRatios[k] <= 0) 1.0 else aspectRatios[k],
     ];
     final count = rowArs.length;
     final arRowSum = rowArs.fold<double>(0, (s, ar) => s + ar);

@@ -2529,7 +2529,6 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
     });
     // Two distinct listener registrations; a `ref..listen()..listen()`
     // cascade would read worse than two plain statements.
-    // ignore: cascade_invocations
     ref.listen<VehicleDeepLink?>(pendingVehicleDeepLinkProvider, (prev, next) {
       if (next == null) return;
       _handleVehicleLink(next);

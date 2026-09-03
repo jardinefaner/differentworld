@@ -34,7 +34,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: '3.41.2'
+  FLUTTER_VERSION: '3.47.2'
 
 jobs:
   checks:
@@ -152,7 +152,8 @@ jobs:
   build-web:
     name: Build web (release)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # A release web build (dart2js) took 34 min locally on this codebase; 30 was cutting it close enough to flake.
+    timeout-minutes: 50
     steps:
       - name: Checkout
         uses: actions/checkout@v4
