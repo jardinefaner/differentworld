@@ -5,6 +5,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
+import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -311,7 +312,7 @@ class BrainBreaksScreen extends ConsumerWidget {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: ContentHeader(
                 title: 'Brain Breaks',
-                subtitle: 'Quick resets — pick a card',
+                subtitle: 'Tap to run · hold to put it on the screen',
               ),
             ),
             Padding(
@@ -350,6 +351,7 @@ class BrainBreaksScreen extends ConsumerWidget {
             title: card.title,
             tagline: card.tagline,
             onTap: () => unawaited(context.push(card.route)),
+            onLongPress: () => unawaited(_castCard(context, card)),
           ),
       ],
     );
@@ -360,7 +362,7 @@ class BrainBreaksScreen extends ConsumerWidget {
   /// read), 4-up on tablet, 3-up on desktop — a deck of equal-weight short
   /// cards reads as a uniform grid (docs/GRID.md). Each tile bounds the
   /// [AccentCardTile] in the SAME text-scale-aware [tileExtent] the flat grid
-  /// uses, because the tile body has a `Spacer` (an unbounded bento cell would
+  /// uses: the tile hugs its content now, but an unbounded bento cell would
   /// otherwise throw; see docs/GRID.md).
   Widget _bentoGrid(
     BuildContext context,
@@ -383,12 +385,25 @@ class BrainBreaksScreen extends ConsumerWidget {
                 title: card.title,
                 tagline: card.tagline,
                 onTap: () => unawaited(context.push(card.route)),
+                onLongPress: () => unawaited(_castCard(context, card)),
               ),
             ),
           ),
       ],
     );
   }
+}
+
+/// Put a break on the room's screen. Every card is just a route, and
+/// [showCastToRoom] is route-generic, so all of them are castable with no
+/// per-activity work — the Present hub had this and the Breaks deck did not,
+/// purely because the two hubs grew separately.
+Future<void> _castCard(BuildContext context, _BreakCard card) {
+  return showCastToRoom(
+    context,
+    mirrorRoute: card.route,
+    mirrorLabel: 'Put “${card.title}” on the screen',
+  );
 }
 
 class _BreakCard {

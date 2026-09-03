@@ -34,6 +34,7 @@ class AccentCardTile extends StatelessWidget {
     this.icon,
     this.emoji,
     this.onTap,
+    this.onLongPress,
     this.semanticLabel,
     super.key,
   }) : assert(
@@ -55,6 +56,11 @@ class AccentCardTile extends StatelessWidget {
   final String? emoji;
 
   final VoidCallback? onTap;
+
+  /// Secondary action — used by the decks for "put this on the room's screen".
+  /// A long-press keeps the grid free of a per-tile cast button, which at
+  /// fourteen tiles would be fourteen competing affordances.
+  final VoidCallback? onLongPress;
 
   /// One clean screen-reader announcement for the whole tile; when set, the
   /// inner fragments are excluded so it reads as a single button.
@@ -83,6 +89,7 @@ class AccentCardTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(color: edge, width: 0.5),
