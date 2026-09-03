@@ -150,7 +150,11 @@ class SectionCard extends StatelessWidget {
                   Expanded(child: _renderTitle(theme, onContainer)),
                   if (trailing != null) ...[
                     const SizedBox(width: 8),
-                    trailing!,
+                    // Flexible, not bare: the title is Expanded but a trailing
+                    // action was laid out at its intrinsic width, so a labelled
+                    // button at 200% text pushed the header 149px off the right
+                    // edge. Both sides can give now.
+                    Flexible(child: trailing!),
                   ],
                 ],
               ),

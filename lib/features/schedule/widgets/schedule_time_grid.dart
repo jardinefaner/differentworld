@@ -326,22 +326,29 @@ class _CohortRow extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    group.name,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (group.ageRange != null)
-                    Text(
-                      group.ageRange!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                  // The row's height is set by the time grid, not the label —
+                  // so at 200% the name + age range exceed it. Flexible lets
+                  // them shrink into the row instead of overflowing it.
+                  Flexible(
+                    child: Text(
+                      group.name,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (group.ageRange != null)
+                    Flexible(
+                      child: Text(
+                        group.ageRange!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
               ),
@@ -692,51 +699,58 @@ class _GridBlockCell extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(icon, size: 13, color: fg),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: fg,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (hasConflict)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            size: 13,
-                            color: scheme.tertiary,
+                  // The chip's height comes from the TIME AXIS — minutes, not
+                  // content — so it cannot grow to meet doubled text. Both
+                  // rows Flexible so they compress instead of overflowing.
+                  Flexible(
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 13, color: fg),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: fg,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      if (isNow)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: scheme.primary,
-                              shape: BoxShape.circle,
+                        if (hasConflict)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 3),
+                            child: Icon(
+                              Icons.warning_amber_rounded,
+                              size: 13,
+                              color: scheme.tertiary,
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  Text(
-                    timeLabel,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: fg.withValues(alpha: 0.78),
+                        if (isNow)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 3),
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: scheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Flexible(
+                    child: Text(
+                      timeLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: fg.withValues(alpha: 0.78),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

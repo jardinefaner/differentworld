@@ -245,14 +245,24 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(emoji, style: const TextStyle(fontSize: 64)),
+                    // A 64pt emoji and a displaySmall headline both double at
+                    // 200%; the card is a fixed hero. Loose fit lets the emoji
+                    // give way first — the words are the point.
+                    Flexible(
+                      child: Text(
+                        emoji,
+                        style: const TextStyle(fontSize: 64),
+                      ),
+                    ),
                     const SizedBox(height: 20),
-                    Text(
-                      text,
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                        height: 1.15,
+                    Flexible(
+                      child: Text(
+                        text,
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          color: scheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w600,
+                          height: 1.15,
+                        ),
                       ),
                     ),
                   ],
