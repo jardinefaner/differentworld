@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+// CupertinoPageTransitionsBuilder moved from material/ to cupertino/route.dart
+// in Flutter 3.47 — material.dart no longer re-exports it.
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // shared_preferences IS listed as a direct dep in pubspec.yaml; the
