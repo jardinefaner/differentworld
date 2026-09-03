@@ -137,6 +137,8 @@ import 'package:differentworld/features/rooms/turns_screen.dart';
 import 'package:differentworld/features/rotation/arrange_screen.dart';
 import 'package:differentworld/features/rotation/coverage_screen.dart';
 import 'package:differentworld/features/routines/routines_screen.dart';
+import 'package:differentworld/features/sandbox/sandbox_data.dart';
+import 'package:differentworld/features/sandbox/sandbox_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
@@ -1150,6 +1152,37 @@ final routerProvider = Provider<GoRouter>((ref) {
                   title: 'Roles',
                   child: RolesScreen(),
                 ),
+              ),
+              GoRoute(
+                path: 'sandbox',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Try it out',
+                  child: SandboxScreen(),
+                ),
+                routes: [
+                  // The pretend program's HOME — the same surface a real
+                  // launch lands on, so what you see here is what they see.
+                  GoRoute(
+                    path: 'day-one',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'Day one',
+                      child: SandboxRunScreen(
+                        day: SandboxDay.dayOne,
+                        child: NowCockpitScreen(),
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'as/:memberId',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Sandbox',
+                      child: SandboxRunScreen(
+                        memberId: state.pathParameters['memberId'],
+                        child: const NowCockpitScreen(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'toolkit',

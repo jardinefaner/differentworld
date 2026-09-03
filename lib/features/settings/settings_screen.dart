@@ -208,6 +208,16 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SettingsDivider(),
               ListTile(
+                leading: const Icon(Icons.science_outlined),
+                title: const Text('Try it out'),
+                subtitle: const Text(
+                  'A pretend program — see day one, or any role’s Monday',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/settings/sandbox'),
+              ),
+              const _SettingsDivider(),
+              ListTile(
                 leading: const Icon(Icons.directions_bus_outlined),
                 title: const Text('Vehicles'),
                 subtitle: const Text(
