@@ -1,4 +1,7 @@
 import 'package:differentworld/app/design_tokens.dart';
+// CupertinoPageTransitionsBuilder moved from material/ to cupertino/route.dart
+// in Flutter 3.47 — material.dart no longer re-exports it.
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 // Warm teal — picked over the prior developer-blue (`0xFF1F6FEB`) so

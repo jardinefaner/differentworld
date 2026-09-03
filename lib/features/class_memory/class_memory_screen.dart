@@ -3,9 +3,11 @@ import 'package:differentworld/features/class_memory/class_memory.dart';
 import 'package:differentworld/features/class_memory/class_memory_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/inline_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +33,11 @@ class ClassMemoryScreen extends ConsumerWidget {
     final group = (ref.watch(groupsProvider).value ?? const <Group>[])
         .where((g) => g.id == groupId)
         .firstOrNull;
+    // The RAW async value, not just its data. `.value ?? const []` — which
+    // this screen shipped with — renders a failed load as "nothing kept
+    // yet", so a sync error and an empty room look identical and the
+    // teacher is told a comforting lie about their own history.
+    final async = ref.watch(classMemoriesProvider(groupId));
     final bySort = ref.watch(classMemoriesBySortProvider(groupId));
     final total = bySort.values.fold<int>(0, (a, b) => a + b.length);
 
@@ -53,7 +60,18 @@ class ClassMemoryScreen extends ConsumerWidget {
                       ? '1 thing kept'
                       : '$total things kept',
                 ),
-                if (total == 0)
+                if (async.hasError)
+                  ErrorState(
+                    title: "Couldn't load what this room remembers",
+                    detail:
+                        'Nothing has been lost — this is a read problem, '
+                        'not a missing history.',
+                    onRetry: () =>
+                        ref.invalidate(classMemoriesProvider(groupId)),
+                  )
+                else if (async.isLoading && total == 0)
+                  const LoadingSlot()
+                else if (total == 0)
                   const EmptyState(
                     icon: Icons.auto_stories_outlined,
                     title: 'Nothing kept yet',

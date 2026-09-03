@@ -1367,6 +1367,59 @@ live together so they stay in lockstep. Reference:
 `lib/features/action_words/world_present_screen.dart`. (Caught by the
 lifecycle guard on the world-cast screen, Wave C.)
 
+### `.value ?? const []` renders a FAILED read as an EMPTY one
+
+The idiom is everywhere and it is right most of the time — but on any
+surface that says something CONFIDENT about absence, it makes the app lie:
+
+- Class memory said **"nothing kept yet"** about a history a teacher had
+  spent weeks building.
+- The room page showed an **empty roster** to someone standing in a full
+  room, with "Add a child" underneath it — inviting duplicate enrolment,
+  which is a far worse outcome than a visible error.
+
+Both read as certainty. Neither was.
+
+Rule: if a screen's empty state makes a CLAIM ("nobody yet", "nothing
+kept"), it must first check `hasError` and say something different — and
+where the empty state carries an ACTION, hide the action too. A person who
+cannot see the current data must not be invited to add to it.
+
+`test/unit/swallowed_error_test.dart` guards the pattern on the screens that
+watch async data. It is deliberately crude — a screen can pass and still be
+wrong — but the failure mode is silent by nature, so a coarse net beats
+none. `docs/SCREEN_RUBRIC.md` B3 is the full rule and marks it a blocker.
+
+### Dead links don't throw — go_router renders a fallback instead
+
+`context.push('/a/route/that/does/not/exist')` does **not** crash. go_router
+matches what it can and renders the 404 (`errorBuilder`) or, where the route
+takes its args through `extra`, falls back to a DIFFERENT screen entirely.
+So the tap "works", the user lands somewhere they did not ask for, and
+nothing surfaces in logs or in `flutter analyze`.
+
+Three shipped in one day, all in new code:
+- `/schedule/block?id=…` — that route reads a `BlockEditArgs` from `extra`;
+  a query id silently landed on the schedule screen.
+- `/groups/:id/run/:blockId` — never declared at all.
+- `/settings/locations` in a doc example — guessed from the screen's name.
+
+**`test/unit/no_dead_links_test.dart` now checks every literal
+`context.push('/…')` in `lib/` against the REAL router** via
+`router.configuration.findMatch`, with `${…}` standing in as one segment.
+
+Two things about it worth keeping:
+- It **skips comment lines** — but only after the first run caught a wrong
+  example in `feature_card`'s doc (`/family/:id`, which does not exist). A
+  wrong example ships as a dead link the moment somebody copies it, so fix
+  the comment rather than just excusing it.
+- It has a **"the check can actually fail"** test. The first version of
+  this checker was a regex whose prefix fallback silently passed a
+  deliberately-broken route. A checker that cannot fail is worse than none,
+  because it is believed.
+
+Paths built by concatenation are out of scope and stay a human problem.
+
 ### `canManageSpace` is `isDirector` — structure has its own key now
 
 `canManageSpace` was never a capability. It is literally

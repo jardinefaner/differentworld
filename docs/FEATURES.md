@@ -179,6 +179,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: none — it reports capabilities, it does not require any
 **Data**: none. Pure derivation over `Viewer`; no reads, no writes.
 **Surfaces**:
+- *See the app as someone else* — `preview_banner.dart`. Director-only role preview, promoted from the dev-only Wave 168 toggle. The lens only ever NARROWS: it swaps in a role's DEFAULT bundle, and only a director can set it, so previewing is never a way to grant yourself access. A banner announces it on every route and exits in one tap — a lens you can forget you are wearing would make a director conclude the app broke.
 - *What you can do* — `your_work_screen.dart`. Four bands ordered by how often you touch them, not by permission tier. THREE states, not two: **can**, **needs a certificate** (yours to fix), **needs someone** (names who to ask). Only open items carry a route — offering a tap into a screen that will refuse you is the dead end this exists to remove.
 **Depends on**: Viewer / capabilities.
 **Consumed by**: nothing — it is a leaf, by design.
@@ -1654,6 +1655,15 @@ _Run 2026-06-03 (Tools + LiveSession lobby + Poster orientation)_ — discovery 
 
 ---
 
+_Run 2026-09-03 (fix/picker-breathes — sandbox + route drift)_ — three items corrected:
+- **Sandbox** — new feature section added (providers-only stub; no route wired yet). No discovery surfaces exist in code. No SCHEMA.md entry needed (no synced data).
+- **ActivityForge** — Routes corrected from `/activity/forge` / `/activity/lens` to `/forge` / `/lens`. Router confirmed at lines 1723 and 1731 of `router.dart`; omnibox entries also push `/forge` and `/lens`. No other ActivityForge claims changed.
+- **Launch** — Route corrected from `/launch` (never existed) to `/ready`. LaunchScreen docstring and router line 1718 both confirm `/ready`. No new tables; SCHEMA.md unchanged. No other Launch claims changed.
+- SCHEMA.md: no changes — no migrations added; no new tables.
+- Cross-link reconcile: none — no (feature → table) or (table → feature) links affected.
+
+---
+
 _Last full registry verification: 2026-06-06 (World slice 1 — character_sheets)._
 _Incremental verification: 2026-07-04 (chore/dedup-wave — shared widget extraction). No discovery drift. No schema changes. See run report below._
 _Incremental reconcile: 2026-06-08 (timer caps + phase windows caps + attendance natural-key index) — Action Words Capabilities + Status + Depends on + Consumed by updated for `timer_presets` / `suggest_play_minutes` caps. Today Data + Depends on updated for `phase_windows` cap. Settings Data + Program settings surface description + Depends on updated for all three caps + new `_TimerPresetsTile` / `_PlayLengthTile` / `_PhaseWindowsSection` tiles. Cross-links reconciled: Today→spaces and Action Words→spaces and Settings→spaces all bidirectional with SCHEMA.md. No new discovery drift._
@@ -1745,7 +1755,7 @@ you're also updating the agent's view of truth._
 **Purpose**: An activity is not a whole pre-written experience pulled from a finite list — it is FOUR atomic parts recombined: a VERB (the action), a NOUN (the thing), a CONSTRAINT (the twist that turns noise into play), and a TIME (the box). "A library runs out, a formula doesn't" (docs/VISION.md #3).
 **Personas served**: Coach Sam, Brianna, Jordan (the "I need something in ten minutes" moment).
 **Discovery surfaces**:
-- Routes: `/activity/forge` (`activity_forge_screen.dart`), `/activity/lens` (`activity_lens_screen.dart`)
+- Routes: `/forge` (`activity_forge_screen.dart`), `/lens` (`activity_lens_screen.dart`)
 - Omnibox: yes (activity entries)
 - Slash / Drawer / Settings: no
 **Capabilities**: staff.
@@ -1753,7 +1763,7 @@ you're also updating the agent's view of truth._
 **Surfaces**: *Forge* (recombine the four parts), *Lens* (view an activity through a different frame).
 **Depends on**: ActionWords (verbs), GameContent.
 **Consumed by**: ActivityRuntime.
-**Last verified**: 2026-08-24
+**Last verified**: 2026-09-03
 
 ## Games
 **Path**: `lib/features/games/`
@@ -1790,14 +1800,14 @@ you're also updating the agent's view of truth._
 **Purpose**: The boot surface, and the readiness signals that decide what a signed-in member lands on.
 **Personas served**: everyone, once per launch.
 **Discovery surfaces**:
-- Routes: `/launch`
+- Routes: `/ready`
 - Omnibox / Slash / Drawer / Settings: no
 **Capabilities**: none — it runs before the viewer is resolved.
 **Data**: reads [subjects](SCHEMA.md#subjects), [schedule_blocks](SCHEMA.md#schedule_blocks) and the day templates to decide readiness.
-**Surfaces**: *LaunchScreen* (`launch_screen.dart`), *launch readiness* (`launch_readiness.dart`).
+**Surfaces**: *LaunchScreen* (`launch_screen.dart`) at `/ready` — three questions ("Where the program stands"; composes readiness + live block + day state into one reference page that does NOT self-retire like Today's cards do), *launch readiness* (`launch_readiness.dart`).
 **Depends on**: Auth, Schedule, Subjects.
 **Consumed by**: the router's redirect.
-**Last verified**: 2026-08-24
+**Last verified**: 2026-09-03
 
 ## Runtime
 **Path**: `lib/features/runtime/`
@@ -1824,3 +1834,23 @@ you're also updating the agent's view of truth._
 **Depends on**: AppShell.
 **Consumed by**: nothing at runtime.
 **Last verified**: 2026-08-24
+
+## Sandbox
+**Path**: `lib/features/sandbox/`
+**Purpose**: A throwaway in-memory program a director can walk through as any role, so the difference between "can this role reach their work" (role preview) and "what does their Monday actually look like" (a real room with real room assignments) is visible without touching live data. Isolation is structural: the database is `NativeDatabase.memory()` with no PowerSync connector, so nothing written here can reach the server.
+**Personas served**: Maya (directors setting up a new role configuration).
+**Discovery surfaces**:
+- Routes: none — `SandboxScope` widget and `sandboxMemberIdProvider` are shipped; no route is wired yet.
+- Omnibox: no
+- Slash: none
+- Drawer: no
+- Settings: no
+**Status**: stub — providers and seed widget shipped, no user-facing route wired yet.
+**Capabilities**: n/a (no gates — not yet reachable from UI).
+**Data**: none synced. Writes to an isolated `AppDatabase.detached(NativeDatabase.memory())` that has no PowerSync connector; rows evaporate on close.
+**Surfaces**: None — providers only, consumed by other features.
+- `sandbox_data.dart` — `sandboxSpaceId`, `sandboxStaff`, `seedSandbox(db, {nowIso})` seeding function that inserts one space, two rooms (Sparrows, Herons), five staff at five roles, and nine children.
+- `sandbox_scope.dart` — `SandboxScope` (`ConsumerStatefulWidget` that builds the in-memory DB, seeds it, and overrides `appDatabaseProvider` in a nested `ProviderScope`), `sandboxMemberIdProvider` (which pretend staffer you are), `sandboxViewer(members, spaces, id)` helper.
+**Depends on**: core db (`AppDatabase.detached`, `materializeSchema`), Capabilities (seeds role defaults via `RoleBundles.defaultsFor`).
+**Consumed by**: nothing yet — integration into a route is the deferred next step.
+**Last verified**: 2026-09-03

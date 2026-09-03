@@ -676,7 +676,11 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     ),
     OmniboxEntry(
       id: 'page.ready',
-      label: 'Ready to run',
+      // Matches the screen's own title. They drifted the moment I retitled
+      // the screen and left the catalogue alone — so search offered "Ready
+      // to run" and you arrived at "Where you stand", which reads as
+      // landing on the wrong page.
+      label: 'Where you stand',
       category: OmniboxCategory.page,
       icon: Icons.checklist_rtl_outlined,
       keywords: const [
@@ -690,6 +694,16 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         'launch',
         'what do i need',
         'before 9',
+        // The page now answers three questions, so it must be findable by
+        // all three — a director asking "what needs attention" is looking
+        // for the same screen as one asking "how do I get started".
+        'where do we stand',
+        'needs attention',
+        'attention',
+        'what needs doing',
+        'step by step',
+        'steps',
+        'checklist',
       ],
       onSelect: (ctx, _) => ctx.push('/ready'),
     ),

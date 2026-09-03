@@ -8,6 +8,7 @@ import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/cast_chrome_button.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
+import 'package:differentworld/features/roles/preview_banner.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/speak/speak_immersive.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -21,6 +22,7 @@ import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
 import 'package:differentworld/shared/widgets/shell_back_action.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey, SystemNavigator;
@@ -482,6 +484,20 @@ class _AppShellState extends ConsumerState<AppShell> {
         // Live-block strip — sits directly above the omnibox bar,
         // collapses to zero height when nothing is live. Same guards as
         // the bar: staff only, not kid mode, not immersive, not /search.
+        // Role preview announces itself on EVERY route, not just where you
+        // started it. A lens you can forget you are wearing is a trap: a
+        // director who stops seeing Billing would conclude the app broke,
+        // and every judgement they made from then on would be about a role
+        // they are not. Carries a stable key like its siblings — this Stack
+        // is the one that drops the omnibox's IME when children shuffle.
+        if (!inKidMode && !isImmersive)
+          const Positioned(
+            key: ValueKey('shell-role-preview'),
+            left: 0,
+            right: 0,
+            top: 0,
+            child: PreviewBanner(),
+          ),
         if (!inKidMode &&
             viewer is! GuardianViewer &&
             !isImmersive &&

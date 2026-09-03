@@ -689,6 +689,7 @@ void main() {
   );
 
   // The attention instruments (docs/ROTATION.md).
+  _richPlate('screens/picker', (db) async => const NamePickerScreen());
   _richPlate('screens/turns', (db) async => const TurnsScreen(groupId: 'g1'));
   _richPlate('screens/your_work', (db) async => const YourWorkScreen());
   _richPlate(

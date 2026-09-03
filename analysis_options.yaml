@@ -9,8 +9,25 @@ analyzer:
     # Build output — generated Dart from native plugins (irondash,
     # super_native_extensions) is not our source; don't lint it.
     - "build/**"
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
   errors:
     invalid_annotation_target: ignore
+    # Flutter 3.47 annotated AnimationController.repeat / Navigator.maybePop
+    # and friends with @awaitNotRequired, which makes our explicit
+    # `unawaited(...)` wrappers "unnecessary" (39 sites). We keep them: the
+    # wrapper documents to a HUMAN that the future is deliberately not
+    # awaited, which is exactly the fire-and-forget intent this codebase
+    # relies on. `dart fix --code=unnecessary_unawaited` must NOT be run to
+    # clear these — it mishandles the multi-line form, stripping
+    # `unawaited(` and `);` but leaving the trailing comma, which produces a
+    # dangling expression and a syntax error (it corrupted 13 files on
+    # 2026-09-03).
+    unnecessary_unawaited: ignore
 
 linter:
   rules:

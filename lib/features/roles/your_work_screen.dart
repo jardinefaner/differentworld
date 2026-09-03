@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/roles/preview_banner.dart';
 import 'package:differentworld/features/roles/your_work.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -79,6 +80,19 @@ class YourWorkScreen extends ConsumerWidget {
                     color: theme.colorScheme.primary,
                   ),
                 ),
+                // Directors only. The gate that MATTERS is in viewerProvider
+                // — preview swaps in a role's DEFAULT bundle and only a
+                // director may set it, so a counselor cannot preview their
+                // way to more access. Hiding the affordance as well just
+                // stops it being a discoverable dead end for everyone else.
+                if (canPreviewRoles(viewer)) ...[
+                  const SizedBox(height: 14),
+                  OutlinedButton.icon(
+                    onPressed: () => unawaited(pickPreviewRole(context, ref)),
+                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                    label: const Text('See the app as someone else'),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 for (final g in work)
                   _WorkBand(key: ValueKey('band-${g.title}'), group: g),

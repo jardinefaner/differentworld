@@ -125,7 +125,15 @@ class GlassPanel extends StatelessWidget {
               },
             ),
             padding: padding ?? EdgeInsets.zero,
-            child: child,
+            // A transparent Material INSIDE the tinted Container. Ink
+            // (ListTile / InkWell splashes) paints on the nearest
+            // Material ancestor; without this the nearest one is
+            // ABOVE the glass fill, so every ripple in a glass sheet
+            // renders *behind* the tint and is invisible. Flutter
+            // 3.47 asserts on exactly this. `_SidePanelFrame` already
+            // did it by hand — hoisting it here fixes every shape
+            // (pill / bar / sheet / overlay / side) in one place.
+            child: Material(type: MaterialType.transparency, child: child),
           ),
         ),
       ),
@@ -367,7 +375,7 @@ class _SidePanelFrameState extends State<_SidePanelFrame> {
   /// Esc honour the "Discard changes?" guard on dirty forms instead of
   /// silently discarding typed-in work. A direct `pop` would skip PopScope.
   void _close() {
-    unawaited(Navigator.of(context).maybePop());
+    Navigator.of(context).maybePop();
   }
 
   @override

@@ -59,7 +59,11 @@ List<ReadyItem> buildReadiness({
           ? '${worldName ?? ''}${week != null ? ' · Week $week' : ''}'
           : 'Without a start date no world is live — the whole curriculum '
                 'hangs off it. One tap, once.',
-      actionLabel: worldLive ? null : 'Set it up',
+      // A DONE item stays clickable. Nulling the label the moment
+      // something is finished turns a standing view into a list of
+      // things you may no longer look at — and "the day has a shape" is
+      // exactly the row you tap when you want to CHANGE that shape.
+      actionLabel: worldLive ? 'See the week' : 'Set it up',
       actionRoute: '/this-week',
     ),
     ReadyItem(
@@ -67,8 +71,10 @@ List<ReadyItem> buildReadiness({
       status: hasKids ? ReadyStatus.done : ReadyStatus.todo,
       title: hasKids ? 'Children are enrolled' : 'Add your children',
       why: 'The roster is who you pick verbs for, log, and reveal at closing.',
-      actionLabel: hasKids ? null : 'Add children',
-      actionRoute: '/',
+      actionLabel: hasKids ? 'See the roster' : 'Add children',
+      // Was '/', which is Today — a row about the roster that lands you
+      // on the home screen and leaves you to find it.
+      actionRoute: '/program',
     ),
     ReadyItem(
       id: 'plan',
@@ -77,7 +83,7 @@ List<ReadyItem> buildReadiness({
       why:
           'A day template gives the day its blocks and rhythm — drag the '
           'durations, the times fall out.',
-      actionLabel: hasPlan ? null : 'Build a day',
+      actionLabel: hasPlan ? 'Change the shape' : 'Build a day',
       actionRoute: '/schedule/day-templates',
     ),
     const ReadyItem(

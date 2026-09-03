@@ -15,6 +15,7 @@ import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/inline_add.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -52,7 +53,8 @@ class RoomSetupScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final group = (ref.watch(groupsProvider).value ?? const <Group>[])
+    final groupsAsync = ref.watch(groupsProvider);
+    final group = (groupsAsync.value ?? const <Group>[])
         .where((g) => g.id == groupId)
         .firstOrNull;
 
@@ -62,7 +64,15 @@ class RoomSetupScreen extends ConsumerWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
-            child: group == null
+            // An errored load used to spin forever — indistinguishable
+            // from a slow one, so nobody knew whether to wait or leave.
+            child: groupsAsync.hasError
+                ? ErrorState(
+                    title: "Couldn't open this room",
+                    detail: 'Nothing has changed — this is a read problem.',
+                    onRetry: () => ref.invalidate(groupsProvider),
+                  )
+                : group == null
                 ? const Center(child: CircularProgressIndicator())
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 96),
@@ -312,8 +322,8 @@ class _ChildrenBand extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roster =
-        ref.watch(subjectsInGroupProvider(group.id)).value ?? const <Subject>[];
+    final rosterAsync = ref.watch(subjectsInGroupProvider(group.id));
+    final roster = rosterAsync.value ?? const <Subject>[];
     final defaultAllows = ref.watch(spaceDefaultAllowsPhotosProvider);
 
     return _Band(
@@ -322,7 +332,23 @@ class _ChildrenBand extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (roster.isEmpty)
+          // The dangerous one. A failed roster read rendered as "nobody
+          // yet" — an empty room shown to someone standing in a full one,
+          // with "Add a child" underneath inviting them to re-enter
+          // children who already exist. Duplicate enrolment is a much
+          // worse outcome than a visible error.
+          if (rosterAsync.hasError)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                "Couldn't load who's in this room. Don't add anyone yet — "
+                'they may already be here.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            )
+          else if (roster.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
@@ -357,7 +383,8 @@ class _ChildrenBand extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              if (ref.watch(viewerProvider).canManageStructure)
+              if (ref.watch(viewerProvider).canManageStructure &&
+                  !rosterAsync.hasError)
                 InlineAdd(
                   hint: 'Add a child',
                   onSubmit: (v) => _add(ref, v),

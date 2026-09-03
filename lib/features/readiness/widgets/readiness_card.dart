@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/features/readiness/readiness.dart';
 import 'package:differentworld/features/readiness/readiness_providers.dart';
+import 'package:differentworld/features/readiness/widgets/fix_in_place.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -50,58 +52,87 @@ class ReadinessCard extends ConsumerWidget {
   }
 }
 
-class _Row extends StatelessWidget {
+class _Row extends StatefulWidget {
   const _Row({required this.item, required this.subjectWord});
 
   final ReadinessItem item;
   final String subjectWord;
 
   @override
+  State<_Row> createState() => _RowState();
+}
+
+class _RowState extends State<_Row> {
+  bool _open = false;
+
+  ReadinessItem get item => widget.item;
+  String get subjectWord => widget.subjectWord;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fixable = FixInPlace.supports(item.kind);
     final urgent =
         item.kind == ReadinessKind.roomOverLimit ||
         item.kind == ReadinessKind.missingGuardian ||
         item.kind == ReadinessKind.missingAllergyAnswer;
 
-    return InkWell(
-      onTap: () => _go(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              _icon,
-              size: 20,
-              color: urgent
-                  ? theme.colorScheme.error
-                  : theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_title, style: theme.textTheme.bodyLarge),
-                  const SizedBox(height: 1),
-                  Text(
-                    _detail,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+    // A fixable item OPENS rather than navigates. Sending someone to a
+    // child's record to answer yes/no means the app named a problem and
+    // then made them go hunting for its solution — for a one-tap answer
+    // that IS the whole cost of the task. Items whose fix genuinely needs
+    // another surface (a camera, a decision about which child leaves an
+    // over-full room) still route out.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => fixable ? setState(() => _open = !_open) : _go(context),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  _icon,
+                  size: 20,
+                  color: urgent
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_title, style: theme.textTheme.bodyLarge),
+                      const SizedBox(height: 1),
+                      Text(
+                        _detail,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Icon(
+                  fixable
+                      ? (_open ? Icons.expand_less : Icons.expand_more)
+                      : Icons.chevron_right,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
             ),
-            Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ],
+          ),
         ),
-      ),
+        if (fixable && _open)
+          Padding(
+            padding: const EdgeInsets.only(left: 30, bottom: 8),
+            child: FixInPlace(item: item),
+          ),
+      ],
     );
   }
 
