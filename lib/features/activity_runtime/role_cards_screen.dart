@@ -93,7 +93,7 @@ class _RoleCardsScreenState extends State<RoleCardsScreen> {
                   // Cell grows with text scale (smaller cells than the other
                   // decks) so name + "builds …" never clip.
                   mainAxisExtent:
-                      120 +
+                      64 +
                       64 * (MediaQuery.textScalerOf(context).scale(14) / 14),
                 ),
                 children: [

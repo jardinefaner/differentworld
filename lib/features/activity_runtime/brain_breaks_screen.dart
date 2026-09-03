@@ -202,7 +202,11 @@ class BrainBreaksScreen extends ConsumerWidget {
     // title + tagline need more vertical room than a 0.9-ratio cell has,
     // and the tile's antialias clip was silently cutting them off.
     final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
-    final tileExtent = 140 + 64 * scale;
+    // Sized to the tile's real content (top-aligned, no Spacer): fixed
+    // chrome ~66dp (padding + 24dp icon + gap) plus a text block that grows
+    // with the user's scale. The old 140+64 was tuned for a Spacer-stretched
+    // cell and left ~40% of every tile empty.
+    final tileExtent = 64 + 64 * scale;
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
     // (no per-screen toggle). When on, the SAME deck of cards re-lays as
     // uniform bento tiles (2-up on a phone); off keeps the existing

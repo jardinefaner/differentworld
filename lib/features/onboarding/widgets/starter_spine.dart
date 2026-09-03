@@ -81,6 +81,28 @@ class SpineState {
   bool get visible => started && !dismissed && !allDone;
 }
 
+/// Whether the director's starter spine still wants the screen.
+///
+/// The cockpit asks this so a brand-new program LEADS with setup instead of a
+/// clock beat. Without it a director who signs up in the evening lands on
+/// `CockpitBeat.closed` — "Nothing left on the board. See you tomorrow." —
+/// before they have done anything, which is the app's least useful sentence to
+/// show a person on their first launch.
+///
+/// Deliberately false for a joining teacher: their welcome is one small card
+/// ([_TeacherWelcome]), not a takeover — only the director has setup to do.
+final Provider<bool> starterSpineVisibleProvider = Provider.autoDispose<bool>((
+  ref,
+) {
+  final viewer = ref.watch(viewerProvider);
+  if (viewer is GuardianViewer || !viewer.isSignedIn) return false;
+  if (!viewer.canManageSpace) return false;
+  final space = ref.watch(currentSpaceProvider).value;
+  final groups = ref.watch(groupsProvider).value;
+  if (space == null || groups == null) return false;
+  return SpineState.of(space.caps, groupCount: groups.length).visible;
+});
+
 /// Per-device flag for the teacher's one-card welcome.
 class TeacherWelcomeDismissed extends PrefsBoolNotifier {
   @override

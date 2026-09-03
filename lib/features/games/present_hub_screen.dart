@@ -144,7 +144,7 @@ class PresentHubScreen extends ConsumerWidget {
         crossAxisSpacing: 12,
         // Cell grows with text scale so the title/tagline never clip
         // (the fixed-childAspectRatio trap; see brain_breaks).
-        mainAxisExtent: 140 + 64 * _textScale(context),
+        mainAxisExtent: 64 + 64 * _textScale(context),
       ),
       children: [
         for (final card in _cards)

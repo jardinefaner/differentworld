@@ -6,6 +6,7 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/onboarding/widgets/starter_spine.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/today/context_lead.dart';
@@ -49,6 +50,10 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
     // chrome), so the top band shows the beat's tone instead of the dark
     // Scaffold surface.
     final beatBg = _beatBg(Theme.of(context).colorScheme, beat, lead);
+    // Day zero leads with setup, not the clock. StarterSpine self-hides once
+    // the steps are done (or dismissed), so this is the whole gate — no
+    // separate "is this a new program" flag to drift out of sync.
+    final settingUp = ref.watch(starterSpineVisibleProvider);
     return EdgeScaffold(
       background: ColoredBox(color: beatBg),
       body: SafeArea(
@@ -71,6 +76,12 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
                 builder: (context, constraints) => SingleChildScrollView(
                   child: Column(
                     children: [
+                      // ABOVE the beat, deliberately. For a brand-new program
+                      // "what do I do first" IS the beat; the clock stage is
+                      // secondary until there's a room and a roster to drive
+                      // it. Renders nothing at all once the spine retires.
+                      if (settingUp)
+                        const StarterSpine(key: ValueKey('cockpit-spine')),
                       SizedBox(
                         // The beat keeps its full-viewport stage; its own
                         // internal scroll (in `_beatFrame`) still handles
