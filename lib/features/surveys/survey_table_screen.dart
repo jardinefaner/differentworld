@@ -393,6 +393,9 @@ class _StatusFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String?>(
+      // Without isExpanded the items are laid out at their INTRINSIC width,
+      // so at 200% text "All responses" is wider than the field and clips.
+      isExpanded: true,
       initialValue: selected,
       decoration: const InputDecoration(
         labelText: 'Status filter',

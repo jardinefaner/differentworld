@@ -769,9 +769,12 @@ class _BeatSlide extends StatelessWidget {
     ]);
   }
 
+  // Children are Flexible so a stage whose headline doubles at 200% text
+  // shrinks into the viewport instead of throwing. A present surface has no
+  // scroll to fall back on — the room is looking at it.
   Widget _centered(List<Widget> children) => Column(
     mainAxisAlignment: MainAxisAlignment.center,
-    children: children,
+    children: [for (final c in children) Flexible(child: c)],
   );
 
   Widget _headline(String text, double size) => Text(

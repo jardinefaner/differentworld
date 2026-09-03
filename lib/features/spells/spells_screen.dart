@@ -118,31 +118,50 @@ class _SpellTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            // Every child Flexible: a 48pt emoji plus three labels all
+            // double at 200% text, and a grid cell cannot grow to meet them.
+            // Loose fit lets each give up space in turn (the emoji first,
+            // since it is decoration) instead of throwing a RenderFlex.
             children: [
-              Text(spell.emoji, style: const TextStyle(fontSize: 48)),
-              const SizedBox(height: 8),
-              Text(
-                word.word,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: gold,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  spell.emoji,
+                  style: const TextStyle(fontSize: 48),
                 ),
               ),
-              Text(
-                spell.english,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: 1,
+              const SizedBox(height: 8),
+              Flexible(
+                child: Text(
+                  word.word,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: gold,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  spell.english,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                spellTimeLabel(spell.durationSeconds),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              Flexible(
+                child: Text(
+                  spellTimeLabel(spell.durationSeconds),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],

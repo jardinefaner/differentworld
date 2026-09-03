@@ -283,14 +283,20 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Row(
+          // Wrap, not Row: at 200% the two buttons cannot sit side by side,
+          // and a Spacer in a Row has no way to yield. Wrapping puts Send on
+          // its own line instead of clipping it off the right edge.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               TextButton.icon(
                 onPressed: _copyLink,
                 icon: const Icon(Icons.link),
                 label: const Text('Copy link'),
               ),
-              const Spacer(),
               FilledButton.icon(
                 onPressed: _sending ? null : _send,
                 icon: _sending

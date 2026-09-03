@@ -249,13 +249,20 @@ class _BeatTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(glyph, style: const TextStyle(fontSize: 34)),
+                      Flexible(
+                        child: Text(
+                          glyph,
+                          style: const TextStyle(fontSize: 34),
+                        ),
+                      ),
                       const SizedBox(height: 10),
-                      // Eyebrow — small, tracked, uppercase (the brand's label
-                      // voice).
+                      // Eyebrow — sentence case. BRAND.md law 4 retired the
+                      // uppercase label voice; the comment that used to sit
+                      // here still claimed it WAS the brand voice, which is
+                      // how the treatment kept getting copied forward.
                       if (beat.label.isNotEmpty)
                         Text(
-                          beat.label.toUpperCase(),
+                          beat.label,
                           semanticsLabel: beat.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
