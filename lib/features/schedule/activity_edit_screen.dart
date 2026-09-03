@@ -798,7 +798,7 @@ class _RoutineSection extends ConsumerWidget {
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
             itemCount: steps.length,
-            onReorder: (oldIndex, newIndex) => unawaited(
+            onReorderItem: (oldIndex, newIndex) => unawaited(
               ref
                   .read(routineActionsProvider)
                   .reorder(activityId, oldIndex, newIndex),

@@ -387,6 +387,10 @@ class _PortraitPainter extends CustomPainter {
           ),
           paint..color = t.wrap,
         );
+        // A cascade across a run of draw calls buries WHICH shape each line
+        // draws behind a wall of `..`; on a painter that hurts more than the
+        // repeated receiver does.
+        // ignore: cascade_invocations
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromCenter(

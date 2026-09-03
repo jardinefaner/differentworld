@@ -145,7 +145,10 @@ SummerBook buildSummerBook({
                     .where((e) => e.kind == EntryKind.observation)
                     .toList(),
               ).reversed)
-                (m.body?.trim().isNotEmpty ?? false) ? m.body!.trim() : m.title,
+                if (m.body?.trim().isNotEmpty ?? false)
+                  m.body!.trim()
+                else
+                  m.title,
             ]
           : const [],
       kind: kind,

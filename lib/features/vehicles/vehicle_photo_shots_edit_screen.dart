@@ -156,12 +156,12 @@ class _VehiclePhotoShotsEditScreenState
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
           itemCount: shots.length,
-          onReorder: (oldIndex, newIndex) {
+          onReorderItem: (oldIndex, newIndex) {
             setState(() {
-              var ni = newIndex;
-              if (ni > oldIndex) ni -= 1;
+              // Final index already — onReorderItem does the post-removal
+              // adjustment onReorder left to us.
               final item = shots.removeAt(oldIndex);
-              shots.insert(ni, item);
+              shots.insert(newIndex.clamp(0, shots.length), item);
             });
           },
           itemBuilder: (context, i) {

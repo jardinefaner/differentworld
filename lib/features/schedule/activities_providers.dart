@@ -314,9 +314,9 @@ class RoutineActions {
   Future<void> reorder(String activityId, int oldIndex, int newIndex) {
     return _mutate(activityId, (steps) {
       if (oldIndex < 0 || oldIndex >= steps.length) return steps;
-      var target = newIndex;
-      if (target > oldIndex) target -= 1;
-      target = target.clamp(0, steps.length - 1);
+      // newIndex is the FINAL index: ReorderableListView.onReorderItem already
+      // accounts for the removal, unlike the deprecated onReorder.
+      final target = newIndex.clamp(0, steps.length - 1);
       final moved = steps.removeAt(oldIndex);
       steps.insert(target, moved);
       return steps;

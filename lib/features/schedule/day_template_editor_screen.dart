@@ -92,7 +92,7 @@ class DayTemplateEditorScreen extends ConsumerWidget {
                   : ReorderableListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                       itemCount: template.schedule.length,
-                      onReorder: (oldIndex, newIndex) {
+                      onReorderItem: (oldIndex, newIndex) {
                         unawaited(
                           actions.reorderBlocks(
                             spaceId: spaceId,
