@@ -52,9 +52,11 @@ import 'package:intl/intl.dart';
 /// the search results are easy to read. It owns its own
 /// [TextEditingController] + [FocusNode] and mirrors every keystroke into
 /// [omniboxQueryProvider] so the existing result-building reacts exactly
-/// as before. Selecting a result pops `/search` first (capturing a
+/// as before. Selecting a result pops `/search` FIRST — capturing a
 /// long-lived root-navigator context so the post-pop dispatch survives the
-/// page tear-down), then fires the entry's `onSelect`.
+/// page tear-down — then fires the entry's `onSelect`, so the destination
+/// replaces the search page instead of stacking on it. Back from the
+/// destination returns to wherever the user actually was.
 class OmniboxSearchScreen extends ConsumerStatefulWidget {
   const OmniboxSearchScreen({super.key});
 
@@ -279,15 +281,25 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen>
       // Dismiss the IME first: the search field stays alive underneath now, so
       // without this the destination could appear with the keyboard still up.
       _focus.unfocus();
-      // Keep `/search` in the back stack (do NOT pop) and keep the query (do
-      // NOT clear): entries navigate via `ctx.push`, so the destination lands
-      // ON TOP of the search page. A swipe-back from the destination then
-      // returns to the search page exactly as the user left it — same query,
-      // same results — which is the requested behaviour. (A `ctx.go` entry — a
-      // top-level jump like Today — still resets the stack, the right thing for
-      // a section switch, not a result.) Navigates from THIS page's live
-      // context since we no longer pop it out from under the call.
-      entry.onSelect(context, ref);
+      // POP `/search` before dispatching, so the destination replaces the
+      // search page rather than stacking on top of it.
+      //
+      // The stack a user expects is [where I was] → [where I asked to go].
+      // Leaving `/search` in the middle makes back land on the search page —
+      // a surface they were only passing THROUGH, and one they never chose to
+      // "be" on. Reported as "back goes to screens I didn't really go back
+      // to", which is exactly right: a search box is a doorway, not a room.
+      //
+      // This reverses a deliberate earlier choice (keep the page so back
+      // restored the query and results). That trade buys re-running a search
+      // cheaply and costs the back button its meaning on every single
+      // omnibox use; the back button wins.
+      //
+      // Dispatch through `dispatchCtx` — this page's own context deactivates
+      // the instant we pop, and a dead context silently swallows the action
+      // (CLAUDE.md: post-pop dispatch needs a stable context).
+      close();
+      entry.onSelect(dispatchCtx, ref);
     }
 
     Future<void> saveAsCapture() async {
