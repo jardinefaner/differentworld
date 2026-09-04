@@ -22,6 +22,7 @@ import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/generated_portraits_setting.dart';
+import 'package:differentworld/features/settings/locale_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
@@ -205,6 +206,18 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/settings/roles'),
+              ),
+              const _SettingsDivider(),
+              ListTile(
+                leading: const Icon(Icons.language_outlined),
+                title: const Text('Language'),
+                subtitle: Text(
+                  ref.watch(localeOverrideProvider).value == null
+                      ? 'Following your device'
+                      : 'English',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showLanguagePicker(context, ref),
               ),
               const _SettingsDivider(),
               ListTile(
@@ -1195,4 +1208,52 @@ class _OutdoorModeTile extends ConsumerWidget {
       },
     );
   }
+}
+
+/// The language picker.
+///
+/// Only English ships today, so this reads as "following your device" with one
+/// alternative. It exists now rather than later because the WIRING is the
+/// expensive part — once a translator hands over `app_es.arb`, Spanish is one
+/// entry in `supportedLocales` and one row here, not a search through 726
+/// files for the setting that should have existed.
+Future<void> _showLanguagePicker(BuildContext context, WidgetRef ref) {
+  final current = ref.read(localeOverrideProvider).value;
+  return showGlassSheet<void>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const GlassDragHandle(),
+          ListTile(
+            title: const Text('Follow my device'),
+            subtitle: const Text(
+              'Uses whatever language your phone is set to — so a family '
+              'never has to find this screen to be understood.',
+            ),
+            trailing: current == null ? const Icon(Icons.check) : null,
+            onTap: () {
+              unawaited(ref.read(localeOverrideProvider.notifier).set(null));
+              Navigator.of(ctx).pop();
+            },
+          ),
+          ListTile(
+            title: const Text('English'),
+            trailing: current?.languageCode == 'en'
+                ? const Icon(Icons.check)
+                : null,
+            onTap: () {
+              unawaited(
+                ref
+                    .read(localeOverrideProvider.notifier)
+                    .set(const Locale('en')),
+              );
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    ),
+  );
 }

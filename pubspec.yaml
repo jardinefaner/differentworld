@@ -50,6 +50,12 @@ dependencies:
   app_links: ^6.4.1
   intl: ^0.20.2
 
+  # Localisation. English-only at launch, but the ARB pipeline is wired so a
+  # translation is a data file rather than a refactor — retrofitting i18n into
+  # 726 files later is the expensive version of this.
+  flutter_localizations:
+    sdk: flutter
+
   # Direct because the sandbox's WEB database needs WasmSqlite3 +
   # InMemoryFileSystem by name (lib/features/sandbox/sandbox_db_web.dart).
   # It already arrives transitively via drift; this makes the dependency
@@ -162,6 +168,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Generates AppLocalizations from lib/l10n/*.arb — see l10n.yaml.
+  generate: true
 
   assets:
     - .env

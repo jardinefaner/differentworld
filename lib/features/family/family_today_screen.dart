@@ -11,6 +11,7 @@ import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -39,6 +40,7 @@ class FamilyTodayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final viewer = ref.watch(viewerProvider);
     if (viewer is! GuardianViewer) {
       // Router is supposed to gate; defensive empty state.
@@ -73,9 +75,9 @@ class FamilyTodayScreen extends ConsumerWidget {
         ),
         data: (children) {
           if (children.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.child_care_outlined,
-              title: 'No children linked yet',
+              title: l10n.familyNoChildren,
               // Wave 96: dropped the "check back in a few minutes"
               // promise — linking children often happens days
               // before the program starts, and a parent who came
@@ -113,6 +115,7 @@ class _FamilyTodayList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // Flag-first subtitle: warmer voice when everyone's accounted for,
     // an actionable line when at least one of "your kids" is flagged.
     // Reads each kid's row via the family per-subject PostgREST provider
@@ -135,7 +138,7 @@ class _FamilyTodayList extends ConsumerWidget {
     }
 
     final header = ContentHeader(
-      title: space?.name ?? 'Today',
+      title: space?.name ?? l10n.familyToday,
       subtitle: _subtitle(guardianName: guardianName, flagged: flagged),
       subtitleColor: flagged.isEmpty
           ? null
@@ -491,13 +494,14 @@ class _SeeAllPhotosLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: TextButton.icon(
         onPressed: () => context.push('/subjects/$subjectId/photos'),
         icon: const Icon(Icons.photo_library_outlined, size: 18),
-        label: const Text('See all photos'),
+        label: Text(l10n.familySeeAllPhotos),
         style: TextButton.styleFrom(
           foregroundColor: theme.colorScheme.primary,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

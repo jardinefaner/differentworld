@@ -3,6 +3,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -28,6 +29,7 @@ class FamilyMessagesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final viewer = ref.watch(viewerProvider);
     if (viewer is! GuardianViewer) {
       // Staff don't have a global messages index — they reach threads
@@ -48,16 +50,16 @@ class FamilyMessagesScreen extends ConsumerWidget {
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
       body: childrenAsync.when(
-        loading: () => const LoadingSlot(),
+        loading: LoadingSlot.new,
         error: (_, _) => ErrorState(
           title: 'Could not load',
           onRetry: () => ref.invalidate(familyChildrenProvider),
         ),
         data: (children) {
           if (children.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.forum_outlined,
-              title: 'No conversations yet',
+              title: l10n.familyNoConversations,
               message:
                   'Your program director will link your child to your '
                   'account; once they do, message threads will appear here.',
@@ -69,8 +71,8 @@ class FamilyMessagesScreen extends ConsumerWidget {
           return ResponsivePage(
             bottomPadding: 32,
             children: [
-              const ContentHeader(
-                title: 'Messages',
+              ContentHeader(
+                title: l10n.familyMessages,
                 subtitle:
                     'A direct line between you and the team — one '
                     'thread per child.',
