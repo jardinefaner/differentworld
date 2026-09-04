@@ -1009,15 +1009,15 @@ COPPA in the US) will eventually audit.
     attachment-pathed object whose row is tagged (`subject_id` / `captured_by`)
     to a subject they guard. The authorization is a pure function
     (`authorizePhotoAccess`) with a Deno test.
-  - **DEFERRED — bucket lockdown written, not pushed.**
-    `20260903000001_person_photos_broker_only.sql` drops the permissive
-    `person_photos_read_own_space` policy so the broker is the only read path.
-    Gated on an on-device "photos load" check, because pushing it over a broker
-    that is broken for any path shape blanks every photo at once. Until it
-    lands the hole is mitigated (the app signs through the broker) but **not
-    closed**: the policy still lets ANY space member `createSignedUrl` any
-    photo in that space directly — and a guardian IS a space member, which the
-    policy cannot distinguish from staff.
+  - **CLOSED 2026-09-03.** `20260903000001_person_photos_broker_only.sql`
+    dropped `person_photos_read_own_space`, so `sign-photo` is now the only
+    read path. The hole it closed: the policy let ANY space member sign ANY
+    photo under that space's prefix, and **a guardian IS a space member** —
+    the policy could not tell them from staff, so a guardian session could
+    reach any child's photo in the program. The broker can, and does.
+  - **If photos ever go blank, this is the first thing to suspect** — and the
+    rollback is one statement: re-create the policy from
+    `20260519000005_person_photos_private.sql`.
 - **Background screenshots** on iOS/Android are blocked in release
   builds — Android sets `FLAG_SECURE` in `MainActivity.onCreate`;
   iOS overlays a solid-colour `UIView` over the key window in
@@ -2317,14 +2317,16 @@ that way.
   OAuth URL)
 - **Background photo upload + thumbnail generation** — when we wire
   observations
-- **`sign-photo` bucket lockdown** — `20260903000001_person_photos_broker_only.sql`.
-  Until 2026-09-03 this entry said the migration was "written but not pushed";
-  it had in fact never been written. It exists now, and is deliberately NOT
-  pushed: the gate is a **signed-in on-device check** that photos still render
-  on three path shapes (subject, attachment, family), which the file spells out.
-  The failure mode is total rather than graceful — a broker that is broken for
-  any shape blanks every photo the moment the fallback policy goes — so the
-  check is the whole safety margin. Rollback is one statement.
+- ~~`sign-photo` bucket lockdown~~ — **PUSHED 2026-09-03**
+  (`20260903000001_person_photos_broker_only.sql`). The broad
+  `person_photos_read_own_space` policy is gone; the broker is the only read
+  path. What made it safe to push without the on-device check: `lib/` contains
+  **zero** `storage.from('person-photos')` reads — every photo URL is minted
+  through `sign-photo`, so the policy was a path the app never took. (The two
+  `createSignedUrl` calls in the codebase target the `exports` bucket.) The
+  broker's staff rule is also exactly as permissive as the dropped policy
+  (`isSpaceMember` on the path's first segment), so staff reads cannot narrow.
+  Guardians DO narrow — that was the hole.
 - ~~`20260622000002_trip_location.sql`~~ — **APPLIED.** This entry claimed it
   was blocked on a pooler timeout; verified 2026-09-03 by probing the column
   (`GET /rest/v1/trip_logistics?select=destination_lat` → 200) and by
