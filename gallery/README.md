@@ -157,7 +157,7 @@ a drive-by.
 consumer outside its own feature, it is a promotion candidate. When it
 gains its third, it is overdue.
 
-## Catalogued — 53 component plates + 161 screen plates (all light + dark)
+## Catalogued — 54 component plates + 161 screen plates (all light + dark)
 
 ### Atoms
 
@@ -166,6 +166,7 @@ gains its third, it is overdue.
 | Action buttons | [primary_action_button.dart], [secondary_action_button.dart], [destructive_button.dart] + themed Filled/Tonal/Outlined/Text | pill actions, all button kinds, destructive | ✅ | [light](atoms/action_buttons__light.png) · [dark](atoms/action_buttons__dark.png) |
 | PersonAvatar | [person_avatar.dart] | initials, 3 radii | ✅ | [light](atoms/person_avatar__light.png) · [dark](atoms/person_avatar__dark.png) |
 | GeneratedPortrait | [generated_portrait.dart] | 8 seeds at list size · 3 at reveal size | ✅ content-driven | [light](atoms/generated_portrait__light.png) · [dark](atoms/generated_portrait__dark.png) |
+| ActivityPrompt | [activity_prompt.dart] | the prompt card every brain break shares — left accent edge, eyebrow, primary/neutral tone | ✅ | [light](molecules/activity_prompt__light.png) · [dark](molecules/activity_prompt__dark.png) |
 | SectionEyebrow | [section_eyebrow.dart] | the label above a title — sentence case, w600, 0.2 tracking (BRAND.md law 4) | ✅ | [light](atoms/section_eyebrow__light.png) · [dark](atoms/section_eyebrow__dark.png) |
 | StatusDot | [status_dot.dart] | calm · progress · needsAttention · neutral | ✅ | [light](atoms/status_dot__light.png) · [dark](atoms/status_dot__dark.png) |
 | ProgressDots | [progress_dots.dart] | step indicators (0 of N, current position) | ✅ | [light](atoms/progress_dots__light.png) · [dark](atoms/progress_dots__dark.png) |
@@ -342,6 +343,7 @@ under `pumpAndSettle` (leave that state to widget tests — see FormSaveButton
 [error_state.dart]: ../lib/shared/widgets/error_state.dart
 [error_banner.dart]: ../lib/shared/widgets/error_banner.dart
 [cap_switch.dart]: ../lib/shared/widgets/cap_switch.dart
+[activity_prompt.dart]: ../lib/shared/widgets/activity_prompt.dart
 [section_eyebrow.dart]: ../lib/shared/widgets/section_eyebrow.dart
 [status_dot.dart]: ../lib/shared/widgets/status_dot.dart
 [progress_dots.dart]: ../lib/shared/widgets/progress_dots.dart

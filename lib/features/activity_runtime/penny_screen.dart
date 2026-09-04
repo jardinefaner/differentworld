@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/shared/widgets/activity_prompt.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -81,30 +82,15 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
               subtitle: 'Share a thought, count a penny',
             ),
             if (question != null && question.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'a thought about…',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      question,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              // This is the card that had drifted: a rounded box with no left
+              // edge, where Letters and Potions both had one. Same idea, three
+              // hand-rolled copies, one different.
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: ActivityPrompt(
+                  eyebrow: 'A thought about…',
+                  prompt: question,
+                  tone: ActivityPromptTone.neutral,
                 ),
               ),
             // The count, big — the answer to "how many thoughts?"

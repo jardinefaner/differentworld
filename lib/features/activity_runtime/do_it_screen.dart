@@ -7,6 +7,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/platform.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -208,30 +209,35 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Text('Do it', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                if (verb.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      verb,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
+            // ContentHeader like every other non-immersive activity, so the
+            // whole deck opens the same way — title, subtitle, then content.
+            // This screen used a bare `Text('Do it')` in a hand-rolled Row,
+            // which is why it read as a different app from Penny or Potions
+            // even though the palette and type already matched. The verb chip
+            // keeps its place via the header's own `trailing` slot.
+            ContentHeader(
+              title: 'Do it',
+              subtitle: 'One real thing, together',
+              bottomGap: 12,
+              trailing: verb.isEmpty
+                  ? null
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        verb,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-              ],
             ),
-            const SizedBox(height: 12),
             // The action, big — host-present, glanceable across the room.
             Expanded(
               child: Container(
