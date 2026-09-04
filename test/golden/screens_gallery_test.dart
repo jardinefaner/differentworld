@@ -320,6 +320,10 @@ void main() {
   _screenPlate('screens/capture_inbox', const CaptureInboxScreen());
   _screenPlate('screens/capture', const CaptureScreen());
   _screenPlate('screens/cast', const CastScreen());
+  // No cockpit plate: CastCockpit opens a real Realtime WebSocket on mount,
+  // so it leaves a pending timer the harness rejects. Plating it needs a fake
+  // CastSession, which is why it has gone unrendered — and unrendered is how
+  // it stayed hardcoded near-black while the app around it went warm.
   _screenPlate('screens/conductor', const ConductorScreen());
   _screenPlate('screens/day_run', const DayRunScreen());
   _screenPlate('screens/day_templates', const DayTemplatesScreen());

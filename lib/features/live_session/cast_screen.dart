@@ -139,7 +139,16 @@ class _CastScreenState extends ConsumerState<CastScreen> {
   Widget build(BuildContext context) {
     // Back from a live role returns to the lobby (not out of /cast).
     return PopScope(
-      canPop: _mode == _Mode.lobby,
+      // Leaving the COCKPIT leaves /cast entirely, back to wherever you came
+      // from — the cast keeps running (it lives above the screen, and the
+      // chrome pill still shows it). Sending a caster to the lobby instead
+      // asked "which device is this one?" of someone actively casting from
+      // this one, which is not a question, it is a contradiction.
+      //
+      // Receiver mode still falls back to the lobby: this device IS the
+      // screen, so backing out is a real mode change and the lobby is where
+      // that decision is made.
+      canPop: _mode != _Mode.receive,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _toLobby();
       },
@@ -163,11 +172,12 @@ class _CastScreenState extends ConsumerState<CastScreen> {
           onExit: _toLobby,
         ),
         _Mode.cast => Scaffold(
-          // The cast cockpit is a projection stage (the TV), not a themed
-          // surface — hardcoded dark per docs/THEME_ADHERENCE.md.
-          backgroundColor: const Color(
-            0xFF0C0D14,
-          ), // raw-canvas: cast cockpit (TV) stage
+          // The cockpit is the phone in your hand — a REMOTE, not a stage.
+          // This used to be hardcoded near-black with a comment calling it
+          // "a projection stage (the TV)", which is simply not what it is:
+          // the Receiver is the TV, and the cockpit's own doc says everything
+          // in it stays on the phone. The effect was that tapping "This is my
+          // remote" left a warm cream app and landed in a black one.
           body: SafeArea(
             child: CastCockpit(
               key: ValueKey('cast-$_code'),
