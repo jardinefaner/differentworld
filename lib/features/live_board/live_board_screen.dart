@@ -7,6 +7,8 @@ import 'package:differentworld/features/live_board/board_game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart'
     show generateSessionCode;
+import 'package:differentworld/features/live_session/live_session.dart'
+    show LiveStatus;
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -36,6 +38,10 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   CastSession? _session;
   final _subs = <StreamSubscription<dynamic>>[];
   int _peers = 0;
+  // Subscribed alongside peers, because peers==0 alone cannot tell "nobody has
+  // joined yet" from "the channel is dead" — and the board says something
+  // VERY different in each case.
+  LiveStatus _status = LiveStatus.connecting;
 
   BoardInstrument _active = BoardInstrument.word;
   final _wordCtrl = TextEditingController();
@@ -74,6 +80,11 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
       _subs.add(
         session.peers.listen((v) {
           if (mounted) setState(() => _peers = v);
+        }),
+      );
+      _subs.add(
+        session.status.listen((v) {
+          if (mounted) setState(() => _status = v);
         }),
       );
       _session = session;
@@ -190,7 +201,7 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
               title: 'Live Board',
               subtitle: 'One phone, every screen — pick an instrument',
             ),
-            _JoinCard(code: _code, peers: _peers),
+            _JoinCard(code: _code, peers: _peers, status: _status),
             const SizedBox(height: 16),
             // What the room sees — the same stage the receiver renders.
             Text('What the room sees', style: theme.textTheme.labelMedium),
@@ -321,10 +332,15 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
 /// The join code + live screen count, so the teacher can point the room's
 /// screens at this board.
 class _JoinCard extends StatelessWidget {
-  const _JoinCard({required this.code, required this.peers});
+  const _JoinCard({
+    required this.code,
+    required this.peers,
+    required this.status,
+  });
 
   final String code;
   final int peers;
+  final LiveStatus status;
 
   @override
   Widget build(BuildContext context) {
@@ -353,12 +369,28 @@ class _JoinCard extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           Expanded(
+            // The failure this fixes: when Realtime is wedged, peers stays 0
+            // and the board used to print the join instructions anyway —
+            // telling a teacher to walk to the TV and type a code that cannot
+            // possibly connect. An instruction that cannot work is worse than
+            // no instruction, so a dead channel says so instead.
             child: Text(
-              peers == 0
-                  ? 'On each room screen: Cast → Be the screen → enter this code.'
-                  : '$peers screen${peers == 1 ? '' : 's'} connected.',
+              switch (status) {
+                LiveStatus.error =>
+                  "Can't reach the screens right now. The code won't "
+                      'connect until this clears — try again in a moment.',
+                LiveStatus.connecting when peers == 0 => 'Connecting…',
+                _ when peers == 0 =>
+                  'On each room screen: Cast → Be the screen → enter this '
+                      'code.',
+                _ => '$peers screen${peers == 1 ? '' : 's'} connected.',
+              },
               style: theme.textTheme.bodySmall?.copyWith(
-                color: peers == 0 ? scheme.onSurfaceVariant : scheme.primary,
+                color: switch (status) {
+                  LiveStatus.error => scheme.error,
+                  _ when peers == 0 => scheme.onSurfaceVariant,
+                  _ => scheme.primary,
+                },
               ),
             ),
           ),
