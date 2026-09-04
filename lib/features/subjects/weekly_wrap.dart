@@ -74,7 +74,7 @@ Future<void> castWeeklyWrap(
       attachmentsForEntityProvider((kind: 'entry', id: e.id)).future,
     );
     final at = DateTime.tryParse(e.recordedAt)?.toLocal();
-    final day = at == null ? '' : DateFormat.EEEE().format(at).toUpperCase();
+    final day = at == null ? '' : DateFormat.EEEE().format(at);
     final imagePath = atts.urls.isEmpty ? null : atts.urls.first;
     final body = (e.body ?? '').trim();
     if (imagePath != null || body.isNotEmpty) {
@@ -109,7 +109,7 @@ List<PresentSlide> buildWeeklyWrapSlides({
 }) {
   final slides = <PresentSlide>[
     PresentSlide(
-      eyebrow: 'THIS WEEK',
+      eyebrow: 'This week',
       title: '$childName’s week',
       emoji: '🎞️',
       subtitle: totalPieces == 1 ? '1 piece' : '$totalPieces pieces',
@@ -129,7 +129,7 @@ List<PresentSlide> buildWeeklyWrapSlides({
   }
   slides.add(
     PresentSlide(
-      eyebrow: 'AND COUNTING',
+      eyebrow: 'And counting',
       title: 'Look how much $childName made',
       emoji: '🌱',
     ),

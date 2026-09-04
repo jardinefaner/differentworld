@@ -130,7 +130,7 @@ class _IntControl extends StatelessWidget {
             '$value',
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

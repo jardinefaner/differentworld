@@ -558,7 +558,7 @@ class _AfterPickupCard extends ConsumerWidget {
           ),
           const Spacer(),
           Text(
-            isSend ? 'AFTER PICKUP' : "DAY'S DONE",
+            isSend ? 'After pickup' : "Day's done",
             style: theme.textTheme.labelMedium?.copyWith(
               color: scheme.onSurfaceVariant,
               letterSpacing: 1.2,
@@ -656,7 +656,7 @@ class _MorningCard extends ConsumerWidget {
         accentBackground: fg,
         accentForeground: bg,
         icon: Icons.wb_sunny_outlined,
-        eyebrow: 'GOOD MORNING',
+        eyebrow: 'Good morning',
         title: world != null ? 'Day ${position!.day}' : 'A new day',
         body: Text(
           hasPicked
@@ -715,7 +715,7 @@ class _RevealCard extends ConsumerWidget {
         accentBackground: fg,
         accentForeground: bg,
         icon: Icons.auto_awesome_outlined,
-        eyebrow: 'THE CLOSING',
+        eyebrow: 'The closing',
         title: 'Reveal the day',
         body: const Text(
           'Gather the room — each child becomes who they were today.',

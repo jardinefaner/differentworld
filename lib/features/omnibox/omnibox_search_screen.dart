@@ -860,10 +860,10 @@ class _SectionHeaderWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Text(
-        label.toUpperCase(),
+        label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.6,
         ),
       ),
@@ -1003,10 +1003,10 @@ class _CaptureHeroCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      muted ? 'OR SAVE AS A NOTE' : 'SAVE AS A CAPTURE',
+                      muted ? 'Or save as a note' : 'Save as a capture',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: fgSoft,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -1137,10 +1137,10 @@ class _ComposeDraftCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'DRAFT A BLOCK',
+                      'Draft a block',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: scheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 0.9,
                       ),
                     ),
@@ -1278,10 +1278,10 @@ class _RecentCapturesStrip extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                'RECENT CAPTURES',
+                'Recent captures',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
                 ),
               ),

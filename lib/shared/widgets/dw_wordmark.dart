@@ -11,6 +11,10 @@ import 'package:flutter/material.dart';
 /// steps up one weight (w400) so the two words read as a pair, not a repeat.
 ///
 /// Reach for this anywhere the brand name appears at size — the login hero,
+/// The wordmark is a LOGOTYPE, so its caps are the MARK, not shouted UI
+/// copy — BRAND.md law 4 governs interface text, not the brand's own
+/// lockup. The lines carry `// raw-canvas` so the type guard skips exactly
+/// them and keeps checking the rest of this file.
 /// the onboarding open, an exported report's masthead. Small inline mentions
 /// in body copy stay as plain `Text`.
 class DwWordmark extends StatelessWidget {
@@ -55,15 +59,23 @@ class DwWordmark extends StatelessWidget {
         ? Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('DIFFERENT', style: base, textAlign: TextAlign.center),
               Text(
-                'WORLD',
+                'DIFFERENT', // raw-canvas
+                style: base,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                'WORLD', // raw-canvas
                 style: base.copyWith(fontWeight: FontWeight.w400),
                 textAlign: TextAlign.center,
               ),
             ],
           )
-        : Text('DIFFERENT WORLD', style: base, textAlign: TextAlign.center);
+        : Text(
+            'DIFFERENT WORLD', // raw-canvas
+            style: base,
+            textAlign: TextAlign.center,
+          );
 
     final body = tagline == null
         ? mark
@@ -73,7 +85,7 @@ class DwWordmark extends StatelessWidget {
               mark,
               SizedBox(height: size * 0.42),
               Text(
-                tagline!.toUpperCase(),
+                tagline!.toUpperCase(), // raw-canvas
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,

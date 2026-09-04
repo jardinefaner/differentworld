@@ -45,7 +45,7 @@ void main() {
     expect(find.text(photoSession1Script.title), findsWidgets);
     expect(find.text('Before they arrive'), findsWidgets);
     // The sequence header names the beat count.
-    expect(find.textContaining('THE SEQUENCE'), findsOneWidget);
+    expect(find.textContaining('The sequence'), findsOneWidget);
     // The advance bar names the next beat.
     expect(find.textContaining('Next ·'), findsOneWidget);
   });
@@ -131,7 +131,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // The vocab beat renders its word cards (Composition / Close-up / Subject).
-    expect(find.text('WORDS FOR THE WALL'), findsOneWidget);
+    expect(find.text('Words for the wall'), findsOneWidget);
     expect(find.text('Composition'), findsWidgets);
   });
 

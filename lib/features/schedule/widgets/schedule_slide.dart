@@ -104,9 +104,9 @@ class ScheduleSlide extends ConsumerWidget {
 
     final phaseLabel = switch (phase) {
       SlidePhase.now => 'NOW',
-      SlidePhase.next => 'NEXT',
-      SlidePhase.done => 'DONE',
-      SlidePhase.later => 'LATER',
+      SlidePhase.next => 'Next',
+      SlidePhase.done => 'Done',
+      SlidePhase.later => 'Later',
     };
     final timeRange = (start == null || end == null)
         ? ''
@@ -568,9 +568,9 @@ List<PresentSlide> _daySlides(
         : '${timeOfDay(start)} – ${timeOfDay(end)}';
     final phaseLabel = switch (phases[i]) {
       SlidePhase.now => 'NOW',
-      SlidePhase.next => 'NEXT',
-      SlidePhase.done => 'DONE',
-      SlidePhase.later => 'LATER',
+      SlidePhase.next => 'Next',
+      SlidePhase.done => 'Done',
+      SlidePhase.later => 'Later',
     };
     out.add(
       PresentSlide(

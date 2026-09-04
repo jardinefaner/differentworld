@@ -428,7 +428,7 @@ class _PendingInvitesHeader extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'PENDING INVITES',
+              'Pending invites',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 letterSpacing: 0.6,

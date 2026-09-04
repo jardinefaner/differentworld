@@ -124,10 +124,10 @@ class _Strip extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'LIVE',
+                    'Live',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: AppColors.growthOf(theme),
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -188,7 +188,7 @@ class _MomentCount extends StatelessWidget {
           '$count',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],

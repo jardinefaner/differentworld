@@ -184,7 +184,7 @@ class _RoleCardFace extends StatelessWidget {
               'Today I am ${role.article} ${role.name}',
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
@@ -258,14 +258,14 @@ class _RoleCardFace extends StatelessWidget {
                   title: role.name,
                   slides: [
                     PresentSlide(
-                      eyebrow: 'TODAY WE ARE',
+                      eyebrow: 'Today we are',
                       title: '${role.article} ${role.name}',
                       emoji: role.emoji,
                       subtitle: 'we build ${role.builds}',
                     ),
                     for (final habit in role.habits)
                       PresentSlide(
-                        eyebrow: 'A ${role.name.toUpperCase()} HABIT',
+                        eyebrow: 'A ${role.name} habit',
                         title: 'I $habit',
                         icon: Icons.bolt,
                       ),
@@ -368,11 +368,11 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      label.toUpperCase(),
+      label,
       semanticsLabel: label,
       style: TextStyle(
         color: color,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         letterSpacing: 1.2,
         fontSize: 12,
       ),

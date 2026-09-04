@@ -140,7 +140,7 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
                 icon: const Icon(Icons.print_outlined),
                 label: const Text(
                   'Make a poster',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -218,7 +218,7 @@ class _Intro extends StatelessWidget {
               : const Icon(Icons.photo_camera, size: 26),
           label: Text(
             capturing ? 'Opening…' : 'Snap your tile',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 10),

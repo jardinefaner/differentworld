@@ -52,7 +52,7 @@ class Spell {
 const List<Spell> kSpells = [
   Spell(
     id: 'freeze',
-    english: 'FREEZE',
+    english: 'Freeze',
     emoji: '❄️',
     durationSeconds: 300,
     words: [
@@ -78,7 +78,7 @@ const List<Spell> kSpells = [
   ),
   Spell(
     id: 'move',
-    english: 'MOVE',
+    english: 'Move',
     emoji: '🏃',
     durationSeconds: 180,
     words: [
@@ -104,7 +104,7 @@ const List<Spell> kSpells = [
   ),
   Spell(
     id: 'create',
-    english: 'CREATE',
+    english: 'Create',
     emoji: '🎨',
     durationSeconds: 300,
     words: [
@@ -130,7 +130,7 @@ const List<Spell> kSpells = [
   ),
   Spell(
     id: 'share',
-    english: 'SHARE',
+    english: 'Share',
     emoji: '🤝',
     durationSeconds: 180,
     words: [
@@ -156,7 +156,7 @@ const List<Spell> kSpells = [
   ),
   Spell(
     id: 'wonder',
-    english: 'WONDER',
+    english: 'Wonder',
     emoji: '🌌',
     durationSeconds: 180,
     words: [

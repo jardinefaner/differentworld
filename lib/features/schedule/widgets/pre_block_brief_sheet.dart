@@ -263,7 +263,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
                               'Supplies',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: scheme.onTertiaryContainer,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: 0.4,
                               ),
                             ),

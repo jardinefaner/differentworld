@@ -257,7 +257,7 @@ class JourneyDayRow extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: accent,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -353,10 +353,10 @@ class _BoundaryCallout extends StatelessWidget {
               Icon(icon, size: 18, color: accent),
               const SizedBox(width: 8),
               Text(
-                label.toUpperCase(),
+                label,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: accent,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
               ),

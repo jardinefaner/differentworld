@@ -219,7 +219,7 @@ class _LeadingRow extends ConsumerWidget {
                     'NOW',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: scheme.onTertiaryContainer,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.6,
                       fontSize: 9,
                     ),

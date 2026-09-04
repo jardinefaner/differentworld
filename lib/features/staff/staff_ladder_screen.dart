@@ -172,7 +172,7 @@ class _CurrentRung extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'YOU ARE',
+                  'You are',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer.withValues(
                       alpha: 0.7,
@@ -332,7 +332,7 @@ class _ListBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label.toUpperCase(),
+          label,
           style: theme.textTheme.labelSmall?.copyWith(
             color: tone,
             letterSpacing: 1.5,
@@ -377,7 +377,7 @@ class _SeeAlso extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'GROW THROUGH',
+          'Grow through',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             letterSpacing: 1.5,
