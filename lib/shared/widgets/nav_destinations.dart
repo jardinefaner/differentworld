@@ -163,6 +163,17 @@ List<NavDestination> buildNavDestinations(
       route: '/',
       essential: true,
     ),
+    // Attendance is the first thing a teacher does each morning and it had NO
+    // drawer row: it lives at `/groups/:id/attendance`, per-room, so there was
+    // nothing flat to link. `/checklist` is the cross-room surface that
+    // already exists for exactly this — its omnibox keywords are literally
+    // attendance / check-in / morning / mark — and it was reachable only by
+    // typing. The most daily action in the app was the hardest to find.
+    const NavDestination(
+      icon: Icons.task_alt_outlined,
+      label: 'Check in',
+      route: '/checklist',
+    ),
     const NavDestination(
       icon: Icons.calendar_month_outlined,
       label: 'Schedule',

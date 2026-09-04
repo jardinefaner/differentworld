@@ -28,6 +28,7 @@ class EntityLink extends ConsumerWidget {
     required this.entity,
     this.style,
     this.padded = true,
+    this.tinted = true,
     this.maxLines,
     this.overflow,
     super.key,
@@ -41,6 +42,15 @@ class EntityLink extends ConsumerWidget {
   /// `true` → a soft tinted pill (a standalone chip). `false` → bare tinted
   /// text (inline next to other words).
   final bool padded;
+
+  /// `false` → the label keeps its own colour and only the TAP survives.
+  ///
+  /// The kind-tint is what makes an entity reference legible inside prose —
+  /// "Sofia and Mateo built a fort" wants the two names to look like the
+  /// things they are. In a LIST where every row is the same kind it says
+  /// nothing new, and twenty tinted names read as twenty flagged rows. The
+  /// brand's rule is that glow is scarce; a roster spends it on nothing.
+  final bool tinted;
 
   /// Forwarded to the inner [Text] so the chip is safe in a constrained slot
   /// (e.g. a grid-card header that caps the name at one line).
@@ -61,7 +71,9 @@ class EntityLink extends ConsumerWidget {
     final accent = entity.kind.accent;
     final label = Text(
       entity.label,
-      style: entityInlineTextStyle(context, entity.kind, base: style),
+      style: tinted
+          ? entityInlineTextStyle(context, entity.kind, base: style)
+          : style,
       maxLines: maxLines,
       overflow: overflow,
     );

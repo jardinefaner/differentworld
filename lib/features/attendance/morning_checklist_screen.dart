@@ -18,6 +18,7 @@ import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// "Morning checklist" — every student in every classroom on today's
 /// date, grouped by classroom. One scroll, swipe / tap to mark, done.
@@ -216,12 +217,20 @@ class _MorningChecklistScreenState
         ),
         data: (sections) {
           if (sections.isEmpty) {
-            return const EmptyState(
+            // The message names the next step, so the screen should offer
+            // it. Captures and Observations both give their empty state a
+            // CTA; this one told you what to do and left you to find it.
+            return EmptyState(
               icon: Icons.child_care_outlined,
               title: 'No students to check in',
               message:
-                  'Add classrooms and students first; this list builds '
-                  'itself.',
+                  'This list builds itself once there are rooms with '
+                  'children in them.',
+              action: FilledButton.icon(
+                onPressed: () => unawaited(context.push('/groups/new')),
+                icon: const Icon(Icons.meeting_room_outlined),
+                label: const Text('Set up a room'),
+              ),
             );
           }
           return _ChecklistList(
