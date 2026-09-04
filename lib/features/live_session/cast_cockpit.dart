@@ -367,12 +367,18 @@ class _Launcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Same sizing as the activity library's grid, and for the same reason its
+    // comment gives: these tiles are top-aligned with no Spacer, so a cell
+    // tuned for a stretched layout leaves ~40% of every tile empty. Fixed
+    // chrome (padding + icon + gap) plus a text block that grows with the
+    // user's text scale.
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
     return GridView.extent(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      maxCrossAxisExtent: 200,
+      maxCrossAxisExtent: 220,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.1,
+      mainAxisExtent: 72 + 64 * scale,
       children: [
         // This week's world — first, the headline thing to cast.
         if (presentWorld case final world? when onPresentWorld != null)
@@ -574,6 +580,15 @@ class _Driving extends StatelessWidget {
   Widget build(BuildContext context) {
     final wire = CastSession.gameStateOf(meta);
     final state = def.decode(wire);
+
+    // The board you look at is the board you touch — here too. The preview
+    // fills most of the phone already, so a second copy of it at thumbnail
+    // size underneath is the same redundancy the single-device screens had,
+    // just with a longer excuse: "the TV holds the display" is true, and
+    // irrelevant to the fact that the display is ALSO right here in your hand.
+    final live = def.buildLiveStage(context, state, send);
+    if (live != null) return live;
+
     final custom = def.buildControls(context, state, send);
     return Column(
       children: [

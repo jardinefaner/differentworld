@@ -150,7 +150,12 @@ class _CastScreenState extends ConsumerState<CastScreen> {
       // that decision is made.
       canPop: _mode != _Mode.receive,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _toLobby();
+        // ONLY the receiver's own back is ours to handle. Nested PopScopes in
+        // one route ALL get their callback invoked for a single pop attempt —
+        // so while the cockpit was blocking a pop to return to its launcher,
+        // this handler fired too and sent the whole screen to the lobby,
+        // which is the teleport that made the fix look like it hadn't landed.
+        if (!didPop && _mode == _Mode.receive) _toLobby();
       },
       child: switch (_mode) {
         _Mode.lobby => EdgeScaffold(
