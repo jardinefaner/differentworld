@@ -63,11 +63,7 @@ Future<void> showCastToRoom(
         );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            what == null ? 'On the screen' : '$what is on the screen',
-          ),
-        ),
+        SnackBar(content: Text(castConfirmation(what, cast.peers))),
       );
     }
     return;
@@ -142,4 +138,25 @@ Future<void> showCastToRoom(
       );
     },
   );
+}
+
+/// What the phone says after a one-tap cast.
+///
+/// A live session means a session OBJECT exists, not that a TV is watching
+/// one — `peers` can be zero while the code is up and nothing has joined. The
+/// first version said "X is on the screen" either way, which is the one lie
+/// that costs a staffer something real: they say "everyone look at the screen"
+/// and the room looks at a join code.
+///
+/// It stays a confirmation in both cases, because the cast DID happen — the
+/// state is queued and a screen joining later receives it (the presenter
+/// re-publishes on presence sync). Only the tense changes.
+///
+/// A pure function so the claim is testable without standing up a Realtime
+/// session; the branch it guards is otherwise unreachable in a widget test.
+String castConfirmation(String? what, int peers) {
+  final subject = what ?? 'It';
+  return peers > 0
+      ? '$subject is on the screen'
+      : '$subject shows as soon as a screen connects';
 }

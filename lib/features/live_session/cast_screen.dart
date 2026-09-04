@@ -377,52 +377,59 @@ class _DeviceCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final edge = primary ? scheme.primary : scheme.outlineVariant;
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      // Rounded on the right only — the left edge IS the accent (BRAND.md
-      // law 1), the same shape ActivityPrompt uses.
-      borderRadius: const BorderRadius.only(
-        topRight: Radius.circular(18),
-        bottomRight: Radius.circular(18),
-      ),
-      child: InkWell(
-        onTap: onTap,
+    // A card with no action must not look like one with an action. This is the
+    // no-controller-code case, where "this is the screen" needs a code typed
+    // in below before it means anything.
+    final enabled = onTap != null;
+    return Opacity(
+      opacity: enabled ? 1 : 0.55,
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        // Rounded on the right only — the left edge IS the accent (BRAND.md
+        // law 1), the same shape ActivityPrompt uses.
         borderRadius: const BorderRadius.only(
           topRight: Radius.circular(18),
           bottomRight: Radius.circular(18),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: edge, width: 4)),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(18),
+            bottomRight: Radius.circular(18),
           ),
-          padding: const EdgeInsets.fromLTRB(16, 18, 18, 18),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: scheme.primary, size: 28),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(left: BorderSide(color: edge, width: 4)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 18, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: scheme.primary, size: 28),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        height: 1.4,
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -456,6 +463,9 @@ class _CodeEntry extends StatelessWidget {
       children: [
         TextField(
           controller: codeCtrl,
+          // Revealed on purpose — the user just asked for it, so the keyboard
+          // should already be up rather than costing a second tap.
+          autofocus: true,
           textCapitalization: TextCapitalization.characters,
           textInputAction: TextInputAction.go,
           maxLength: 6,
