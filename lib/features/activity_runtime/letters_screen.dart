@@ -6,6 +6,7 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/activity_runtime/letters.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/activity_prompt.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -96,38 +97,12 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
                 ),
               ),
             if (prompt != null && prompt.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(18),
-                    bottomRight: Radius.circular(18),
-                  ),
-                  border: Border(
-                    left: BorderSide(color: scheme.primary, width: 4),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'today’s prompt',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      prompt,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: ActivityPrompt(
+                  eyebrow: 'Today’s prompt',
+                  prompt: prompt,
+                  padding: const EdgeInsets.all(18),
                 ),
               ),
             Row(

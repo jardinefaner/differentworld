@@ -17,6 +17,7 @@ import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/accent_edge_card.dart';
 import 'package:differentworld/shared/widgets/accent_edge_row.dart';
+import 'package:differentworld/shared/widgets/activity_prompt.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -314,6 +315,26 @@ void main() {
           StatusDot(kind: StatusDotKind.needsAttention, size: 18),
         ),
         _Labeled('neutral', StatusDot(kind: StatusDotKind.neutral, size: 18)),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/activity_prompt',
+    height: 330,
+    (_) => const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ActivityPrompt(
+          eyebrow: 'Today’s prompt',
+          prompt: 'Draw your two favourite animals having an adventure.',
+        ),
+        SizedBox(height: Insets.lg),
+        ActivityPrompt(
+          eyebrow: 'A thought about…',
+          prompt: 'What is the bravest thing you have ever done?',
+          tone: ActivityPromptTone.neutral,
+        ),
       ],
     ),
   );
