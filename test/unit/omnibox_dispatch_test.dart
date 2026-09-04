@@ -77,4 +77,50 @@ void main() {
       );
     }
   });
+
+  test('selecting a result keeps the query; consuming it clears', () {
+    // The two halves of "never get lost":
+    //
+    //   BACK        = navigation history. Pops to where you were.
+    //   THE BOX     = tool state. Remembers your query independently.
+    //
+    // The old design used the back STACK to remember the query, which made
+    // back mean something different after a search than anywhere else. These
+    // are separate concerns and the fix is to keep them separate — the same
+    // shape as a browser address bar or a command palette: back never returns
+    // you to the search box, the search box just remembers.
+    expect(
+      selectEntryBody(),
+      isNot(contains('omniboxQueryProvider.notifier).clear()')),
+      reason:
+          'A result is a LOOKUP — the text was not consumed, so it should '
+          'survive for when the omnibox is reopened.',
+    );
+
+    // …but a slash command or a save-as-capture CONSUMED the text, so those
+    // must clear. The asymmetry is the point, not an oversight.
+    final consumed = src.indexOf('exec(dispatchCtx');
+    expect(
+      src.substring(0, consumed).lastIndexOf('clear()'),
+      greaterThan(src.substring(0, consumed).lastIndexOf('void ')),
+      reason: 'a slash command consumes the text and must clear it',
+    );
+  });
+
+  test('the query provider outlives the page, or the box forgets', () {
+    // If this were autoDispose, popping /search would drop the last watcher
+    // and reset the query — the box would forget the moment you navigated,
+    // which is the whole feature.
+    final state = File(
+      'lib/features/omnibox/omnibox_state.dart',
+    ).readAsStringSync();
+    final decl = state.substring(state.indexOf('omniboxQueryProvider'));
+    expect(
+      decl.split(';').first,
+      isNot(contains('autoDispose')),
+      reason:
+          'omniboxQueryProvider must outlive the search page; autoDispose '
+          'would clear the query on pop and the box would forget.',
+    );
+  });
 }
