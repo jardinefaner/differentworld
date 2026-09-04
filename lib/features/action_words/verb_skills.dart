@@ -31,8 +31,7 @@ enum SkillMeasureKind {
 
   /// A 1–5 judgement of quality / accuracy / smoothness, for skills with no
   /// clean number (Locate, Plan, Pace, Diagnose, Receive…).
-  rating
-  ;
+  rating;
 
   /// The unit label shown next to the number.
   String get unit => switch (this) {

@@ -27,8 +27,7 @@ enum PhotoConsent {
   allowed,
 
   /// The family said no. Never overridden by a program default.
-  declined
-  ;
+  declined;
 
   bool get isDeclined => this == PhotoConsent.declined;
 }

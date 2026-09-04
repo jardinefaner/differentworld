@@ -7,8 +7,7 @@ enum AttendanceStatus {
   absent,
   late,
   earlyPickup,
-  excused
-  ;
+  excused;
 
   /// Round-trip from DB string. Returns null on unknown values so a
   /// future server-side enum addition doesn't crash the client.

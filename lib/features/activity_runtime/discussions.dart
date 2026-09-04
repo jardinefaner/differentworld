@@ -14,8 +14,7 @@ library;
 enum DiscussionBand {
   early('4–6', 'Ages 4–6'),
   middle('7–9', 'Ages 7–9'),
-  older('10–12', 'Ages 10–12')
-  ;
+  older('10–12', 'Ages 10–12');
 
   const DiscussionBand(this.short, this.label);
 

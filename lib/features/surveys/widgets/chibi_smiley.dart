@@ -37,8 +37,7 @@ enum ChibiVariant {
   eggCream,
 
   /// Egg, teal. Cool counterweight to the warm cream egg.
-  eggTeal
-  ;
+  eggTeal;
 
   /// Deterministic rotation across questions. Q0 → tallCoral, Q1 →
   /// tallSky, …, Q8 → tallCoral again. Even if a template grows past
@@ -74,8 +73,7 @@ enum ChibiExpression {
 
   /// Bigger D-smile, brighter sparkles, slight bounce. The closeout
   /// celebration face.
-  excited
-  ;
+  excited;
 
   /// Map an agree3 answer (0/1/2) to the matching expression.
   static ChibiExpression forAgree3(int value) => switch (value) {

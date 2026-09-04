@@ -104,6 +104,31 @@ while IFS= read -r f; do
     added=$(cat "$f")
   fi
 
+  # A REFORMAT is not a change of content. The Dart 3.47 formatter joins a
+  # trailing `;` onto the last enum value, which git reports as one line
+  # removed and a near-identical line added — and the guard then flags a
+  # hardcoded colour that has been sitting there untouched for months. It
+  # cried wolf on `mood.dart` three times in one day.
+  #
+  # So: drop any added line whose content also appears among the REMOVED
+  # lines, ignoring leading whitespace and a trailing `;` or `,`. A line that
+  # left and came back is a move; only genuinely NEW content should be judged.
+  removed=$(
+    { git diff "$base_ref"...HEAD -- "$f" 2>/dev/null
+      git diff -- "$f" 2>/dev/null
+      git diff --cached -- "$f" 2>/dev/null
+    } | grep -E '^-' | grep -vE '^---' | sed 's/^-//' \
+      | sed 's/^[[:space:]]*//; s/[;,][[:space:]]*$//'
+  )
+  if [ -n "$removed" ]; then
+    added=$(
+      printf '%s\n' "$added" | while IFS= read -r line; do
+        norm=$(printf '%s' "$line" | sed 's/^[[:space:]]*//; s/[;,][[:space:]]*$//')
+        printf '%s\n' "$removed" | grep -qxF "$norm" || printf '%s\n' "$line"
+      done
+    )
+  fi
+
   # A trailing `// raw-canvas` exempts one line inside an otherwise-themed
   # file, exactly as the colour guard does — so a mixed file (themed lobby +
   # raw stage) stays checked instead of being allowlisted wholesale.

@@ -19,8 +19,7 @@ enum BoardItemKind {
   idea('💡', 'Idea'),
   question('❓', 'Question'),
   decision('✅', 'Decision'),
-  action('🔥', 'Action')
-  ;
+  action('🔥', 'Action');
 
   const BoardItemKind(this.emoji, this.label);
   final String emoji;

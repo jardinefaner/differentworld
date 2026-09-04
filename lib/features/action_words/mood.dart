@@ -14,8 +14,7 @@ enum MoodLevel {
   rainy(2, '🌧️', 'Rainy', Color(0xFF4FC3F7)),
   cloudy(3, '⛅', 'Cloudy', Color(0xFF90A4AE)),
   sunny(4, '🌤️', 'Sunny', Color(0xFFFFB74D)),
-  bright(5, '☀️', 'Bright', Color(0xFFFFD54F))
-  ;
+  bright(5, '☀️', 'Bright', Color(0xFFFFD54F));
 
   const MoodLevel(this.value, this.emoji, this.label, this.color);
   final int value;

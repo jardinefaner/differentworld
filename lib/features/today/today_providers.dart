@@ -121,8 +121,7 @@ enum DayPhase {
   pickup,
 
   /// After hours — the program day is over.
-  closed
-  ;
+  closed;
 
   /// The coarse phase for [now] using the afterschool default windows. This is
   /// the fallback used while the program's configured windows are still
