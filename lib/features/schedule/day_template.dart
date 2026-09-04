@@ -17,8 +17,7 @@ enum DayBlockKind {
   free('🧸', 'Free play', 'on_site', 0.9),
   transition('🔁', 'Transition', 'on_site', 0.4),
   pickup('👋', 'Pickup', 'on_site', 0.18),
-  fieldTrip('🚌', 'Field trip', 'field_trip', 0.9)
-  ;
+  fieldTrip('🚌', 'Field trip', 'field_trip', 0.9);
 
   const DayBlockKind(this.emoji, this.label, this.scheduleKind, this.energy);
   final String emoji;

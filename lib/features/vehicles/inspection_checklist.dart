@@ -8,8 +8,7 @@ import 'dart:convert';
 enum InspectionStatus {
   ok,
   needsRepair,
-  unsafe
-  ;
+  unsafe;
 
   String get wire => switch (this) {
     InspectionStatus.ok => 'ok',

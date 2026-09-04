@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/activity_runtime/activity_deck.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
@@ -16,6 +17,7 @@ import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/section_eyebrow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,162 +37,183 @@ class BrainBreaksScreen extends ConsumerWidget {
   // Memoized on first access for the whole isolate: in tests, set the
   // platform (e.g. `TargetPlatformVariant`) BEFORE pumping this screen
   // — see brain_breaks_platform_test.dart.
-  static final _cards = <_BreakCard>[
+  static final _cards = <DeckCard>[
     // "Do It" leads — the one card that sends the room OFF the screen to do
     // a real thing, and keeps a record of it (docs/VISION.md 2026-06-18).
-    const _BreakCard(
+    const DeckCard(
       title: 'Do It',
       tagline: 'A real thing to go do',
       icon: Icons.directions_run_outlined,
       color: ActivityPalette.green,
+      lane: DeckLane.reset,
       route: '/activity/do-it',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Quick Picks',
       tagline: 'This or that?',
       icon: Icons.swap_horiz,
       color: ActivityPalette.pink,
+      lane: DeckLane.reset,
       route: '/activity/this-or-that',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Act It Out',
       tagline: 'Say it as if…',
       icon: Icons.theater_comedy,
       color: ActivityPalette.purple,
+      lane: DeckLane.reset,
       route: '/activity/as-if',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Beat the Letter',
       tagline: 'Words that start with…',
       icon: Icons.abc,
       color: ActivityPalette.teal,
+      lane: DeckLane.reset,
       route: '/activity/starts-with',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Math Game',
       tagline: 'One question at a time',
       icon: Icons.quiz_outlined,
       color: ActivityPalette.blue,
+      lane: DeckLane.reset,
       route: '/activity/math-game',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Many Paths',
       tagline: 'How many ways to a number?',
       icon: Icons.calculate,
       color: ActivityPalette.indigo,
+      lane: DeckLane.reset,
       route: '/activity/math',
     ),
     // Camera-dependent: hidden where there's no in-app camera
     // (docs/PLATFORM_RUBRIC.md P1 — no dead "take a photo" buttons).
     if (isMobileCapturePlatform)
-      const _BreakCard(
+      const DeckCard(
         title: 'Photo Studio',
         tagline: 'Capture the moment',
         icon: Icons.photo_camera,
         color: ActivityPalette.amber,
+        lane: DeckLane.reset,
         route: '/activity/photo',
       ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Role Cards',
       tagline: 'Be an animal — or an astronaut',
       icon: Icons.pets,
       color: ActivityPalette.green,
+      lane: DeckLane.reset,
       route: '/activity/roles',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Make a Pattern',
       tagline: 'Snap a tile, watch it repeat',
       icon: Icons.grid_on,
       color: ActivityPalette.deepPurple,
+      lane: DeckLane.reset,
       route: '/activity/pattern',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Group Talk',
       tagline: 'Discuss — by topic & age',
       icon: Icons.forum_outlined,
       color: ActivityPalette.cyan,
+      lane: DeckLane.reset,
       route: '/activity/discussions',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Riddle Me This',
       tagline: 'Guess the answer',
       icon: Icons.lightbulb_outline,
       color: ActivityPalette.yellow,
+      lane: DeckLane.reset,
       route: '/activity/riddles',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Reveal the Picture',
       tagline: 'Call a square, guess the picture',
       icon: Icons.grid_on,
       color: ActivityPalette.cyan,
+      lane: DeckLane.reset,
       route: '/activity/grid-reveal',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Mindful Minute',
       tagline: 'Breathe together',
       icon: Icons.spa_outlined,
       color: ActivityPalette.teal,
+      lane: DeckLane.reset,
       route: '/activity/breathe',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Fact or Fib',
       tagline: 'True, or made up?',
       icon: Icons.fact_check_outlined,
       color: ActivityPalette.deepPurple,
+      lane: DeckLane.reset,
       route: '/activity/fact-or-fib',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Story Starters',
       tagline: 'Build a story together',
       icon: Icons.auto_stories_outlined,
       color: ActivityPalette.indigo,
+      lane: DeckLane.reset,
       route: '/activity/story',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Rhyme Time',
       tagline: 'How many rhymes?',
       icon: Icons.music_note_outlined,
       color: ActivityPalette.pink,
+      lane: DeckLane.reset,
       route: '/activity/rhyme-time',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Fill in the Blank',
       tagline: 'Silly words → read it aloud',
       icon: Icons.edit_note_outlined,
       color: ActivityPalette.amber,
+      lane: DeckLane.reset,
       route: '/activity/fill-blank',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Letters',
       tagline: 'Write to a friend',
       icon: Icons.mail_outline,
       color: ActivityPalette.pink,
+      lane: DeckLane.reset,
       route: '/activity/letters',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Penny for a Thought',
       tagline: 'Share a thought, count a penny',
       icon: Icons.toll_outlined,
       color: ActivityPalette.amber,
+      lane: DeckLane.reset,
       route: '/activity/penny',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Potions',
       tagline: 'Gather, stir, name your potion',
       icon: Icons.science_outlined,
       color: ActivityPalette.green,
+      lane: DeckLane.reset,
       route: '/activity/potions',
     ),
-    const _BreakCard(
+    const DeckCard(
       title: 'Charades',
       tagline: 'Act it out — phone + screen',
       icon: Icons.theater_comedy_outlined,
       color: ActivityPalette.purple,
+      lane: DeckLane.reset,
       route: '/live/charades',
     ),
   ];
 
-  void _surprise(BuildContext context, List<_BreakCard> cards) {
+  void _surprise(BuildContext context, List<DeckCard> cards) {
     final pick = cards[Random().nextInt(cards.length)];
     unawaited(context.push(pick.route));
   }
@@ -221,16 +244,17 @@ class BrainBreaksScreen extends ConsumerWidget {
     final calmOn = ref.watch(calmEnabledProvider).value ?? false;
     final spellbookOn = ref.watch(spellbookEnabledProvider).value ?? false;
     final recapOn = ref.watch(recapEnabledProvider).value ?? false;
-    final cards = <_BreakCard>[..._cards];
+    final cards = <DeckCard>[..._cards];
     // Opt-in cards slot in right after Do It — the room-facing surfaces lead.
     if (spellbookOn) {
       cards.insert(
         1,
-        const _BreakCard(
+        const DeckCard(
           title: 'Spellbook',
           tagline: 'Open the day’s magic',
           icon: Icons.auto_stories_outlined,
           color: ActivityPalette.deepPurple,
+          lane: DeckLane.rhythm,
           route: '/spellbook',
         ),
       );
@@ -238,11 +262,12 @@ class BrainBreaksScreen extends ConsumerWidget {
     if (calmOn) {
       cards.insert(
         1,
-        const _BreakCard(
+        const DeckCard(
           title: 'What to do instead',
           tagline: 'Calm ideas for big feelings',
           icon: Icons.self_improvement_outlined,
           color: ActivityPalette.teal,
+          lane: DeckLane.rhythm,
           route: '/calm',
         ),
       );
@@ -250,11 +275,12 @@ class BrainBreaksScreen extends ConsumerWidget {
     if (dailyOn) {
       cards.insert(
         1,
-        const _BreakCard(
+        const DeckCard(
           title: 'Today',
           tagline: 'Question · quote · mission',
           icon: Icons.wb_sunny_outlined,
           color: ActivityPalette.amber,
+          lane: DeckLane.rhythm,
           route: '/daily',
         ),
       );
@@ -262,11 +288,12 @@ class BrainBreaksScreen extends ConsumerWidget {
     if (recapOn) {
       cards.insert(
         1,
-        const _BreakCard(
+        const DeckCard(
           title: 'Today’s recap',
           tagline: 'Send each family the day',
           icon: Icons.send_outlined,
           color: ActivityPalette.cyan,
+          lane: DeckLane.rhythm,
           route: '/recap',
         ),
       );
@@ -274,11 +301,12 @@ class BrainBreaksScreen extends ConsumerWidget {
     if (routinesOn) {
       cards.insert(
         1,
-        const _BreakCard(
+        const DeckCard(
           title: 'Our day',
           tagline: 'What do we do now?',
           icon: Icons.schedule_outlined,
           color: ActivityPalette.teal,
+          lane: DeckLane.rhythm,
           route: '/routines',
         ),
       );
@@ -286,15 +314,26 @@ class BrainBreaksScreen extends ConsumerWidget {
     if (heroesOn) {
       cards.insert(
         1,
-        const _BreakCard(
+        const DeckCard(
           title: 'Heroes',
           tagline: 'Build a make-believe self',
           icon: Icons.auto_awesome_outlined,
           color: ActivityPalette.indigo,
+          lane: DeckLane.rhythm,
           route: '/heroes',
         ),
       );
     }
+    // The Present deck joins the same library. The two hubs were split on a
+    // line that does not exist — same card shape, same tile, every item a
+    // route — and Present linked here as though this were a subcategory of
+    // itself. One library, grouped by what a thing IS.
+    cards.addAll(presentDeck);
+    final lanes = [
+      for (final lane in DeckLane.values)
+        (lane: lane, cards: cards.where((c) => c.lane == lane).toList()),
+    ].where((g) => g.cards.isNotEmpty).toList();
+
     return EdgeScaffold(
       showBack: false,
       actions: [
@@ -311,16 +350,22 @@ class BrainBreaksScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ContentHeader(
-                title: 'Brain Breaks',
+                title: 'Do something together',
                 subtitle: _deckHint,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              child: bento
-                  ? _bentoGrid(context, cards, tileExtent)
-                  : _accentGrid(context, cards, tileExtent),
-            ),
+            for (final group in lanes) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                child: SectionEyebrow(group.lane.label),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: bento
+                    ? _bentoGrid(context, group.cards, tileExtent)
+                    : _accentGrid(context, group.cards, tileExtent),
+              ),
+            ],
           ],
         ),
       ),
@@ -331,7 +376,7 @@ class BrainBreaksScreen extends ConsumerWidget {
   /// text scale via [tileExtent]).
   Widget _accentGrid(
     BuildContext context,
-    List<_BreakCard> cards,
+    List<DeckCard> cards,
     double tileExtent,
   ) {
     return GridView(
@@ -366,7 +411,7 @@ class BrainBreaksScreen extends ConsumerWidget {
   /// otherwise throw; see docs/GRID.md).
   Widget _bentoGrid(
     BuildContext context,
-    List<_BreakCard> cards,
+    List<DeckCard> cards,
     double tileExtent,
   ) {
     return BentoGrid(
@@ -398,28 +443,12 @@ class BrainBreaksScreen extends ConsumerWidget {
 /// [showCastToRoom] is route-generic, so all of them are castable with no
 /// per-activity work — the Present hub had this and the Breaks deck did not,
 /// purely because the two hubs grew separately.
-Future<void> _castCard(BuildContext context, _BreakCard card) {
+Future<void> _castCard(BuildContext context, DeckCard card) {
   return showCastToRoom(
     context,
     mirrorRoute: card.route,
     mirrorLabel: 'Put “${card.title}” on the screen',
   );
-}
-
-class _BreakCard {
-  const _BreakCard({
-    required this.title,
-    required this.tagline,
-    required this.icon,
-    required this.color,
-    required this.route,
-  });
-
-  final String title;
-  final String tagline;
-  final IconData icon;
-  final Color color;
-  final String route;
 }
 
 /// "Hold" is a phone gesture; on a laptop the same action is a right-click,

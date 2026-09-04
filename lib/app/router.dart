@@ -89,7 +89,6 @@ import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
-import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/groups/room_create_screen.dart';
@@ -1924,7 +1923,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           // /present/<id> = single-device, /live/<id> = two-device.
           GoRoute(
             path: '/present',
-            builder: (_, _) => const PresentHubScreen(),
+            // ONE library, two doors. Present and Brain Breaks were two hubs
+            // of the same thing — identical card shape, identical tile, every
+            // item a route — and Present carried a card linking to Brain
+            // Breaks as though it were a subcategory of itself. Both deep
+            // links still resolve; they land on the same grouped library.
+            builder: (_, _) => const BrainBreaksScreen(),
           ),
           // The app remote / cast model (docs/LIVE_SESSIONS.md "the cast
           // model"): one device is a clean Receiver; this phone is the Caster
