@@ -190,10 +190,10 @@ class _BlockRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        label.toUpperCase(),
+        label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: onContainer,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.6,
         ),
       ),

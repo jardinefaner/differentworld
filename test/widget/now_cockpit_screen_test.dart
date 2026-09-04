@@ -194,7 +194,7 @@ void main() {
 
     testWidgets('the morning beat leads with the verb pick', (tester) async {
       await _pump(tester, beat: CockpitBeat.goodMorning, lead: _lead);
-      expect(find.text('GOOD MORNING'), findsOneWidget);
+      expect(find.text('Good morning'), findsOneWidget);
       expect(find.text("Pick today's verbs"), findsOneWidget);
       // The arrival lead's move rides alongside as a secondary chip.
       expect(find.text('Run the session'), findsOneWidget);

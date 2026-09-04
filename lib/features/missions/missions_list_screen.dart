@@ -219,7 +219,7 @@ class _MissionDetailSheet extends ConsumerWidget {
               mission.name,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
@@ -278,7 +278,7 @@ class _MissionDetailSheet extends ConsumerWidget {
                           '${i + 1}',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: theme.colorScheme.onPrimaryContainer,
                           ),
                         ),
@@ -343,10 +343,10 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      label.toUpperCase(),
+      label,
       style: TextStyle(
         color: color,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         letterSpacing: 1.1,
         fontSize: 12,
       ),
@@ -649,7 +649,7 @@ class _MissionEditSheetState extends ConsumerState<_MissionEditSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('LEAVE BEHIND', style: theme.textTheme.labelMedium),
+              Text('Leave behind', style: theme.textTheme.labelMedium),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,

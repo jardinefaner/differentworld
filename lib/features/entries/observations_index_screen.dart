@@ -322,7 +322,7 @@ class _DayHeader extends SliverPersistentHeaderDelegate {
       color: theme.colorScheme.surface,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       child: Text(
-        label.toUpperCase(),
+        label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 0.6,

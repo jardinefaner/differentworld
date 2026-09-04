@@ -900,7 +900,7 @@ class _TimePill extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label.toUpperCase(),
+                label,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   letterSpacing: 0.6,
@@ -1079,7 +1079,7 @@ class _RepeatSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
-                  'ON THESE DAYS',
+                  'On these days',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                     letterSpacing: 1.2,
@@ -1106,7 +1106,7 @@ class _RepeatSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
-                  'UNTIL',
+                  'Until',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                     letterSpacing: 1.2,
@@ -1175,7 +1175,7 @@ class _FieldLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w700,

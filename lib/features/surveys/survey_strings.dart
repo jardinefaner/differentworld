@@ -86,7 +86,7 @@ class SurveyStrings {
         'Tap Back to look at any question again, or '
         "Finish to save what you've answered.",
     required: 'Tap a smiley first.',
-    practiceBadge: 'PRACTICE',
+    practiceBadge: 'Practice',
   );
 
   static const _es = SurveyStrings._(

@@ -131,7 +131,7 @@ class YearlyReviewScreen extends ConsumerWidget {
           yearLabel,
           style: theme.textTheme.titleLarge?.copyWith(
             color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -305,11 +305,11 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
       child: Text(
-        label.toUpperCase(),
+        label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 1.4,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -329,11 +329,11 @@ class _BentoSectionLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Text(
-        label.toUpperCase(),
+        label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 1.4,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

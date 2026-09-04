@@ -122,7 +122,7 @@ class _VerbCard extends StatelessWidget {
       child: ExpansionTile(
         leading: Text(verb.emoji, style: const TextStyle(fontSize: 26)),
         title: Text(
-          '${verb.label.toUpperCase()} · ${role.jobTitle}',
+          '${verb.label} · ${role.jobTitle}',
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
@@ -213,7 +213,7 @@ class _JobTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'HELPER SAYS',
+                    'Helper says',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: accent,
                       letterSpacing: 1.5,
@@ -330,7 +330,7 @@ class _GuideBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label.toUpperCase(),
+            label,
             style: theme.textTheme.labelSmall?.copyWith(
               color: tone,
               letterSpacing: 1.5,
@@ -355,7 +355,7 @@ class _Label extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 6),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: accent,
           letterSpacing: 1.5,

@@ -165,7 +165,7 @@ class _Body extends ConsumerWidget {
                           child: Text(
                             hasName ? chosen.trim() : 'Choose a name',
                             style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: hasName
                                   ? null
                                   : theme.colorScheme.onSurfaceVariant,
@@ -227,7 +227,7 @@ class _Body extends ConsumerWidget {
                   hasDrawing ? 'Redraw myself' : 'Draw myself',
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

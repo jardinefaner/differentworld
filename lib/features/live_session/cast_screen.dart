@@ -425,7 +425,7 @@ class _BeAScreenCard extends StatelessWidget {
             onSubmitted: (_) => onFollowEntered(),
             style: theme.textTheme.headlineSmall?.copyWith(letterSpacing: 6),
             decoration: InputDecoration(
-              hintText: 'CODE',
+              hintText: 'Code',
               hintStyle: TextStyle(
                 color: scheme.onSurfaceVariant,
                 letterSpacing: 6,

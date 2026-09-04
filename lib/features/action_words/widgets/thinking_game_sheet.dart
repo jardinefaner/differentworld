@@ -36,7 +36,7 @@ class _ThinkingGameSheet extends StatelessWidget {
                   child: Text(
                     game.concept,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.3,
                     ),
                   ),

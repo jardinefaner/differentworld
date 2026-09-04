@@ -194,7 +194,7 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
           if (kept.isNotEmpty) ...[
             const SizedBox(height: 28),
             Text(
-              'KEPT',
+              'Kept',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 letterSpacing: 1.5,
@@ -255,7 +255,7 @@ class _ForgedCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Tag('${forged.verb.emoji} ${forged.verb.label.toUpperCase()}'),
+              _Tag('${forged.verb.emoji} ${forged.verb.label}'),
               _Tag('${forged.minutes} min'),
             ],
           ),

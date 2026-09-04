@@ -339,7 +339,7 @@ class _PeekScaffold extends StatelessWidget {
                         Text(title, style: theme.textTheme.titleLarge),
                         const SizedBox(height: 2),
                         Text(
-                          entity.kind.noun.toUpperCase(),
+                          entity.kind.noun,
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: tint,
                             letterSpacing: 0.6,

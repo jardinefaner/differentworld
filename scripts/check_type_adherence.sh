@@ -56,6 +56,12 @@ HEAVY='FontWeight\.(w800|w900)'
 # 4+ chars, so genuine acronyms that ARE the word — PDF, QR, UTC, AM/PM — are
 # out of range. Checked against the whole tree when this was written: zero
 # technical false positives (no SQL / HTTP / JSON caps literals in lib/).
+#
+# KNOWN BLIND SPOT: the quotes have to bracket the caps, so a shouted label
+# INSIDE an interpolation slips through — `'THE SEQUENCE · \${n} BEATS'` was
+# missed by exactly this during the 2026-09-03 sweep. Widening it to any caps
+# run inside any string re-introduces the false positives this narrowness
+# buys, so it stays narrow and this note stays here.
 CAPSLIT="['\"][A-Z][A-Z ]{3,}['\"]"
 
 base_ref=""

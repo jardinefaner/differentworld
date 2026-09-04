@@ -185,7 +185,7 @@ class _Field extends StatelessWidget {
               text: '$label  ',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: labelColor,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 0.6,
               ),
             ),

@@ -28,7 +28,7 @@ class VerbLensStrip extends StatelessWidget {
                 Text(v.emoji, style: const TextStyle(fontSize: 18)),
                 const SizedBox(width: 8),
                 Text(
-                  v.label.toUpperCase(),
+                  v.label,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: tint,
                     fontWeight: FontWeight.w700,

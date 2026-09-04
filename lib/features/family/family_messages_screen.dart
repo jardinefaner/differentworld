@@ -167,7 +167,7 @@ class _ChildThreadCard extends StatelessWidget {
                 unread > 9 ? '9+' : '$unread',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             )

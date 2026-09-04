@@ -499,7 +499,7 @@ class _InlinePickerState extends ConsumerState<_InlinePicker> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'THEIR RULE THIS WEEK',
+                        'Their rule this week',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSecondaryContainer
                               .withValues(alpha: 0.7),
@@ -611,7 +611,7 @@ Future<void> castTodaysWordsToRoom(BuildContext context, WidgetRef ref) {
   }
   final slides = <PresentSlide>[
     PresentSlide(
-      eyebrow: 'TODAY IN OUR ROOM',
+      eyebrow: 'Today in our room',
       title: 'Today’s words',
       emoji: '🌍',
       subtitle: items.length == 1
@@ -624,7 +624,7 @@ Future<void> castTodaysWordsToRoom(BuildContext context, WidgetRef ref) {
     final verbs = verbsByIds(it.day.verbPicks);
     slides.add(
       PresentSlide(
-        eyebrow: '${it.subject.firstName.toUpperCase()} IS',
+        eyebrow: '${it.subject.firstName} is',
         title: world?.name ?? it.day.worldName ?? 'A brand-new world',
         emoji: world?.emoji ?? '✨',
         subtitle: verbs.map((v) => v.label).join('  ·  '),

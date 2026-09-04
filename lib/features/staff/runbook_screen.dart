@@ -176,7 +176,7 @@ class _Lane extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label.toUpperCase(),
+            label,
             style: theme.textTheme.labelSmall?.copyWith(
               color: tone,
               letterSpacing: 1.5,

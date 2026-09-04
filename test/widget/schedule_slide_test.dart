@@ -95,7 +95,7 @@ void main() {
         phase: SlidePhase.done,
       );
 
-      expect(find.textContaining('DONE'), findsOneWidget);
+      expect(find.textContaining('Done'), findsOneWidget);
       expect(find.text('Take attendance'), findsNothing);
       expect(find.text('Cast to room'), findsNothing);
       // A finished block can still get a moment logged after the fact.
@@ -111,7 +111,7 @@ void main() {
         phase: SlidePhase.next,
       );
 
-      expect(find.textContaining('NEXT'), findsOneWidget);
+      expect(find.textContaining('Next'), findsOneWidget);
       expect(find.text('Trip tools'), findsOneWidget);
       // Not live yet → no attendance verb, no cast.
       expect(find.text('Take attendance'), findsNothing);

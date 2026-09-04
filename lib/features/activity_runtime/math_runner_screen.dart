@@ -154,7 +154,7 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen> {
         Text(
           '${widget.target}',
           style: theme.textTheme.displayLarge?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: theme.colorScheme.primary,
           ),
         ),

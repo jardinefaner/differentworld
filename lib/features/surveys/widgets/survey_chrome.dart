@@ -315,7 +315,7 @@ class _PracticeBadge extends StatelessWidget {
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onTertiaryContainer,
             letterSpacing: 1.4,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

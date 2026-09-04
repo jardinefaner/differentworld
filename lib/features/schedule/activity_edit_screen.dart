@@ -297,7 +297,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'SUPPLIES NEEDED',
+          'Supplies needed',
           style: theme.textTheme.labelSmall?.copyWith(
             color: scheme.onSurfaceVariant,
             letterSpacing: 0.6,
@@ -762,7 +762,7 @@ class _RoutineSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'THE ROUTINE',
+          'The routine',
           style: theme.textTheme.labelSmall?.copyWith(
             color: scheme.onSurfaceVariant,
             letterSpacing: 0.6,
@@ -986,7 +986,7 @@ class _RoutinePlaceholder extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'THE ROUTINE',
+          'The routine',
           style: theme.textTheme.labelSmall?.copyWith(
             color: scheme.onSurfaceVariant,
             letterSpacing: 0.6,

@@ -325,7 +325,7 @@ class _RecentsShelf extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'RECENT',
+                'Recent',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   letterSpacing: 1.2,
@@ -394,7 +394,7 @@ class _RecentChip extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        category.name.toUpperCase(),
+                        category.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelSmall?.copyWith(
@@ -710,7 +710,7 @@ class _ToolkitToolDetailViewState extends ConsumerState<ToolkitToolDetailView> {
         SelectableText(
           tool.name,
           style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             height: 1.15,
           ),
         ),

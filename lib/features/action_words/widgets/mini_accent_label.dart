@@ -10,7 +10,7 @@ class MiniAccentLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      text.toUpperCase(),
+      text,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
         color: accent,
         fontWeight: FontWeight.w700,

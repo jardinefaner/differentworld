@@ -361,7 +361,7 @@ class _JoinCard extends StatelessWidget {
               Text(
                 code,
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 3,
                 ),
               ),
@@ -498,7 +498,7 @@ class _NumberControls extends StatelessWidget {
                 '$number',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

@@ -24,7 +24,7 @@ class BecomeStrip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'BECOME IT',
+          'Become it',
           style: theme.textTheme.labelSmall?.copyWith(
             color: gold,
             letterSpacing: 1.2,

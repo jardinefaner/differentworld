@@ -237,7 +237,7 @@ class _CastWeekButton extends ConsumerWidget {
       onPressed: () {
         final slides = <PresentSlide>[
           PresentSlide(
-            eyebrow: 'THIS WEEK',
+            eyebrow: 'This week',
             title: '$childName’s world',
             subtitle: world?.name,
             emoji: world?.emoji,
@@ -245,14 +245,14 @@ class _CastWeekButton extends ConsumerWidget {
           ),
           if (intention != null)
             PresentSlide(
-              eyebrow: 'THE INTENTION',
+              eyebrow: 'The intention',
               title: intention,
               icon: Icons.flag_outlined,
               accent: accent,
             ),
           if (project != null)
             PresentSlide(
-              eyebrow: 'THE PROJECT',
+              eyebrow: 'The project',
               title: project.title,
               subtitle: _projectSubtitle(project),
               icon: Icons.handyman_outlined,
@@ -260,7 +260,7 @@ class _CastWeekButton extends ConsumerWidget {
             ),
           if (answer != null)
             PresentSlide(
-              eyebrow: 'TODAY ${childName.toUpperCase()} SAID',
+              eyebrow: 'Today $childName said',
               title: answer,
               icon: Icons.chat_bubble_outline,
               accent: accent,

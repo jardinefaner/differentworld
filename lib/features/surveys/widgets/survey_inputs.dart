@@ -169,7 +169,7 @@ class SmileyChoice extends StatelessWidget {
                         : selected
                         ? theme.colorScheme.primary
                         : theme.colorScheme.onSurface,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
               ),
@@ -420,7 +420,7 @@ class _OptionToggleChip extends StatelessWidget {
                 color: selected
                     ? theme.colorScheme.primary
                     : theme.colorScheme.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],

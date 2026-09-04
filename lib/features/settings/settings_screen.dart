@@ -464,7 +464,7 @@ class _SettingsGroup extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
             child: Text(
-              label.toUpperCase(),
+              label,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 letterSpacing: 0.6,
@@ -1023,7 +1023,7 @@ class _FontPickerSheet extends ConsumerWidget {
     Widget header(String text) => Padding(
       padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: theme.textTheme.labelMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),

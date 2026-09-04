@@ -98,10 +98,10 @@ class InsightsScreen extends ConsumerWidget {
                   children: [
                     header,
                     if (urgent.isNotEmpty)
-                      _SeverityGroup(label: 'URGENT', insights: urgent),
+                      _SeverityGroup(label: 'Urgent', insights: urgent),
                     if (suggestion.isNotEmpty)
                       _SeverityGroup(
-                        label: 'SUGGESTIONS',
+                        label: 'Suggestions',
                         insights: suggestion,
                       ),
                     if (info.isNotEmpty)
@@ -120,14 +120,14 @@ class InsightsScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: _SeverityGroup(
-                            label: 'URGENT',
+                            label: 'Urgent',
                             insights: urgent,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _SeverityGroup(
-                            label: 'SUGGESTIONS',
+                            label: 'Suggestions',
                             insights: suggestion,
                           ),
                         ),
@@ -180,7 +180,7 @@ class _InsightsBento extends StatelessWidget {
         BentoTile(
           id: 'urgent',
           span: const BentoSpan.hero(),
-          child: _SeverityGroup(label: 'URGENT', insights: urgent),
+          child: _SeverityGroup(label: 'Urgent', insights: urgent),
         ),
       if (suggestion.isNotEmpty)
         BentoTile(
@@ -189,7 +189,7 @@ class _InsightsBento extends StatelessWidget {
           // a full-width band on phone/tablet. phone/desktop spans are the
           // defaults (2), so only tablet + rows are stated.
           span: const BentoSpan(tablet: 4, rows: 2),
-          child: _SeverityGroup(label: 'SUGGESTIONS', insights: suggestion),
+          child: _SeverityGroup(label: 'Suggestions', insights: suggestion),
         ),
       if (info.isNotEmpty)
         BentoTile(
@@ -240,7 +240,7 @@ class _SeverityGroup extends StatelessWidget {
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               letterSpacing: 1.4,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

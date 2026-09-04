@@ -131,7 +131,7 @@ class GuardianDrawer extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
                         child: Text(
-                          'YOUR CHILDREN',
+                          'Your children',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                             letterSpacing: 0.6,

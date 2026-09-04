@@ -918,7 +918,7 @@ class _SampleCertificate extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'SAMPLE CERTIFICATE',
+            'SAMPLE CERTIFICATE', // raw-canvas
             style: theme.textTheme.labelSmall?.copyWith(
               color: accent,
               letterSpacing: 2,
@@ -927,7 +927,7 @@ class _SampleCertificate extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'PHOTOGRAPHER',
+            'PHOTOGRAPHER', // raw-canvas
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               letterSpacing: 2,

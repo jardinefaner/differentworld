@@ -248,8 +248,7 @@ enum _Bucket {
   overdue('Overdue'),
   today('Today'),
   thisWeek('This week'),
-  later('Later')
-  ;
+  later('Later');
 
   const _Bucket(this.label);
   final String label;
@@ -334,7 +333,7 @@ class _BucketHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Text(
-        label.toUpperCase(),
+        label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: isOverdue
               ? theme.colorScheme.error

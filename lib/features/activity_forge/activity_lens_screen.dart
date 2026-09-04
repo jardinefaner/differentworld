@@ -179,7 +179,7 @@ class _LensRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  verb.label.toUpperCase(),
+                  verb.label,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -226,7 +226,7 @@ class _LensCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  verb.label.toUpperCase(),
+                  verb.label,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w700,

@@ -37,7 +37,7 @@ class ThinkingBeatLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.primary,
           letterSpacing: 1,

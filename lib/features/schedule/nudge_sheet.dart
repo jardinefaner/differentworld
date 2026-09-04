@@ -308,7 +308,7 @@ class _NudgeBarState extends ConsumerState<NudgeBar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'NUDGE THE DAY',
+            'Nudge the day',
             style: theme.textTheme.labelSmall?.copyWith(
               color: cs.onSurfaceVariant,
               letterSpacing: 0.5,

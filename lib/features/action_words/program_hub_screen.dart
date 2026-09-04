@@ -234,7 +234,7 @@ class _TodayCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'TODAY',
+                      'Today',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: accent,
                         fontWeight: FontWeight.w700,
@@ -384,7 +384,7 @@ class _JourneyChip extends StatelessWidget {
             isCurrent ? 'NOW' : 'wk ${block.week}',
             style: theme.textTheme.labelSmall?.copyWith(
               color: isCurrent ? accent : theme.colorScheme.onSurfaceVariant,
-              fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
+              fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: isCurrent ? 0.5 : 0,
             ),
           ),
@@ -820,7 +820,7 @@ class _JourneyTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'THE JOURNEY',
+            'The journey',
             style: theme.textTheme.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,
               fontWeight: FontWeight.w700,

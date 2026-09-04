@@ -947,7 +947,7 @@ class _SayThisCard extends StatelessWidget {
               Icon(Icons.campaign_outlined, size: 15, color: labelFg),
               const SizedBox(width: 6),
               Text(
-                'SAY THIS',
+                'Say this',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: labelFg,
                   fontWeight: FontWeight.w700,
@@ -1139,7 +1139,7 @@ class _VocabCards extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'WORDS FOR THE WALL',
+          'Words for the wall',
           style: theme.textTheme.labelSmall?.copyWith(
             color: scheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
@@ -1639,7 +1639,7 @@ class _SequenceTimeline extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'THE SEQUENCE · ${beats.length} BEATS',
+            'The sequence · ${beats.length} beats',
             style: theme.textTheme.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,
               fontWeight: FontWeight.w700,

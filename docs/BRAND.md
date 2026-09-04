@@ -100,10 +100,16 @@ not palettes:
   nothing in the repo grepped for a weight, a `.toUpperCase()`, or a
   font family. 61 themed files had drifted back to the retired
   Jost-era treatment (46 uppercase, 25 w800+) and nothing said so.
-  Diff-scoped, so it gates new drift; those 61 are the standing
-  backlog. Reach for `SectionEyebrow` rather than retyping the
-  label-above-a-title treatment — that widget exists because sixty-one
-  files had nowhere to import it from.
+  **The backlog was cleared 2026-09-03** — all 61 migrated to sentence
+  case and w700. What survives uppercase is deliberate and named: the
+  wordmark (a logotype, not UI copy), the certificate facsimile (the
+  diploma convention), license plates, join codes and channel topics,
+  file-format acronyms, avatar initials, and the Through-My-Eyes
+  scripts, whose say-lines are VERBATIM by rule. Those carry a
+  per-line `// raw-canvas` marker or are non-display code, so the
+  guard stays honest rather than merely quiet. Reach for
+  `SectionEyebrow` rather than retyping the label-above-a-title
+  treatment.
 - `docs/SCREEN_RUBRIC.md` + Screen Rubric agent — chrome clearance,
   four states, primitives, a11y.
 - `tool/score_screens.py` → `gallery/screen_scores.md` — the measured
