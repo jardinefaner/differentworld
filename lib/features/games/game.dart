@@ -226,7 +226,6 @@ abstract class GameDefinition<S> {
 
   /// If non-null, the scaffold shows a "cast" action that pushes this route
   /// — the live present/control variant (docs/LIVE_SESSIONS.md).
-  String? get liveRoute => null;
 
   /// Whether this game builds its whole round from the content bank in
   /// [initialState] (true) — vs. needing a Drift-derived seed (roster,

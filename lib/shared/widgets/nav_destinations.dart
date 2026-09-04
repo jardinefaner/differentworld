@@ -163,6 +163,17 @@ List<NavDestination> buildNavDestinations(
       route: '/',
       essential: true,
     ),
+    // Attendance is the first thing a teacher does each morning and it had NO
+    // drawer row: it lives at `/groups/:id/attendance`, per-room, so there was
+    // nothing flat to link. `/checklist` is the cross-room surface that
+    // already exists for exactly this — its omnibox keywords are literally
+    // attendance / check-in / morning / mark — and it was reachable only by
+    // typing. The most daily action in the app was the hardest to find.
+    const NavDestination(
+      icon: Icons.task_alt_outlined,
+      label: 'Check in',
+      route: '/checklist',
+    ),
     const NavDestination(
       icon: Icons.calendar_month_outlined,
       label: 'Schedule',
@@ -232,15 +243,14 @@ List<NavDestination> buildNavDestinations(
       group: 'Activities',
       onlyFor: (v) => v.canObserve,
     ),
-    const NavDestination(
-      icon: Icons.co_present_outlined,
-      label: 'Present',
-      route: '/present',
-      group: 'Activities',
-    ),
+    // ONE entry, because there is one screen. Merging the Present and Brain
+    // Breaks hubs left both drawer rows pointing at the same library — two
+    // names for one destination, which is the drawer telling a lie about how
+    // much app there is. `/present` still resolves for deep links and the
+    // omnibox; it just no longer earns a second row.
     const NavDestination(
       icon: Icons.bubble_chart_outlined,
-      label: 'Brain Breaks',
+      label: 'Do together',
       route: '/breaks',
       group: 'Activities',
     ),

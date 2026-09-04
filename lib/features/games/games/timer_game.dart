@@ -54,9 +54,6 @@ class TimerGame extends GameDefinition<TimerState> {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
-  @override
-  String? get liveRoute => '/live/timer';
-
   /// Default 5:00, paused.
   @override
   Map<String, dynamic> initialState(ContentSource content) => const {

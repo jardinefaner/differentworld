@@ -48,9 +48,6 @@ class RiddlesGame extends GameDefinition<RiddleState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
   @override
-  String? get liveRoute => '/live/riddles';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) {
     final picked = content.take(ContentKind.riddle, 10);
     final items = [

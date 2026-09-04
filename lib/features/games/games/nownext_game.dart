@@ -59,9 +59,6 @@ class NowNextGame extends GameDefinition<NowNextState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
   @override
-  String? get liveRoute => '/live/now-next';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'blocks': const <List<String>>[],
     'i': 0,

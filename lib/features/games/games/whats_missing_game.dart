@@ -86,9 +86,6 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.rose);
 
   @override
-  String? get liveRoute => '/live/whats-missing';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'rounds': const <Map<String, dynamic>>[],
     'i': 0,

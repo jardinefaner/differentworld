@@ -77,9 +77,6 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
-  String? get liveRoute => '/live/odd-one-out';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'rounds': const <Map<String, dynamic>>[],
     'i': 0,

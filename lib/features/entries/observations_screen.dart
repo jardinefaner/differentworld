@@ -81,7 +81,8 @@ class ObservationsScreen extends ConsumerWidget {
               icon: Icons.menu_book_outlined,
               title: 'No observations yet',
               message: viewer.canObserve
-                  ? 'Add the first one with the button below.'
+                  ? 'A moment you noticed, in a sentence — it becomes part of '
+                        'this child’s story.'
                   : 'Observations from teachers will appear here.',
               action: viewer.canObserve
                   ? FilledButton.icon(

@@ -53,9 +53,6 @@ class CharadesGame extends GameDefinition<CharadesState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
 
   @override
-  String? get liveRoute => '/live/charades';
-
-  @override
   bool get hasSecretRole => true;
 
   @override

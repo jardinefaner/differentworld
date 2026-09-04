@@ -61,9 +61,6 @@ class NameItGame extends GameDefinition<NameItState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.rose);
 
   @override
-  String? get liveRoute => '/live/name-it';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'cards': const <Map<String, String>>[],
     'i': 0,

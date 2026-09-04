@@ -57,9 +57,6 @@ class StoryStartersGame extends GameDefinition<StoryState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
-  String? get liveRoute => '/live/story';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) {
     // 8 fresh openers from the generator (≈51k combinations; the engine skips
     // recently-served ones), then all twists to cycle through.

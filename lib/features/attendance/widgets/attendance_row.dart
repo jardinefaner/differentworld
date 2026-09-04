@@ -82,8 +82,19 @@ class AttendanceRow extends StatelessWidget {
                       label: fullName,
                     ),
                     padded: false,
+                    // Plain, not the entity tint. EntityLink colours by KIND,
+                    // which is right for an inline reference in prose
+                    // ("Sofia and Mateo built a fort") and wrong in a list
+                    // where every row is the same kind — twenty rust names on
+                    // warm paper read as twenty problems, and the brand's own
+                    // rule is that glow is scarce.
+                    tinted: false,
                     style: theme.textTheme.bodyLarge,
-                    maxLines: 1,
+                    // Two lines. Five 48dp buttons take 240dp of a 390dp
+                    // phone, leaving ~124dp for the name — "Liam Okafor"
+                    // truncated to "Liam Okaf…". A roster row exists to tell
+                    // children apart; a clipped surname defeats the screen.
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

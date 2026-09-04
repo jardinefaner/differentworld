@@ -50,9 +50,6 @@ class AsIfGame extends GameDefinition<AsIfState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
-  String? get liveRoute => '/live/as-if';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) {
     final lines = [
       for (final c in content.take(ContentKind.line, 999))
