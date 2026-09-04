@@ -1940,6 +1940,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               // on the program channel (the "make this the screen" setup +
               // launch auto-resume use it).
               presentAsScreen: state.uri.queryParameters['role'] == 'screen',
+              // ?cast=<gameId> → put that game on the screen as soon as one is
+              // connected, so "cast this activity" doesn't decay into "open
+              // the cast menu".
+              castOnConnect: state.uri.queryParameters['cast'],
             ),
           ),
           // The Live Board — the phone as a classroom instrument

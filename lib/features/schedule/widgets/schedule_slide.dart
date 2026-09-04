@@ -203,6 +203,7 @@ class ScheduleSlide extends ConsumerWidget {
         ? () => unawaited(
             showCastToRoom(
               context,
+              ref,
               mirrorRoute: '/present-room/$groupId',
               mirrorLabel: 'Show this block on the screen',
               mirrorSubtitle:
