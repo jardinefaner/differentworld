@@ -60,6 +60,12 @@ class AccentCardTile extends StatelessWidget {
   /// Secondary action — used by the decks for "put this on the room's screen".
   /// A long-press keeps the grid free of a per-tile cast button, which at
   /// fourteen tiles would be fourteen competing affordances.
+  ///
+  /// Bound to RIGHT-CLICK as well as long-press. Press-and-hold with a mouse
+  /// technically works, but nobody discovers it — a laptop user reaches for
+  /// the context menu. Shipping this as long-press only (2026-09-03) put a
+  /// mobile-shaped gesture on a desktop target, which is exactly the drift
+  /// docs/PLATFORM_RUBRIC.md exists to catch.
   final VoidCallback? onLongPress;
 
   /// One clean screen-reader announcement for the whole tile; when set, the
@@ -90,6 +96,7 @@ class AccentCardTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
+        onSecondaryTap: onLongPress,
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(color: edge, width: 0.5),

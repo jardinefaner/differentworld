@@ -20,6 +20,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -67,7 +68,15 @@ class ChildWorldScreen extends ConsumerWidget {
     final key = (subjectId: subjectId, week: week);
 
     // Decal the hub with the child's room theme — subtle, over the Calm base.
-    final groups = ref.watch(groupsProvider).value ?? const <Group>[];
+    //
+    // The room read drives more than decoration: without it `practice` below
+    // is null and the role-practice entry silently DISAPPEARS. A failed load
+    // and an empty one are not the same thing (CLAUDE.md), and a kid opening
+    // their world should not quietly lose a door because a query failed — so
+    // the error is surfaced as one calm line rather than swallowed.
+    final groupsAsync = ref.watch(groupsProvider);
+    final groupsFailed = groupsAsync.hasError;
+    final groups = groupsAsync.value ?? const <Group>[];
     Group? group;
     for (final g in groups) {
       if (g.id == subject.groupId) {
@@ -95,6 +104,21 @@ class ChildWorldScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
           children: [
             ContentHeader(title: '$name’s world', subtitle: 'This week'),
+            // Only when the ROOM read failed. Deliberately quiet and
+            // non-blocking: the rest of the world still works, and this is a
+            // surface a child may be holding — but "your room didn't load" is
+            // a truer thing to say than silently dropping the door to it.
+            if (groupsFailed)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ErrorState(
+                  title: "Couldn't load this room",
+                  detail:
+                      'Everything else here still works. Practising a role '
+                      'needs the room, so it is hidden until this loads.',
+                  onRetry: () => ref.invalidate(groupsProvider),
+                ),
+              ),
             BentoGrid(
               tiles: [
                 BentoTile(

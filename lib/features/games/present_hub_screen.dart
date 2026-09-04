@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -117,11 +118,11 @@ class PresentHubScreen extends ConsumerWidget {
         bottom: false,
         child: ListView(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ContentHeader(
                 title: 'Present',
-                subtitle: 'Tap to open · hold to put it on the screen',
+                subtitle: _deckHint,
               ),
             ),
             Padding(
@@ -227,3 +228,9 @@ class _PresentCard {
 /// user's text-size setting instead of clipping at a fixed aspect ratio.
 double _textScale(BuildContext context) =>
     MediaQuery.textScalerOf(context).scale(14) / 14;
+
+/// "Hold" is a phone gesture; on a laptop the same action is a right-click,
+/// and telling a desktop user to hold is telling them to do nothing.
+String get _deckHint => isMobileCapturePlatform
+    ? 'Tap to open · hold to put it on the screen'
+    : 'Tap to open · right-click to put it on the screen';
