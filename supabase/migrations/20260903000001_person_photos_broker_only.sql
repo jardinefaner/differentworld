@@ -1,0 +1,63 @@
+-- Close the person-photos read hole: the `sign-photo` broker becomes the ONLY
+-- path to a signed URL.
+--
+-- ⚠️  DO NOT PUSH THIS UNTIL PHOTOS HAVE BEEN CONFIRMED LOADING ON A DEVICE.
+--     Written 2026-09-03, deliberately unpushed. See "Before you push" below.
+--
+-- ---------------------------------------------------------------------------
+-- What is wrong today
+-- ---------------------------------------------------------------------------
+-- `20260519000005_person_photos_private.sql` made the bucket private and added
+-- `person_photos_read_own_space`, which lets ANY authenticated member of a
+-- space read ANY object whose first path segment is that space id. At the time
+-- that was the whole gate, and it was a big improvement on a public bucket.
+--
+-- Since then the app routes every read through the `sign-photo` Edge Function
+-- (`supabase/functions/sign-photo`), which authorises SERVER-SIDE before it
+-- signs:
+--
+--   STAFF     — must be a member of the photo's space (the path's first segment)
+--   GUARDIAN  — either (a) a subject-pathed object for a subject they guard, or
+--               (b) an attachment-pathed object whose row is tagged
+--               (subject_id / captured_by) to a subject they guard
+--
+-- That is a strictly narrower rule than the policy, and it is the one the app
+-- actually relies on. But the policy is still there, so the narrower rule is
+-- advisory: anyone holding a session can call `createSignedUrl` directly and
+-- get any photo in their space, guardians included. A guardian is a member of
+-- the space; the policy cannot tell them from staff. That is the hole.
+--
+-- ---------------------------------------------------------------------------
+-- What this does
+-- ---------------------------------------------------------------------------
+-- Drops the broad SELECT policy. With it gone, `authenticated` has no direct
+-- read on the bucket at all, and the only actor who can sign a URL is the Edge
+-- Function, which runs with the service role and applies the rules above.
+--
+-- Uploads are untouched — they go through the app’s own write path and their own
+-- policies, and the app stores a bucket-relative PATH on the row, never a URL.
+--
+-- ---------------------------------------------------------------------------
+-- Before you push
+-- ---------------------------------------------------------------------------
+-- The failure mode is loud and total: if the broker is not working for some
+-- path shape, dropping this policy blanks EVERY photo in the app rather than
+-- degrading. So confirm, on a signed-in device, in this order:
+--
+--   1. A child's photo renders on a subject detail screen (staff, subject path).
+--   2. A photo renders in a captures / observations list (staff, attachment path).
+--   3. If a guardian account exists: a photo renders on Family Today.
+--
+-- All three go through `signedPersonPhotoUrlProvider` → `sign-photo`. If they
+-- render TODAY, they will render after this, because the broker is already the
+-- code path — this migration only removes the fallback nobody is using.
+--
+-- If a photo is blank BEFORE you push, the broker is the problem; fix that
+-- first. Pushing on top of a broken broker is what turns a read hole into an
+-- outage.
+--
+-- Rollback is one statement — re-create the policy from
+-- `20260519000005_person_photos_private.sql`.
+-- ---------------------------------------------------------------------------
+
+drop policy if exists "person_photos_read_own_space" on storage.objects;

@@ -772,11 +772,18 @@ dark/light + "white-on-light pill" defects. Read color from
     before, which is how 61 themed files drifted back to the retired
     Jost-era eyebrow (46 uppercase, 25 w800+) while colour was enforced
     three different ways and BRAND.md claimed all five laws were
-    "mechanically enforced". Those 61 are the standing backlog — the
-    guard is diff-scoped and structurally cannot see them. **Use
-    `SectionEyebrow` (`lib/shared/widgets/section_eyebrow.dart`) for the
-    label above a title**; it exists precisely because there was nowhere
-    to import the treatment from, so every screen re-derived it wrong.
+    "mechanically enforced". **All 61 were migrated 2026-09-03**, so the
+    guard now protects a clean tree rather than a documented debt.
+    **Use `SectionEyebrow` (`lib/shared/widgets/section_eyebrow.dart`)
+    for the label above a title**; it exists precisely because there was
+    nowhere to import the treatment from, so every screen re-derived it
+    wrong.
+  - **Four kinds of caps are NOT drift**, and a sweep that changes them
+    is a regression: the wordmark (a logotype), a printed-document
+    facsimile, machine strings (license plates, join codes, channel
+    topics, format acronyms, initials), and the curriculum scripts,
+    whose say-lines are VERBATIM by rule. The first two carry a
+    per-line `// raw-canvas` marker; the rest are non-display code.
   - **The allowlist is FILE-scoped, not folder-scoped.** Whole-folder
     entries (`^lib/features/live_session/`, etc.) used to exempt themed
     surfaces that happened to share a folder with a raw stage — that's
@@ -1002,12 +1009,15 @@ COPPA in the US) will eventually audit.
     attachment-pathed object whose row is tagged (`subject_id` / `captured_by`)
     to a subject they guard. The authorization is a pure function
     (`authorizePhotoAccess`) with a Deno test.
-  - **DEFERRED — bucket lockdown not pushed yet.** The migration that DROPS the
-    old permissive `person_photos_read_own_space` policy is written but **NOT
-    pushed**, gated on an on-device "photos load" check (pushing it before
-    verifying the broker would blank every photo). Until it lands the read-hole
-    is mitigated (signing goes through the broker) but **not closed** — the old
-    policy still allows a direct `createSignedUrl` by any space member.
+  - **DEFERRED — bucket lockdown written, not pushed.**
+    `20260903000001_person_photos_broker_only.sql` drops the permissive
+    `person_photos_read_own_space` policy so the broker is the only read path.
+    Gated on an on-device "photos load" check, because pushing it over a broker
+    that is broken for any path shape blanks every photo at once. Until it
+    lands the hole is mitigated (the app signs through the broker) but **not
+    closed**: the policy still lets ANY space member `createSignedUrl` any
+    photo in that space directly — and a guardian IS a space member, which the
+    policy cannot distinguish from staff.
 - **Background screenshots** on iOS/Android are blocked in release
   builds — Android sets `FLAG_SECURE` in `MainActivity.onCreate`;
   iOS overlays a solid-colour `UIView` over the key window in
@@ -2307,14 +2317,19 @@ that way.
   OAuth URL)
 - **Background photo upload + thumbnail generation** — when we wire
   observations
-- **`sign-photo` bucket lockdown** — the migration that DROPS the permissive
-  `person_photos_read_own_space` policy (so the `sign-photo` broker is the ONLY
-  read path) is written but NOT pushed, gated on an on-device "photos still
-  load" check. See the Photos bullet under Privacy & security.
-- **`20260622000002_trip_location.sql`** (`trip_logistics` coords / pin columns
-  for the field-trip run sheet) — written but NOT pushed (Supabase pooler
-  timeout 544; retry when reachable). Local schema changed → device
-  clean-reinstall needed once it lands. See the block-run-sheet gotcha.
+- **`sign-photo` bucket lockdown** — `20260903000001_person_photos_broker_only.sql`.
+  Until 2026-09-03 this entry said the migration was "written but not pushed";
+  it had in fact never been written. It exists now, and is deliberately NOT
+  pushed: the gate is a **signed-in on-device check** that photos still render
+  on three path shapes (subject, attachment, family), which the file spells out.
+  The failure mode is total rather than graceful — a broker that is broken for
+  any shape blanks every photo the moment the fallback policy goes — so the
+  check is the whole safety margin. Rollback is one statement.
+- ~~`20260622000002_trip_location.sql`~~ — **APPLIED.** This entry claimed it
+  was blocked on a pooler timeout; verified 2026-09-03 by probing the column
+  (`GET /rest/v1/trip_logistics?select=destination_lat` → 200) and by
+  `supabase migration list --linked`, which shows every migration on disk
+  applied. The trip pin writes sync. Nothing is pending here.
 
 ## Interaction invariants — input surfaces
 
