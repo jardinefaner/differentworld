@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/conductor.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/world_cast_game.dart';
@@ -20,6 +20,7 @@ import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +30,19 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 /// cast model"). The authority: it picks what to present (the launcher),
 /// drives it (the controls), and switches it at will. Everything here stays on
 /// the phone — only the chosen game + its state ride the wire to the Receiver.
+///
+/// **It is THEMED, because it is a remote and not a stage.** It spent a long
+/// time on the raw-canvas allowlist, painted near-black with white text and
+/// its own palette, under a comment in `cast_screen` calling it "a projection
+/// stage (the TV)". Nothing here is ever on a TV: the sentence above says so,
+/// and the Receiver is the thing the room looks at. The effect was that
+/// tapping "This is my remote" dropped you out of a warm cream app into a
+/// black one — the same screen, the same hand, a different product.
+///
+/// The one genuinely raw region is [_Driving]'s preview, which mirrors what
+/// the TV is showing and keeps the game's own `vibe.surface`. That is the
+/// boundary docs/THEME_ADHERENCE.md draws: the stage is raw, the controls
+/// around it are not.
 class CastCockpit extends ConsumerStatefulWidget {
   const CastCockpit({
     required this.code,
@@ -118,7 +132,6 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     final text = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF14151D),
       builder: (_) => const _ConductSheet(),
     );
     if (text == null || text.trim().isEmpty) return;
@@ -179,6 +192,25 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     // journey isn't set up → the banner falls back to a "check the code" hint.
     final world = ref.watch(currentWorldProvider);
 
+    return PopScope(
+      // Driving a game, back returns to the launcher — the same thing the
+      // Switch button does. Without this the pop fell through to CastScreen,
+      // which sent you to the LOBBY: a setup screen asking "which device is
+      // this one?" while you are actively casting from this one.
+      canPop: def == null || _showLauncher,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(() => _showLauncher = true);
+      },
+      child: _body(context, snap, def, world),
+    );
+  }
+
+  Widget _body(
+    BuildContext context,
+    CastSnapshot snap,
+    GameDefinition<dynamic>? def,
+    CurriculumWorld? world,
+  ) {
     return Column(
       children: [
         _CockpitHeader(
@@ -253,15 +285,15 @@ class _CastErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withValues(alpha: 0.14),
+        color: Theme.of(context).colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.45)),
+        border: Border.all(color: Theme.of(context).colorScheme.error),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
-            color: Colors.redAccent,
+            color: Theme.of(context).colorScheme.error,
             size: 22,
           ),
           const SizedBox(width: 10),
@@ -272,7 +304,9 @@ class _CastErrorBanner extends StatelessWidget {
                         'instead?'
                   : "Can't reach the screen. Check the join code on the "
                         'other device.',
-              style: const TextStyle(color: Colors.white, fontSize: 13),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onErrorContainer,
+              ),
             ),
           ),
           if (canSolo) ...[
@@ -280,8 +314,8 @@ class _CastErrorBanner extends StatelessWidget {
             FilledButton(
               onPressed: onSolo,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF0C0D14),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
                 visualDensity: VisualDensity.compact,
               ),
               child: const Text('Show here'),
@@ -289,7 +323,11 @@ class _CastErrorBanner extends StatelessWidget {
           ],
           IconButton(
             tooltip: 'Dismiss',
-            icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+            icon: Icon(
+              Icons.close,
+              color: Theme.of(context).colorScheme.onErrorContainer,
+              size: 20,
+            ),
             onPressed: onDismiss,
           ),
         ],
@@ -345,7 +383,7 @@ class _Launcher extends StatelessWidget {
             icon: Icons.ads_click,
             title: 'Conduct',
             subtitle: 'Cast text, tap a word',
-            color: const Color(0xFF2A6B7A),
+            color: ActivityPalette.teal,
             onTap: onConduct!,
           ),
         // Now & Next — today's schedule on the screen, advanced from the phone.
@@ -354,7 +392,7 @@ class _Launcher extends StatelessWidget {
             icon: Icons.view_agenda_outlined,
             title: 'Now & Next',
             subtitle: "Today's schedule",
-            color: const Color(0xFF4C7A5C),
+            color: ActivityPalette.green,
             onTap: onNowNext!,
           ),
         // Visual Timer — a countdown on the screen, driven from the phone. Casts
@@ -363,7 +401,7 @@ class _Launcher extends StatelessWidget {
           icon: Icons.timer_outlined,
           title: 'Timer',
           subtitle: 'A countdown on the screen',
-          color: const Color(0xFF50708A),
+          color: ActivityPalette.blue,
           onTap: () => onPick(const TimerGame()),
         ),
         // Only content-bank games — roster/schedule-seeded ones (Now & Next,
@@ -385,6 +423,10 @@ class _Launcher extends StatelessWidget {
 }
 
 /// A non-game launcher tile (the Conductor, future presentables).
+///
+/// Delegates to [AccentCardTile] — the same tile the activity library draws —
+/// so "what can I put on the screen" and "what can we do together" are
+/// recognisably the same list of things, rather than one warm and one black.
 class _SimpleTile extends StatelessWidget {
   const _SimpleTile({
     required this.icon,
@@ -402,36 +444,12 @@ class _SimpleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return AccentCardTile(
       color: color,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: Colors.white, size: 28),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      ),
+      icon: icon,
+      title: title,
+      tagline: subtitle,
+      onTap: onTap,
     );
   }
 }
@@ -467,19 +485,14 @@ class _ConductSheetState extends State<_ConductSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Conduct',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            Text('Conduct', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Paste lyrics or type a sentence — one line per line. Tap a word '
               'on the screen to spotlight it.',
-              style: TextStyle(color: Colors.white60, fontSize: 13),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -487,12 +500,14 @@ class _ConductSheetState extends State<_ConductSheet> {
               autofocus: true,
               minLines: 3,
               maxLines: 8,
-              style: const TextStyle(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyLarge,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Twinkle twinkle little star…',
-                hintStyle: TextStyle(color: Colors.white30),
-                border: OutlineInputBorder(),
+                hintStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 14),
@@ -516,40 +531,12 @@ class _WorldTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return AccentCardTile(
       color: world.color,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(world.emoji, style: const TextStyle(fontSize: 28)),
-              const Spacer(),
-              Text(
-                'Week ${world.week}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              Text(
-                world.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Tap to cast',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      ),
+      emoji: world.emoji,
+      title: world.name,
+      tagline: 'Week ${world.week} · tap to cast',
+      onTap: onTap,
     );
   }
 }
@@ -562,36 +549,15 @@ class _LauncherTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    // The game's own accent, tinted rather than filled — the same tile the
+    // activity library draws, so the deck reads as one deck wherever it is
+    // listed.
+    return AccentCardTile(
       color: def.vibe.accent,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.cast, color: Colors.white, size: 28),
-              const Spacer(),
-              Text(
-                def.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Tap to cast',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      ),
+      icon: Icons.cast,
+      title: def.title,
+      tagline: 'Tap to cast',
+      onTap: onTap,
     );
   }
 }
@@ -635,7 +601,7 @@ class _SwitchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.04),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -682,10 +648,16 @@ class _CockpitHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final app = theme.extension<AppColors>();
+    // Status reads from the theme's semantic roles, so it stays legible on
+    // the warm light surface as well as the dark one. The neon *Accent
+    // variants only ever worked on near-black.
     final (label, color) = switch (status) {
-      LiveStatus.live => ('Live', Colors.greenAccent),
-      LiveStatus.connecting => ('Connecting…', Colors.amberAccent),
-      LiveStatus.error => ('Offline', Colors.redAccent),
+      LiveStatus.live => ('Live', app?.growth ?? scheme.primary),
+      LiveStatus.connecting => ('Connecting…', scheme.tertiary),
+      LiveStatus.error => ('Offline', scheme.error),
     };
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
@@ -699,11 +671,7 @@ class _CockpitHeader extends StatelessWidget {
                   casting == null
                       ? 'Pick something to cast'
                       : 'Casting · $casting',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                  style: theme.textTheme.titleMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Row(
@@ -727,15 +695,14 @@ class _CockpitHeader extends StatelessWidget {
                                   '${peers == 1 ? 'screen' : 'screens'}'
                             : '$label · your code $code — add a screen',
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
                     ),
                     if (peers > 0) ...[
                       const SizedBox(width: 8),
-                      const Icon(Icons.tv, color: Colors.white38, size: 14),
+                      Icon(Icons.tv, color: scheme.onSurfaceVariant, size: 14),
                     ],
                   ],
                 ),
@@ -744,22 +711,19 @@ class _CockpitHeader extends StatelessWidget {
           ),
           TextButton.icon(
             onPressed: onStop,
-            icon: const Icon(
-              Icons.stop_circle_outlined,
-              color: Colors.redAccent,
-            ),
-            label: const Text(
-              'Stop',
-              style: TextStyle(color: Colors.redAccent),
-            ),
+            icon: Icon(Icons.stop_circle_outlined, color: scheme.error),
+            label: Text('Stop', style: TextStyle(color: scheme.error)),
           ),
           TextButton.icon(
             onPressed: onLeave,
-            icon: const Icon(Icons.close, color: Colors.white70),
+            icon: Icon(Icons.close, color: scheme.onSurfaceVariant),
             // "Leave" MINIMIZES — the cast persists in castSessionProvider and
             // the chrome pill keeps showing the code on every screen. Only
             // "Stop" ends the session.
-            label: const Text('Leave', style: TextStyle(color: Colors.white70)),
+            label: Text(
+              'Leave',
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
           ),
         ],
       ),
