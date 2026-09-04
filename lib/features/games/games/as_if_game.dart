@@ -109,7 +109,6 @@ class AsIfGame extends GameDefinition<AsIfState> {
     final theme = Theme.of(context);
     return GameStage.frame(
       context,
-      eyebrow: 'Say it…',
       hero: GameStage.hero(context, '“${s.line}”'),
       body: Column(
         mainAxisSize: MainAxisSize.min,

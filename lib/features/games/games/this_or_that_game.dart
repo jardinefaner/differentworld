@@ -125,9 +125,12 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
     if (s.done) return const _WrapSlide();
     final (a, b) = s.current;
     final theme = Theme.of(context);
+    // No eyebrow. Two options with "or" between them already ARE the
+    // question — a label above them restates the shape of what is on screen,
+    // and it is on screen permanently, which is the definition of a sign on a
+    // wall (CLAUDE.md, the half-second rule).
     return GameStage.frame(
       context,
-      eyebrow: 'This, or that?',
       hero: _Choice(text: a, accent: vibe.accent),
       body: Column(
         mainAxisSize: MainAxisSize.min,

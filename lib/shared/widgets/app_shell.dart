@@ -526,11 +526,20 @@ class _AppShellState extends ConsumerState<AppShell> {
         // Claude Code session (read via scripts/read_dev_flags.sh). Gated on
         // kDebugMode so it never ships; hidden in kid mode like the rest.
         if (kDebugMode && !inKidMode)
-          const Positioned(
-            key: ValueKey('shell-dev-flag'),
+          Positioned(
+            key: const ValueKey('shell-dev-flag'),
             right: 12,
-            bottom: ShellMetrics.bottomOmniboxHeight + 12,
-            child: DevFlagButton(),
+            // TOP, under the chrome pills — NOT bottom-right. The bottom is
+            // where the thumb lives and where every screen puts its primary
+            // repeated action, so a debug affordance parked there covered
+            // real controls: Shuffle on the Memory board, Next on a game's
+            // control bar. A dev tool does not get to sit on the one control
+            // a staffer presses over and over.
+            top:
+                MediaQuery.paddingOf(context).top +
+                ShellMetrics.topChromeHeight +
+                8,
+            child: const DevFlagButton(),
           ),
       ],
     );
