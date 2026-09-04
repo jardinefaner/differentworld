@@ -96,6 +96,19 @@ class GameScaffold<S> extends StatelessWidget {
                   final revealLabel = def.revealLabel(
                     revealed: wire['r'] == true,
                   );
+                  // The stage is the instrument (memory, reveal, what's
+                  // missing): the game owns the whole single-device shape, so
+                  // there is no second copy of the board to tap and no
+                  // control bar to leave room for. Checked FIRST — a game
+                  // that offers this also has a buildControls remote, which
+                  // is for the cast cockpit, not for here.
+                  final live = def.buildLiveStage(
+                    context,
+                    state,
+                    controller.send,
+                  );
+                  if (live != null) return SafeArea(child: live);
+
                   // Full control override (poll, timer, …): one layout — the
                   // stage fills, the game's own controls sit in the bar.
                   final custom = def.buildControls(
@@ -410,4 +423,34 @@ class _CustomControlBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The themed strip a live stage puts its verbs on.
+///
+/// The stage itself is a RAW canvas — a projection surface, hardcoded dark by
+/// docs/THEME_ADHERENCE.md. Its CONTROLS are not: a control region inside an
+/// immersive surface is themed even though the stage around it is not, and
+/// painting buttons straight onto the dark stage is the boundary bug that doc
+/// names. It also just fails to read — an outlined button on near-black is a
+/// rumour.
+///
+/// So a [GameDefinition.buildLiveStage] ends with this: the board takes every
+/// pixel above it, the verbs sit on `surfaceContainerHighest` below, and the
+/// SafeArea keeps them off the home indicator.
+class GameVerbBar extends StatelessWidget {
+  const GameVerbBar({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    child: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: child,
+      ),
+    ),
+  );
 }

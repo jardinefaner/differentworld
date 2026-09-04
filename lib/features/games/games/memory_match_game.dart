@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:flutter/material.dart';
 
 /// Memory / Match (docs/CARD_GAMES.md) — the classic concentration game over
@@ -236,6 +237,61 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
     );
   }
 
+  /// One board, and you touch it. The stage already draws the cards at a size
+  /// a room can read; making them answer is strictly better than redrawing
+  /// them at 15pt somewhere else for the thumb.
+  ///
+  /// [buildControls] below is untouched — that remote is for the cast
+  /// cockpit, where the display genuinely lives on another device.
+  @override
+  Widget? buildLiveStage(
+    BuildContext context,
+    MemoryState s,
+    void Function(GameIntent intent, [Map<String, dynamic> args]) send,
+  ) {
+    if (s.cards.isEmpty) return null; // nothing to tap — use the plain stage
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              children: [
+                Text(
+                  s.done ? 'You found them all!' : 'Find the matching pairs',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${s.pairsFound} / ${s.pairsTotal} pairs',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _MemoryBoard(
+                    state: s,
+                    accent: vibe.accent,
+                    onPick: (i) => send(GameIntent.pick, {'cell': i}),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        GameVerbBar(
+          child: _MemoryVerbs(state: s, send: send),
+        ),
+      ],
+    );
+  }
+
   // The teacher's remote: a compact tappable mirror of the board + Shuffle.
   @override
   Widget? buildControls(
@@ -248,7 +304,15 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
 /// The big read-only board (the stage / cast view). Fractional rows so it can't
 /// RenderFlex-overflow.
 class _MemoryBoard extends StatelessWidget {
-  const _MemoryBoard({required this.state, required this.accent});
+  const _MemoryBoard({
+    required this.state,
+    required this.accent,
+    this.onPick,
+  });
+
+  /// Flip the card at this index. Null = the read-only cast view (the TV),
+  /// where a tap must not play a card.
+  final void Function(int index)? onPick;
 
   final MemoryState state;
   final Color accent;
@@ -271,6 +335,9 @@ class _MemoryBoard extends StatelessWidget {
                               card: state.cards[row * cols + col],
                               status: state.statusOf(row * cols + col),
                               accent: accent,
+                              onTap: onPick == null
+                                  ? null
+                                  : () => onPick!(row * cols + col),
                             )
                           : const SizedBox.shrink(),
                     ),
@@ -428,28 +495,40 @@ class _MemoryControls extends StatelessWidget {
             },
           ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: state.flipped.isEmpty
-                    ? null
-                    : () => send(GameIntent.back),
-                icon: const Icon(Icons.undo),
-                label: const Text('Flip back'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () => send(GameIntent.reset),
-                icon: Icon(state.done ? Icons.replay : Icons.shuffle),
-                label: Text(state.done ? 'Play again' : 'Shuffle'),
-              ),
-            ),
-          ],
-        ),
+        _MemoryVerbs(state: state, send: send),
       ],
     );
   }
+}
+
+/// Flip back + Shuffle — the two things that are NOT a card.
+///
+/// Shared by the cast remote and the live stage so the pair can't drift into
+/// two spellings of the same verb.
+class _MemoryVerbs extends StatelessWidget {
+  const _MemoryVerbs({required this.state, required this.send});
+
+  final MemoryState state;
+  final void Function(GameIntent intent, [Map<String, dynamic> args]) send;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: OutlinedButton.icon(
+          onPressed: state.flipped.isEmpty ? null : () => send(GameIntent.back),
+          icon: const Icon(Icons.undo),
+          label: const Text('Flip back'),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: FilledButton.icon(
+          onPressed: () => send(GameIntent.reset),
+          icon: Icon(state.done ? Icons.replay : Icons.shuffle),
+          label: Text(state.done ? 'Play again' : 'Shuffle'),
+        ),
+      ),
+    ],
+  );
 }
