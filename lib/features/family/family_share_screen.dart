@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -60,7 +61,10 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Sent to the teacher!')),
+          // Read off `context` here rather than a build-scoped binding: this
+          // is an async handler, and the string is looked up at the moment
+          // the snackbar is shown.
+          SnackBar(content: Text(AppLocalizations.of(context).familyShareSent)),
         );
     } on Object {
       if (!mounted) return;
@@ -74,6 +78,7 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final viewer = ref.watch(viewerProvider);
@@ -93,20 +98,20 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
     return EdgeScaffold(
       body: SafeArea(
         child: childrenAsync.when(
-          loading: () => const LoadingSlot(),
+          loading: LoadingSlot.new,
           // This is the one network-backed family read (PostgREST) — a
           // guardian offline WILL land here, so it needs a retry, and the
           // raw exception never belongs in family-facing copy.
           error: (_, _) => ErrorState(
-            title: 'Couldn’t load your children',
-            detail: 'Check your connection and try again.',
+            title: l10n.commonCouldNotLoadChildren,
+            detail: l10n.commonCheckConnection,
             onRetry: () => ref.invalidate(familyChildrenProvider),
           ),
           data: (children) {
             if (children.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.home_outlined,
-                title: 'No children linked yet',
+                title: l10n.familyNoChildren,
                 message: 'Once your child is linked, you can share from home.',
               );
             }
@@ -115,8 +120,8 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
               children: [
-                const ContentHeader(
-                  title: 'Share from home',
+                ContentHeader(
+                  title: l10n.familyShareFromHome,
                   subtitle: 'Send your child’s teacher a moment from home',
                 ),
                 Container(
@@ -189,7 +194,7 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.send_outlined),
-                  label: const Text('Send to the teacher'),
+                  label: Text(l10n.familyShareSend),
                 ),
               ],
             );

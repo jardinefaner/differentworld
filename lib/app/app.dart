@@ -9,8 +9,10 @@ import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
+import 'package:differentworld/features/settings/locale_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/text_scale_setting.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:differentworld/shared/widgets/orientation_lock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,6 +90,14 @@ class DifferentWorldApp extends ConsumerWidget {
       darkTheme: calmify(outdoor ?? buildDarkTheme(textTheme: fontText)),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      // Localisation. `supportedLocales` is English-only today — adding
+      // Spanish is `lib/l10n/app_es.arb` plus one entry here, because the
+      // pipeline is wired. `localeOverrideProvider` null means "follow the
+      // device", which is the right default: a Spanish-speaking parent should
+      // not have to find a setting to be understood.
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: ref.watch(localeOverrideProvider).value,
       // Wrap every routed page in AppTextScaleApplier — applies the user's
       // in-app text-size override (Settings → Display) on top of the OS
       // dynamic-type setting. Shallow — no rebuilds on route changes.

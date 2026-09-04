@@ -1,0 +1,11 @@
+# Localisation pipeline (docs: flutter gen-l10n).
+#
+# English is the template AND the only shipped locale today. The point of
+# wiring this now is that adding Spanish becomes "write app_es.arb", not
+# "touch every widget in the app" — the cost of retrofitting i18n grows with
+# the codebase, and this one is already 185k lines.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

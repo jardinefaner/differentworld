@@ -12,6 +12,7 @@ import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -43,6 +44,7 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final viewer = ref.watch(viewerProvider);
     final subjectAsync = ref.watch(familySubjectByIdProvider(subjectId));
     // Wave 113: dynamic tab title — the child's name. Falls back
@@ -64,9 +66,9 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
           ),
           data: (subject) {
             if (subject == null) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.help_outline,
-                title: 'Child not found',
+                title: l10n.familyChildNotFound,
                 message: "We couldn't load this profile. Pull to refresh.",
               );
             }
@@ -123,6 +125,7 @@ class _FamilyDetailBody extends ConsumerWidget {
 
   /// The default layout — the single-column feed, ranked loudest-first.
   Widget _flatBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -133,13 +136,13 @@ class _FamilyDetailBody extends ConsumerWidget {
             _header(context),
 
             // -- Today (loudest) -----------------------------------------
-            _SectionLabel(label: 'Today', theme: theme),
+            _SectionLabel(label: l10n.familyToday, theme: theme),
             _TodayCard(subject: subject),
             const SizedBox(height: 8),
             _TodayObservations(subjectId: subject.id),
 
             // -- Messages (next-most-important) --------------------------
-            _SectionLabel(label: 'Messages', theme: theme),
+            _SectionLabel(label: l10n.familyMessages, theme: theme),
             _MessagesCard(subjectId: subject.id),
 
             // -- Incidents (surfaced safety record; hides when none) -----
@@ -147,7 +150,7 @@ class _FamilyDetailBody extends ConsumerWidget {
 
             // -- Recent observations (history) ---------------------------
             const SizedBox(height: 16),
-            _SectionLabel(label: 'This week', theme: theme),
+            _SectionLabel(label: l10n.familyThisWeek, theme: theme),
             _RecentObservations(subjectId: subject.id),
           ],
         );
@@ -169,6 +172,7 @@ class _FamilyDetailBody extends ConsumerWidget {
   /// column (no `Expanded` / `Spacer`; docs/GRID.md). Ordering matches the flat
   /// feed's priority: status pair → today's notes → incidents → this week.
   Widget _bentoBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ResponsivePage(
       children: [
         _header(context),
@@ -182,7 +186,7 @@ class _FamilyDetailBody extends ConsumerWidget {
               id: 'today',
               span: const BentoSpan(phone: 1),
               child: _BentoSection(
-                label: 'Today',
+                label: l10n.familyToday,
                 child: _TodayCard(subject: subject),
               ),
             ),
@@ -190,7 +194,7 @@ class _FamilyDetailBody extends ConsumerWidget {
               id: 'messages',
               span: const BentoSpan(phone: 1),
               child: _BentoSection(
-                label: 'Messages',
+                label: l10n.familyMessages,
                 child: _MessagesCard(subjectId: subject.id),
               ),
             ),
@@ -199,7 +203,7 @@ class _FamilyDetailBody extends ConsumerWidget {
         const SizedBox(height: 12),
         // Narrative feeds stay full-width (text-heavy / photo heroes).
         _BentoSection(
-          label: 'Today’s notes',
+          label: l10n.familyTodaysNotes,
           child: _TodayObservations(subjectId: subject.id),
         ),
         // Self-suppressing safety record — renders nothing when there are no
@@ -208,7 +212,7 @@ class _FamilyDetailBody extends ConsumerWidget {
         _FamilyIncidents(subjectId: subject.id),
         const SizedBox(height: 16),
         _BentoSection(
-          label: 'This week',
+          label: l10n.familyThisWeek,
           child: _RecentObservations(subjectId: subject.id),
         ),
       ],
@@ -418,6 +422,7 @@ class _FamilyIncidents extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     // W2: honor the program kill-switch — if the director turned incident
     // reports off, the family section disappears too.
@@ -434,7 +439,7 @@ class _FamilyIncidents extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
-          _SectionLabel(label: 'Incidents', theme: theme),
+          _SectionLabel(label: l10n.familyIncidents, theme: theme),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
@@ -454,7 +459,7 @@ class _FamilyIncidents extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        _SectionLabel(label: 'Incidents', theme: theme),
+        _SectionLabel(label: l10n.familyIncidents, theme: theme),
         for (final i in incidents) FamilyIncidentCard(incident: i),
       ],
     );

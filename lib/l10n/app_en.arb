@@ -1,0 +1,87 @@
+{
+  "@@locale": "en",
+
+  "@_COMMENT_SCOPE": {
+    "description": "The family lens first. Lauren is the persona i18n exists for — a Spanish-speaking parent for whom every OTHER gap is a missing feature on one screen, and this one is the wrong language on every screen. Her surfaces are also the smallest complete slice of the app, which makes them the right place to prove the pipeline before the staff side follows."
+  },
+
+  "familyToday": "Today",
+  "@familyToday": {
+    "description": "Title of the family home — what happened with my child today."
+  },
+  "familyThisWeek": "This week",
+  "@familyThisWeek": {
+    "description": "Section heading grouping the last seven days."
+  },
+  "familyTodaysNotes": "Today's notes",
+  "@familyTodaysNotes": {
+    "description": "Heading above the observations staff wrote today."
+  },
+  "familySeeAllPhotos": "See all photos",
+  "@familySeeAllPhotos": {
+    "description": "Link from the photo strip into the full folder."
+  },
+  "familyMessages": "Messages",
+  "familyIncidents": "Incidents",
+  "familyRoom": "Room",
+  "@familyRoom": {
+    "description": "Label before the classroom name. UI-side wording for the engine's Group (docs/NAMING.md)."
+  },
+  "familyPickupBy": "Pickup by",
+  "@familyPickupBy": {
+    "description": "Label before the people authorised to collect this child."
+  },
+
+  "familyShareFromHome": "Share from home",
+  "familyShareSubtitle": "Send your child's teacher a moment from home",
+  "familyShareSend": "Send to the teacher",
+  "familyShareSent": "Sent to the teacher!",
+  "@familyShareSent": {
+    "description": "Confirmation after a guardian sends a photo or note. Keep the warmth — this is a parent being told their moment arrived."
+  },
+  "familyShareNotLinked": "Once your child is linked, you can share from home.",
+  "familyShareGuardianOnly": "Sharing from home is for a child's parent or guardian.",
+
+  "familyNoChildren": "No children linked yet",
+  "familyNoConversations": "No conversations yet",
+  "familyChildNotFound": "Child not found",
+  "familyChildStillLoading": "Still loading this child — try again.",
+
+  "commonCouldNotLoad": "Couldn't load",
+  "@commonCouldNotLoad": {
+    "description": "Error-state title. Never says 'error' — see the copy-tone skill."
+  },
+  "commonCheckConnection": "Check your connection and try again.",
+  "commonCouldNotLoadChildren": "Couldn't load your children",
+  "commonRetry": "Try again",
+  "commonSignOut": "Sign out?",
+  "commonNotAvailable": "Not available",
+  "commonDisplayAndTextSize": "Display & text size",
+  "commonForFamilies": "For families",
+
+  "familyWelcomeTitle": "Welcome - {childName}",
+  "@familyWelcomeTitle": {
+    "description": "Header of the printable welcome sheet for a newly enrolled child.",
+    "placeholders": {
+      "childName": {
+        "type": "String",
+        "example": "Amara"
+      }
+    }
+  },
+  "familyChildFullName": "{firstName} {lastName}",
+  "@familyChildFullName": {
+    "description": "A child's display name. Separate so a locale that orders family name first can reorder it without touching Dart.",
+    "placeholders": {
+      "firstName": { "type": "String", "example": "Amara" },
+      "lastName": { "type": "String", "example": "Okafor" }
+    }
+  },
+  "familyPhotoCount": "{count, plural, =0{No photos yet} =1{1 photo} other{{count} photos}}",
+  "@familyPhotoCount": {
+    "description": "Plural — English has two forms, Spanish two, Polish four. Written as ICU plural so a translator supplies the forms their language needs instead of the app assuming two.",
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  }
+}
