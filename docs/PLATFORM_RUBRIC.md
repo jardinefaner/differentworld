@@ -131,7 +131,7 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 
 | Feature | Web | Desktop | Adaptive | Pointer/KB | States | Biggest web/desktop gap |
 |---|:--:|:--:|:--:|:--:|:--:|---|
-| action_words | ✅ | ✅ | ✅ | ⚠️ | ✅ | The app's largest feature (18k lines, 23 screens). Present/cast surfaces are host-driven and touch-only; the reveal/advance games took `PresenterShortcuts` but the world-present + conductor screens did not. |
+| action_words | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-09-03:** the two slideshow-shaped present surfaces (`beat_presenter`, `world_present_screen`) now take → / Enter / ← via `PresenterShortcuts`. A deck shown on the TV is usually driven from a laptop, where the keyboard is the remote — not reaching across to tap the screen the room is watching. |
 | world | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
 | child_world | ✅ | ✅ | ✅ | ✅ | ⚠️ | **Real defect:** `groupsProvider` read as `.value ?? const <Group>[]` (line 70) — a FAILED load renders as an EMPTY world with no error. The documented gotcha, and NOT covered by `swallowed_error_test.dart`. |
 | games | ✅ | ✅ | ✅ | ✅ | ✅ | Stages are raw canvases by design; host controls keyboard-driven. |
@@ -146,7 +146,7 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 
 | Feature | Web | Desktop | Adaptive | Pointer/KB | States | Biggest web/desktop gap |
 |---|:--:|:--:|:--:|:--:|:--:|---|
-| live_board | ✅ | ✅ | ✅ | ✅ | ⚠️ | No error path — a Realtime failure reads as an idle board. Realtime has no in-app health surface at all (the sync sheet covers PowerSync only). |
+| live_board | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-09-03:** it subscribed to `peers` but not `status`, so a wedged Realtime printed the join instructions anyway — walking a teacher to the TV to type a code that could never connect. The three zero-peer states (connecting / live-and-empty / dead) are now three different sentences, pinned by `live_status_copy_test.dart`. The app-wide cast pill also grew an error face, which is Realtime's ONLY on-device health surface. |
 | speak | ✅ | ✅ | ✅ | ⚠️ | — | A presentation surface driven by touch; a laptop presenter has no keys. Raw canvas by design, so no four states. |
 | picker | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
 | rotation | ✅ | ✅ | ✅ | ✅ | ⚠️ | No error state on the rotation reads. |

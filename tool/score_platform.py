@@ -73,12 +73,19 @@ POINTER_KB = re.compile(
 # floor. Absence of async is the difference between "—" and a finding.
 ASYNC = re.compile(
     r"AsyncValue|\.when\(|StreamProvider|FutureProvider|AsyncNotifier|"
-    r"\.value \?\?|hasError"
+    r"\.value \?\?|hasError|LiveStatus"
 )
 
-LOADING = re.compile(r"LoadingSlot|CircularProgressIndicator|Skeleton|\.when\(")
+# A LIVE surface signals state through LiveStatus, not AsyncValue — the board
+# shows "Connecting…" and a dead-channel line without ever touching a
+# `.when(`. Counting only the async vocabulary marked those screens ⚠️ while
+# they handled all three states correctly.
+LOADING = re.compile(
+    r"LoadingSlot|CircularProgressIndicator|Skeleton|\.when\(|"
+    r"LiveStatus\.connecting"
+)
 EMPTY = re.compile(r"EmptyState|isEmpty")
-ERROR = re.compile(r"ErrorState|error:|hasError|onRetry")
+ERROR = re.compile(r"ErrorState|error:|hasError|onRetry|LiveStatus\.error")
 
 
 def dart_files(folder: Path) -> list[Path]:

@@ -4,6 +4,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/present_stage.dart';
+import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
@@ -63,89 +64,96 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen>
     _count = slides.length;
     final accent = world.color;
 
-    return PresentStageScaffold(
-      accent: accent,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _page,
-            itemCount: slides.length,
-            onPageChanged: (i) {
-              if (mounted) setState(() => _index = i);
-            },
-            itemBuilder: (_, i) => Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 40,
-                vertical: 56,
-              ),
-              child: slides[i],
-            ),
-          ),
-          // Tap zones: left third = back, right third = forward. Opaque,
-          // or a childless GestureDetector hit-tests nothing and the tap
-          // falls through to the PageView (tap-to-advance silently dead).
-          Positioned.fill(
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _go(-1),
-                  ),
+    // Same reasoning as the beat deck: a world shown on the TV is usually
+    // driven from a laptop, where the keyboard is the remote
+    // (docs/PLATFORM_RUBRIC.md P3). No-op on touch.
+    return PresenterShortcuts(
+      onNext: () => _go(1),
+      onBack: () => _go(-1),
+      child: PresentStageScaffold(
+        accent: accent,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _page,
+              itemCount: slides.length,
+              onPageChanged: (i) {
+                if (mounted) setState(() => _index = i);
+              },
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 56,
                 ),
-                const Spacer(),
-                Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _go(1),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Close
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white70),
-              onPressed: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          // Fullscreen — top-left, web only (native is already fullscreen
-          // via immersiveSticky). The "view it on the TV" toggle.
-          if (webFullscreenSupported)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: IconButton(
-                tooltip: 'Fullscreen',
-                icon: const Icon(Icons.fullscreen, color: Colors.white70),
-                onPressed: () => unawaited(toggleWebFullscreen()),
+                child: slides[i],
               ),
             ),
-          // Progress dots
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < slides.length; i++)
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: i == _index ? Colors.white : Colors.white24,
+            // Tap zones: left third = back, right third = forward. Opaque,
+            // or a childless GestureDetector hit-tests nothing and the tap
+            // falls through to the PageView (tap-to-advance silently dead).
+            Positioned.fill(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _go(-1),
                     ),
                   ),
-              ],
+                  const Spacer(),
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _go(1),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            // Close
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ),
+            // Fullscreen — top-left, web only (native is already fullscreen
+            // via immersiveSticky). The "view it on the TV" toggle.
+            if (webFullscreenSupported)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: IconButton(
+                  tooltip: 'Fullscreen',
+                  icon: const Icon(Icons.fullscreen, color: Colors.white70),
+                  onPressed: () => unawaited(toggleWebFullscreen()),
+                ),
+              ),
+            // Progress dots
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < slides.length; i++)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == _index ? Colors.white : Colors.white24,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
