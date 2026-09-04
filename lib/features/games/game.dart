@@ -187,6 +187,36 @@ abstract class GameDefinition<S> {
   /// its own per-game wrap / done beat (docs/GAMES.md decision).
   Widget buildStage(BuildContext context, S state);
 
+  /// The stage when it can be TOUCHED — the single-device layout, where the
+  /// display IS the instrument.
+  ///
+  /// A game whose stage has something to point at (a card to flip, a tile to
+  /// reveal) used to draw its board TWICE on a phone: full-size and dead on
+  /// the stage, then again as a row of ~15pt thumbnails in [buildControls] so
+  /// there was something to tap. That split is real when CASTING — the TV
+  /// holds the display and the phone is genuinely a remote — but on one
+  /// device it asks a staffer to look at one board and touch a different one,
+  /// and spends a quarter of the screen doing it. Reveal the Picture even
+  /// grew an A1–D4 coordinate system whose only job was mapping one copy onto
+  /// the other.
+  ///
+  /// Return the COMPLETE single-device layout here, verbs included — the
+  /// scaffold renders it instead of [buildStage] + [buildControls], so the
+  /// game owns the whole shape rather than negotiating with a control bar.
+  ///
+  /// Null (the default, and right for most games) means this stage has
+  /// nothing to tap: a riddle, a prompt, a countdown. Those keep the standard
+  /// stage + control bar.
+  ///
+  /// [buildStage] stays untouched and stays a pure display, because it is
+  /// also what the cast RECEIVER paints on the TV — where a tap must never
+  /// mean "play a card", and already means something else.
+  Widget? buildLiveStage(
+    BuildContext context,
+    S state,
+    void Function(GameIntent intent, [Map<String, dynamic> args]) send,
+  ) => null;
+
   /// Optional FULL override of the control region. When non-null the game
   /// renders its own buttons — a poll's per-option +1, a timer's start/pause,
   /// Charades' Got it/Skip — and calls `send` with the intent (+ optional

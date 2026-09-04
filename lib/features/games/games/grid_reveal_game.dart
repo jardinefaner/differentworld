@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
@@ -256,6 +257,29 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   Widget buildStage(BuildContext context, GridRevealState state) =>
       _GridRevealStage(state: state, accent: vibe.accent);
 
+  /// Tap the picture itself. The A1–D4 labels stay — a room calls out a
+  /// square, which is the game — but they no longer double as the only way to
+  /// map a thumbnail grid onto the real one.
+  @override
+  Widget? buildLiveStage(
+    BuildContext context,
+    GridRevealState state,
+    void Function(GameIntent intent, [Map<String, dynamic> args]) send,
+  ) => Column(
+    children: [
+      Expanded(
+        child: _GridRevealStage(
+          state: state,
+          accent: vibe.accent,
+          onPick: (i) => send(GameIntent.pick, {'cell': i}),
+        ),
+      ),
+      GameVerbBar(
+        child: _GridRevealVerbs(state: state, send: send),
+      ),
+    ],
+  );
+
   // The control region IS the tappable grid (the host taps the called cell) +
   // Reveal all / New — so it overrides the standard bar.
   @override
@@ -269,10 +293,18 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
 /// The big screen: the picture filling a centered grid-shaped box, with opaque
 /// labelled tiles on top; revealed tiles lift to show the picture through.
 class _GridRevealStage extends StatelessWidget {
-  const _GridRevealStage({required this.state, required this.accent});
+  const _GridRevealStage({
+    required this.state,
+    required this.accent,
+    this.onPick,
+  });
 
   final GridRevealState state;
   final Color accent;
+
+  /// Lift the tile at this index — set on the single-device stage, null on
+  /// the cast receiver.
+  final void Function(int index)? onPick;
 
   @override
   Widget build(BuildContext context) {
@@ -325,6 +357,9 @@ class _GridRevealStage extends StatelessWidget {
                                       ),
                                       label: GridRevealState.label(r, c),
                                       accent: accent,
+                                      onTap: onPick == null
+                                          ? null
+                                          : () => onPick!(r * state.cols + c),
                                     ),
                                   ),
                               ],
@@ -362,31 +397,41 @@ class _CoverTile extends StatelessWidget {
     required this.revealed,
     required this.label,
     required this.accent,
+    this.onTap,
   });
 
   final bool revealed;
   final String label;
   final Color accent;
 
+  /// Lift this tile. Null = the TV's cover, which nobody touches.
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedOpacity(
-      opacity: revealed ? 0 : 1,
-      duration: const Duration(milliseconds: 280),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1B26),
-          border: Border.all(color: accent.withValues(alpha: 0.35)),
-        ),
-        alignment: Alignment.center,
-        child: FittedBox(
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.45),
-                fontWeight: FontWeight.w500,
+    return GestureDetector(
+      // A revealed tile is transparent but still occupies its box, so it stays
+      // hit-testable — without this guard, tapping the picture through a
+      // lifted tile re-sends `pick` for a cell that is already open.
+      onTap: revealed ? null : onTap,
+      child: AnimatedOpacity(
+        opacity: revealed ? 0 : 1,
+        duration: const Duration(milliseconds: 280),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1B26),
+            border: Border.all(color: accent.withValues(alpha: 0.35)),
+          ),
+          alignment: Alignment.center,
+          child: FittedBox(
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -435,30 +480,40 @@ class _GridRevealControls extends StatelessWidget {
             ],
           ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => send(GameIntent.reset),
-                icon: const Icon(Icons.replay),
-                label: const Text('New picture'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: state.allRevealed
-                    ? null
-                    : () => send(GameIntent.reveal),
-                icon: const Icon(Icons.visibility),
-                label: const Text('Reveal all'),
-              ),
-            ),
-          ],
-        ),
+        _GridRevealVerbs(state: state, send: send),
       ],
     );
   }
+}
+
+/// New picture + Reveal all — the two things that are not a tile. Shared by
+/// the cast remote and the live stage so they cannot drift apart.
+class _GridRevealVerbs extends StatelessWidget {
+  const _GridRevealVerbs({required this.state, required this.send});
+
+  final GridRevealState state;
+  final void Function(GameIntent intent, [Map<String, dynamic> args]) send;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: OutlinedButton.icon(
+          onPressed: () => send(GameIntent.reset),
+          icon: const Icon(Icons.replay),
+          label: const Text('New picture'),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: FilledButton.icon(
+          onPressed: state.allRevealed ? null : () => send(GameIntent.reveal),
+          icon: const Icon(Icons.visibility),
+          label: const Text('Reveal all'),
+        ),
+      ),
+    ],
+  );
 }
 
 class _CellButton extends StatelessWidget {
