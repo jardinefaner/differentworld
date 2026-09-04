@@ -11,8 +11,7 @@ enum MissionEvidenceKind {
   photo('photo', 'Photo', Icons.photo_camera_outlined),
   count('count', 'A count', Icons.tag),
   note('note', 'A note', Icons.edit_note_outlined),
-  check('check', 'Just a check', Icons.check_circle_outline)
-  ;
+  check('check', 'Just a check', Icons.check_circle_outline);
 
   const MissionEvidenceKind(this.key, this.label, this.icon);
 

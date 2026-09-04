@@ -32,8 +32,7 @@ enum FormFactor {
   phone,
   smallTablet,
   tablet,
-  desktop
-  ;
+  desktop;
 
   static FormFactor fromWidth(double width) {
     if (width < Breakpoints.phone) return FormFactor.phone;

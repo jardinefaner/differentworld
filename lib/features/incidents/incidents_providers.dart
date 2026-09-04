@@ -17,8 +17,7 @@ enum IncidentType {
   behavior('behavior', 'Behavior', Icons.report_gmailerrorred_outlined),
   illness('illness', 'Illness', Icons.sick_outlined),
   medical('medical', 'Allergy / medical', Icons.medical_services_outlined),
-  other('other', 'Other', Icons.more_horiz)
-  ;
+  other('other', 'Other', Icons.more_horiz);
 
   const IncidentType(this.id, this.label, this.icon);
 

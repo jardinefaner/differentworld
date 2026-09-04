@@ -71,7 +71,6 @@ import 'package:differentworld/features/games/games/name_it_screen.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/odd_one_out_screen.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
-import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/groups/room_create_screen.dart';
@@ -346,7 +345,6 @@ void main() {
   _screenPlate('screens/photography_runner', const PhotographyRunnerScreen());
   _screenPlate('screens/pickup_board', const PickupBoardScreen());
   _screenPlate('screens/poster', const PosterScreen());
-  _screenPlate('screens/present_hub', const PresentHubScreen());
   _screenPlate('screens/print_toolkit', const PrintToolkitScreen());
   _screenPlate('screens/program_hub', const ProgramHubScreen());
   _screenPlate('screens/program_settings', const ProgramSettingsScreen());

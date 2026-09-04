@@ -41,8 +41,7 @@ enum SurveyQuestionKind {
 /// Language toggle for survey presentation + TTS playback.
 enum SurveyLanguage {
   en('en', 'English', 'EN'),
-  es('es', 'Español', 'ES')
-  ;
+  es('es', 'Español', 'ES');
 
   const SurveyLanguage(this.code, this.displayName, this.short);
   final String code;

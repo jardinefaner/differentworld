@@ -73,8 +73,7 @@ enum PosterAssembly {
   /// No cutting and no folding: butt the printed pages edge to edge and
   /// the white borders become deliberate gutters, like split-canvas wall
   /// art. Zero precision required.
-  panels
-  ;
+  panels;
 
   /// True for every mode that prints the image inside a white border.
   bool get insetsPages => this != PosterAssembly.tape;

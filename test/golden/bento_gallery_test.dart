@@ -9,7 +9,6 @@ import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
-import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
@@ -147,7 +146,6 @@ void main() {
   // build their bento from the (overridden-empty) program providers — the bento
   // LAYOUT still renders, which is the variant we're locking.
   _bentoScreenPlate('insights', const InsightsScreen());
-  _bentoScreenPlate('present_hub', const PresentHubScreen());
   _bentoScreenPlate('capture_inbox', const CaptureInboxScreen());
   _bentoScreenPlate('observations_index', const ObservationsIndexScreen());
   _bentoScreenPlate('tasks', const TasksScreen());

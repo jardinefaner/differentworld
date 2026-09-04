@@ -145,8 +145,7 @@ enum RoutineKind {
     'outside',
     'recess',
     'play',
-  ])
-  ;
+  ]);
 
   const RoutineKind(this.label, this.keywords);
 

@@ -21,8 +21,7 @@ enum OmniboxCategory {
   place('Location', Icons.place_outlined),
   activity('Activity', Icons.local_activity_outlined),
   vehicle('Vehicle', Icons.directions_bus_outlined),
-  setting('Setting', Icons.settings_outlined)
-  ;
+  setting('Setting', Icons.settings_outlined);
 
   const OmniboxCategory(this.label, this.icon);
 

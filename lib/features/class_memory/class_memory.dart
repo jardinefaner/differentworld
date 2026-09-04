@@ -30,8 +30,7 @@ enum ClassMemorySort {
   discovery('discovery', 'Things we discovered'),
 
   /// A word the room started using and kept.
-  word('word', 'Words we learned')
-  ;
+  word('word', 'Words we learned');
 
   const ClassMemorySort(this.id, this.heading);
 
