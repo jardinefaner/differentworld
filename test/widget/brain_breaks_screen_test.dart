@@ -34,7 +34,7 @@ void main() {
       await tester.pumpWidget(harness());
       await tester.pumpAndSettle();
 
-      expect(find.text('Brain Breaks'), findsOneWidget);
+      expect(find.text('Do something together'), findsOneWidget);
       expect(find.text('Quick Picks'), findsOneWidget);
       expect(find.text('Act It Out'), findsOneWidget);
       expect(find.text('Beat the Letter'), findsOneWidget);
