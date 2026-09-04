@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/game_content/custom_pictures.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -77,11 +78,15 @@ class _PictureLibraryScreenState extends ConsumerState<PictureLibraryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
-              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
-            ),
+            // No in-app camera on web/desktop — offering it there is a dead
+            // button (docs/PLATFORM_RUBRIC.md P1). Gallery still works
+            // everywhere, so the sheet keeps its point.
+            if (isMobileCapturePlatform)
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Take a photo'),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+              ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: const Text('Choose from gallery'),

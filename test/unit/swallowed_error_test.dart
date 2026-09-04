@@ -23,6 +23,10 @@ void main() {
     'lib/features/groups/room_setup_screen.dart',
     'lib/features/class_memory/class_memory_screen.dart',
     'lib/features/launch/launch_screen.dart',
+    // Added 2026-09-03 by the platform-rubric second pass: it read
+    // `groupsProvider` as `.value ?? const []`, so a failed room load silently
+    // removed the role-practice door from a child's own world.
+    'lib/features/child_world/child_world_screen.dart',
   ];
 
   for (final path in guarded) {

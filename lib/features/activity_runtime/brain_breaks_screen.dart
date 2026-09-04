@@ -308,11 +308,11 @@ class BrainBreaksScreen extends ConsumerWidget {
         bottom: false,
         child: ListView(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ContentHeader(
                 title: 'Brain Breaks',
-                subtitle: 'Tap to run · hold to put it on the screen',
+                subtitle: _deckHint,
               ),
             ),
             Padding(
@@ -421,3 +421,9 @@ class _BreakCard {
   final Color color;
   final String route;
 }
+
+/// "Hold" is a phone gesture; on a laptop the same action is a right-click,
+/// and telling a desktop user to hold is telling them to do nothing.
+String get _deckHint => isMobileCapturePlatform
+    ? 'Tap to run · hold to put it on the screen'
+    : 'Tap to run · right-click to put it on the screen';

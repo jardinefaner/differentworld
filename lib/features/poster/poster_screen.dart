@@ -6,6 +6,7 @@ import 'package:differentworld/features/poster/poster_engine.dart';
 import 'package:differentworld/features/poster/poster_models.dart';
 import 'package:differentworld/features/poster/poster_prefs.dart';
 import 'package:differentworld/features/poster/poster_text.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -266,14 +267,18 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                 unawaited(_pick(ImageSource.gallery));
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
-              onTap: () {
-                Navigator.of(sheetContext).pop();
-                unawaited(_pick(ImageSource.camera));
-              },
-            ),
+            // No in-app camera on web/desktop — offering it there is a dead
+            // button (docs/PLATFORM_RUBRIC.md P1). Gallery still works
+            // everywhere, so the sheet keeps its point.
+            if (isMobileCapturePlatform)
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Take a photo'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  unawaited(_pick(ImageSource.camera));
+                },
+              ),
           ],
         ),
       ),

@@ -4,7 +4,25 @@
 phone-first; mobile gets the attention and web/desktop drift. This is the
 scorecard that makes the drift visible and prioritizes the catch-up.
 
-**Status:** first full pass 2026-06-01 (all 33 `lib/features/` folders read).
+**Status:** first pass 2026-06-01 (33 folders). **Second pass 2026-09-03** —
+the app had grown to 67 folders, so HALF of it had never been scored, and the
+rubric had sat still for three months while claiming to be living. All 34
+missing features are scored below.
+
+**The second pass was scripted, not read.** `tool/score_platform.py` scores
+every folder on all five axes from source, so this can be re-run in a minute
+instead of re-read in an afternoon — which is the actual reason the first pass
+went stale. The script produces EVIDENCE, not verdicts: it names the files that
+call a camera plugin, the screens with no width-awareness, the folders with no
+error path. Every ⚠️ below was then checked by hand, and roughly a third of the
+script's first-cut flags were false positives worth understanding (a camera
+call already behind `isMobileCapturePlatform` is the CORRECT shape; a static
+screen with no async data has no four states to design). The script now knows
+both of those.
+
+    python3 tool/score_platform.py --unscored   # anything missing from this doc
+    python3 tool/score_platform.py picker       # one feature, with evidence
+
 Living document — re-score a row when you touch its screens; add the date.
 
 **Catch-up landed 2026-06-01 (P0→P3):** both web crashes fixed (photos,
@@ -106,6 +124,62 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 | vehicles | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-06-01:** scan action mobile-only; scan screen shows a "scan on your phone" fallback off-mobile instead of mounting `mobile_scanner`. List/detail use `ResponsiveGrid`. |
 | photos | ✅ | ✅ | ✅ | ✅ | ⚠️ | **Fixed 2026-06-01:** web compresses on-thread + surfaces failed uploads (no `dart:io` queue crash); camera gated to mobile, web/desktop file-pick. Display web-safe. |
 | voice | ⚠️ | ❌ | — | — | ⚠️ | Mic dictation `kIsWeb`-gated (web needs HTTPS+getUserMedia); no desktop mic story (`record` unverified on macOS/Win/Linux). Service layer, no UI. |
+
+---
+
+### Curriculum, worlds & play — *scored 2026-09-03*
+
+| Feature | Web | Desktop | Adaptive | Pointer/KB | States | Biggest web/desktop gap |
+|---|:--:|:--:|:--:|:--:|:--:|---|
+| action_words | ✅ | ✅ | ✅ | ⚠️ | ✅ | The app's largest feature (18k lines, 23 screens). Present/cast surfaces are host-driven and touch-only; the reveal/advance games took `PresenterShortcuts` but the world-present + conductor screens did not. |
+| world | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| child_world | ✅ | ✅ | ✅ | ✅ | ⚠️ | **Real defect:** `groupsProvider` read as `.value ?? const <Group>[]` (line 70) — a FAILED load renders as an EMPTY world with no error. The documented gotcha, and NOT covered by `swallowed_error_test.dart`. |
+| games | ✅ | ✅ | ✅ | ✅ | ✅ | Stages are raw canvases by design; host controls keyboard-driven. |
+| game_content | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-09-03:** the picture library offered "Take a photo" ungated — a dead button on web/desktop. Now `isMobileCapturePlatform`, gallery still everywhere. |
+| heroes | ✅ | ✅ | ✅ | ✅ | ✅ | Camera correctly gated with a gallery fallback. |
+| spells | ✅ | ✅ | ✅ | ✅ | — | Static content; no async to state. |
+| spellbook | ✅ | ✅ | ✅ | ✅ | ⚠️ | Watches four providers with no loading or error path; low blast radius (a small daily card). |
+| story | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| activity_forge | ✅ | ✅ | ✅ | ✅ | ⚠️ | No loading or error state on the lens/forge reads. |
+
+### Live, present & pick — *scored 2026-09-03*
+
+| Feature | Web | Desktop | Adaptive | Pointer/KB | States | Biggest web/desktop gap |
+|---|:--:|:--:|:--:|:--:|:--:|---|
+| live_board | ✅ | ✅ | ✅ | ✅ | ⚠️ | No error path — a Realtime failure reads as an idle board. Realtime has no in-app health surface at all (the sync sheet covers PowerSync only). |
+| speak | ✅ | ✅ | ✅ | ⚠️ | — | A presentation surface driven by touch; a laptop presenter has no keys. Raw canvas by design, so no four states. |
+| picker | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| rotation | ✅ | ✅ | ✅ | ✅ | ⚠️ | No error state on the rotation reads. |
+
+### Day shape & ops — *scored 2026-09-03*
+
+| Feature | Web | Desktop | Adaptive | Pointer/KB | States | Biggest web/desktop gap |
+|---|:--:|:--:|:--:|:--:|:--:|---|
+| cockpit | ✅ | ✅ | ✅ | ✅ | ✅ | The default home. Solid on all axes. |
+| launch | ✅ | ✅ | ✅ | ✅ | ⚠️ | `/ready` watches six providers with no loading or error path. |
+| readiness | ✅ | ✅ | — | — | — | Providers only; no standalone screen. |
+| daily | ✅ | ✅ | ✅ | ✅ | ⚠️ | Camera correctly gated. No error state on the response reads. |
+| recap | ✅ | ✅ | ⚠️ | ✅ | ✅ | Single column at every width — a composer that would benefit from a wide two-pane. |
+| reflections | ✅ | ✅ | ⚠️ | ✅ | ✅ | Same: single column, no width-awareness. |
+| routines | ✅ | ✅ | ⚠️ | ✅ | ✅ | Same. |
+| rooms | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| rollover | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| class_memory | ✅ | ✅ | ✅ | ✅ | ✅ | Solid (its error state was fixed in an earlier wave). |
+| incidents | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| staff | ✅ | ✅ | ✅ | ✅ | ✅ | Solid. |
+| roles | ✅ | ✅ | ✅ | ✅ | ⚠️ | Role preview: no loading or error path. |
+
+### Tools, meta & dev — *scored 2026-09-03*
+
+| Feature | Web | Desktop | Adaptive | Pointer/KB | States | Biggest web/desktop gap |
+|---|:--:|:--:|:--:|:--:|:--:|---|
+| tools | ✅ | ✅ | ✅ | ✅ | — | Static index; nothing async. |
+| calm | ✅ | ✅ | ✅ | ✅ | — | Static breathing surface. |
+| poster | ✅ | ✅ | ✅ | ✅ | — | **Fixed 2026-09-03:** offered "Take a photo" ungated. Print path is web-safe (`printing` ships a web impl). |
+| entities | ✅ | ✅ | ⚠️ | ✅ | ⚠️ | 1k lines, single column, no error path on the entity reads. |
+| identity | ✅ | ✅ | — | — | — | Providers only. |
+| sandbox | ✅ | ✅ | ⚠️ | ✅ | ⚠️ | **Web fixed 2026-09-03** — it imported `drift/native.dart`, and routing it pulled `dart:ffi` into the web build and broke it entirely. Now a conditional import (`WasmDatabase` on web). Picker is single-column; no empty state (it always has content). |
+| dev_flags | ⚠️ | ✅ | — | — | — | `File` + `getApplicationDocumentsDirectory` with no `kIsWeb` guard, so the flag button throws on a web DEBUG build. Debug-only and never in a release bundle — lowest-priority row in this doc, listed for completeness. |
 
 ---
 
