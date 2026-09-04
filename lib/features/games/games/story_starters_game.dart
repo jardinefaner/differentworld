@@ -151,21 +151,17 @@ class StoryStartersGame extends GameDefinition<StoryState> {
         ),
       );
     }
+    // No eyebrow, no how-to line. "Story 3 / 8" is a position in a deck that
+    // nobody acts on, and "Build it together — one line each, around the
+    // circle" is the rule of a game the room is already playing. Both were
+    // permanent, which means both stopped being read while still taking the
+    // space the story opener wanted.
     return GameStage.frame(
       context,
-      eyebrow: 'Story ${s.index + 1} / ${s.total}',
       hero: GameStage.hero(context, s.starter),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 16),
-          Text(
-            'Build it together — one line each, around the circle.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white38,
-            ),
-          ),
           if (s.hasTwist) ...[
             const SizedBox(height: 24),
             Container(
