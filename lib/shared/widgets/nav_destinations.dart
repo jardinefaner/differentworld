@@ -232,15 +232,14 @@ List<NavDestination> buildNavDestinations(
       group: 'Activities',
       onlyFor: (v) => v.canObserve,
     ),
-    const NavDestination(
-      icon: Icons.co_present_outlined,
-      label: 'Present',
-      route: '/present',
-      group: 'Activities',
-    ),
+    // ONE entry, because there is one screen. Merging the Present and Brain
+    // Breaks hubs left both drawer rows pointing at the same library — two
+    // names for one destination, which is the drawer telling a lie about how
+    // much app there is. `/present` still resolves for deep links and the
+    // omnibox; it just no longer earns a second row.
     const NavDestination(
       icon: Icons.bubble_chart_outlined,
-      label: 'Brain Breaks',
+      label: 'Do together',
       route: '/breaks',
       group: 'Activities',
     ),
