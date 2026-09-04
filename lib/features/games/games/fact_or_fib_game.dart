@@ -51,9 +51,6 @@ class FactOrFibGame extends GameDefinition<FactState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
   @override
-  String? get liveRoute => '/live/fact-or-fib';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) {
     final picked = content.take(ContentKind.factOrFib, 10);
     final items = [

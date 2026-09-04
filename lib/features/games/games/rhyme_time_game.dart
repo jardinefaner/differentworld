@@ -36,9 +36,6 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.teal);
 
   @override
-  String? get liveRoute => '/live/rhyme-time';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) {
     final words = [
       for (final c in (content.take(ContentKind.rhymeWord, 1000)..shuffle()))

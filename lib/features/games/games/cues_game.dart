@@ -50,9 +50,6 @@ class CuesGame extends GameDefinition<CueState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
-  String? get liveRoute => '/live/cues';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {'i': 0};
 
   @override

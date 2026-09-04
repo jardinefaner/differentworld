@@ -74,9 +74,6 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
   @override
-  String? get liveRoute => '/live/math-game';
-
-  @override
   List<GameSetting> get settings => const [
     IntSetting(
       id: 'min',

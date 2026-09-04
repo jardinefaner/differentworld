@@ -56,9 +56,6 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
-  String? get liveRoute => '/live/starts-with';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) {
     final categories = [
       for (final c in content.take(ContentKind.category, 1000))

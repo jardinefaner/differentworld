@@ -61,9 +61,6 @@ class PollGame extends GameDefinition<PollState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);
 
   @override
-  String? get liveRoute => '/live/poll';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'q': 'What should we do next?',
     'options': const ['Outside', 'Art', 'Building', 'Reading'],

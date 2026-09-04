@@ -97,9 +97,6 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
 
   @override
-  String? get liveRoute => '/live/memory-match';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'cards': const <Map<String, dynamic>>[],
     'flipped': const <int>[],

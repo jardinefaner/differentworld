@@ -49,9 +49,6 @@ class PickerGame extends GameDefinition<PickerState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
-  String? get liveRoute => '/live/picker';
-
-  @override
   Map<String, dynamic> initialState(ContentSource content) => {
     'names': const <String>[],
     'i': 0,

@@ -116,9 +116,6 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);
 
-  @override
-  String? get liveRoute => '/live/grid-reveal';
-
   // Customizable grid — A–H × 1–8 like a chessboard, or any size in between.
   // The settings sheet (single-device) collects these; the live/cast default
   // path uses [initialState] (the default size) until the cockpit grows a

@@ -54,9 +54,6 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.teal);
 
   @override
-  String? get liveRoute => '/live/this-or-that';
-
-  @override
   String revealLabel({required bool revealed}) => revealed ? 'Hide' : 'Discuss';
 
   @override
