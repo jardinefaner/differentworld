@@ -279,13 +279,13 @@ class _Hero extends StatelessWidget {
 
 /// The lead actions — Play today + Cast + More. Wraps, so it shrink-wraps in
 /// a bento cell.
-class _ActionsRow extends StatelessWidget {
+class _ActionsRow extends ConsumerWidget {
   const _ActionsRow({required this.world, required this.accent});
   final CurriculumWorld world;
   final Color accent;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -297,7 +297,7 @@ class _ActionsRow extends StatelessWidget {
           label: const Text('Play today'),
         ),
         OutlinedButton.icon(
-          onPressed: () => _castOptions(context, world),
+          onPressed: () => _castOptions(context, ref, world),
           icon: const Icon(Icons.cast),
           label: const Text('Cast to the room'),
         ),
@@ -441,9 +441,14 @@ class _ActivitiesSection extends StatelessWidget {
 }
 
 /// Cast this world to the room — the shared mirror-vs-paired chooser.
-Future<void> _castOptions(BuildContext context, CurriculumWorld world) {
+Future<void> _castOptions(
+  BuildContext context,
+  WidgetRef ref,
+  CurriculumWorld world,
+) {
   return showCastToRoom(
     context,
+    ref,
     mirrorRoute: '/present-world/${world.id}',
     mirrorLabel: 'Mirror to this screen',
     mirrorSubtitle: 'Show it right here — for a projector by cable or AirPlay.',

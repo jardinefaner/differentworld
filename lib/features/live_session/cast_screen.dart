@@ -16,7 +16,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// the **Caster** (this phone): pick what to present, switch it, control it —
 /// all from the phone, while the screen shows only the clean output.
 class CastScreen extends ConsumerStatefulWidget {
-  const CastScreen({super.key, this.presentAsScreen = false});
+  const CastScreen({
+    super.key,
+    this.presentAsScreen = false,
+    this.castOnConnect,
+  });
+
+  /// A game id to put on the screen the moment a cast is live — the intent
+  /// carried from wherever the cast was asked for (`/cast?cast=<id>`).
+  final String? castOnConnect;
 
   /// Open straight into receiver (room-screen) mode on the program channel —
   /// the launch auto-resume + the "make this the room screen" setup pass this.
@@ -58,6 +66,14 @@ class _CastScreenState extends ConsumerState<CastScreen> {
       // Resume a live cast: the chrome pill lands on the controls, not lobby.
       _mode = _Mode.cast;
       _code = snap.code!;
+      _enterImmersiveSoon();
+    } else if (widget.castOnConnect != null && myCode != null) {
+      // Asked to cast something specific with no screen connected yet. Go
+      // straight to the cockpit on my own code: it shows the join code for a
+      // TV and casts the moment one joins, so the answer to "put this on the
+      // screen" is never a menu about casting.
+      _mode = _Mode.cast;
+      _code = myCode;
       _enterImmersiveSoon();
     }
     // else → lobby (the default _mode) to pick "cast" or "be a screen".
@@ -156,6 +172,7 @@ class _CastScreenState extends ConsumerState<CastScreen> {
             child: CastCockpit(
               key: ValueKey('cast-$_code'),
               code: _code,
+              castOnConnect: widget.castOnConnect,
               onLeave: _toLobby,
             ),
           ),
@@ -187,16 +204,39 @@ class _Lobby extends StatefulWidget {
   State<_Lobby> createState() => _LobbyState();
 }
 
+/// The lobby answers ONE question — **which device am I holding?**
+///
+/// That is the only branch here, and the old lobby never asked it. It showed
+/// "Cast to your screens" and "Be a screen" as two equal cards, which reads as
+/// a choice between two things to DO when it is really a choice between two
+/// devices to BE: the phone in your hand wants the first, the TV across the
+/// room wants the second, and a staffer holding a phone has no reason to know
+/// the second card is not addressed to them.
+///
+/// Three smaller repairs come with the framing:
+///
+/// * **The code stopped being trivia.** It appeared three times in three
+///   meanings — as a parenthetical in one subtitle, inside a button label, and
+///   as the thing to type into a field. Here it is stated once, where it is
+///   useful: on the remote, as what your screens follow.
+/// * **The setup order is on screen.** Nothing said the TV has to be told
+///   first. Now the remote path carries the one instruction the phone-holder
+///   needs — and it is short, because signing the TV into the same account
+///   means there is no code to type at all.
+/// * **The code field went away by default.** Following SOMEONE ELSE'S
+///   controller is the rare case (a second staffer's screens, a shared room),
+///   so it is behind a disclosure instead of a text field sitting on a screen
+///   whose job is a binary choice.
 class _LobbyState extends State<_Lobby> {
   final _codeCtrl = TextEditingController();
+  bool _showOther = false;
+  String? _error;
 
   @override
   void dispose() {
     _codeCtrl.dispose();
     super.dispose();
   }
-
-  String? _error;
 
   void _follow() {
     final code = _codeCtrl.text.trim().toUpperCase();
@@ -212,61 +252,99 @@ class _LobbyState extends State<_Lobby> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+    final myCode = widget.myControllerCode;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Align(
+        alignment: Alignment.topLeft,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 460),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cast',
-                textAlign: TextAlign.center,
+                'Cast to a screen',
+                key: const ValueKey('cast-lobby-title'),
                 style: theme.textTheme.headlineSmall,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                'Your phone is the remote; your screens follow your code.',
-                textAlign: TextAlign.center,
+                'Which device is this one?',
+                key: const ValueKey('cast-lobby-sub'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 28),
-              if (widget.myControllerCode case final code?) ...[
-                // Everyday path: cast AS the controller. Every screen following
-                // your code shows what you pick.
-                _BigCard(
-                  icon: Icons.cast,
-                  title: 'Cast to your screens',
+              const SizedBox(height: 22),
+              if (myCode != null) ...[
+                _DeviceCard(
+                  key: const ValueKey('cast-remote'),
+                  icon: Icons.smartphone,
+                  title: 'This is my remote',
                   subtitle:
-                      'Pick a game, world, or activity — it shows on '
-                      'every screen following your code ($code).',
-                  onTap: () => widget.onCast(code),
+                      'Pick what the room sees. Screens following $myCode '
+                      'show it.',
+                  primary: true,
+                  onTap: () => widget.onCast(myCode),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
               ],
-              // One "Be a screen" path: follow your own code by default, or
-              // enter a different controller's. (Merges the old "use this
-              // device as a screen" + "be a screen for a controller" cards,
-              // which both just called onFollow.)
-              _BeAScreenCard(
-                // Stable key: the sibling _BigCard is conditional, so without
-                // a key the TextField's element would shift + drop its IME
-                // (the Column-keys gotcha).
+              _DeviceCard(
                 key: const ValueKey('cast-be-a-screen'),
-                myControllerCode: widget.myControllerCode,
-                codeCtrl: _codeCtrl,
-                error: _error,
-                onFollowMine: widget.myControllerCode == null
-                    ? null
-                    : () => widget.onFollow(widget.myControllerCode!),
-                onFollowEntered: _follow,
-                onClearError: () {
-                  if (_error != null) setState(() => _error = null);
-                },
+                icon: Icons.tv,
+                title: 'This is the screen',
+                subtitle: myCode == null
+                    ? 'Show what a remote picks. Enter its code below.'
+                    : 'For the TV or a spare tablet — it shows what your '
+                          'remote picks.',
+                primary: false,
+                onTap: myCode == null ? null : () => widget.onFollow(myCode),
               ),
+              const SizedBox(height: 18),
+              // The instruction the phone-holder actually needs, and the one
+              // the old lobby left them to guess: the TV has to be told first.
+              // Kept to one sentence because same-account is genuinely this
+              // simple — no code changes hands.
+              if (myCode != null)
+                Text(
+                  key: const ValueKey('cast-setup-hint'),
+                  'Setting up the TV? Open Different World on it, tap Cast, '
+                  'then “This is the screen”. Signed into the same account, '
+                  "there's no code to type.",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+              const SizedBox(height: 6),
+              // Rare path, so it stays folded away: following a DIFFERENT
+              // controller (another staffer's screens, a shared room).
+              if (myCode != null)
+                Align(
+                  key: const ValueKey('cast-other-toggle'),
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => setState(() => _showOther = !_showOther),
+                    child: Text(
+                      _showOther
+                          ? 'Never mind'
+                          : "Following someone else's screens?",
+                    ),
+                  ),
+                ),
+              if (_showOther || myCode == null) ...[
+                const SizedBox(height: 4),
+                _CodeEntry(
+                  key: const ValueKey('cast-code-entry'),
+                  codeCtrl: _codeCtrl,
+                  error: _error,
+                  onSubmit: _follow,
+                  onClearError: () {
+                    if (_error != null) setState(() => _error = null);
+                  },
+                ),
+              ],
             ],
           ),
         ),
@@ -275,35 +353,54 @@ class _LobbyState extends State<_Lobby> {
   }
 }
 
-class _BigCard extends StatelessWidget {
-  const _BigCard({
+/// One of the two devices this could be. Same shape for both so the choice
+/// reads as "which one", not "which is the real button" — only the accent
+/// edge separates the everyday path from the setup one.
+class _DeviceCard extends StatelessWidget {
+  const _DeviceCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.primary,
     required this.onTap,
+    super.key,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback onTap;
+  final bool primary;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final edge = primary ? scheme.primary : scheme.outlineVariant;
     return Material(
       color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(20),
+      // Rounded on the right only — the left edge IS the accent (BRAND.md
+      // law 1), the same shape ActivityPrompt uses.
+      borderRadius: const BorderRadius.only(
+        topRight: Radius.circular(18),
+        bottomRight: Radius.circular(18),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(18),
+          bottomRight: Radius.circular(18),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: edge, width: 4)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 18, 18, 18),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: scheme.primary, size: 32),
-              const SizedBox(width: 16),
+              Icon(icon, color: scheme.primary, size: 28),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,14 +408,15 @@ class _BigCard extends StatelessWidget {
                     Text(
                       title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -332,120 +430,59 @@ class _BigCard extends StatelessWidget {
   }
 }
 
-/// The merged "Be a screen" card — follow your own controller code (a one-tap
-/// button when you have one) OR enter a different controller's code. Replaces
-/// the two near-identical follower cards that both just called onFollow.
-class _BeAScreenCard extends StatelessWidget {
-  const _BeAScreenCard({
+/// Type a controller's code to follow it. Only on screen when it is the
+/// actual task — a device with no controller code of its own, or the folded-
+/// open "someone else's screens" path.
+class _CodeEntry extends StatelessWidget {
+  const _CodeEntry({
     required this.codeCtrl,
     required this.error,
-    required this.onFollowEntered,
+    required this.onSubmit,
     required this.onClearError,
-    this.myControllerCode,
-    this.onFollowMine,
     super.key,
   });
 
-  final String? myControllerCode;
   final TextEditingController codeCtrl;
   final String? error;
-  final VoidCallback? onFollowMine;
-  final VoidCallback onFollowEntered;
+  final VoidCallback onSubmit;
   final VoidCallback onClearError;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.tv, color: scheme.primary, size: 32),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'Be a screen',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Make this TV or tablet follow a controller — your own screens, or '
-            "someone else's code.",
-            style: theme.textTheme.bodySmall?.copyWith(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: codeCtrl,
+          textCapitalization: TextCapitalization.characters,
+          textInputAction: TextInputAction.go,
+          maxLength: 6,
+          onChanged: (_) => onClearError(),
+          onSubmitted: (_) => onSubmit(),
+          style: theme.textTheme.headlineSmall?.copyWith(letterSpacing: 6),
+          decoration: InputDecoration(
+            hintText: 'Code',
+            hintStyle: TextStyle(
               color: scheme.onSurfaceVariant,
+              letterSpacing: 6,
             ),
+            border: const OutlineInputBorder(),
+            counterText: '',
+            errorText: error,
           ),
-          if (onFollowMine != null) ...[
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: onFollowMine,
-                icon: const Icon(Icons.devices_outlined),
-                label: Text('Follow my screens ($myControllerCode)'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: Divider(color: scheme.outlineVariant)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'or another code',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                Expanded(child: Divider(color: scheme.outlineVariant)),
-              ],
-            ),
-          ],
-          const SizedBox(height: 14),
-          TextField(
-            controller: codeCtrl,
-            textCapitalization: TextCapitalization.characters,
-            textInputAction: TextInputAction.go,
-            maxLength: 6,
-            onChanged: (_) => onClearError(),
-            onSubmitted: (_) => onFollowEntered(),
-            style: theme.textTheme.headlineSmall?.copyWith(letterSpacing: 6),
-            decoration: InputDecoration(
-              hintText: 'Code',
-              hintStyle: TextStyle(
-                color: scheme.onSurfaceVariant,
-                letterSpacing: 6,
-              ),
-              border: const OutlineInputBorder(),
-              counterText: '',
-              errorText: error,
-            ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: onSubmit,
+            style: FilledButton.styleFrom(minimumSize: const Size(88, 56)),
+            child: const Text('Follow'),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: onFollowEntered,
-              style: FilledButton.styleFrom(minimumSize: const Size(88, 56)),
-              child: const Text('Follow'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

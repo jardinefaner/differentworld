@@ -412,6 +412,7 @@ class _LeadCard extends ConsumerWidget {
             ? () => unawaited(
                 showCastToRoom(
                   context,
+                  ref,
                   mirrorRoute: '/journey',
                   mirrorSubtitle:
                       'Open the room’s world here, then mirror it to the TV — '

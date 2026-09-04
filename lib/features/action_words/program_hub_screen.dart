@@ -395,12 +395,12 @@ class _JourneyChip extends StatelessWidget {
 }
 
 /// Cast the season — play today, walk the journey, open this week.
-class _CastRow extends StatelessWidget {
+class _CastRow extends ConsumerWidget {
   const _CastRow({required this.accent});
   final Color accent;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -425,6 +425,7 @@ class _CastRow extends StatelessWidget {
           onPressed: () => unawaited(
             showCastToRoom(
               context,
+              ref,
               mirrorRoute: '/journey',
               mirrorSubtitle:
                   'Open the journey here, then mirror to the TV — or set it '

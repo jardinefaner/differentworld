@@ -362,8 +362,8 @@ class BrainBreaksScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: bento
-                    ? _bentoGrid(context, group.cards, tileExtent)
-                    : _accentGrid(context, group.cards, tileExtent),
+                    ? _bentoGrid(context, ref, group.cards, tileExtent)
+                    : _accentGrid(context, ref, group.cards, tileExtent),
               ),
             ],
           ],
@@ -376,6 +376,7 @@ class BrainBreaksScreen extends ConsumerWidget {
   /// text scale via [tileExtent]).
   Widget _accentGrid(
     BuildContext context,
+    WidgetRef ref,
     List<DeckCard> cards,
     double tileExtent,
   ) {
@@ -396,7 +397,7 @@ class BrainBreaksScreen extends ConsumerWidget {
             title: card.title,
             tagline: card.tagline,
             onTap: () => unawaited(context.push(card.route)),
-            onLongPress: () => unawaited(_castCard(context, card)),
+            onLongPress: () => unawaited(_castCard(context, ref, card)),
           ),
       ],
     );
@@ -411,6 +412,7 @@ class BrainBreaksScreen extends ConsumerWidget {
   /// otherwise throw; see docs/GRID.md).
   Widget _bentoGrid(
     BuildContext context,
+    WidgetRef ref,
     List<DeckCard> cards,
     double tileExtent,
   ) {
@@ -430,7 +432,7 @@ class BrainBreaksScreen extends ConsumerWidget {
                 title: card.title,
                 tagline: card.tagline,
                 onTap: () => unawaited(context.push(card.route)),
-                onLongPress: () => unawaited(_castCard(context, card)),
+                onLongPress: () => unawaited(_castCard(context, ref, card)),
               ),
             ),
           ),
@@ -439,15 +441,19 @@ class BrainBreaksScreen extends ConsumerWidget {
   }
 }
 
-/// Put a break on the room's screen. Every card is just a route, and
-/// [showCastToRoom] is route-generic, so all of them are castable with no
-/// per-activity work — the Present hub had this and the Breaks deck did not,
-/// purely because the two hubs grew separately.
-Future<void> _castCard(BuildContext context, DeckCard card) {
+/// Put a break on the room's screen.
+///
+/// Every card is just a route, so the chooser is route-generic and every card
+/// gets one with no per-activity work. What the card does NOT decide is which
+/// mechanism it gets — [showCastToRoom] resolves that from the route, because
+/// only nine of these can reach a paired TV and the other eighteen would
+/// otherwise be offered a screen that stays blank.
+Future<void> _castCard(BuildContext context, WidgetRef ref, DeckCard card) {
   return showCastToRoom(
     context,
+    ref,
     mirrorRoute: card.route,
-    mirrorLabel: 'Put “${card.title}” on the screen',
+    what: card.title,
   );
 }
 

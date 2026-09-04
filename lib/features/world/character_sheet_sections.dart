@@ -498,12 +498,12 @@ class _StageRow extends StatelessWidget {
   }
 }
 
-class _Links extends StatelessWidget {
+class _Links extends ConsumerWidget {
   const _Links({required this.subjectId});
   final String subjectId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -522,6 +522,7 @@ class _Links extends StatelessWidget {
           onPressed: () => unawaited(
             showCastToRoom(
               context,
+              ref,
               mirrorRoute: '/growth/$subjectId',
               mirrorSubtitle:
                   'Open their story here, then mirror to the TV — great at '

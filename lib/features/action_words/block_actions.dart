@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/action_words/block_run.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// The "use right now" tray for a run-of-show slide — the app features a host
@@ -129,7 +130,8 @@ List<BlockActionKind> blockActionKindsFor({
 /// whose context is missing (e.g. no `groupId`) is dropped so the tray never
 /// offers a dead button.
 List<BeatAction> blockActionsFor(
-  BuildContext context, {
+  BuildContext context,
+  WidgetRef ref, {
   required String blockId,
   required String? groupId,
   required String scheduleKind,
@@ -241,8 +243,9 @@ List<BeatAction> blockActionsFor(
           BeatAction(
             icon: Icons.cast,
             label: 'Cast',
-            onTap: () =>
-                unawaited(showCastToRoom(context, mirrorRoute: mirror)),
+            onTap: () => unawaited(
+              showCastToRoom(context, ref, mirrorRoute: mirror),
+            ),
           ),
         );
       case BlockActionKind.tripBoard:

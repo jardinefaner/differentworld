@@ -30,9 +30,23 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 /// drives it (the controls), and switches it at will. Everything here stays on
 /// the phone — only the chosen game + its state ride the wire to the Receiver.
 class CastCockpit extends ConsumerStatefulWidget {
-  const CastCockpit({required this.code, required this.onLeave, super.key});
+  const CastCockpit({
+    required this.code,
+    required this.onLeave,
+    this.castOnConnect,
+    super.key,
+  });
 
   final String code;
+
+  /// A game id to put on the screen as soon as this cockpit is live.
+  ///
+  /// Carries the intent from wherever the cast was ASKED for. "Put Riddle Me
+  /// This on the TV" used to become a bare `/cast`, so the cockpit opened
+  /// having forgotten the riddle and the staffer had to find it again in the
+  /// launcher — the app asking a question it had already been told the answer
+  /// to.
+  final String? castOnConnect;
   final VoidCallback onLeave;
 
   @override
@@ -58,9 +72,17 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     // the "modified provider while the widget tree was building" trap.
     unawaited(
       Future.microtask(() {
-        if (mounted) {
-          ref.read(castSessionProvider.notifier).start(widget.code);
-        }
+        if (!mounted) return;
+        ref.read(castSessionProvider.notifier).start(widget.code);
+        final pending = widget.castOnConnect;
+        if (pending == null) return;
+        final def = gameById(pending);
+        // An id this build doesn't know is not an error worth a dialog — the
+        // cockpit simply opens on its launcher, which is where the staffer
+        // would have gone anyway.
+        if (def == null) return;
+        _cast.castGame(def, _contentNow());
+        setState(() => _showLauncher = false);
       }),
     );
   }

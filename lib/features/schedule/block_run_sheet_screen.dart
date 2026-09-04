@@ -216,7 +216,7 @@ class BlockRunSheetScreen extends ConsumerWidget {
           minutes: photoTurnsMinutes,
         ),
         onCapture: () => _capture(context),
-        onCast: () => _cast(context),
+        onCast: () => _cast(context, ref),
         onReview: () => _openReview(context),
       );
     }
@@ -336,7 +336,7 @@ class BlockRunSheetScreen extends ConsumerWidget {
             icon: Icons.cast,
             title: 'Cast to room',
             subtitle: 'Mirror to the big screen',
-            onTap: () => _cast(context),
+            onTap: () => _cast(context, ref),
           ),
         ),
       // Capture — always: a moment is worth keeping on any block.
@@ -550,10 +550,11 @@ class BlockRunSheetScreen extends ConsumerWidget {
   /// Cast this block to the room — the SAME per-block cast the schedule deck's
   /// slide uses: project the cohort's LIVE block to the TV, which follows the
   /// day on its own.
-  void _cast(BuildContext context) {
+  void _cast(BuildContext context, WidgetRef ref) {
     unawaited(
       showCastToRoom(
         context,
+        ref,
         mirrorRoute: '/present-room/${block.groupId}',
         mirrorLabel: 'Show this block on the screen',
         mirrorSubtitle:

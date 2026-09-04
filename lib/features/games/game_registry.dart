@@ -76,3 +76,39 @@ GameDefinition<dynamic>? gameById(String id) {
   }
   return null;
 }
+
+/// Route segments that do NOT match their game's [GameDefinition.id].
+///
+/// The registry's contract above says the id matches the `/activity/<id>`
+/// segment, and it does — for every game but one. `LetterWordsGame` is
+/// `letter-words` and ships at `/activity/starts-with`, because the ROUTE is
+/// named for what a staffer calls the activity ("Beat the Letter") while the
+/// id is named for the mechanic. Guessing the id from the slug therefore gets
+/// exactly one game wrong, silently, and the thing it gets wrong is whether
+/// the app offers to put it on a TV.
+///
+/// `test/unit/game_route_resolution_test.dart` walks the real router and
+/// asserts every game-backed route resolves, so a future rename can't
+/// reintroduce the gap without failing.
+const Map<String, String> _routeSlugOverrides = <String, String>{
+  'starts-with': 'letter-words',
+};
+
+/// The game a route runs, or null when the route is not a registry game.
+///
+/// This is the question "can a second screen show this?" — a paired receiver
+/// renders `gameById(...)` and nothing else, so a route with no definition
+/// here can only ever be MIRRORED from the device it runs on. Offering a
+/// second screen for one of those promises a thing the app cannot do.
+///
+/// Accepts the three shapes a castable surface is reached by:
+/// `/activity/<slug>` (host-run), `/live/<slug>` (two-device) and
+/// `/present/<slug>` (single-device stage). Anything else returns null.
+GameDefinition<dynamic>? gameForRoute(String route) {
+  final path = route.split('?').first;
+  final parts = path.split('/').where((s) => s.isNotEmpty).toList();
+  if (parts.length != 2) return null;
+  if (!const {'activity', 'live', 'present'}.contains(parts.first)) return null;
+  final slug = parts[1];
+  return gameById(_routeSlugOverrides[slug] ?? slug);
+}

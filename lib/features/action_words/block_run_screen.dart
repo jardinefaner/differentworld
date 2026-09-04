@@ -294,6 +294,7 @@ class _BlockDayDeck extends ConsumerWidget {
           // launchpad"). Host-only: the overview card is never mirrored.
           actionsForBeat: (i) => blockActionsFor(
             context,
+            ref,
             blockId: ordered[i].blockId,
             groupId: group.id,
             scheduleKind: ordered[i].kind,
