@@ -49,7 +49,7 @@ class BrainBreaksScreen extends ConsumerWidget {
       route: '/activity/do-it',
     ),
     const DeckCard(
-      title: 'Quick Picks',
+      title: 'This or That',
       tagline: 'This or that?',
       icon: Icons.swap_horiz,
       color: ActivityPalette.pink,
@@ -57,7 +57,7 @@ class BrainBreaksScreen extends ConsumerWidget {
       route: '/activity/this-or-that',
     ),
     const DeckCard(
-      title: 'Act It Out',
+      title: 'Say It As If',
       tagline: 'Say it as if…',
       icon: Icons.theater_comedy,
       color: ActivityPalette.purple,

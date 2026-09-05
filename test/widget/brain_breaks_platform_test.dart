@@ -43,7 +43,7 @@ void main() {
 
       expect(find.text('Photo Studio'), findsNothing);
       // The rest of the deck is intact.
-      expect(find.text('Quick Picks'), findsOneWidget);
+      expect(find.text('This or That'), findsOneWidget);
       expect(find.text('Role Cards'), findsOneWidget);
     },
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
