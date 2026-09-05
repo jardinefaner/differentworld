@@ -148,11 +148,17 @@ ButtonStyle _baseButtonStyle(TextTheme text) => ButtonStyle(
 ThemeData _themeFrom(ColorScheme scheme, {TextTheme? textTheme}) {
   // The clean "Clean" display style passes AppType.cleanTextTheme(); everyone
   // else gets the default tracked/thin brand ramp.
-  final text = textTheme ?? AppType.textTheme();
+  // Every style gets the bundled colour-emoji face as its LAST fallback, so
+  // an emoji renders identically on Android, iOS, web and desktop — and, on
+  // web, without waiting for CanvasKit to fetch one. Applied here rather than
+  // at ~89 call sites, because emoji show up wherever content does.
+  final text = AppType.withEmoji(textTheme ?? AppType.textTheme());
   final isDark = scheme.brightness == Brightness.dark;
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    // The same fallback for any stray Text that misses the named ramp.
+    fontFamilyFallback: const [AppType.emoji],
     // Global default for any stray `Text` without a named style — read from
     // the ACTIVE body ramp so it follows the font picker (a raw TextStyle with
     // no family, e.g. a game option pill, inherits THIS). Falls back to the

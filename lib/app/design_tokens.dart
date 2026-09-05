@@ -142,6 +142,45 @@ abstract final class AppType {
   /// `Text` speaks it too; named display/headline styles switch to [display].
   static const ui = 'SpaceGrotesk';
 
+  /// The emoji face — **NotoColorEmoji**, bundled (`assets/fonts/`).
+  ///
+  /// Never a primary family; it is the LAST fallback on every style, so a
+  /// glyph the text faces don't carry (an emoji) is drawn from here instead of
+  /// from whatever the host platform happens to own. Before this, Android drew
+  /// its own colour Noto while web had no emoji font and fetched one from
+  /// fonts.gstatic.com on demand — different art, arriving late, and nothing
+  /// at all when a web client was offline.
+  static const emoji = 'NotoColorEmoji';
+
+  /// [base] with [emoji] appended to every style's `fontFamilyFallback`.
+  ///
+  /// One pass over the ramp beats editing ~89 emoji-bearing widgets, and it
+  /// keeps working for surfaces that don't exist yet. Existing fallbacks are
+  /// preserved — emoji goes LAST, so it only ever fills glyphs no text face
+  /// could draw.
+  static TextTheme withEmoji(TextTheme base) {
+    TextStyle? f(TextStyle? s) => s?.copyWith(
+      fontFamilyFallback: [...?s.fontFamilyFallback, emoji],
+    );
+    return base.copyWith(
+      displayLarge: f(base.displayLarge),
+      displayMedium: f(base.displayMedium),
+      displaySmall: f(base.displaySmall),
+      headlineLarge: f(base.headlineLarge),
+      headlineMedium: f(base.headlineMedium),
+      headlineSmall: f(base.headlineSmall),
+      titleLarge: f(base.titleLarge),
+      titleMedium: f(base.titleMedium),
+      titleSmall: f(base.titleSmall),
+      bodyLarge: f(base.bodyLarge),
+      bodyMedium: f(base.bodyMedium),
+      bodySmall: f(base.bodySmall),
+      labelLarge: f(base.labelLarge),
+      labelMedium: f(base.labelMedium),
+      labelSmall: f(base.labelSmall),
+    );
+  }
+
   /// Extra letter-spacing to STACK on a display/eyebrow style when it's
   /// uppercased at the call site — tracked caps need more air than the
   /// mixed-case ramp bakes in. e.g. `style.copyWith(letterSpacing:

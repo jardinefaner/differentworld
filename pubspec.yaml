@@ -217,6 +217,28 @@ flutter:
   # at runtime with `fontVariations` (e.g. FontVariation('wght', 720)).
   # OFL-licensed; license text sits beside each .ttf.
   fonts:
+    # NotoColorEmoji — the app's emoji, on EVERY platform.
+    #
+    # Without it, emoji resolve to whatever each platform happens to have:
+    # Android draws its own colour Noto locally, while CanvasKit on web has
+    # no emoji font at all and must DOWNLOAD one from fonts.gstatic.com the
+    # first time a glyph is needed. So the same screen looked different on
+    # web and mobile, arrived late on a cold web load, and — the part that
+    # actually matters for an offline-first app — could not render emoji at
+    # all on web with no network.
+    #
+    # Wired into the theme's fontFamilyFallback (lib/app/design_tokens.dart),
+    # so all ~89 emoji-bearing surfaces get it without touching a call site.
+    # COLRv1 vector build (4.8 MB): the full set, deliberately NOT subset —
+    # emoji arrive from CONTENT (worlds, blocks, verbs a director types), so
+    # a fixed subset would render tofu for anything outside it, which is
+    # worse than the download it replaces. OFL (NotoColorEmoji-OFL.txt).
+    #
+    # NOT the same file as assets/fonts/NotoEmoji.ttf, which is an 18 KB
+    # MONOCHROME subset used only by the PDF toolkit for printed cards.
+    - family: NotoColorEmoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji.ttf
     # Jost — the app's primary typeface (lib/app/design_tokens.dart). A
     # geometric / Futura-style sans; the whole UI ramp is built from it,
     # with the thin-tracked-uppercase treatment carrying the brand voice.
