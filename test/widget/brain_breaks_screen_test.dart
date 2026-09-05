@@ -35,8 +35,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Do something together'), findsOneWidget);
-      expect(find.text('Quick Picks'), findsOneWidget);
-      expect(find.text('Act It Out'), findsOneWidget);
+      expect(find.text('This or That'), findsOneWidget);
+      expect(find.text('Say It As If'), findsOneWidget);
       expect(find.text('Beat the Letter'), findsOneWidget);
       expect(find.text('Many Paths'), findsOneWidget);
       expect(find.text('Photo Studio'), findsOneWidget);
@@ -50,7 +50,7 @@ void main() {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Quick Picks'));
+    await tester.tap(find.text('This or That'));
     await tester.pumpAndSettle();
 
     expect(find.text('this-or-that-screen'), findsOneWidget);

@@ -50,7 +50,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   String get id => 'letter-words';
 
   @override
-  String get title => 'Letter Words';
+  String get title => 'Beat the Letter';
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);

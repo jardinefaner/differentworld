@@ -334,11 +334,34 @@ class _GridRevealStage extends StatelessWidget {
                     else
                       ColoredBox(
                         color: Colors.white,
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: Text(
-                            state.emoji,
-                            style: const TextStyle(fontSize: 240),
+                        // The glyph, pushed out to the FRAME rather than
+                        // floating in the middle of it.
+                        //
+                        // An emoji drawn as Text sits in a line box that is
+                        // taller than its ink — default leading plus ascent
+                        // and descent the glyph never uses. FittedBox then
+                        // scales that BOX to cover, so the picture ended up
+                        // occupying only the centre of the grid. On a 4x4
+                        // that means B2/C2/B3/C3 carry the whole picture and
+                        // the twelve tiles around them reveal white, so the
+                        // room learns to call the same four squares every
+                        // round and the game stops being a game.
+                        //
+                        // `height: 1.0` drops the leading; the overscale then
+                        // takes the ink (~0.78 of the box) out past the
+                        // edges. Clipped by the ClipRRect above, so the
+                        // overflow is cropped rather than drawn.
+                        child: Transform.scale(
+                          scale: 1.3,
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: Text(
+                              state.emoji,
+                              style: const TextStyle(
+                                fontSize: 240,
+                                height: 1,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -416,7 +439,13 @@ class _CoverTile extends StatelessWidget {
       onTap: revealed ? null : onTap,
       child: AnimatedOpacity(
         opacity: revealed ? 0 : 1,
-        duration: const Duration(milliseconds: 280),
+        // Asymmetric on purpose. LIFTING a tile should ease away (280ms) —
+        // that is the reveal, and it is the nice part. COVERING must be
+        // instant: "New picture" swaps the image and re-covers every tile at
+        // once, and a fade back in means 280ms of the fresh picture showing
+        // through before it is hidden. The whole game is that nobody has seen
+        // it yet.
+        duration: Duration(milliseconds: revealed ? 280 : 0),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF1A1B26),

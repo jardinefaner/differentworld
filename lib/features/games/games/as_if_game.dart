@@ -44,7 +44,7 @@ class AsIfGame extends GameDefinition<AsIfState> {
   String get id => 'as-if';
 
   @override
-  String get title => 'As If';
+  String get title => 'Say It As If';
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
