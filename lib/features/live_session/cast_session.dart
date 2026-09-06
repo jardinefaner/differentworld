@@ -2,6 +2,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
+import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// The **cast** layer (docs/LIVE_SESSIONS.md "the cast model"): an app-level
@@ -105,10 +106,7 @@ class CastSession {
   /// game reads content. Re-casting the same game = "play again" with fresh
   /// content.
   void cast(GameDefinition<dynamic> def, ContentSource content) {
-    _session.reseed(<String, dynamic>{
-      'game': def.id,
-      'state': def.initialState(content),
-    });
+    _session.reseed(_wire(def.id, def.initialState(content)));
   }
 
   /// Put a stage on the screen from an EXPLICIT, pre-built wire-state —
@@ -116,8 +114,30 @@ class CastSession {
   /// slideshow). The caller builds the self-describing state; the game's
   /// pure reducer drives it from there, same as any cast game.
   void castStage(String gameId, Map<String, dynamic> state) {
-    _session.reseed(<String, dynamic>{'game': gameId, 'state': state});
+    _session.reseed(_wire(gameId, state));
   }
+
+  /// The wire: the game id and its state as before, PLUS the stage described
+  /// in shapes when the game can describe itself (stage_shape.dart).
+  ///
+  /// Both ride together on purpose. A receiver that knows the shape draws it
+  /// generically — including for a game shipped after that receiver was
+  /// built — and one that doesn't ignores the extra key and resolves the id
+  /// exactly as it always has. Nothing has to be migrated in lockstep.
+  static Map<String, dynamic> _wire(String id, Map<String, dynamic> state) {
+    final def = gameById(id);
+    final shape = def?.asShape(def.decode(state));
+    return <String, dynamic>{
+      'game': id,
+      'state': state,
+      if (shape != null) 'shape': shape.toWire(),
+    };
+  }
+
+  /// The described stage on the wire, or null when this game doesn't describe
+  /// itself (or the phone predates shapes).
+  static StageShape? shapeOf(Map<String, dynamic> meta) =>
+      StageShape.fromWire((meta['shape'] as Map?)?.cast<String, dynamic>());
 
   /// Clear the screen back to the idle "waiting" card.
   void clearStage() => _session.reseed(idleState);
@@ -158,10 +178,9 @@ class CastSession {
     final gameWire =
         (state['state'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
-    return <String, dynamic>{
-      'game': id,
-      'state': def.reduce(gameWire, mapped, args),
-    };
+    // Re-describe after every intent — the shape IS the state, so a stale
+    // shape would show the room the previous move.
+    return _wire(id, def.reduce(gameWire, mapped, args));
   }
 
   static GameIntent? _intentByName(String name) {

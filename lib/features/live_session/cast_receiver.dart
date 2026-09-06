@@ -1,11 +1,11 @@
 import 'dart:async';
-
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
+import 'package:differentworld/features/live_session/shape_stage_view.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -115,6 +115,7 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
   Widget build(BuildContext context) {
     final gameId = CastSession.gameIdOf(_meta);
     final def = gameId == null ? null : gameById(gameId);
+    final shape = CastSession.shapeOf(_meta);
     // Casting, but the authority (phone) dropped — don't strand the room on a
     // frozen frame with no way out.
     final disconnected = _status == LiveStatus.error && gameId != null;
@@ -124,8 +125,18 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
       body = SafeArea(
         child: _IdleCard(code: widget.code, status: _status),
       );
+    } else if (def == null && shape != null) {
+      // A game this build has never heard of, drawn anyway — because the
+      // phone described the stage instead of only naming it
+      // (stage_shape.dart). This is the whole point of shapes: a screen
+      // mounted on a wall and never updated can still show an activity that
+      // shipped after it.
+      body = ColoredBox(
+        color: const Color(0xFF0C0D14), // raw-canvas: TV stage
+        child: ShapeStageView(shape: shape),
+      );
     } else if (def == null) {
-      // The phone cast a game this build doesn't know (a newer app).
+      // Not describable either — an older phone, or a stage with no shape.
       body = const SafeArea(
         child: _IdleMessage(
           icon: Icons.system_update_alt,

@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
 
 /// The unified game framework (docs/GAMES.md "The Game contract", VISION
@@ -186,6 +187,19 @@ abstract class GameDefinition<S> {
   /// letter, a grid, a word cloud, (later) a map. Owns its hero shape +
   /// its own per-game wrap / done beat (docs/GAMES.md decision).
   Widget buildStage(BuildContext context, S state);
+
+  /// This stage, DESCRIBED rather than drawn (docs — stage_shape.dart).
+  ///
+  /// Null by default, which keeps every existing game on the named-game path
+  /// untouched. A game that returns a shape rides BOTH: the shape goes on the
+  /// wire beside the game id, so a receiver that knows the shape draws it
+  /// generically and one that doesn't falls back to [buildStage] exactly as
+  /// before. That is what makes the migration safe to do one game at a time.
+  ///
+  /// The prize is not fewer lines here — it is that a receiver which has never
+  /// heard of this game can still show it, so a wall-mounted screen nobody
+  /// updates stops being a reason an activity can't reach the room.
+  StageShape? asShape(S state) => null;
 
   /// The stage when it can be TOUCHED — the single-device layout, where the
   /// display IS the instrument.
