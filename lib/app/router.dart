@@ -71,7 +71,10 @@ import 'package:differentworld/features/game_content/picture_library_screen.dart
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
+import 'package:differentworld/features/games/games/battleship_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
+import 'package:differentworld/features/games/games/classic_boards_screen.dart';
+import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
@@ -2142,6 +2145,41 @@ final routerProvider = Provider<GoRouter>((ref) {
                 RoleCardsScreen(subject: state.extra as RoleSubject?),
           ),
           // Riddles — host-run, answer-first; the room guesses, you Reveal.
+          // The classics (docs — grid_game.dart). Bingo and Guess Who draw
+          // faces from the bundled picture deck; Battleship and Connect Four
+          // are their own board and need no content at all.
+          GoRoute(
+            path: '/activity/bingo',
+            builder: (_, _) => const BingoScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/bingo',
+            builder: (_, _) => const BingoScreen(live: true),
+          ),
+          GoRoute(
+            path: '/activity/guess-who',
+            builder: (_, _) => const GuessWhoScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/guess-who',
+            builder: (_, _) => const GuessWhoScreen(live: true),
+          ),
+          GoRoute(
+            path: '/activity/battleship',
+            builder: (_, _) => const GameRunner(def: BattleshipGame()),
+          ),
+          GoRoute(
+            path: '/live/battleship',
+            builder: (_, _) => const LiveGameScreen(def: BattleshipGame()),
+          ),
+          GoRoute(
+            path: '/activity/connect-four',
+            builder: (_, _) => const GameRunner(def: ConnectFourGame()),
+          ),
+          GoRoute(
+            path: '/live/connect-four',
+            builder: (_, _) => const LiveGameScreen(def: ConnectFourGame()),
+          ),
           GoRoute(
             path: '/activity/riddles',
             builder: (_, _) => const GameRunner(def: RiddlesGame()),

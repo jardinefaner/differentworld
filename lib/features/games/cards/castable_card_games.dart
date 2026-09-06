@@ -1,5 +1,8 @@
 import 'package:differentworld/features/games/cards/picture_card.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/games/bingo_game.dart';
+import 'package:differentworld/features/games/games/classic_boards_screen.dart';
+import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/memory_match_game.dart';
 import 'package:differentworld/features/games/games/memory_match_screen.dart';
 import 'package:differentworld/features/games/games/name_it_game.dart';
@@ -26,4 +29,9 @@ final List<(GameDefinition<dynamic>, CardSeed)> castableCardGames =
       (const OddOneOutGame(), oddOneOutSeed),
       (const WhatsMissingGame(), whatsMissingSeed),
       (const MemoryMatchGame(), memoryMatchSeed),
+      // The picture-fed classics. Battleship and Connect Four are absent on
+      // purpose: they need no deck, so the cockpit's content-bank loop
+      // already reaches them.
+      (const BingoGame(), bingoSeed),
+      (const GuessWhoGame(), guessWhoSeed),
     ];
