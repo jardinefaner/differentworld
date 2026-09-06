@@ -2,10 +2,14 @@ import 'package:differentworld/features/action_words/conductor.dart';
 import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
+import 'package:differentworld/features/games/games/battleship_game.dart';
+import 'package:differentworld/features/games/games/bingo_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
+import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
+import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/memory_match_game.dart';
@@ -57,6 +61,14 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   OddOneOutGame(),
   WhatsMissingGame(),
   MemoryMatchGame(),
+  // The classics (docs — grid_game.dart). Board games written SHAPE-FIRST:
+  // each brings its board and its rule, and inherits the renderer, the wire
+  // format and the reducer. They cast to a screen that has never heard of
+  // them, because the wire describes a grid rather than naming them.
+  BingoGame(),
+  BattleshipGame(),
+  GuessWhoGame(),
+  ConnectFourGame(),
   // The Live Board — the phone-as-instrument surface (docs/LIVE_BOARD.md).
   // Cast-only: driven by LiveBoardScreen via castStage, rendered by the
   // existing cast receiver.

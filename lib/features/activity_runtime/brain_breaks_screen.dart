@@ -123,6 +123,40 @@ class BrainBreaksScreen extends ConsumerWidget {
       lane: DeckLane.reset,
       route: '/activity/discussions',
     ),
+    // The classics. Nothing to teach — four generations already know the
+    // rules, which is the same reason the stages stopped narrating themselves.
+    const DeckCard(
+      title: 'Bingo',
+      tagline: 'Cross them off as they’re called',
+      icon: Icons.grid_view_rounded,
+      color: ActivityPalette.amber,
+      lane: DeckLane.screen,
+      route: '/activity/bingo',
+    ),
+    const DeckCard(
+      title: 'Battleship',
+      tagline: 'Call a square — hit or miss',
+      icon: Icons.sailing_outlined,
+      color: ActivityPalette.blue,
+      lane: DeckLane.screen,
+      route: '/activity/battleship',
+    ),
+    const DeckCard(
+      title: 'Guess Who',
+      tagline: 'Ask, rule them out, one left',
+      icon: Icons.face_outlined,
+      color: ActivityPalette.purple,
+      lane: DeckLane.screen,
+      route: '/activity/guess-who',
+    ),
+    const DeckCard(
+      title: 'Connect Four',
+      tagline: 'Four in a line wins',
+      icon: Icons.circle_outlined,
+      color: ActivityPalette.red,
+      lane: DeckLane.screen,
+      route: '/activity/connect-four',
+    ),
     const DeckCard(
       title: 'Riddle Me This',
       tagline: 'Guess the answer',
