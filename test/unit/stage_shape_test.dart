@@ -12,6 +12,8 @@
 
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/memory_match_game.dart';
+import 'package:differentworld/features/games/games/odd_one_out_game.dart';
+import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -104,5 +106,57 @@ void main() {
     )!;
     expect(m.behind, isNull);
     expect(m.cells.first.face, '🍎');
+  });
+
+  test('four different games all come out one shape', () {
+    // The migration's actual claim. Four games with four different rulesets
+    // and four bespoke stages reduce to one vocabulary, which is the only
+    // reason a single renderer on the TV can serve all of them.
+    const odd = OddOneOutGame();
+    const missing = WhatsMissingGame();
+    Map<String, dynamic> card(String e) => {'image': e, 'label': e, 'pair': e};
+
+    final o = odd.asShape(
+      odd.decode({
+        'rounds': [
+          {
+            'cards': [card('a'), card('b'), card('c'), card('d')],
+            'answer': 2,
+          },
+        ],
+        'i': 0,
+        'r': true,
+      }),
+    )!;
+    // Revealed: the three that BELONG go quiet so the odd one is what is left
+    // standing. `done` already meant "resolved, out of play" — no new state
+    // was needed, which is the vocabulary earning its keep.
+    expect(o.cells[2].state, CellState.shown);
+    expect(o.cells[0].state, CellState.done);
+
+    final m = missing.asShape(
+      missing.decode({
+        'rounds': [
+          {
+            'cards': [card('a'), card('b'), card('c'), card('d')],
+            'missing': 1,
+          },
+        ],
+        'i': 0,
+        'phase': 1, // quiz
+      }),
+    )!;
+    // Quiz hides the missing one IN PLACE, so the room can point at the gap.
+    expect(m.cells[1].state, CellState.hidden);
+    expect(m.cells[0].state, CellState.shown);
+    expect(m.title, "What's missing?");
+
+    expect(
+      {o.kind, m.kind, ShapeKind.grid}.length,
+      1,
+      reason:
+          'all four games must speak one shape or the shared renderer is '
+          'a fiction',
+    );
   });
 }

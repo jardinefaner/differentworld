@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
 
 /// Odd One Out (docs/CARD_GAMES.md) — four pictures go up; three share a
@@ -101,6 +102,33 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
     if (!s.revealed) GameIntent.reveal,
     if (s.index < s.rounds.length - 1) GameIntent.next,
   };
+
+  /// The board, described — see stage_shape.dart.
+  ///
+  /// Every card is face UP the whole time; this game is about noticing, not
+  /// uncovering. The reveal dims the three that belong so the odd one is what
+  /// is left standing — `done` reads as "resolved, out of play", which is
+  /// exactly what those three become.
+  @override
+  StageShape? asShape(OddOneOutState s) {
+    final round = s.current;
+    if (round == null) return null;
+    return StageShape(
+      kind: ShapeKind.grid,
+      cols: 2,
+      rows: (round.cards.length / 2).ceil(),
+      note: s.revealed ? round.odd?.label : null,
+      cells: [
+        for (var i = 0; i < round.cards.length; i++)
+          ShapeCell(
+            state: s.revealed && i != round.answer
+                ? CellState.done
+                : CellState.shown,
+            face: round.cards[i].image,
+          ),
+      ],
+    );
+  }
 
   @override
   Widget buildStage(BuildContext context, OddOneOutState s) {

@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
 
 /// What's Missing (docs/CARD_GAMES.md) — a working-memory game over the picture
@@ -147,6 +148,45 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
     if (!s.isLast) GameIntent.next,
     GameIntent.reset,
   };
+
+  /// The board, described — see stage_shape.dart.
+  ///
+  /// This game is a phase machine and the grid vocabulary already carries it
+  /// without a new field: STUDY shows everything, QUIZ hides one IN PLACE (so
+  /// the room can point at the gap), and REVEAL brings it back while dimming
+  /// the rest so the answer is the thing still lit.
+  @override
+  StageShape? asShape(WhatsMissingState s) {
+    final round = s.current;
+    if (round == null) return null;
+    final cols = round.cards.length <= 4 ? 2 : 3;
+    return StageShape(
+      kind: ShapeKind.grid,
+      cols: cols,
+      rows: (round.cards.length / cols).ceil(),
+      // The one instruction that is NEWS rather than a permanent sign: which
+      // half of the game the room is in right now.
+      title: switch (s.phase) {
+        MissingPhase.study => 'Look at them all',
+        MissingPhase.quiz => "What's missing?",
+        MissingPhase.revealed => null,
+      },
+      note: s.phase == MissingPhase.revealed ? round.missing?.label : null,
+      cells: [
+        for (var i = 0; i < round.cards.length; i++)
+          ShapeCell(
+            state: switch (s.phase) {
+              MissingPhase.study => CellState.shown,
+              MissingPhase.quiz =>
+                i == round.missingIndex ? CellState.hidden : CellState.shown,
+              MissingPhase.revealed =>
+                i == round.missingIndex ? CellState.shown : CellState.done,
+            },
+            face: round.cards[i].image,
+          ),
+      ],
+    );
+  }
 
   @override
   Widget buildStage(BuildContext context, WhatsMissingState s) {
