@@ -221,7 +221,7 @@ class _RoleCardFace extends StatelessWidget {
                   );
                 },
               ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             _SectionLabel(label: 'My 3 habits', color: muted),
             const SizedBox(height: 8),
             for (final habit in role.habits)
@@ -231,7 +231,7 @@ class _RoleCardFace extends StatelessWidget {
                 text: 'I $habit',
                 strong: true,
               ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             _SectionLabel(
               label: subject == null
                   ? 'Make these — the proof'
@@ -250,7 +250,7 @@ class _RoleCardFace extends StatelessWidget {
                 subject: subject,
                 roleName: role.name,
               ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => unawaited(
                 presentSlides(

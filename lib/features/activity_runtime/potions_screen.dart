@@ -65,7 +65,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   for (final ing in recipe.ingredients)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -82,7 +82,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(ing.emoji, style: const TextStyle(fontSize: 22)),
                           const SizedBox(width: 12),
                           Expanded(
@@ -94,7 +94,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                         ],
                       ),
                     ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Icon(
@@ -124,7 +124,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             // The magical effect — the reveal.
             Container(
               width: double.infinity,
@@ -154,7 +154,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             // Name it together (creative; happens on paper / out loud).
             Container(
               width: double.infinity,
@@ -169,7 +169,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                     Icons.auto_awesome_outlined,
                     color: scheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Name your potion together…',
@@ -181,7 +181,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _brewAnother,
               style: FilledButton.styleFrom(

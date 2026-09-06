@@ -137,7 +137,7 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             if (pairs.isEmpty)
               _NoPairsNote(hasGroups: groups.isNotEmpty)
             else ...[
@@ -240,7 +240,7 @@ class _NoPairsNote extends StatelessWidget {
             style: theme.textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             hasGroups
                 ? 'Add more children to this room to pair everyone up — or '

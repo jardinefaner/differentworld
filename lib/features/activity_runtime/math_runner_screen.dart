@@ -281,7 +281,7 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
         ],
         if (more.isNotEmpty) ...[
           Text('More paths', style: theme.textTheme.labelLarge),
@@ -373,7 +373,7 @@ class _VerdictChip extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(icon, size: 18, color: color),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Flexible(
           child: Text(
             text,

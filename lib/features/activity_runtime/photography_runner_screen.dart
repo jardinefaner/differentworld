@@ -1461,7 +1461,7 @@ class _PhotographyRunnerScreenState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.pause, color: Colors.white, size: 16),
-                      SizedBox(width: 6),
+                      SizedBox(width: 8),
                       Text(
                         'Paused',
                         style: TextStyle(
@@ -1679,7 +1679,7 @@ class _LockedChip extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.lock, color: Colors.amberAccent, size: 16),
-                SizedBox(width: 6),
+                SizedBox(width: 8),
                 Text(
                   'Locked',
                   style: TextStyle(
@@ -1825,7 +1825,7 @@ class _MissionBanner extends StatelessWidget {
               size: 20,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Flexible(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1906,7 +1906,7 @@ class _TurnBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Icon(Icons.timer_outlined, color: timerColor, size: 18),
               const SizedBox(width: 4),
               Text(
@@ -1983,7 +1983,7 @@ class _TimesUpOverlay extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 const Text(
                   'Give the phone to your teacher.',
                   textAlign: TextAlign.center,
@@ -1993,7 +1993,7 @@ class _TimesUpOverlay extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
                 Text(
                   'Staff: tap the top-left corner 5 times to take the next turn.',
                   textAlign: TextAlign.center,

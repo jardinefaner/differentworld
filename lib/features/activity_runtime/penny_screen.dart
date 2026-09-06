@@ -118,7 +118,7 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
             ),
             const SizedBox(height: 24),
             _PennyPile(count: _count, max: _maxDrawn),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: _addPenny,
               style: FilledButton.styleFrom(
@@ -143,7 +143,7 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                     label: const Text('Undo'),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _count == 0 ? null : _startOver,
@@ -156,7 +156,7 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: _newQuestion,
               style: OutlinedButton.styleFrom(

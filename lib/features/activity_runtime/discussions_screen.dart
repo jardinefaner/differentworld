@@ -312,7 +312,7 @@ class _GroupDiscussionScreenState extends State<GroupDiscussionScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -365,13 +365,13 @@ class _GroupDiscussionScreenState extends State<GroupDiscussionScreen> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 '${_deck.length} ${_deck.length == 1 ? 'prompt' : 'prompts'}, '
                 'together.',
                 style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 32),
               FilledButton.icon(
                 onPressed: _restart,
                 icon: const Icon(Icons.refresh),

@@ -260,7 +260,7 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
                         style: const TextStyle(fontSize: 64),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Flexible(
                       child: Text(
                         text,
@@ -275,7 +275,7 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
@@ -403,7 +403,7 @@ class _DoItEvidenceSheetState extends ConsumerState<_DoItEvidenceSheet> {
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               _PhotoBlock(
                 bytes: _photoBytes,
                 picking: _picking,

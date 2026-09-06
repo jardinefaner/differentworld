@@ -478,7 +478,7 @@ class _ChildReviewStrip extends ConsumerWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: photos.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) => _ReviewPhoto(
                 photo: photos[i],
                 allUrls: photos.map((p) => p.url).toList(growable: false),

@@ -134,7 +134,7 @@ class _FillBlankScreenState extends ConsumerState<FillBlankScreen> {
             height: 1.15,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         TextField(
           controller: _input,
           autofocus: true,
@@ -154,7 +154,7 @@ class _FillBlankScreenState extends ConsumerState<FillBlankScreen> {
           icon: Icon(isLast ? Icons.celebration_outlined : Icons.arrow_forward),
           label: Text(isLast ? 'Reveal it!' : 'Next word'),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         // Progress dots — filled blanks vs remaining.
         Row(
           children: [
@@ -212,7 +212,7 @@ class _FillBlankScreenState extends ConsumerState<FillBlankScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: _another,
           style: FilledButton.styleFrom(
