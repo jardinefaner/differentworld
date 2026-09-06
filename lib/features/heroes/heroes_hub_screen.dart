@@ -71,7 +71,7 @@ class HeroesHubScreen extends ConsumerWidget {
               children: [
                 const ContentHeader(
                   title: 'Heroes',
-                    ),
+                ),
                 const SizedBox(height: 4),
                 if (bento)
                   // Each child is a uniform tile that packs 2-up on a phone

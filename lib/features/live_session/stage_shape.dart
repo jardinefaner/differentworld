@@ -41,14 +41,47 @@ enum CellState {
   done,
 }
 
+/// What a cell MEANS, when its state alone cannot say it.
+///
+/// Deliberately semantic rather than a colour: the wire says "this one was
+/// right", and the receiver decides what right looks like in its theme. A hex
+/// on the wire would hardcode one device's palette into every other device's
+/// screen.
+enum CellTint {
+  /// No claim — the ordinary case.
+  none,
+
+  /// Correct, safe, found.
+  right,
+
+  /// Nearly — the right letter in the wrong place, a near miss.
+  close,
+
+  /// Wrong, or dangerous.
+  wrong,
+
+  /// Lit, active, switched on.
+  live,
+}
+
 /// One position on a [ShapeKind.grid].
 class ShapeCell {
-  const ShapeCell({required this.state, this.label, this.face});
+  const ShapeCell({
+    required this.state,
+    this.label,
+    this.face,
+    this.tint = CellTint.none,
+  });
 
   factory ShapeCell.fromWire(Map<String, dynamic> m) => ShapeCell(
     state: CellState.values[(m['s'] as num?)?.toInt() ?? 0],
     label: m['l'] as String?,
     face: m['f'] as String?,
+    tint:
+        CellTint.values[((m['c'] as num?)?.toInt() ?? 0).clamp(
+          0,
+          CellTint.values.length - 1,
+        )],
   );
 
   final CellState state;
@@ -61,10 +94,14 @@ class ShapeCell {
   /// the board reveals a shared picture behind it instead.
   final String? face;
 
+  /// What the cell means beyond its state — right, close, wrong, live.
+  final CellTint tint;
+
   Map<String, dynamic> toWire() => {
     's': state.index,
     if (label != null) 'l': label,
     if (face != null) 'f': face,
+    if (tint != CellTint.none) 'c': tint.index,
   };
 }
 

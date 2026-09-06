@@ -7,29 +7,46 @@ import 'package:flutter/material.dart';
 
 /// One square on a board.
 class BoardCell {
-  const BoardCell({this.face, this.label, this.state = CellState.hidden});
+  const BoardCell({
+    this.face,
+    this.label,
+    this.state = CellState.hidden,
+    this.tint = CellTint.none,
+  });
 
   factory BoardCell.fromWire(Map<String, dynamic> m) => BoardCell(
     face: m['f'] as String?,
     label: m['l'] as String?,
     state: CellState.values[(m['s'] as num?)?.toInt() ?? 0],
+    tint:
+        CellTint.values[((m['c'] as num?)?.toInt() ?? 0).clamp(
+          0,
+          CellTint.values.length - 1,
+        )],
   );
 
   final String? face;
   final String? label;
   final CellState state;
+  final CellTint tint;
 
-  BoardCell copyWith({String? face, String? label, CellState? state}) =>
-      BoardCell(
-        face: face ?? this.face,
-        label: label ?? this.label,
-        state: state ?? this.state,
-      );
+  BoardCell copyWith({
+    String? face,
+    String? label,
+    CellState? state,
+    CellTint? tint,
+  }) => BoardCell(
+    face: face ?? this.face,
+    label: label ?? this.label,
+    state: state ?? this.state,
+    tint: tint ?? this.tint,
+  );
 
   Map<String, dynamic> toWire() => {
     's': state.index,
     if (face != null) 'f': face,
     if (label != null) 'l': label,
+    if (tint != CellTint.none) 'c': tint.index,
   };
 }
 
@@ -135,6 +152,15 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// The quieter second line — a score, a count, a whose-go.
   String? noteFor(GridBoard b) => null;
 
+  /// The cell as the ROOM should see it, which is not always the cell as the
+  /// board stores it.
+  ///
+  /// Minesweeper keeps each square's neighbour count in its label from the
+  /// moment it deals, because the count is the board — but showing it before
+  /// the square is uncovered hands the room the whole answer. Default is
+  /// identity; a game that hides part of itself overrides.
+  BoardCell present(BoardCell c) => c;
+
   /// A picture underneath the whole board (Reveal-the-Picture style). Null for
   /// every classic here; kept because the shape offers it.
   String? behindFor(GridBoard b) => null;
@@ -211,8 +237,14 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     note: noteFor(state),
     behind: behindFor(state),
     cells: [
-      for (final c in state.cells)
-        ShapeCell(state: c.state, face: c.face, label: c.label),
+      for (final raw in state.cells)
+        if (present(raw) case final c)
+          ShapeCell(
+            state: c.state,
+            face: c.face,
+            label: c.label,
+            tint: c.tint,
+          ),
     ],
   );
 
