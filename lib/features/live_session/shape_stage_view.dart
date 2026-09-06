@@ -1,3 +1,5 @@
+import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
@@ -158,24 +160,42 @@ class _Cell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final app = Theme.of(context).extension<AppColors>();
+    final accent = scheme.primary;
     final down = cell.state == CellState.hidden;
     final done = cell.state == CellState.done;
+    // The tint decides the FACE colour, not the state — a cell can be face-up
+    // and still be telling the room it was wrong.
+    final tinted = switch (cell.tint) {
+      CellTint.none => null,
+      CellTint.right => app?.growth ?? scheme.primary,
+      CellTint.close => scheme.tertiary,
+      CellTint.wrong => scheme.error,
+      CellTint.live => accent,
+    };
     return AnimatedOpacity(
       opacity: done ? 0.45 : 1,
       duration: const Duration(milliseconds: 200),
       child: Container(
         decoration: BoxDecoration(
-          color: down
-              ? const Color(0xFF1A1B26) // raw-canvas: TV stage
-              : Colors.white, // raw-canvas: TV stage
+          color:
+              tinted ??
+              (down
+                  ? const Color(0xFF1A1B26) // raw-canvas: TV stage
+                  : Colors.white), // raw-canvas: TV stage
           border: framed
               ? Border.all(color: accent.withValues(alpha: 0.35))
               : null,
           borderRadius: framed ? null : BorderRadius.circular(10),
         ),
         alignment: Alignment.center,
-        child: down
+        // A label shows whenever there is no FACE to show instead — which
+        // covers all three uses without the renderer knowing the games:
+        // Battleship's coordinate on a covered square, Minesweeper's count on
+        // an uncovered one, Four Corners' room-position on a permanently
+        // face-up board. Keying it to "face down" only served the first.
+        child: cell.face == null
             ? (cell.label == null
                   ? null
                   : FittedBox(
@@ -184,7 +204,9 @@ class _Cell extends StatelessWidget {
                         child: Text(
                           cell.label!,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.45),
+                            color: tinted == null
+                                ? Colors.white.withValues(alpha: 0.45)
+                                : AppColors.onAccent(tinted),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -194,14 +216,44 @@ class _Cell extends StatelessWidget {
                   ? null
                   : Padding(
                       padding: const EdgeInsets.all(6),
-                      child: FittedBox(
-                        child: Text(
-                          cell.face!,
-                          style: const TextStyle(fontSize: 64),
-                        ),
-                      ),
+                      child: _Face(cell.face!),
                     )),
       ),
+    );
+  }
+}
+
+/// What a cell shows face-up.
+///
+/// A face is EITHER an emoji or a picture, and the two need different
+/// widgets. Drawing every face as Text was fine while the only grid games
+/// carried emoji, and shipped Bingo as a board of blank squares the moment
+/// one carried `assets/card_games/everyday/04-banana.png` — a file path
+/// scaled down to nothing. Memory and Guess Who were one cast away from the
+/// same thing.
+///
+/// The test is the path, not the game: a bundled asset renders through
+/// [CardTile] (which degrades to a broken-image glyph rather than throwing),
+/// a Storage path through the signed-URL loader, and anything else is a
+/// glyph.
+class _Face extends StatelessWidget {
+  const _Face(this.ref);
+
+  final String ref;
+
+  @override
+  Widget build(BuildContext context) {
+    if (ref.startsWith('assets/')) return CardTile(image: ref);
+    // A person photo lives in Storage and needs a signed URL; an emoji never
+    // contains a slash, so this cannot swallow one.
+    if (ref.contains('/')) {
+      return PersonPhotoNetwork(
+        urlOrPath: ref,
+        placeholderBuilder: (_) => const ColoredBox(color: Colors.white),
+      );
+    }
+    return FittedBox(
+      child: Text(ref, style: const TextStyle(fontSize: 64)),
     );
   }
 }

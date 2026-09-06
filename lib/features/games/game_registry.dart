@@ -8,11 +8,15 @@ import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/four_corners_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/guess_who_game.dart';
+import 'package:differentworld/features/games/games/hangman_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
+import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/memory_match_game.dart';
+import 'package:differentworld/features/games/games/minesweeper_game.dart';
 import 'package:differentworld/features/games/games/name_it_game.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
 import 'package:differentworld/features/games/games/odd_one_out_game.dart';
@@ -69,6 +73,10 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   BattleshipGame(),
   GuessWhoGame(),
   ConnectFourGame(),
+  LightsOutGame(),
+  MinesweeperGame(),
+  HangmanGame(),
+  FourCornersGame(),
   // The Live Board — the phone-as-instrument surface (docs/LIVE_BOARD.md).
   // Cast-only: driven by LiveBoardScreen via castStage, rendered by the
   // existing cast receiver.
