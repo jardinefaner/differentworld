@@ -102,7 +102,6 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
           children: [
             const ContentHeader(
               title: 'Make a Pattern',
-              subtitle: 'Draw a tile, snap it, watch it repeat',
             ),
             if (tile == null)
               _Intro(
@@ -124,14 +123,14 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               _Controls(
                 config: _config,
                 capturing: _capturing,
                 onConfig: (c) => setState(() => _config = c),
                 onNewTile: _snap,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: _capturing ? null : _makePoster,
                 style: FilledButton.styleFrom(
@@ -183,7 +182,7 @@ class _Intro extends StatelessWidget {
                 Icons.auto_awesome,
                 color: theme.colorScheme.onSecondaryContainer,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 prompt,
                 textAlign: TextAlign.center,
@@ -192,7 +191,7 @@ class _Intro extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: onNewPrompt,
                 icon: const Icon(Icons.casino_outlined, size: 18),
@@ -219,14 +218,6 @@ class _Intro extends StatelessWidget {
           label: Text(
             capturing ? 'Opening…' : 'Snap your tile',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Make your pattern in real life first — then photograph one tile.',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],

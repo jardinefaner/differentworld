@@ -79,7 +79,6 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
           children: [
             const ContentHeader(
               title: 'Letters',
-              subtitle: 'To a friend, from you',
             ),
             if (groups.length > 1)
               Padding(
@@ -142,8 +141,14 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
             if (pairs.isEmpty)
               _NoPairsNote(hasGroups: groups.isNotEmpty)
             else ...[
+              // "everyone writes one, gets one" described the list directly
+              // under it — every name appears once on each side, with an
+              // arrow between. And "Write it on paper" was a permanent
+              // how-to: true forever, which is why it stopped being read.
+              // The paper instruction belongs where it is NEWS — the empty
+              // state, before there is anything else to look at.
               Text(
-                'Today’s pairs · everyone writes one, gets one',
+                'Today’s pairs',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -151,15 +156,6 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
               const SizedBox(height: 8),
               for (final pair in pairs)
                 _PairRow(from: pair.from.firstName, to: pair.to.firstName),
-              const SizedBox(height: 14),
-              Center(
-                child: Text(
-                  'Write it on paper — “To:” and “From:” at the top.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
             ],
           ],
         ),
@@ -238,7 +234,7 @@ class _NoPairsNote extends StatelessWidget {
             size: 48,
             color: scheme.primary.withValues(alpha: 0.7),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'Write to a friend',
             style: theme.textTheme.titleMedium,

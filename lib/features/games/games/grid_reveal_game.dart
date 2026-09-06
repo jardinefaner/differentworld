@@ -4,6 +4,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
 
@@ -256,6 +257,26 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   @override
   Widget buildStage(BuildContext context, GridRevealState state) =>
       _GridRevealStage(state: state, accent: vibe.accent);
+
+  /// The board, described — see stage_shape.dart. Reveal the Picture and
+  /// Memory both come out as a `grid`, which is the whole point: one renderer
+  /// on the TV serves both, and any grid game written later.
+  @override
+  StageShape? asShape(GridRevealState s) => StageShape(
+    kind: ShapeKind.grid,
+    cols: s.cols,
+    rows: s.rows,
+    behind: s.emoji,
+    behindIsImage: s.photo,
+    note: s.done ? s.answer : null,
+    cells: [
+      for (var i = 0; i < s.cols * s.rows; i++)
+        ShapeCell(
+          state: s.isRevealed(i) ? CellState.shown : CellState.hidden,
+          label: GridRevealState.label(i ~/ s.cols, i % s.cols),
+        ),
+    ],
+  );
 
   /// Tap the picture itself. The A1–D4 labels stay — a room calls out a
   /// square, which is the game — but they no longer double as the only way to

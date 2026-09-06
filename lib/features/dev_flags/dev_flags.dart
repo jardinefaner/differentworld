@@ -171,19 +171,28 @@ class DevFlagButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Flag this screen for review',
-      child: Material(
-        color: scheme.secondaryContainer.withValues(alpha: 0.92),
-        shape: const CircleBorder(),
-        elevation: 2,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () => unawaited(_flag(context)),
-          child: Padding(
-            padding: const EdgeInsets.all(11),
-            child: Icon(
-              Icons.outlined_flag,
-              size: 22,
-              color: scheme.onSecondaryContainer,
+      // Small and quiet on purpose. A debug affordance floats over EVERY
+      // screen, so wherever it sits it will sooner or later land on somebody's
+      // content — it covered Shuffle and Next at the bottom, then the Do It
+      // "move" chip once moved to the top. The fix is not a better corner (a
+      // 44dp opaque disc has no safe one) but taking up less room and less
+      // attention: half-opacity until touched, and small enough to read
+      // through.
+      child: Opacity(
+        opacity: 0.55,
+        child: Material(
+          color: scheme.secondaryContainer.withValues(alpha: 0.75),
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => unawaited(_flag(context)),
+            child: Padding(
+              padding: const EdgeInsets.all(7),
+              child: Icon(
+                Icons.outlined_flag,
+                size: 16,
+                color: scheme.onSecondaryContainer,
+              ),
             ),
           ),
         ),

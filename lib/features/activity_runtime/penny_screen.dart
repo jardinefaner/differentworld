@@ -79,7 +79,6 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
           children: [
             const ContentHeader(
               title: 'Penny for a thought',
-              subtitle: 'Share a thought, count a penny',
             ),
             if (question != null && question.isNotEmpty)
               // This is the card that had drifted: a rounded box with no left
@@ -105,9 +104,11 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                     ),
                   ),
                   Text(
-                    _count == 1
-                        ? 'penny · 1 thought'
-                        : 'pennies · $_count thoughts',
+                    // The big number above already IS the count, and in this
+                    // game a penny is a thought — so "0 · pennies · 0
+                    // thoughts" was the same number twice, in two units for
+                    // one idea.
+                    _count == 1 ? 'penny' : 'pennies',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -115,9 +116,9 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _PennyPile(count: _count, max: _maxDrawn),
-            const SizedBox(height: 20),
+            const SizedBox(height: 28),
             FilledButton.icon(
               onPressed: _addPenny,
               style: FilledButton.styleFrom(
@@ -126,7 +127,7 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
               icon: const Icon(Icons.add_circle_outline),
               label: const Text('A penny for a thought'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             // 2 + 1 instead of 3-up: three-across squeezed the labels
             // into mid-word wraps ("New qu/estion") on a phone
             // (gallery-critic 2026-07-05).

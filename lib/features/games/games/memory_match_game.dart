@@ -4,6 +4,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
+import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
 
 /// Memory / Match (docs/CARD_GAMES.md) — the classic concentration game over
@@ -236,6 +237,32 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
       ),
     );
   }
+
+  /// The board, described — see stage_shape.dart.
+  ///
+  /// Memory and Reveal the Picture are different games that happen to be the
+  /// same SHAPE: a board of cells that are down, up, or finished. Memory sets
+  /// a face per cell and no shared picture; Reveal sets a picture behind and
+  /// no faces. Same wire, same renderer on the TV.
+  @override
+  StageShape? asShape(MemoryState s) => StageShape(
+    kind: ShapeKind.grid,
+    cols: MemoryMatchGame.columnsFor(s.cards.length),
+    rows: (s.cards.length / MemoryMatchGame.columnsFor(s.cards.length)).ceil(),
+    title: s.done ? 'You found them all!' : 'Find the matching pairs',
+    note: '${s.pairsFound} / ${s.pairsTotal} pairs',
+    cells: [
+      for (var i = 0; i < s.cards.length; i++)
+        ShapeCell(
+          state: switch (s.statusOf(i)) {
+            MemoryCellStatus.down => CellState.hidden,
+            MemoryCellStatus.up => CellState.shown,
+            MemoryCellStatus.matched => CellState.done,
+          },
+          face: s.cards[i].image,
+        ),
+    ],
+  );
 
   /// One board, and you touch it. The stage already draws the cards at a size
   /// a room can read; making them answer is strictly better than redrawing
