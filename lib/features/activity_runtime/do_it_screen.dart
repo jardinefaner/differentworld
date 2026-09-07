@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/platform.dart';
@@ -186,15 +187,18 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
     final deck = _deckFrom(items);
 
     return EdgeScaffold(
-      body: deck.isEmpty
-          ? const EmptyState(
-              icon: Icons.directions_run_outlined,
-              title: 'Nothing to do yet',
-              message:
-                  'Real-world actions will appear here to try with the '
-                  'room.',
-            )
-          : _present(theme, scheme, deck[_index % deck.length]),
+      body: OursFooter(
+        route: '/activity/do-it',
+        child: deck.isEmpty
+            ? const EmptyState(
+                icon: Icons.directions_run_outlined,
+                title: 'Nothing to do yet',
+                message:
+                    'Real-world actions will appear here to try with the '
+                    'room.',
+              )
+            : _present(theme, scheme, deck[_index % deck.length]),
+      ),
     );
   }
 

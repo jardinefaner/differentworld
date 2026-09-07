@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/shared/widgets/activity_prompt.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -73,99 +74,104 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
         : (questions[_qIndex % questions.length].payload['text'] as String?);
 
     return EdgeScaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-          children: [
-            const ContentHeader(
-              title: 'Penny for a thought',
-            ),
-            if (question != null && question.isNotEmpty)
-              // This is the card that had drifted: a rounded box with no left
-              // edge, where Letters and Potions both had one. Same idea, three
-              // hand-rolled copies, one different.
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: ActivityPrompt(
-                  eyebrow: 'A thought about…',
-                  prompt: question,
-                  tone: ActivityPromptTone.neutral,
+      body: OursFooter(
+        route: '/activity/penny',
+        child: SafeArea(
+          child: ListView(
+            // 24, not 96: OursFooter sits below this list and already clears
+            // the omnibox bar, so the old reservation was counted twice.
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            children: [
+              const ContentHeader(
+                title: 'Penny for a thought',
+              ),
+              if (question != null && question.isNotEmpty)
+                // This is the card that had drifted: a rounded box with no left
+                // edge, where Letters and Potions both had one. Same idea, three
+                // hand-rolled copies, one different.
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: ActivityPrompt(
+                    eyebrow: 'A thought about…',
+                    prompt: question,
+                    tone: ActivityPromptTone.neutral,
+                  ),
+                ),
+              // The count, big — the answer to "how many thoughts?"
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      '$_count',
+                      style: theme.textTheme.displayLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.primary,
+                      ),
+                    ),
+                    Text(
+                      // The big number above already IS the count, and in this
+                      // game a penny is a thought — so "0 · pennies · 0
+                      // thoughts" was the same number twice, in two units for
+                      // one idea.
+                      _count == 1 ? 'penny' : 'pennies',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            // The count, big — the answer to "how many thoughts?"
-            Center(
-              child: Column(
+              const SizedBox(height: 24),
+              _PennyPile(count: _count, max: _maxDrawn),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: _addPenny,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(60),
+                ),
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('A penny for a thought'),
+              ),
+              const SizedBox(height: 16),
+              // 2 + 1 instead of 3-up: three-across squeezed the labels
+              // into mid-word wraps ("New qu/estion") on a phone
+              // (gallery-critic 2026-07-05).
+              Row(
                 children: [
-                  Text(
-                    '$_count',
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: scheme.primary,
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _count == 0 ? null : _undo,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.undo, size: 18),
+                      label: const Text('Undo'),
                     ),
                   ),
-                  Text(
-                    // The big number above already IS the count, and in this
-                    // game a penny is a thought — so "0 · pennies · 0
-                    // thoughts" was the same number twice, in two units for
-                    // one idea.
-                    _count == 1 ? 'penny' : 'pennies',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _count == 0 ? null : _startOver,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.restart_alt, size: 18),
+                      label: const Text('Start over'),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-            _PennyPile(count: _count, max: _maxDrawn),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: _addPenny,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(60),
-              ),
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('A penny for a thought'),
-            ),
-            const SizedBox(height: 16),
-            // 2 + 1 instead of 3-up: three-across squeezed the labels
-            // into mid-word wraps ("New qu/estion") on a phone
-            // (gallery-critic 2026-07-05).
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _count == 0 ? null : _undo,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    icon: const Icon(Icons.undo, size: 18),
-                    label: const Text('Undo'),
-                  ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _newQuestion,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _count == 0 ? null : _startOver,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    icon: const Icon(Icons.restart_alt, size: 18),
-                    label: const Text('Start over'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _newQuestion,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('New question'),
               ),
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('New question'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

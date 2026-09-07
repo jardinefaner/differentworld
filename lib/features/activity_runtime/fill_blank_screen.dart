@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -84,15 +85,18 @@ class _FillBlankScreenState extends ConsumerState<FillBlankScreen> {
     final deck = _deckFrom(items);
 
     return EdgeScaffold(
-      body: deck.isEmpty
-          ? const EmptyState(
-              icon: Icons.edit_note_outlined,
-              title: 'Nothing to fill in yet',
-              message:
-                  'Fill-in-the-blank stories will appear here to play '
-                  'with the room.',
-            )
-          : _body(theme, deck[_deckIndex % deck.length]),
+      body: OursFooter(
+        route: '/activity/fill-blank',
+        child: deck.isEmpty
+            ? const EmptyState(
+                icon: Icons.edit_note_outlined,
+                title: 'Nothing to fill in yet',
+                message:
+                    'Fill-in-the-blank stories will appear here to play '
+                    'with the room.',
+              )
+            : _body(theme, deck[_deckIndex % deck.length]),
+      ),
     );
   }
 

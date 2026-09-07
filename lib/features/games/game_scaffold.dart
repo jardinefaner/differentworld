@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
+import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
@@ -129,6 +130,7 @@ class GameScaffold<S> extends StatelessWidget {
                           children: [
                             Expanded(child: stage),
                             _GameControlBar(
+                              gameId: def.id,
                               wire: wire,
                               done: done,
                               active: active,
@@ -151,6 +153,7 @@ class GameScaffold<S> extends StatelessWidget {
                               // phones.
                               Expanded(child: stage),
                               _GameControlPanel(
+                                gameId: def.id,
                                 wire: wire,
                                 done: done,
                                 active: active,
@@ -183,6 +186,7 @@ int _intOf(Map<String, dynamic> m, String k, int fallback) =>
 /// "i / n".
 class _GameControlBar extends StatelessWidget {
   const _GameControlBar({
+    required this.gameId,
     required this.wire,
     required this.done,
     required this.active,
@@ -190,6 +194,9 @@ class _GameControlBar extends StatelessWidget {
     required this.onIntent,
     required this.onDone,
   });
+
+  /// The game's id — the key the "add ours" door looks up.
+  final String gameId;
 
   final Map<String, dynamic> wire;
   final bool done;
@@ -212,7 +219,19 @@ class _GameControlBar extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
+          // A Wrap, not a Row: at the 200% text floor the status line plus
+          // three intrinsically-sized buttons are wider than the 720dp
+          // breakpoint, and a Row has nowhere to put the excess — it
+          // overflowed by 280dp on the done beat before this changed, which
+          // the gallery never caught because it doesn't render that state at
+          // this width. Wrapping lets the buttons drop to a second run
+          // instead of off the screen; at default scale it lays out
+          // identically to the Row it replaces.
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Text(
                 done ? 'Round complete!' : '${index + 1} / $total',
@@ -220,49 +239,60 @@ class _GameControlBar extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Spacer(),
-              if (!done) ...[
-                IconButton.filledTonal(
-                  onPressed: active.contains(GameIntent.back)
-                      ? () => onIntent(GameIntent.back)
-                      : null,
-                  icon: const Icon(Icons.arrow_back),
-                  tooltip: 'Back',
-                ),
-                const SizedBox(width: 8),
-              ],
-              if (done) ...[
-                OutlinedButton.icon(
-                  onPressed: onDone,
-                  icon: const Icon(Icons.check),
-                  label: const Text('Done'),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  // reset reseeds with fresh content (see LocalGameController).
-                  onPressed: () => onIntent(GameIntent.reset),
-                  icon: const Icon(Icons.replay),
-                  label: const Text('Play again'),
-                ),
-              ] else ...[
-                FilledButton.tonalIcon(
-                  onPressed: active.contains(GameIntent.reveal)
-                      ? () => onIntent(GameIntent.reveal)
-                      : null,
-                  icon: Icon(
-                    revealed ? Icons.visibility_off : Icons.lightbulb_outline,
-                  ),
-                  label: Text(revealLabel),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: active.contains(GameIntent.next)
-                      ? () => onIntent(GameIntent.next)
-                      : null,
-                  icon: const Icon(Icons.arrow_forward),
-                  label: const Text('Next'),
-                ),
-              ],
+              Wrap(
+                key: ValueKey(done ? 'bar-done' : 'bar-playing'),
+                crossAxisAlignment: WrapCrossAlignment.center,
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (!done)
+                    IconButton.filledTonal(
+                      onPressed: active.contains(GameIntent.back)
+                          ? () => onIntent(GameIntent.back)
+                          : null,
+                      icon: const Icon(Icons.arrow_back),
+                      tooltip: 'Back',
+                    ),
+                  if (done) ...[
+                    OutlinedButton.icon(
+                      onPressed: onDone,
+                      icon: const Icon(Icons.check),
+                      label: const Text('Done'),
+                    ),
+                    FilledButton.icon(
+                      // reset reseeds with fresh content (LocalGameController).
+                      onPressed: () => onIntent(GameIntent.reset),
+                      icon: const Icon(Icons.replay),
+                      label: const Text('Play again'),
+                    ),
+                    OursStrip(
+                      key: const ValueKey('ours-strip-bar'),
+                      route: gameId,
+                      compact: true,
+                    ),
+                  ] else ...[
+                    FilledButton.tonalIcon(
+                      onPressed: active.contains(GameIntent.reveal)
+                          ? () => onIntent(GameIntent.reveal)
+                          : null,
+                      icon: Icon(
+                        revealed
+                            ? Icons.visibility_off
+                            : Icons.lightbulb_outline,
+                      ),
+                      label: Text(revealLabel),
+                    ),
+                    FilledButton.icon(
+                      onPressed: active.contains(GameIntent.next)
+                          ? () => onIntent(GameIntent.next)
+                          : null,
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text('Next'),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -274,6 +304,7 @@ class _GameControlBar extends StatelessWidget {
 /// Default phone control panel — big, the phone is the remote.
 class _GameControlPanel extends StatelessWidget {
   const _GameControlPanel({
+    required this.gameId,
     required this.wire,
     required this.done,
     required this.active,
@@ -281,6 +312,9 @@ class _GameControlPanel extends StatelessWidget {
     required this.onIntent,
     required this.onDone,
   });
+
+  /// The game's id — the key the "add ours" door looks up.
+  final String gameId;
 
   final Map<String, dynamic> wire;
   final bool done;
@@ -317,18 +351,15 @@ class _GameControlPanel extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             if (done) ...[
+              // No caption under this: "Play again" already says what it
+              // does, and at the 200% text floor the sentence cost three
+              // lines that the stage above needed (CLAUDE.md, "make it
+              // obvious first" — an instruction always on screen is a sign
+              // on a wall).
               Icon(
                 Icons.celebration_outlined,
                 size: 44,
                 color: theme.colorScheme.primary,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Play again for a fresh round — new questions every time.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -353,6 +384,7 @@ class _GameControlPanel extends StatelessWidget {
                   label: const Text('Done'),
                 ),
               ),
+              OursStrip(key: const ValueKey('ours-strip-panel'), route: gameId),
             ] else ...[
               SizedBox(
                 width: double.infinity,

@@ -480,22 +480,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## GameContent
 **Path**: `lib/features/game_content/`
-**Purpose**: The staff-authored picture library — upload, name, and remove your own photos, and "Reveal the Picture" plays them (single-device + cast).
-**Personas served**: All staff (author the library); the whole room plays the game seeded from it.
+**Purpose**: What a room writes for itself — its own questions, this-or-that pairs, riddles, do-its, charades prompts and the rest, plus the picture library. Everything authored here plays alongside the curated seeds, so the app ships conditions and the room supplies the content (docs/CONDITIONS.md).
+**Personas served**: All staff (author); the whole room plays what they wrote. Maya (a planning-afternoon library); Jordan / Coach Sam (add one from the activity's own end-of-round beat).
 **Discovery surfaces**:
-- Routes: `/games/pictures`
-- Omnibox: yes — "Game pictures" (page category; keywords: pictures, photos, reveal the picture, grid game, upload pictures, custom pictures, game content)
+- Routes: `/library/ours`, `/library/ours/:kind`, `/games/pictures`
+- Omnibox: yes — "Our own" (page), one entry per authorable kind ("Our riddles", "Our pairs", … keywords: the kind's singular/plural/title, "add {one}", "write {one}"), and "Game pictures"
 - Slash: none
 - Drawer: no
-- Settings: yes — "Game pictures" row in the Resources group
-**Capabilities**: None — open to all signed-in members. Space-scoped: any staffer in the space can add / rename / remove its pictures.
-**Data**: [content_items](SCHEMA.md#content_items) (`kind='picture'`, `payload={image,label}` — rides the content bank, no new table). Bytes live in the private `person-photos` bucket (binary-media rule): the row carries only the Storage path, or a `pending:<id>` token while an offline upload waits; renders via signed URLs.
+- Settings: yes — "Our own" and "Game pictures" rows in the Resources group
+**Capabilities**: No capability flag — open to every STAFF member, and deliberately so: a condition only fills if the person in the room may fill it. Space-scoped; any staffer in the space can add / edit / remove. **Guardians are gated at the screen, not just the entry points** (`viewer is GuardianViewer` → `NoAccess` in all three screens, plus the settings row and omnibox entries) — a `GuardianViewer` DOES carry a `spaceId`, so the write would otherwise have succeeded and put a family-authored row in the program's bank; the DAO was never the gate. Pinned by `test/widget/our_content_guardian_gate_test.dart`.
+**Data**: [content_items](SCHEMA.md#content_items) — `space_id` set, `source='staff'`, `fingerprint = id` (so two identical authored rows both survive; a room may repeat itself). One row per item, `payload` the kind's JSON shape. Picture bytes live in the private `person-photos` bucket (binary-media rule); the row carries only the path or a `pending:<id>` token.
 **Surfaces**:
-- *Picture library* — `lib/features/game_content/picture_library_screen.dart`. Camera-or-gallery upload → name → grid of the space's pictures; tap to rename or remove; pending shots show an "uploading…" state.
-- *Model + providers* — `lib/features/game_content/custom_pictures.dart`. `CustomPicture`, `customPicturesProvider` (Drift watch on the bank, newest first), `gridMixEmojiProvider` (per-device toggle: mix the 28 built-in emoji in with the space's pictures; ON by default).
-**Depends on**: Photos (`PhotoService` upload + offline queue, signed-URL render), the content bank (`ContentBankDao`).
-**Consumed by**: the grid-reveal game (`lib/features/games/games/grid_reveal_screen.dart`) — "Reveal the Picture" seeds from the library, single-device + cast.
-**Last verified**: 2026-07-04
+- *Kind schema* — `lib/features/game_content/content_kinds.dart`. `ContentKindSpec` × 15: title, singular/plural, icon, blurb, and the ordered fields. THE declaration every authoring surface is generated from — a new content kind gets a full CRUD door by adding a spec and nothing else.
+- *Library index* — `our_content_library_screen.dart` (`/library/ours`). Every authorable kind with how many this program has written; a failed read shows a cloud-off icon, never a confident "none yet".
+- *Per-kind list* — `our_content_kind_screen.dart` (`/library/ours/:kind`). Add / tap-to-edit / remove with undo (`deleteWithUndo`, restore re-inserts the SAME id).
+- *The form* — `our_content_form_screen.dart`. A page, not a sheet (the modals law); fields, hints and validation all come from the spec; `DismissGuard` on unsaved work.
+- *In-activity door* — `ours_strip.dart`. `activityAuthorKinds` maps 13 activity routes / game ids to their kinds; `OursStrip` renders on the game's end-of-round beat in `game_scaffold.dart` ("40 ready · 2 pairs yours · Add ours"). Suppressed in kid mode — the door leads out of the activity.
+- *Picture library* — `picture_library_screen.dart` (`/games/pictures`). Camera-or-gallery upload → name → grid; pending shots show an "uploading…" state.
+- *Providers + actions* — `our_content.dart` (`ourContentProvider`, `ourContentCountProvider`, `OurContentActions` create/update/delete/restore) and `custom_pictures.dart` (`CustomPicture`, `customPicturesProvider`, `gridMixEmojiProvider`).
+**Depends on**: the content bank (`ContentBankDao`), Photos (upload + offline queue, signed-URL render), Kid mode (the strip's gate).
+**Consumed by**: every content-bank activity — the authored rows merge into `bankedContentProvider` with no game-side code. The grid-reveal game seeds from the picture library specifically; `game_scaffold.dart` hosts the in-activity door for all 41 games.
+**Last verified**: 2026-09-07
 
 ---
 
