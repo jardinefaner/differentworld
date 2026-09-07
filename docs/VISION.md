@@ -45,6 +45,58 @@ Everything below is in service of that.
 
 ---
 
+## The one non-negotiable
+
+> **AI backstage; children, teachers, objects, movement, and conversation
+> frontstage.**
+
+Everything on this page can be argued with. This cannot.
+
+**Frontstage** is what a room sees and does: a child, an adult, a thing
+you can hold, a body that moves, a sentence someone says out loud. That
+is the product. **Backstage** is everything that makes those easier to
+run — including every model, every generator, every clever inference.
+Backstage work is real and welcome. It just never takes the stage.
+
+Concretely, a feature is **backstage** when the model's output reaches an
+adult as a *draft they accept, edit, or throw away*, and the thing the
+room experiences is still a person, an object, or each other. It is
+**frontstage** — and therefore out — when a child's attention lands on
+the machine: a synthetic voice as the one talking, a generated face
+standing in for a real one, an assistant a child converses with, a screen
+that performs where a person or an object should have been.
+
+Three tests, applied in order:
+
+1. **Who is the child looking at?** If the answer is the app rather than
+   a person, an object, or another child, it is frontstage. Out.
+2. **Whose sentence is it?** If a generated sentence is spoken to the
+   room as the room's own, it is frontstage. A draft an adult reads,
+   changes, and says in their own voice is backstage.
+3. **What happens when it's wrong?** Backstage failure is an adult
+   deleting a bad suggestion. Frontstage failure is a child being told
+   something untrue by something they trust. Only the first is
+   recoverable.
+
+Why this is non-negotiable rather than a preference: the whole premise
+above is *making, not consuming* and *becoming, not recording*. A model
+that entertains a child is consumption wearing the costume of creation,
+and a model that narrates a child is recording wearing the costume of
+becoming. Putting AI frontstage does not dilute the product — it inverts
+it, and we would be building the thing we said we were the alternative
+to.
+
+The existing code already argues this way and should keep doing so.
+`nudge.dart` recomposes a day with "no LLM, no chat reply — a structured
+change to confirm"; `compose_intent.dart` turns a typed phrase into a
+*drafted block you confirm*, not an answer. That is the shape every
+future feature copies.
+
+**docs/AI_BOUNDARY.md** classifies every feature, shipped and proposed,
+against this line.
+
+---
+
 ## The dreams
 
 Each dream has: the **spark** (often a direct quote), what it *means*,

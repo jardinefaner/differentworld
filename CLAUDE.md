@@ -316,6 +316,14 @@ keep the map fresh, and three agents maintain + query them.
   architecture.** When adding a feature, check it's expressible as a
   combination of these eleven; needing a twelfth is a signal, not a
   default. A screen that obeys the eleven laws feels like the system.
+- **[docs/AI_BOUNDARY.md](docs/AI_BOUNDARY.md)** — the *one thing that
+  is not up for discussion*: **AI backstage; children, teachers, objects,
+  movement, and conversation frontstage.** Classifies every feature —
+  shipped, proposed and deferred — as preserving or violating that line,
+  with the three tests to apply to anything new. **Authoritative, and it
+  outranks the others**: a feature that VISION wants and this forbids
+  does not get built. Read it before adding a model, a generated asset,
+  or a synthetic voice to anything.
 - **[docs/BRAND.md](docs/BRAND.md)** — the *how it shows up*: positioning
   (book, not ledger — Brightwheel is the foil), the calm-host
   personality, the five visual laws, voice, the Mobbin reference set,
