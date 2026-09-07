@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/surveys/read_aloud_setting.dart';
 import 'package:differentworld/features/surveys/survey_prefs.dart';
 import 'package:differentworld/features/surveys/survey_strings.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
@@ -70,8 +71,15 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   String? _ageBand;
   String? _grade;
   String? _school;
+
+  /// Read-aloud is opt-in (docs/AI_BOUNDARY.md). It shipped COMPULSORY —
+  /// a child could not start without first picking a synthetic voice, which
+  /// made a model the price of entry to a kid-facing screen. Off, there is
+  /// no voice to pick and nothing to wait for.
+  bool get _readAloud => ref.read(surveyReadAloudProvider).value ?? false;
+
   bool get _identityComplete =>
-      _voiceId != null &&
+      (!_readAloud || _voiceId != null) &&
       (_ageBand?.isNotEmpty ?? false) &&
       (_grade?.isNotEmpty ?? false) &&
       (_school?.isNotEmpty ?? false);
@@ -236,7 +244,11 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   Future<void> _playQuestion(int index) async {
     final t = _template;
     final voice = _voiceId;
-    if (t == null || voice == null) return;
+    // Belt as well as braces: with read-aloud off the picker never appears
+    // so `_voiceId` stays null — but a response saved while it was ON still
+    // carries a voice, and turning the setting off must silence it rather
+    // than depending on which row was loaded.
+    if (t == null || voice == null || !_readAloud) return;
     final pages = _pages;
     if (index < 0 || index >= pages.length) return;
     final page = pages[index];
@@ -702,6 +714,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                       Expanded(
                         child: !_started
                             ? _AboutYouBinding(
+                                readAloud: _readAloud,
                                 voiceId: _voiceId,
                                 ageBand: _ageBand,
                                 grade: _grade,
@@ -925,6 +938,7 @@ class _AboutYouBinding extends ConsumerWidget {
     required this.ageBand,
     required this.grade,
     required this.school,
+    required this.readAloud,
     required this.onPickVoice,
     required this.onPickIdentity,
     required this.onAddIdentityOption,
@@ -936,6 +950,7 @@ class _AboutYouBinding extends ConsumerWidget {
     required this.onVolumeChanged,
   });
 
+  final bool readAloud;
   final String? voiceId;
   final String? ageBand;
   final String? grade;
@@ -977,6 +992,7 @@ class _AboutYouBinding extends ConsumerWidget {
         (a.value ?? const []).map((o) => o.label).toList();
 
     return AboutYouPage(
+      readAloud: readAloud,
       voiceId: voiceId,
       ageBand: ageBand,
       grade: grade,

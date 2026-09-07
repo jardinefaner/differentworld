@@ -28,6 +28,7 @@ import 'package:differentworld/features/settings/starting_simple_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
+import 'package:differentworld/features/surveys/read_aloud_setting.dart';
 import 'package:differentworld/features/today/bento_home_setting.dart';
 import 'package:differentworld/features/today/child_day_bento_setting.dart';
 import 'package:differentworld/features/today/needs_you_setting.dart';
@@ -317,6 +318,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SettingsDivider(),
               const _NeedsYouTile(),
+              const _SettingsDivider(),
+              const _SurveyReadAloudTile(),
             ],
           ),
 
@@ -1324,4 +1327,30 @@ class LayoutsScreen extends ConsumerWidget {
       ),
     ),
   );
+}
+
+/// Let a synthetic voice read survey questions to a child.
+///
+/// Off by default, and the subtitle says what it IS rather than what it does
+/// — a director turning this on should know they are putting a machine voice
+/// in front of a child, because that is the decision (docs/AI_BOUNDARY.md).
+class _SurveyReadAloudTile extends ConsumerWidget {
+  const _SurveyReadAloudTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(surveyReadAloudProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.record_voice_over_outlined),
+      title: const Text('Read surveys aloud'),
+      subtitle: const Text(
+        'A computer voice reads the questions. For pre-readers, with an '
+        'adult sitting with them.',
+      ),
+      value: on,
+      onChanged: (v) => unawaited(
+        ref.read(surveyReadAloudProvider.notifier).set(value: v),
+      ),
+    );
+  }
 }

@@ -40,8 +40,39 @@ has tested against real features is a slogan.
 
 | Feature | The problem | What it should be |
 |---|---|---|
-| **Survey read-aloud** (`survey_take_screen`, `aura_voices`) — a child picks a synthetic voice that reads questions to them | Fails all three tests. The child's attention is on the machine; the sentence is spoken to them by a model as its own; and if the voice mangles a question, a pre-reader has no way to know. The kid-facing surface is the one place the line matters most, and this is the one place we crossed it. | The need is real — pre-readers cannot read the questions. The answer is a **person**, not a better voice: a teacher's own recording per question (record once, replays offline forever), or a pictorial question that needs no reading. Both are frontstage-correct and both work with no network. |
 | **`/speak`** — paste any text, a synthetic voice performs it to the room as editorial type | Built as a staff tool, but its whole design is a voice taking the stage. If it is ever pointed at children — and a big-type karaoke screen invites exactly that — it is a machine performing where a person should be. | Keep it as an **adult rehearsal tool** (hear your own script back), and never route curriculum or story content through it to a room. If reading aloud to children is wanted, that is the teacher's voice, recorded. |
+
+### Fixed — survey read-aloud
+
+Shipped as a violation and corrected 2026-09-07. The original reading
+stands in one respect and was wrong in another, and both are worth
+keeping on the record.
+
+**Wrong about the setting.** Surveys are run **one child at a time, with
+an adult sitting there.** That changes the failure mode the boundary is
+actually about: an unsupervised voice telling a child something untrue is
+unrecoverable, while a voice a teacher is listening to alongside them is
+a supervised aid the adult corrects mid-sentence. Supervision is what
+makes it defensible — so the answer is a toggle a program opts into, not
+a deletion.
+
+**Right about the default.** The voice was **compulsory**: a child could
+not start a survey without first picking one, so a model was the price of
+entry to a kid-facing screen. That is the line crossed by default rather
+than by decision, and it is the part that needed fixing regardless of who
+is in the room.
+
+Now: off by default. Off, the voice cast and the volume slider are not on
+the About-you page at all — a child is never asked which machine should
+read to them — and playback is guarded so a response saved while it was
+on stays silent. On, it behaves as before, and the settings row says what
+it IS rather than what it does: *"A computer voice reads the questions.
+For pre-readers, with an adult sitting with them."*
+
+Still true, and still not built: the principle-correct answer for
+pre-readers is a **person** — a teacher recording each question once,
+replayed offline forever. The toggle makes the default honest. It does
+not make the recording.
 
 ### Watch
 
