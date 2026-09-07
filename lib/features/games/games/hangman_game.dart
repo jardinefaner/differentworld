@@ -41,10 +41,13 @@ class HangmanGame extends GridGame {
     // Charades prompts are single guessable things — the right shape for a
     // word to guess, and already in the bank.
     final picks = content.take(ContentKind.charades, 1);
+    // `word`, not `text`: a charades item is `{word, category}`. Reading
+    // `payload['text']!` threw a null-check the moment the bank had ANY
+    // charades in it — which it always does — so Hangman crashed on open and
+    // the fallback below only ever ran for an empty bank.
+    final picked = picks.isEmpty ? null : picks.first.payload['word'];
     final word =
-        (picks.isEmpty
-                ? 'PLAYGROUND'
-                : (picks.first.payload['text']! as String))
+        ((picked is String && picked.trim().isNotEmpty) ? picked : 'PLAYGROUND')
             .toUpperCase()
             .replaceAll(RegExp('[^A-Z]'), '');
     return [

@@ -103,6 +103,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
         s['i'] = 0;
         s['f'] = 0;
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
       case GameIntent.pick:

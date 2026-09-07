@@ -101,6 +101,7 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
         s['i'] = 0;
         s['r'] = false;
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.pick:
       case GameIntent.tally:
       case GameIntent.capture:

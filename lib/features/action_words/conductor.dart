@@ -102,6 +102,7 @@ class ConductorGame extends GameDefinition<ConductorState> {
         s['i'] = i <= 0 ? -1 : i - 1; // step back, then clear
       case GameIntent.reset: // clear the spotlight
         s['i'] = -1;
+      case GameIntent.tick:
       case GameIntent.reveal:
       case GameIntent.tally:
       case GameIntent.capture:

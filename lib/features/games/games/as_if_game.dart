@@ -87,6 +87,7 @@ class AsIfGame extends GameDefinition<AsIfState> {
         s['li'] = 0;
         s['ai'] = 0;
         s['p'] = 0;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
       case GameIntent.pick:

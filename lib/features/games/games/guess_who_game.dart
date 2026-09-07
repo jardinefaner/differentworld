@@ -32,8 +32,16 @@ class GuessWhoGame extends GridGame {
   @override
   List<BoardCell> deal(ContentSource content) {
     final picks = content.take(ContentKind.picture, cols * rows);
-    final faces = [for (final p in picks) p.payload['image']! as String]
-      ..shuffle(Random());
+    final faces = [for (final p in picks) p.payload['image']! as String];
+    // A short picture bank must still fill the board. Bingo already padded
+    // for this reason; Guess Who did not, so a program with fewer than twelve
+    // pictures got a board with holes — or, with none, an empty grid and a
+    // game that cannot be played at all. Duplicating faces makes for an
+    // easier round, which beats an unplayable one.
+    while (faces.isNotEmpty && faces.length < cols * rows) {
+      faces.addAll(List.of(faces));
+    }
+    faces.shuffle(Random());
     return [
       for (var i = 0; i < min(faces.length, cols * rows); i++)
         // Everyone is face-up from the start. You are not uncovering people,
@@ -50,6 +58,11 @@ class GuessWhoGame extends GridGame {
     final next = c.state == CellState.done ? CellState.shown : CellState.done;
     return b.withAt(i, c.copyWith(state: next));
   }
+
+  /// One face left standing. The line was already computed for the board's title —
+  /// it simply never stamped `done`, so the round ran forever.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
 
   @override
   String? titleFor(GridBoard b) => _left(b) == 1 ? 'That is who!' : null;

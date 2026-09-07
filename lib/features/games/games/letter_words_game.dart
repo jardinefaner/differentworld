@@ -102,6 +102,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
       case GameIntent.reset:
         s['i'] = 0;
         s['f'] = 0;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
       case GameIntent.pick:

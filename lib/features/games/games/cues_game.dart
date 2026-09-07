@@ -71,6 +71,7 @@ class CuesGame extends GameDefinition<CueState> {
         s['i'] = (i + 1) % _cues.length;
       case GameIntent.reset:
         s['i'] = 0;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
       case GameIntent.tally:

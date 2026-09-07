@@ -92,6 +92,10 @@ class SnakesLaddersGame extends GridGame {
     ];
   }
 
+  /// Reaching the last square is the whole point of the board.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) =>
       _at(b) >= b.cells.length - 1 ? 'Home!' : null;

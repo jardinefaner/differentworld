@@ -93,6 +93,7 @@ class PollGame extends GameDefinition<PollState> {
       case GameIntent.reset:
         s['counts'] = List<int>.filled(counts.length, 0);
         s['r'] = false;
+      case GameIntent.tick:
       case GameIntent.next:
       case GameIntent.back:
       case GameIntent.pick:

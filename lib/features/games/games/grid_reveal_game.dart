@@ -238,6 +238,7 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
         // initialState on the live/single-device "play again" path).
         s['rev'] = List<bool>.filled(rev.length, false);
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.next:
       case GameIntent.tally:
       case GameIntent.capture:

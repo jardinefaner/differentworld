@@ -22,6 +22,7 @@ Map<String, dynamic> _counterReduce(
     case GameIntent.reset:
       next['i'] = 0;
       next['count'] = 0;
+    case GameIntent.tick:
     case GameIntent.back:
     case GameIntent.reveal:
     case GameIntent.pick:

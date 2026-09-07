@@ -58,6 +58,11 @@ class ConnectFourGame extends GridGame {
     return null;
   }
 
+  /// Four in a row. The line was already computed for the board's title —
+  /// it simply never stamped `done`, so the round ran forever.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) {
     final w = _winner(b);

@@ -111,6 +111,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
         s['ti'] = 0;
         s['tw'] = '';
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.tally:
       case GameIntent.pick:

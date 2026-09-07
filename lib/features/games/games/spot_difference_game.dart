@@ -87,6 +87,10 @@ class SpotDifferenceGame extends GridGame {
     ];
   }
 
+  /// One difference, one answer — finding it IS the end of the round.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) =>
       b.cells.any((c) => c.tint == CellTint.right) ? 'Found it!' : null;

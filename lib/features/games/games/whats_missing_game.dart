@@ -132,6 +132,7 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
         s['i'] = 0;
         s['phase'] = 0;
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.pick:
       case GameIntent.tally:
       case GameIntent.capture:

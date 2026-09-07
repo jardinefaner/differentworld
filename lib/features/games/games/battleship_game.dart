@@ -68,6 +68,10 @@ class BattleshipGame extends GridGame {
     return b.withAt(i, b.cells[i].copyWith(state: CellState.shown));
   }
 
+  /// Every ship hit — the round is over, not merely titled.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) => _sunk(b) == _ships ? 'All hit!' : null;
 

@@ -92,6 +92,20 @@ class MinesweeperGame extends GridGame {
     );
   }
 
+  /// Two endings, and the board only ever named one: hitting a mine ends the
+  /// round, and so does uncovering every safe square. Clearing the board was
+  /// unreachable as an ENDING before — the note said "All clear!" and play
+  /// carried on with nothing left to tap.
+  @override
+  String? outcomeFor(GridBoard b) {
+    if (_blown(b)) return 'Found one!';
+    return _allClear(b) ? 'All clear — every mine missed' : null;
+  }
+
+  bool _allClear(GridBoard b) => !b.cells.any(
+    (c) => c.face != _mine && c.state == CellState.hidden,
+  );
+
   @override
   String? titleFor(GridBoard b) => _blown(b) ? 'Found one!' : null;
 

@@ -64,6 +64,11 @@ class ScavengerBingoGame extends GridGame {
     );
   }
 
+  /// Everything on the list found. The line was already computed for the board's title —
+  /// it simply never stamped `done`, so the round ran forever.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) =>
       b.cells.every((c) => c.tint == CellTint.right) ? 'All found!' : null;

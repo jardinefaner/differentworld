@@ -134,6 +134,7 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
         s['i'] = (i - 1).clamp(0, last);
       case GameIntent.reset:
         s['i'] = 0;
+      case GameIntent.tick:
       case GameIntent.reveal:
       case GameIntent.pick:
       case GameIntent.tally:

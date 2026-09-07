@@ -169,6 +169,7 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
         s['i'] = 0;
         s['r'] = false;
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.tally:
       case GameIntent.pick:

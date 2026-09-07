@@ -73,6 +73,11 @@ class LightsOutGame extends GridGame {
     ];
   }
 
+  /// Every light off IS the win condition. The line was already computed for the board's title —
+  /// it simply never stamped `done`, so the round ran forever.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) =>
       b.count(CellState.shown) == 0 ? 'All out!' : null;

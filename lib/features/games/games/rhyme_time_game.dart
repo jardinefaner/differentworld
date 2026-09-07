@@ -66,6 +66,7 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
       case GameIntent.reset: // Start over.
         s['i'] = 0;
         s['f'] = 0;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
       case GameIntent.pick:

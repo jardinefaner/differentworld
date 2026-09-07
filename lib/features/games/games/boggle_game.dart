@@ -5,7 +5,13 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
-/// **Boggle.** Sixteen letters. Shout every word you can build from them.
+/// **Boggle.** Sixteen letters. Shout every word you can build from them,
+/// before the sand runs out.
+///
+/// The timer IS Boggle — the real game is three minutes of shouting, and
+/// without one this was sixteen letters sitting on a screen with nothing to
+/// stop the room. Ninety seconds rather than three minutes: the shape here is
+/// a brain break between two other things, not a tournament.
 class BoggleGame extends GridGame {
   const BoggleGame();
 
@@ -39,6 +45,25 @@ class BoggleGame extends GridGame {
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
+
+  /// The sand. Ninety ticks of one second, counted down in the tally.
+  static const _seconds = 90;
+
+  @override
+  bool get ticks => true;
+
+  @override
+  List<BoardCell>? onTick(GridBoard b) => b.cells;
+
+  @override
+  Map<String, int> tallyAfterTick(GridBoard before) => before.plus('elapsed');
+
+  @override
+  String? outcomeFor(GridBoard b) {
+    if (b.score('elapsed') < _seconds) return null;
+    final ringed = b.cells.where((c) => c.tint == CellTint.live).length;
+    return ringed == 0 ? 'Time! How many did you get?' : 'Time!';
+  }
 
   @override
   int get cols => 4;
@@ -74,6 +99,12 @@ class BoggleGame extends GridGame {
       for (final c in b.cells)
         if (c.tint == CellTint.live) c.label ?? '',
     ].join();
-    return word.isEmpty ? null : word;
+    final left = _seconds - b.score('elapsed');
+    // The clock only appears once it is worth watching. A countdown that
+    // starts at 1:30 and sits there is furniture; one that says 0:20 is the
+    // game (the half-second rule — live state, read at a glance).
+    final clock = left <= 20 ? '${left}s' : null;
+    if (word.isEmpty) return clock;
+    return clock == null ? word : '$word · $clock';
   }
 }
