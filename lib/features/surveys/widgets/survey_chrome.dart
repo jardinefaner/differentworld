@@ -611,6 +611,7 @@ class AboutYouPage extends StatefulWidget {
     required this.onPickLanguage,
     required this.volume,
     required this.onVolumeChanged,
+    required this.readAloud,
     super.key,
   });
 
@@ -638,6 +639,11 @@ class AboutYouPage extends StatefulWidget {
   /// onto the response row. The preview audio is played locally by
   /// this widget (so taps feel instant); only the final selection
   /// commits to the DB.
+  /// Whether a synthetic voice may read to this child at all
+  /// (docs/AI_BOUNDARY.md). Off, the voice cast and the volume slider are
+  /// not on the page — the child is never asked to choose a reader.
+  final bool readAloud;
+
   final Future<void> Function(String voiceId) onPickVoice;
 
   /// `dimension` is 'age_band' / 'grade' / 'school'; `label` is the
@@ -740,21 +746,28 @@ class _AboutYouPageState extends State<AboutYouPage> {
                   selected: widget.language,
                   onPick: widget.onPickLanguage,
                 ),
-                const SizedBox(height: 20),
-                _SectionLabel(label: strings.volume),
-                const SizedBox(height: 4),
-                _VolumeSlider(
-                  value: widget.volume,
-                  onChanged: widget.onVolumeChanged,
-                ),
-                const SizedBox(height: 12),
-                _SectionLabel(label: strings.reader),
-                const SizedBox(height: 8),
-                _VoiceTilesGrid(
-                  voices: voices,
-                  previewing: _previewing,
-                  onTap: _onVoiceTap,
-                ),
+                // Volume and the voice cast only exist when read-aloud is
+                // on (docs/AI_BOUNDARY.md). Off, a child never meets the
+                // question "which machine should read to you" — which used
+                // to be COMPULSORY, and is now a thing a program opts into
+                // knowing what it is.
+                if (widget.readAloud) ...[
+                  const SizedBox(height: 24),
+                  _SectionLabel(label: strings.volume),
+                  const SizedBox(height: 4),
+                  _VolumeSlider(
+                    value: widget.volume,
+                    onChanged: widget.onVolumeChanged,
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionLabel(label: strings.reader),
+                  const SizedBox(height: 8),
+                  _VoiceTilesGrid(
+                    voices: voices,
+                    previewing: _previewing,
+                    onTap: _onVoiceTap,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 _DimensionPicker(
                   label: strings.ageBand,
