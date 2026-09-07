@@ -52,8 +52,7 @@ class GuessWhoGame extends GridGame {
   }
 
   @override
-  String? titleFor(GridBoard b) =>
-      _left(b) == 1 ? 'That is who!' : 'Ask a question — rule them out';
+  String? titleFor(GridBoard b) => _left(b) == 1 ? 'That is who!' : null;
 
   @override
   String? noteFor(GridBoard b) {

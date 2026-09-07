@@ -123,7 +123,6 @@ class CharadesGame extends GameDefinition<CharadesState> {
     if (s.done) return _wrap(context, s);
     return GameStage.frame(
       context,
-      eyebrow: 'Act it out — no words',
       hero: GameStage.hero(context, s.category, color: vibe.accent),
       body: Padding(
         padding: const EdgeInsets.only(top: 24),
@@ -143,7 +142,6 @@ class CharadesGame extends GameDefinition<CharadesState> {
     if (state.done) return _wrap(context, state);
     return GameStage.frame(
       context,
-      eyebrow: 'Act this out — no talking',
       hero: GameStage.hero(context, state.word),
       body: Padding(
         padding: const EdgeInsets.only(top: 12),

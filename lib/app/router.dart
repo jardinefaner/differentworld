@@ -72,6 +72,7 @@ import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/battleship_game.dart';
+import 'package:differentworld/features/games/games/boggle_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/classic_boards_screen.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
@@ -93,9 +94,13 @@ import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
+import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
+import 'package:differentworld/features/games/games/simon_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
+import 'package:differentworld/features/games/games/word_search_game.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/groups/room_create_screen.dart';
@@ -2215,6 +2220,46 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/four-corners',
             builder: (_, _) => const LiveGameScreen(def: FourCornersGame()),
+          ),
+          GoRoute(
+            path: '/activity/word-search',
+            builder: (_, _) => const GameRunner(def: WordSearchGame()),
+          ),
+          GoRoute(
+            path: '/live/word-search',
+            builder: (_, _) => const LiveGameScreen(def: WordSearchGame()),
+          ),
+          GoRoute(
+            path: '/activity/boggle',
+            builder: (_, _) => const GameRunner(def: BoggleGame()),
+          ),
+          GoRoute(
+            path: '/live/boggle',
+            builder: (_, _) => const LiveGameScreen(def: BoggleGame()),
+          ),
+          GoRoute(
+            path: '/activity/whack-a-mole',
+            builder: (_, _) => const GameRunner(def: WhackAMoleGame()),
+          ),
+          GoRoute(
+            path: '/live/whack-a-mole',
+            builder: (_, _) => const LiveGameScreen(def: WhackAMoleGame()),
+          ),
+          GoRoute(
+            path: '/activity/simon',
+            builder: (_, _) => const GameRunner(def: SimonGame()),
+          ),
+          GoRoute(
+            path: '/live/simon',
+            builder: (_, _) => const LiveGameScreen(def: SimonGame()),
+          ),
+          GoRoute(
+            path: '/activity/scavenger',
+            builder: (_, _) => const GameRunner(def: ScavengerBingoGame()),
+          ),
+          GoRoute(
+            path: '/live/scavenger',
+            builder: (_, _) => const LiveGameScreen(def: ScavengerBingoGame()),
           ),
           GoRoute(
             path: '/activity/riddles',

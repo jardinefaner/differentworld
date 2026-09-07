@@ -47,6 +47,6 @@ class FourCornersGame extends GridGame {
       ),
   ];
 
-  @override
-  String? titleFor(GridBoard b) => 'Go and stand in a corner';
+  // No title. Four labelled corners on a screen called Four Corners is the
+  // instruction; saying it as well is the sign on the wall.
 }

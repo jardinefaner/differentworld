@@ -90,7 +90,7 @@ class RiddlesGame extends GameDefinition<RiddleState> {
     final (prompt, answer) = s.current;
     return GameStage.frame(
       context,
-      eyebrow: s.revealed ? 'There it is!' : 'Say your guess, then reveal',
+      eyebrow: s.revealed ? 'There it is!' : null,
       hero: GameStage.hero(context, prompt),
       body: Padding(
         padding: const EdgeInsets.only(top: 28),

@@ -75,7 +75,7 @@ class BattleshipGame extends GridGame {
   String? noteFor(GridBoard b) {
     final hit = _sunk(b);
     final shots = b.cells.where((c) => c.state != CellState.hidden).length;
-    if (shots == 0) return 'Call a square';
+    if (shots == 0) return null;
     return '$hit of $_ships · $shots ${shots == 1 ? 'shot' : 'shots'}';
   }
 

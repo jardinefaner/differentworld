@@ -60,8 +60,7 @@ class BingoGame extends GridGame {
   }
 
   @override
-  String? titleFor(GridBoard b) =>
-      _hasLine(b) ? 'Bingo!' : 'Cross them off as they are called';
+  String? titleFor(GridBoard b) => _hasLine(b) ? 'Bingo!' : null;
 
   @override
   String? noteFor(GridBoard b) {

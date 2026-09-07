@@ -224,10 +224,13 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 8),
-          Text(
-            s.revealed ? 'There it is!' : 'Say it out loud — then Reveal',
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white38),
-          ),
+          if (s.revealed)
+            Text(
+              'There it is!',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white38,
+              ),
+            ),
           const SizedBox(height: 28),
           _answerArea(context, q, revealed: s.revealed),
         ],
