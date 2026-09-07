@@ -11,15 +11,21 @@ import 'package:differentworld/features/games/games/battleship_game.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
 import 'package:differentworld/features/games/games/boggle_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
+import 'package:differentworld/features/games/games/crossword_game.dart';
+import 'package:differentworld/features/games/games/dots_boxes_game.dart';
 import 'package:differentworld/features/games/games/four_corners_game.dart';
 import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/hangman_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/minesweeper_game.dart';
+import 'package:differentworld/features/games/games/scattergories_game.dart';
 import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
 import 'package:differentworld/features/games/games/simon_game.dart';
+import 'package:differentworld/features/games/games/snakes_ladders_game.dart';
+import 'package:differentworld/features/games/games/spot_difference_game.dart';
 import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/word_search_game.dart';
+import 'package:differentworld/features/games/games/wordle_game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
@@ -200,6 +206,7 @@ void main() {
 
   _more();
   _last();
+  _shapesIWasWrongAbout();
 
   test('every classic describes itself as a grid', () {
     // The reason they cast to a screen that has never heard of them.
@@ -478,5 +485,120 @@ void _last() {
     final once = tap(g, start, 4);
     expect(board(g, once).cells[4].tint, CellTint.right);
     expect(board(g, tap(g, once, 4)).cells[4].tint, CellTint.none);
+  });
+}
+
+// ── the six I said needed different shapes ────────────────────────────────
+
+Map<String, dynamic> type(
+  GameDefinition<GridBoard> def,
+  Map<String, dynamic> wire,
+  String text,
+) => def.reduce(wire, GameIntent.capture, {'text': text});
+
+void _shapesIWasWrongAbout() {
+  group('Wordle', () {
+    const g = WordleGame();
+
+    test('exact matches are claimed before near ones', () {
+      // The bit everyone gets wrong: a repeated letter must not be marked
+      // "close" against an answer letter a later exact match already used.
+      var w = g.initialState(const _NoContent());
+      final answer = WordleGame.answerOf(board(g, w));
+      w = type(g, w, answer);
+      final row = board(g, w).cells.take(5).toList();
+      expect(row.every((c) => c.tint == CellTint.right), isTrue);
+      expect(g.titleFor(board(g, w)), 'Got it!');
+    });
+
+    test('a guess of the wrong length is refused', () {
+      final w = g.initialState(const _NoContent());
+      expect(type(g, w, 'CAT'), w);
+      expect(type(g, w, 'ELEPHANT'), w);
+    });
+
+    test('the answer never reaches the board', () {
+      final shape = g.asShape(board(g, g.initialState(const _NoContent())))!;
+      expect(shape.cells.every((c) => c.label == null), isTrue);
+    });
+  });
+
+  test('Scattergories fills the next empty category', () {
+    const g = ScattergoriesGame();
+    var w = g.initialState(const _NoContent());
+    w = type(g, w, 'Badger');
+    final b = board(g, w);
+    expect(b.cells.first.tint, CellTint.right);
+    expect(b.cells.first.label, contains('Badger'));
+    expect(g.noteFor(b), startsWith('1 of'));
+  });
+
+  group('Crossword', () {
+    const g = CrosswordGame();
+
+    test('tapping a square asks for that word’s clue', () {
+      final start = g.initialState(const _NoContent());
+      final b0 = board(g, start);
+      final first = b0.cells.indexWhere((c) => c.label != null);
+      final after = board(g, tap(g, start, first));
+      expect(after.cells.where((c) => c.tint == CellTint.live), isNotEmpty);
+      expect(g.titleFor(after), isNotNull, reason: 'a clue should appear');
+    });
+
+    test('a wrong answer changes nothing', () {
+      var w = g.initialState(const _NoContent());
+      final b0 = board(g, w);
+      w = tap(g, w, b0.cells.indexWhere((c) => c.label != null));
+      expect(type(g, w, 'NOPE'), w);
+    });
+
+    test('the wanted letters never reach the board', () {
+      final shape = g.asShape(board(g, g.initialState(const _NoContent())))!;
+      // Only SOLVED squares carry a letter, and nothing is solved yet.
+      expect(shape.cells.every((c) => c.label == null), isTrue);
+    });
+  });
+
+  test('Snakes & Ladders moves the token and never leaves the board', () {
+    const g = SnakesLaddersGame();
+    var w = g.initialState(const _NoContent());
+    for (var i = 0; i < 40; i++) {
+      w = tap(g, w, 0);
+      final b = board(g, w);
+      expect(
+        b.cells.where((c) => c.face == '🔴').length,
+        1,
+        reason: 'exactly one token, always',
+      );
+    }
+    expect(g.titleFor(board(g, w)), 'Home!');
+  });
+
+  group('Dots & Boxes', () {
+    const g = DotsBoxesGame();
+
+    test('dots and boxes are not playable; edges are', () {
+      final start = g.initialState(const _NoContent());
+      expect(tap(g, start, 0), start, reason: 'a dot is scenery');
+      expect(tap(g, start, 8), start, reason: 'a box is won, not taken');
+      expect(tap(g, start, 1), isNot(start), reason: 'an edge is a move');
+    });
+
+    test('closing a box claims it', () {
+      var w = g.initialState(const _NoContent());
+      // The four edges around box (1,1) in a 7-wide board.
+      for (final e in [1, 15, 7, 9]) {
+        w = tap(g, w, e);
+      }
+      final b = board(g, w);
+      expect(b.cells[8].face, isNotNull, reason: 'the box should be claimed');
+    });
+  });
+
+  test('Spot the Difference hides which one changed', () {
+    const g = SpotDifferenceGame();
+    // Needs a picture deck; with none it deals nothing rather than lying.
+    final b = board(g, g.initialState(const _NoContent()));
+    expect(b.cells, isEmpty);
   });
 }

@@ -76,7 +76,9 @@ import 'package:differentworld/features/games/games/boggle_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/classic_boards_screen.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
+import 'package:differentworld/features/games/games/crossword_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
+import 'package:differentworld/features/games/games/dots_boxes_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/four_corners_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
@@ -94,13 +96,17 @@ import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
+import 'package:differentworld/features/games/games/scattergories_game.dart';
 import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
 import 'package:differentworld/features/games/games/simon_game.dart';
+import 'package:differentworld/features/games/games/snakes_ladders_game.dart';
+import 'package:differentworld/features/games/games/spot_difference_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/games/word_search_game.dart';
+import 'package:differentworld/features/games/games/wordle_game.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/groups/room_create_screen.dart';
@@ -2260,6 +2266,54 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/scavenger',
             builder: (_, _) => const LiveGameScreen(def: ScavengerBingoGame()),
+          ),
+          GoRoute(
+            path: '/activity/wordle',
+            builder: (_, _) => const GameRunner(def: WordleGame()),
+          ),
+          GoRoute(
+            path: '/live/wordle',
+            builder: (_, _) => const LiveGameScreen(def: WordleGame()),
+          ),
+          GoRoute(
+            path: '/activity/scattergories',
+            builder: (_, _) => const GameRunner(def: ScattergoriesGame()),
+          ),
+          GoRoute(
+            path: '/live/scattergories',
+            builder: (_, _) => const LiveGameScreen(def: ScattergoriesGame()),
+          ),
+          GoRoute(
+            path: '/activity/crossword',
+            builder: (_, _) => const GameRunner(def: CrosswordGame()),
+          ),
+          GoRoute(
+            path: '/live/crossword',
+            builder: (_, _) => const LiveGameScreen(def: CrosswordGame()),
+          ),
+          GoRoute(
+            path: '/activity/snakes-ladders',
+            builder: (_, _) => const GameRunner(def: SnakesLaddersGame()),
+          ),
+          GoRoute(
+            path: '/live/snakes-ladders',
+            builder: (_, _) => const LiveGameScreen(def: SnakesLaddersGame()),
+          ),
+          GoRoute(
+            path: '/activity/dots-boxes',
+            builder: (_, _) => const GameRunner(def: DotsBoxesGame()),
+          ),
+          GoRoute(
+            path: '/live/dots-boxes',
+            builder: (_, _) => const LiveGameScreen(def: DotsBoxesGame()),
+          ),
+          GoRoute(
+            path: '/activity/spot-difference',
+            builder: (_, _) => const GameRunner(def: SpotDifferenceGame()),
+          ),
+          GoRoute(
+            path: '/live/spot-difference',
+            builder: (_, _) => const LiveGameScreen(def: SpotDifferenceGame()),
           ),
           GoRoute(
             path: '/activity/riddles',

@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/live_session/shape_stage_view.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,10 @@ class BoardCell {
   final CellState state;
   final CellTint tint;
 
+  /// **[copyWith] cannot CLEAR a field.** `copyWith(face: null)` keeps the
+  /// existing face, because null is how the parameter says "unchanged". Snakes
+  /// & Ladders hit this and grew a second token every move: the square the
+  /// token left kept it. To empty a field, build a [BoardCell] instead.
   BoardCell copyWith({
     String? face,
     String? label,
@@ -152,6 +157,24 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// The quieter second line — a score, a count, a whose-go.
   String? noteFor(GridBoard b) => null;
 
+  /// A word or phrase the host types in — Wordle's guess, a Scattergories
+  /// answer, a crossword entry.
+  ///
+  /// Null (the default) means this game is played entirely by tapping, which
+  /// is most of them. A game that returns a hint gets a field under its board
+  /// on the PHONE only: the TV keeps drawing the shape, because a keyboard is
+  /// a thing you hold, not a thing a room reads. That is the line between the
+  /// shape and the instrument — the shape says what the room sees, and typing
+  /// never belongs to the room.
+  String? get entryHint => null;
+
+  /// How many characters the entry takes, when it is fixed. Null = free text.
+  int? get entryLength => null;
+
+  /// Apply typed text. Return null to ignore it (a word of the wrong length,
+  /// an entry after the round is over).
+  List<BoardCell>? onEntry(GridBoard b, String text) => null;
+
   /// The cell as the ROOM should see it, which is not always the cell as the
   /// board stores it.
   ///
@@ -182,6 +205,7 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   Set<GameIntent> activeIntents(GridBoard state) => {
     GameIntent.pick,
     GameIntent.reset,
+    if (entryHint != null) GameIntent.capture,
   };
 
   @override
@@ -206,6 +230,12 @@ abstract class GridGame extends GameDefinition<GridBoard> {
               turn: alternates ? (b.turn + 1) % 2 : b.turn,
             )
             .toWire();
+      case GameIntent.capture:
+        final text = (args['text'] as String? ?? '').trim();
+        if (text.isEmpty) return state;
+        final next = onEntry(b, text);
+        if (next == null) return state;
+        return b.copyWith(cells: next).toWire();
       case GameIntent.reset:
         // Deal again. The content bank is not reachable from a pure reducer,
         // so a reset re-uses the faces already on the board, reshuffled by
@@ -272,9 +302,86 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     if (state.cells.isEmpty) return const DeckEmptyStage();
     final shape = asShape(state);
     if (shape == null) return null;
-    return ShapeStageView(
+    final board = ShapeStageView(
       shape: shape,
       onPick: (i) => send(GameIntent.pick, {'cell': i}),
     );
+    final hint = entryHint;
+    if (hint == null) return board;
+    return Column(
+      children: [
+        Expanded(child: board),
+        _GridEntry(
+          hint: hint,
+          maxLength: entryLength,
+          onSubmit: (t) {
+            send(GameIntent.capture, {'text': t});
+          },
+        ),
+      ],
+    );
   }
+}
+
+/// The one field a typing game gets, under its board.
+///
+/// On the PHONE only — the receiver renders the shape and nothing else, so a
+/// keyboard never appears on the room's screen. Clears itself on submit,
+/// because the next guess is a new one and re-reading the last is not what
+/// anybody wants.
+class _GridEntry extends StatefulWidget {
+  const _GridEntry({
+    required this.hint,
+    required this.onSubmit,
+    this.maxLength,
+  });
+
+  final String hint;
+  final int? maxLength;
+  final void Function(String) onSubmit;
+
+  @override
+  State<_GridEntry> createState() => _GridEntryState();
+}
+
+class _GridEntryState extends State<_GridEntry> {
+  final _c = TextEditingController();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _go() {
+    final t = _c.text.trim();
+    if (t.isEmpty) return;
+    widget.onSubmit(t);
+    _c.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) => GameVerbBar(
+    child: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _c,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.go,
+            maxLength: widget.maxLength,
+            onSubmitted: (_) => _go(),
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              counterText: '',
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        FilledButton(onPressed: _go, child: const Text('Enter')),
+      ],
+    ),
+  );
 }
