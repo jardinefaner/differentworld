@@ -1148,6 +1148,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ],
               ),
               GoRoute(
+                path: 'layouts',
+                builder: (_, _) => const LayoutsScreen(),
+              ),
+              GoRoute(
                 path: 'missions',
                 builder: (_, _) => const RouteTitle(
                   title: 'Missions',

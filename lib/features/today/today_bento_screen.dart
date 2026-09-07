@@ -13,7 +13,9 @@ import 'package:differentworld/features/live_session/live_session_banner.dart';
 import 'package:differentworld/features/onboarding/widgets/starter_spine.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/features/today/context_lead.dart';
+import 'package:differentworld/features/today/needs_you_setting.dart';
 import 'package:differentworld/features/today/today_providers.dart';
+import 'package:differentworld/features/today/widgets/needs_you_card.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/bento_module.dart';
@@ -138,6 +140,11 @@ class _BentoBody extends ConsumerWidget {
       ),
     ];
 
+    // Opt-in (Settings → Preferences). Off by default and additive: the view
+    // below is unchanged, so turning it on costs nothing and turning it back
+    // loses nothing.
+    final needsYou = ref.watch(needsYouProvider).value ?? false;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
@@ -149,6 +156,9 @@ class _BentoBody extends ConsumerWidget {
               subtitle: _greetingLine(),
             ),
             const LiveSessionBanner(),
+            // Above the grid, because a thing that needs you outranks a
+            // report of the day — and absent entirely when nothing does.
+            if (needsYou) const NeedsYouCard(),
             BentoGrid(tiles: tiles),
           ],
         ),

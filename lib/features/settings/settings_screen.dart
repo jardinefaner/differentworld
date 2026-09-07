@@ -30,6 +30,7 @@ import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/features/today/bento_home_setting.dart';
 import 'package:differentworld/features/today/child_day_bento_setting.dart';
+import 'package:differentworld/features/today/needs_you_setting.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -345,41 +346,18 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => context.push('/now'),
               ),
               const _SettingsDivider(),
-              const _CockpitHomeTile(),
+              // Nineteen layout experiments used to sit here, turning the
+              // one screen a director opens to change a setting into seven
+              // screens of switches. They are still all here — one row down.
+              ListTile(
+                leading: const Icon(Icons.dashboard_customize_outlined),
+                title: const Text('Try a different layout'),
+                subtitle: Text(_layoutsSubtitle(ref)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/settings/layouts'),
+              ),
               const _SettingsDivider(),
-              const _LiveEntitiesTile(),
-              const _SettingsDivider(),
-              const _BentoEverywhereTile(),
-              const _SettingsDivider(),
-              const _BentoHomeTile(),
-              const _SettingsDivider(),
-              const _SpellbookBentoTile(),
-              const _SettingsDivider(),
-              const _ProgramHubBentoTile(),
-              const _SettingsDivider(),
-              const _PresentDeckOverviewTile(),
-              const _SettingsDivider(),
-              const _ChildDayBentoTile(),
-              const _SettingsDivider(),
-              const _StartingSimpleTile(),
-              const _GeneratedPortraitsTile(),
-              const _ScheduleGridTile(),
-              const _SettingsDivider(),
-              const _ScheduleDeckTile(),
-              const _SettingsDivider(),
-              const _ScheduleDeckFollowTile(),
-              const _SettingsDivider(),
-              const _HeroesTile(),
-              const _SettingsDivider(),
-              const _RoutinesTile(),
-              const _SettingsDivider(),
-              const _DailyTile(),
-              const _SettingsDivider(),
-              const _CalmTile(),
-              const _SettingsDivider(),
-              const _SpellbookTile(),
-              const _SettingsDivider(),
-              const _RecapTile(),
+              const _NeedsYouTile(),
             ],
           ),
 
@@ -1251,6 +1229,93 @@ Future<void> _showLanguagePicker(BuildContext context, WidgetRef ref) {
               );
               Navigator.of(ctx).pop();
             },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// How many layout experiments are on, so the row says something rather than
+/// making a director open it to find out.
+String _layoutsSubtitle(WidgetRef ref) {
+  final on = [
+    ref.watch(cockpitAsHomeProvider).value ?? false,
+    ref.watch(bentoEverywhereProvider).value ?? false,
+    ref.watch(bentoHomeProvider).value ?? false,
+    ref.watch(needsYouProvider).value ?? false,
+  ].where((e) => e).length;
+  return on == 0 ? 'Everything is on its default' : '$on on';
+}
+
+/// Rank what needs a staffer now, above the day's report.
+class _NeedsYouTile extends ConsumerWidget {
+  const _NeedsYouTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(needsYouProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.priority_high),
+      title: const Text('What needs you'),
+      subtitle: const Text(
+        'Unmarked children and today’s flags, ranked, at the top of Today',
+      ),
+      value: on,
+      onChanged: (v) => unawaited(
+        ref.read(needsYouProvider.notifier).set(value: v),
+      ),
+    );
+  }
+}
+
+/// `/settings/layouts` — every layout experiment, off the main list.
+class LayoutsScreen extends ConsumerWidget {
+  const LayoutsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => EdgeScaffold(
+    body: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+        children: const [
+          ContentHeader(
+            title: 'Try a different layout',
+            subtitle: 'Each one is reversible. Nothing here deletes anything.',
+          ),
+          _SettingsGroup(
+            label: 'Home',
+            children: [
+              _CockpitHomeTile(),
+              _LiveEntitiesTile(),
+              _BentoEverywhereTile(),
+              _BentoHomeTile(),
+            ],
+          ),
+          _SettingsGroup(
+            label: 'Screens',
+            children: [
+              _SpellbookBentoTile(),
+              _ProgramHubBentoTile(),
+              _PresentDeckOverviewTile(),
+              _ChildDayBentoTile(),
+              _StartingSimpleTile(),
+              _GeneratedPortraitsTile(),
+              _ScheduleGridTile(),
+              _ScheduleDeckTile(),
+              _ScheduleDeckFollowTile(),
+            ],
+          ),
+          _SettingsGroup(
+            label: 'What is switched on',
+            children: [
+              _HeroesTile(),
+              _RoutinesTile(),
+              _DailyTile(),
+              _CalmTile(),
+              _SpellbookTile(),
+              _RecapTile(),
+            ],
           ),
         ],
       ),
