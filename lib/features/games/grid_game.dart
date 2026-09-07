@@ -229,6 +229,11 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// Counters after one beat of the clock. Default: unchanged.
   Map<String, int> tallyAfterTick(GridBoard before) => before.tally;
 
+  /// Counters a freshly-dealt board starts with. Default: none. Simon uses it
+  /// to open in "the board is talking" rather than waiting for a tap that
+  /// nobody can make yet.
+  Map<String, int> get initialTally => const <String, int>{};
+
   /// The line above the board, when the board needs one. Most do not.
   String? titleFor(GridBoard b) => null;
 
@@ -277,6 +282,7 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     cols: cols,
     rows: rows,
     cells: deal(content),
+    tally: initialTally,
   ).toWire();
 
   @override
@@ -349,6 +355,7 @@ abstract class GridGame extends GameDefinition<GridBoard> {
           cells: [
             for (final c in b.cells) c.copyWith(state: CellState.hidden),
           ],
+          tally: initialTally,
         ).toWire();
       // Every other intent is a no-op for a board: there is no "next slide"
       // and no answer to reveal. Returning state unchanged means the standard

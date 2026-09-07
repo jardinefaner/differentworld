@@ -728,8 +728,9 @@ Future<void> _pumpAndShoot(
   Size size,
 ) async {
   beginOverflowWatch();
-  await tester.binding.setSurfaceSize(size);
-  tester.view.physicalSize = size;
+  final applied = plateSize(size);
+  await tester.binding.setSurfaceSize(applied);
+  tester.view.physicalSize = applied;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -759,10 +760,16 @@ Future<void> _pumpAndShoot(
   for (var i = 0; i < 6; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
-  await expectLater(
-    find.byType(MaterialApp),
-    matchesGoldenFile('../../gallery/$goldenToken.png'),
-  );
+  // Pixels are supposed to differ in a stress pass — a rescaled or resized
+  // plate reflows everything. The assertion that matters already happened
+  // during pump: an overflow would have thrown. Comparing here would fail
+  // every plate for the wrong reason and bury the real signal.
+  if (!isStressRun) {
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('../../gallery/$goldenToken.png'),
+    );
+  }
   // Drain: unmount (cancels Drift subscriptions) + advance timers so any
   // pending one-shot Drift Timer fires before teardown's invariant check.
   await tester.pumpWidget(const SizedBox.shrink());
@@ -913,8 +920,9 @@ void _bentoPlate(String name, Size size) {
       );
 
       beginOverflowWatch();
-      await tester.binding.setSurfaceSize(size);
-      tester.view.physicalSize = size;
+      final applied = plateSize(size);
+      await tester.binding.setSurfaceSize(applied);
+      tester.view.physicalSize = applied;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -942,10 +950,12 @@ void _bentoPlate(String name, Size size) {
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('../../gallery/${name}__$mode.png'),
-      );
+      if (!isStressRun) {
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../../gallery/${name}__$mode.png'),
+        );
+      }
       await tester.pumpWidget(const SizedBox.shrink());
       // Drain the per-cohort Drift watch timers (groupDayState × 3) — a couple
       // of 1s advances clears them before flutter_test's !timersPending check.
@@ -1034,8 +1044,9 @@ void _rosterPlate(String name, Widget screen, Size size) {
       final viewer = Viewer(member: m, space: s);
 
       beginOverflowWatch();
-      await tester.binding.setSurfaceSize(size);
-      tester.view.physicalSize = size;
+      final applied = plateSize(size);
+      await tester.binding.setSurfaceSize(applied);
+      tester.view.physicalSize = applied;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -1072,10 +1083,12 @@ void _rosterPlate(String name, Widget screen, Size size) {
           await tester.pump(const Duration(milliseconds: 100));
         }
       }
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('../../gallery/${name}__$mode.png'),
-      );
+      if (!isStressRun) {
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../../gallery/${name}__$mode.png'),
+        );
+      }
       await tester.pumpWidget(const SizedBox.shrink());
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
@@ -1307,8 +1320,9 @@ void _richPlate(
           : await extraOverrides(db);
 
       beginOverflowWatch();
-      await tester.binding.setSurfaceSize(size);
-      tester.view.physicalSize = size;
+      final applied = plateSize(size);
+      await tester.binding.setSurfaceSize(applied);
+      tester.view.physicalSize = applied;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -1348,10 +1362,12 @@ void _richPlate(
           await tester.pump(const Duration(milliseconds: 100));
         }
       }
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('../../gallery/${name}__$mode.png'),
-      );
+      if (!isStressRun) {
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../../gallery/${name}__$mode.png'),
+        );
+      }
       await tester.pumpWidget(const SizedBox.shrink());
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
@@ -1468,8 +1484,9 @@ void _scheduleGridPlate(String name, Size size) {
       final viewer = Viewer(member: m, space: s);
 
       beginOverflowWatch();
-      await tester.binding.setSurfaceSize(size);
-      tester.view.physicalSize = size;
+      final applied = plateSize(size);
+      await tester.binding.setSurfaceSize(applied);
+      tester.view.physicalSize = applied;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -1497,10 +1514,12 @@ void _scheduleGridPlate(String name, Size size) {
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('../../gallery/${name}__$mode.png'),
-      );
+      if (!isStressRun) {
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../../gallery/${name}__$mode.png'),
+        );
+      }
       await tester.pumpWidget(const SizedBox.shrink());
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));

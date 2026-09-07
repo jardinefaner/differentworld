@@ -58,10 +58,17 @@ class WordSearchGame extends GridGame {
       }
     }
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    // A placed letter is marked — in `face`, which this game does not
+    // otherwise use, NOT inside the label. The grid knew where the words were
+    // while it was building itself and then threw that away, which is why it
+    // could never tell when they had all been found. Keeping the marker out
+    // of the label matters: the label IS the letter, and anything that reads
+    // it (a test, a renderer, a future feature) should see one character.
     return [
       for (final ch in grid)
         BoardCell(
           label: ch ?? alphabet[r.nextInt(alphabet.length)],
+          face: ch == null ? null : _placed,
           state: CellState.shown,
         ),
     ];
@@ -69,6 +76,25 @@ class WordSearchGame extends GridGame {
 
   /// Tap a letter to ring it; tap again to let it go. The room decides what
   /// counts as a word — the board is not going to argue.
+  /// Marks a letter that belongs to a hidden word. Storage only.
+  static const _placed = 'w';
+
+  /// The marker never reaches a room — a board that drew it would circle
+  /// every answer in the grid.
+  @override
+  BoardCell present(BoardCell c) =>
+      BoardCell(label: c.label, state: c.state, tint: c.tint);
+
+  /// Every letter that belongs to a word, ringed.
+  @override
+  String? outcomeFor(GridBoard b) {
+    final inWord = b.cells.where((c) => c.face == _placed);
+    if (inWord.isEmpty) return null;
+    return inWord.every((c) => c.tint == CellTint.right)
+        ? 'Every word found'
+        : null;
+  }
+
   @override
   List<BoardCell>? onPick(GridBoard b, int i) {
     final c = b.cells[i];

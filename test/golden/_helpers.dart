@@ -136,8 +136,9 @@ Future<void> pumpAt(
   required Size size,
   Duration settle = const Duration(seconds: 1),
 }) async {
-  await tester.binding.setSurfaceSize(size);
-  tester.view.physicalSize = size;
+  final applied = plateSize(size);
+  await tester.binding.setSurfaceSize(applied);
+  tester.view.physicalSize = applied;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -156,11 +157,17 @@ Future<void> pumpAt(
 ///
 ///     STRESS_TEXT_SCALE=2.0 flutter test test/golden/
 ///
-/// Every gallery screen re-renders at 200% text across all four breakpoints
-/// (390dp wide × 200% is the genuinely brutal combination), and any screen that
-/// cannot reflow fails by name. Golden comparison is skipped in this mode — the
-/// pixels are expected to differ; the assertion is simply that nothing
-/// overflowed, threw, or clipped its way out of the layout.
+/// Every gallery screen re-renders at the given text scale **at whatever
+/// viewport its plate authored**, and any screen that cannot reflow fails by
+/// name. Golden comparison is skipped in this mode — the pixels are expected
+/// to differ; the assertion is simply that nothing overflowed, threw, or
+/// clipped its way out of the layout.
+///
+/// This used to claim it covered "all four breakpoints". It does not, and
+/// never did: each plate hardcodes one size (mostly 440×900), so a defect that
+/// only appears at 720dp or on a short landscape phone was invisible. Use
+/// [stressViewport] to re-run the same plates at another size, and
+/// `scripts/check_overflow_matrix.sh` to sweep the grid.
 ///
 /// Null when the variable is unset, so normal runs are untouched.
 /// `String.fromEnvironment` is resolved at COMPILE time and never sees a shell
@@ -172,6 +179,55 @@ double? _readStressScale() {
   if (raw == null || raw.isEmpty) return null;
   return double.tryParse(raw);
 }
+
+/// Viewport stress mode — the OTHER half of the overflow gate.
+///
+/// Every gallery plate hardcodes the one size it was authored at, so the suite
+/// only ever proved a screen fits *that* box. `STRESS_VIEWPORT` overrides the
+/// size for every plate at once, which turns 300-odd single-size plates into a
+/// real breakpoint sweep for the cost of one env var:
+///
+///     STRESS_VIEWPORT=phone-small STRESS_TEXT_SCALE=1.5 flutter test test/golden/
+///
+/// Accepts a name from [stressViewports] or a literal `WIDTHxHEIGHT`.
+/// Null when unset, so normal runs (and the golden PNGs) are untouched —
+/// resizing a plate would change every pixel, so goldens are skipped in this
+/// mode exactly as they are for text stress.
+final Size? stressViewport = _readStressViewport();
+
+/// The sweep grid. Deliberately more than [goldenBreakpoints]: the interesting
+/// failures live at the EDGES — the narrowest phone still shipping, the two
+/// layout breakpoints the app itself switches on (600 / 840), the game
+/// framework's wide breakpoint (720), and a short landscape phone, where
+/// vertical room rather than width is what runs out.
+const Map<String, Size> stressViewports = <String, Size>{
+  'phone-small': Size(320, 640), // the narrowest screen still in the wild
+  'phone-portrait': Size(390, 844), // iPhone 15
+  'phone-landscape': Size(844, 390), // short: height is the constraint
+  'breakpoint-600': Size(600, 800), // single column → nav rail
+  'breakpoint-720': Size(720, 900), // the game framework's wide layout
+  'breakpoint-840': Size(840, 1000), // → two-column master-detail
+  'tablet-portrait': Size(1024, 1366),
+  'desktop': Size(1440, 900),
+};
+
+Size? _readStressViewport() {
+  final raw = Platform.environment['STRESS_VIEWPORT'];
+  if (raw == null || raw.isEmpty) return null;
+  if (stressViewports[raw] case final named?) return named;
+  final parts = raw.toLowerCase().split('x');
+  if (parts.length != 2) return null;
+  final w = double.tryParse(parts[0]);
+  final h = double.tryParse(parts[1]);
+  if (w == null || h == null) return null;
+  return Size(w, h);
+}
+
+/// The size a plate should actually render at: its authored [authored] size,
+/// or the sweep override when one is set. Every gallery pump funnel goes
+/// through this — a suite that sets the surface size directly is a hole in the
+/// sweep.
+Size plateSize(Size authored) => stressViewport ?? authored;
 
 /// Drain the exceptions a plate legitimately produces — a screen's direct
 /// Postgrest read, a missing plugin channel — while REFUSING to swallow a
@@ -212,7 +268,21 @@ void beginOverflowWatch() {
   FlutterError.onError = (details) {
     final text = details.exceptionAsString();
     if (text.contains('overflowed by')) {
-      recordedOverflows.add(text.split('\n').first);
+      // Carry the widget chain, not just the pixel count. "overflowed by 28
+      // pixels" names nothing you can go and fix; the debugCreator line names
+      // the exact Row or Column, which is the difference between a gate you
+      // act on and a gate you mute.
+      final creator = details.informationCollector
+          ?.call()
+          .map((n) => n.toString())
+          .firstWhere(
+            (n) => n.startsWith('debugCreator'),
+            orElse: () => '',
+          );
+      final where = (creator == null || creator.isEmpty)
+          ? ''
+          : '\n      ${creator.split(' ← ').take(6).join(' ← ')}';
+      recordedOverflows.add('${text.split('\n').first}$where');
     }
     previous?.call(details);
   };
@@ -234,8 +304,9 @@ void beginOverflowWatch() {
 final List<String> recordedOverflows = <String>[];
 
 /// True while the suite is running as an overflow stress pass rather than a
-/// pixel-comparison pass.
-bool get isStressRun => stressTextScale != null;
+/// pixel-comparison pass. A resized plate changes every pixel just as a
+/// rescaled one does, so the viewport sweep skips golden comparison too.
+bool get isStressRun => stressTextScale != null || stressViewport != null;
 
 /// Wrap a bare screen widget in `ProviderScope > MaterialApp > screen`
 /// using the app's theme. Suitable for screens with no provider

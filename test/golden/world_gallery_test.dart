@@ -223,8 +223,8 @@ void _scene(
   testWidgets(
     name,
     (tester) async {
-      await tester.binding.setSurfaceSize(Size(width, height));
-      tester.view.physicalSize = Size(width, height);
+      await tester.binding.setSurfaceSize(plateSize(Size(width, height)));
+      tester.view.physicalSize = plateSize(Size(width, height));
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -238,10 +238,14 @@ void _scene(
         ),
       );
       await tester.pumpAndSettle(const Duration(seconds: 1));
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('../../gallery/$name.png'),
-      );
+      // Pixels differ by design in a stress pass (rescaled or resized);
+      // the overflow assertion already happened during pump.
+      if (!isStressRun) {
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../../gallery/$name.png'),
+        );
+      }
     },
     skip: !runGoldens,
   );

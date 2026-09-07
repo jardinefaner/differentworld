@@ -131,6 +131,10 @@ class WordleGame extends GridGame {
   @override
   List<BoardCell>? onPick(GridBoard b, int i) => null;
 
+  /// Guessed, or out of rows.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) {
     if (_solved(b)) return 'Got it!';

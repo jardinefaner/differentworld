@@ -86,6 +86,14 @@ class ScattergoriesGame extends GridGame {
   @override
   List<BoardCell>? onPick(GridBoard b, int i) => null;
 
+  /// Every category answered. The count was already on the board; nothing
+  /// ever declared the round finished.
+  @override
+  String? outcomeFor(GridBoard b) =>
+      b.cells.every((c) => c.tint == CellTint.right)
+      ? 'All of them, with ${letterOf(b)}'
+      : null;
+
   @override
   String? titleFor(GridBoard b) => 'Everything starts with ${letterOf(b)}';
 

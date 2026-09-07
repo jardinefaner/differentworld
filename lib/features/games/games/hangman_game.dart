@@ -94,6 +94,10 @@ class HangmanGame extends GridGame {
     return w.isNotEmpty && w.split('').every(got.contains);
   }
 
+  /// Solved, or out of guesses. Both endings were already written for the title and neither ever stopped the round.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) {
     if (_solved(b)) return 'You got it!';

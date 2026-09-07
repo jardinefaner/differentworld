@@ -150,8 +150,13 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Two action buttons side by side are 6.6dp too wide on a 320dp
+            // phone, which clipped the share button's label. Wrapping stacks
+            // them there and changes nothing at any normal width.
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 OutlinedButton.icon(
                   onPressed: () async {
@@ -167,7 +172,6 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
                   icon: const Icon(Icons.content_copy_outlined),
                   label: const Text('Copy code'),
                 ),
-                const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: () async {
                     final text = shareText;

@@ -153,6 +153,13 @@ class CrosswordGame extends GridGame {
     ];
   }
 
+  /// Every square filled. NOT `titleFor`, which also returns the clue for
+  /// whichever square is selected — reusing it would end the round the moment
+  /// somebody tapped a clue.
+  @override
+  String? outcomeFor(GridBoard b) =>
+      b.cells.any((c) => c.state == CellState.hidden) ? null : 'All done!';
+
   @override
   String? titleFor(GridBoard b) {
     final open = b.cells.where((c) => c.state == CellState.hidden);

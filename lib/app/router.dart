@@ -2341,6 +2341,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/library/ours',
             builder: (_, _) => const OurContentLibraryScreen(),
             routes: [
+              // `new` before `:kind` so the picker isn't swallowed as a
+              // content kind called "new".
+              GoRoute(
+                path: 'new',
+                builder: (_, _) => const OurContentPickerScreen(),
+              ),
               GoRoute(
                 path: ':kind',
                 builder: (_, state) => OurContentKindScreen(

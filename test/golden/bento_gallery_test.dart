@@ -178,8 +178,9 @@ Future<void> _pumpAndShoot(
   Widget screenWidget,
   Size size,
 ) async {
-  await tester.binding.setSurfaceSize(size);
-  tester.view.physicalSize = size;
+  final applied = plateSize(size);
+  await tester.binding.setSurfaceSize(applied);
+  tester.view.physicalSize = applied;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -226,10 +227,14 @@ Future<void> _pumpAndShoot(
   for (var i = 0; i < 6; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
-  await expectLater(
-    find.byType(MaterialApp),
-    matchesGoldenFile('../../gallery/bento/${screen}__$mode.png'),
-  );
+  // Pixels differ by design in a stress pass (rescaled or resized);
+  // the overflow assertion already happened during pump.
+  if (!isStressRun) {
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('../../gallery/bento/${screen}__$mode.png'),
+    );
+  }
   // Drain: unmount (cancels Drift subscriptions) + advance timers so any
   // pending one-shot Drift Timer fires before teardown's invariant check.
   await tester.pumpWidget(const SizedBox.shrink());

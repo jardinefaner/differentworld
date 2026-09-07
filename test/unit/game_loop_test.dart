@@ -14,6 +14,7 @@ import 'package:differentworld/features/games/games/bingo_game.dart';
 import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
+import 'package:differentworld/features/games/games/simon_game.dart';
 import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -45,14 +46,13 @@ void main() {
   ];
 
   group('every grid game can end', () {
-    // A ratchet over a real debt. `outcomeFor` cannot be detected by
-    // reflection, so the ledger is explicit: a game is either KNOWN to have an
-    // ending or KNOWN not to, and a game that is in neither list fails. Move
-    // ids from `missingLoop` to `hasLoop` as each gets its ending; never the
-    // other way.
+    // The ledger. `outcomeFor` cannot be detected by reflection, so it is
+    // explicit: every grid game is either KNOWN to end, or KNOWN to be
+    // deliberately endless, and a game in neither list fails the build.
     const hasLoop = <String>{
       'whack-a-mole',
       'boggle',
+      'simon',
       'bingo',
       'lights-out',
       'minesweeper',
@@ -63,41 +63,56 @@ void main() {
       'battleship',
       'snakes-ladders',
       'scavenger',
-    };
-    const missingLoop = <String>{
       'hangman',
-      'four-corners',
-      'word-search',
-      'simon',
       'wordle',
+      'word-search',
       'scattergories',
       'crossword',
-      'grid-reveal',
-      'memory-match',
+    };
+
+    // Endless ON PURPOSE, with the reason. This list should stay very short;
+    // "it has no ending" is almost always a gap, not a design.
+    const noEnding = <String, String>{
+      'four-corners':
+          'The board is the ROOM — everyone stands in a corner. Nobody wins, '
+          'and inventing a winner would change what the activity is.',
     };
 
     test('the registry actually has grid games (the check can fail)', () {
       expect(gridGames(), isNotEmpty);
-      expect(hasLoop.intersection(missingLoop), isEmpty);
+      expect(hasLoop.intersection(noEnding.keys.toSet()), isEmpty);
+      expect(
+        noEnding.values.every((why) => why.length > 40),
+        isTrue,
+        reason: 'an endless game must justify itself',
+      );
     });
 
     test('every grid game is accounted for in the ledger', () {
       final ids = gridGames().map((g) => g.id).toSet();
-      final unaccounted = ids.difference(hasLoop).difference(missingLoop);
+      final unaccounted = ids
+          .difference(hasLoop)
+          .difference(noEnding.keys.toSet());
       expect(
         unaccounted,
         isEmpty,
         reason:
-            'A new grid game must declare whether it can be finished: '
+            'A new grid game must declare whether it can be finished — add '
+            'it to hasLoop, or to noEnding with a reason: '
             "${unaccounted.join(', ')}",
       );
     });
 
     test('the clock games play themselves to an ending', () {
-      // Only the timed ones can be finished by a machine: a puzzle needs the
-      // right moves, not many moves. Random tapping never solves Lights Out,
-      // which is a fact about the test, not about the game.
-      for (final g in gridGames().where((g) => g.ticks)) {
+      // Only the ones whose ENDING is the clock. Simon has a clock too, but
+      // it only plays the sequence back — Simon ends on wrong taps, and is
+      // covered by its own test below. A puzzle needs the right moves, not
+      // many moves: random tapping never solves Lights Out, which is a fact
+      // about the test rather than about the game.
+      const endsOnClockAlone = {'whack-a-mole', 'boggle'};
+      for (final g in gridGames().where(
+        (g) => endsOnClockAlone.contains(g.id),
+      )) {
         var wire = GridBoard(
           cols: g.cols,
           rows: g.rows,
@@ -172,15 +187,15 @@ void main() {
         for (var i = 0; i < 40; i++)
           ContentItem(
             kind: ContentKind.picture,
-            fingerprint: 'pic\$i',
-            payload: {'image': 'assets/decks/pic\$i.png', 'label': 'Card \$i'},
+            fingerprint: 'pic$i',
+            payload: {'image': 'assets/decks/pic$i.png', 'label': 'Card $i'},
           ),
       ]);
       for (final g in gridGames()) {
         expect(
           () => g.deal(minimal),
           returnsNormally,
-          reason: '\${g.id} throws on a minimally-authored bank',
+          reason: '${g.id} throws on a minimally-authored bank',
         );
       }
     });
@@ -337,6 +352,55 @@ void main() {
       }
       final shape = game.asShape(game.decode(wire));
       expect(shape!.title, game.decode(wire).outcome);
+    });
+  });
+
+  group('simon shows the pattern before asking for it', () {
+    const game = SimonGame();
+
+    GridBoard play(Map<String, dynamic> w) => game.decode(w);
+
+    test('the board is talking on deal, so taps are ignored', () {
+      final b = play(game.initialState(bank()));
+      expect(SimonGame.showingOf(b), isTrue);
+      final after = game.reduce(b.toWire(), GameIntent.pick, {'cell': 0});
+      expect(
+        after,
+        b.toWire(),
+        reason: 'a tap while it plays back does nothing',
+      );
+    });
+
+    test('it lights each pad of the pattern, then falls silent', () {
+      var wire = game.initialState(bank());
+      final lit = <int>[];
+      for (var i = 0; i < 6; i++) {
+        wire = game.reduce(wire, GameIntent.tick, const {});
+        final b = play(wire);
+        final at = b.cells.indexWhere((c) => c.tint == CellTint.live);
+        if (at >= 0) lit.add(at);
+        if (!SimonGame.showingOf(b)) break;
+      }
+      expect(lit, isNotEmpty, reason: 'the room is shown something');
+      expect(SimonGame.showingOf(play(wire)), isFalse, reason: 'then its turn');
+    });
+
+    test('three wrong taps end the round and report the best run', () {
+      var wire = game.initialState(bank());
+      for (var round = 0; round < 3; round++) {
+        // Let it finish talking.
+        for (var i = 0; i < 8 && SimonGame.showingOf(play(wire)); i++) {
+          wire = game.reduce(wire, GameIntent.tick, const {});
+        }
+        final b = play(wire);
+        if (b.done) break;
+        final right = SimonGame.patternOf(b).first;
+        wire = game.reduce(wire, GameIntent.pick, {'cell': (right + 1) % 4});
+      }
+      final b = play(wire);
+      expect(b.score('wrong'), 3);
+      expect(b.done, isTrue);
+      expect(b.outcome, isNotNull);
     });
   });
 

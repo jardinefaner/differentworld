@@ -483,7 +483,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: What a room writes for itself — its own questions, this-or-that pairs, riddles, do-its, charades prompts and the rest, plus the picture library. Everything authored here plays alongside the curated seeds, so the app ships conditions and the room supplies the content (docs/CONDITIONS.md).
 **Personas served**: All staff (author); the whole room plays what they wrote. Maya (a planning-afternoon library); Jordan / Coach Sam (add one from the activity's own end-of-round beat).
 **Discovery surfaces**:
-- Routes: `/library/ours`, `/library/ours/:kind`, `/games/pictures`
+- Routes: `/library/ours`, `/library/ours/new`, `/library/ours/:kind`, `/library/ours/:kind/new`, `/library/ours/:kind/edit?id=`, `/games/pictures`
 - Omnibox: yes — "Our own" (page), one entry per authorable kind ("Our riddles", "Our pairs", … keywords: the kind's singular/plural/title, "add {one}", "write {one}"), and "Game pictures"
 - Slash: none
 - Drawer: no
@@ -492,7 +492,8 @@ surface — preferences + roster + fleet, not primary workflows.
 **Data**: [content_items](SCHEMA.md#content_items) — `space_id` set, `source='staff'`, `fingerprint = id` (so two identical authored rows both survive; a room may repeat itself). One row per item, `payload` the kind's JSON shape. Picture bytes live in the private `person-photos` bucket (binary-media rule); the row carries only the path or a `pending:<id>` token.
 **Surfaces**:
 - *Kind schema* — `lib/features/game_content/content_kinds.dart`. `ContentKindSpec` × 15: title, singular/plural, icon, blurb, and the ordered fields. THE declaration every authoring surface is generated from — a new content kind gets a full CRUD door by adding a spec and nothing else.
-- *Library index* — `our_content_library_screen.dart` (`/library/ours`). Every authorable kind with how many this program has written; a failed read shows a cloud-off icon, never a confident "none yet".
+- *Library index* — `our_content_library_screen.dart` (`/library/ours`). **Leads with what the room has written**, not with the catalogue: only kinds with a count appear, then one "Write something else" row. Day one is an empty state with a single action. The first version listed all sixteen kinds flat with fifteen "None yet" rows — the wall the drawer-slim removed, rebuilt in a library.
+- *Picker* — `OurContentPickerScreen` (`/library/ours/new`). The full set, grouped by `ContentPurpose` (ask the room · get them moving · play with words · write it down) — what a teacher is trying to do, not what the code calls a row.
 - *Per-kind list* — `our_content_kind_screen.dart` (`/library/ours/:kind`). Add / tap-to-edit / remove with undo (`deleteWithUndo`, restore re-inserts the SAME id).
 - *The form* — `our_content_form_screen.dart`. A page, not a sheet (the modals law); fields, hints and validation all come from the spec; `DismissGuard` on unsaved work.
 - *In-activity door* — `ours_strip.dart`. `activityAuthorKinds` maps 13 activity routes / game ids to their kinds; `OursStrip` renders on the game's end-of-round beat in `game_scaffold.dart` ("40 ready · 2 pairs yours · Add ours"). Suppressed in kid mode — the door leads out of the activity.

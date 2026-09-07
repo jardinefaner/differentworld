@@ -456,9 +456,22 @@ void _last() {
   group('Simon', () {
     const g = SimonGame();
 
+    /// Let the board finish playing the pattern back. It now SHOWS the
+    /// sequence before asking for it — previously it never did, so the room
+    /// was asked to repeat something it had never seen — and taps are ignored
+    /// while it is talking.
+    Map<String, dynamic> afterPlayback(Map<String, dynamic> wire) {
+      var w = wire;
+      for (var i = 0; i < 12 && SimonGame.showingOf(board(g, w)); i++) {
+        w = g.reduce(w, GameIntent.tick, const {});
+      }
+      return w;
+    }
+
     test('a right pad extends the pattern; a wrong one starts over', () {
-      final start = g.initialState(const _NoContent());
+      final start = afterPlayback(g.initialState(const _NoContent()));
       final b0 = board(g, start);
+      expect(SimonGame.showingOf(b0), isFalse, reason: "the room's turn");
       final want = SimonGame.patternOf(b0).first;
       final right = board(g, tap(g, start, want));
       expect(SimonGame.patternOf(right).length, 2, reason: 'one more light');
@@ -467,6 +480,12 @@ void _last() {
       final wrong = board(g, tap(g, start, wrongPad));
       // Restart, not game-over — a room of six year olds keeps playing.
       expect(SimonGame.patternOf(wrong).length, 1);
+    });
+
+    test('a tap while the board is still playing back does nothing', () {
+      final start = g.initialState(const _NoContent());
+      expect(SimonGame.showingOf(board(g, start)), isTrue);
+      expect(tap(g, start, 0), start);
     });
 
     test('the pattern never reaches the screen', () {

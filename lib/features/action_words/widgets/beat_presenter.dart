@@ -349,8 +349,15 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
               left: 8,
               right: 8,
               bottom: 10,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // A Wrap, not a Row: three groups of fixed-size controls
+              // overflowed by 20dp on a 320dp phone, clipping the jump-to-beat
+              // button. Wrapping drops a group to a second line instead of off
+              // the screen; at any normal width it lays out identically.
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,

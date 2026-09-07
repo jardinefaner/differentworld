@@ -6,6 +6,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entities/entity_link.dart';
 import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
+import 'package:differentworld/shared/widgets/adaptive_control_row.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -70,36 +71,45 @@ class AttendanceRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: EntityLink(
-                    entity: EntityRef(
-                      kind: EntityKind.subject,
-                      id: subject.id,
-                      label: fullName,
+            // Five 48dp status targets plus an avatar plus a name do not fit
+            // a 320dp phone on one line — the row overflowed by 28dp there,
+            // clipping the last status button. Below 360 the statuses take
+            // their own line at full size; 48dp is the a11y floor, so
+            // shrinking them was never the fix.
+            AdaptiveControlRow(
+              content: Row(
+                children: [
+                  PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: EntityLink(
+                      entity: EntityRef(
+                        kind: EntityKind.subject,
+                        id: subject.id,
+                        label: fullName,
+                      ),
+                      padded: false,
+                      // Plain, not the entity tint. EntityLink colours by KIND,
+                      // which is right for an inline reference in prose
+                      // ("Sofia and Mateo built a fort") and wrong in a list
+                      // where every row is the same kind — twenty rust names on
+                      // warm paper read as twenty problems, and the brand's own
+                      // rule is that glow is scarce.
+                      tinted: false,
+                      style: theme.textTheme.bodyLarge,
+                      // Two lines. Five 48dp buttons take 240dp of a 390dp
+                      // phone, leaving ~124dp for the name — "Liam Okafor"
+                      // truncated to "Liam Okaf…". A roster row exists to tell
+                      // children apart; a clipped surname defeats the screen.
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    padded: false,
-                    // Plain, not the entity tint. EntityLink colours by KIND,
-                    // which is right for an inline reference in prose
-                    // ("Sofia and Mateo built a fort") and wrong in a list
-                    // where every row is the same kind — twenty rust names on
-                    // warm paper read as twenty problems, and the brand's own
-                    // rule is that glow is scarce.
-                    tinted: false,
-                    style: theme.textTheme.bodyLarge,
-                    // Two lines. Five 48dp buttons take 240dp of a 390dp
-                    // phone, leaving ~124dp for the name — "Liam Okafor"
-                    // truncated to "Liam Okaf…". A roster row exists to tell
-                    // children apart; a clipped surname defeats the screen.
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 8),
-                for (final s in AttendanceStatus.values) ...[
+                ],
+              ),
+              spacing: 4,
+              controls: [
+                for (final s in AttendanceStatus.values)
                   _StatusButton(
                     status: s,
                     selected: s == status,
@@ -109,8 +119,6 @@ class AttendanceRow extends StatelessWidget {
                       await onChangeStatus(s == status ? null : s);
                     },
                   ),
-                  const SizedBox(width: 4),
-                ],
               ],
             ),
             if (overwrittenBy != null)

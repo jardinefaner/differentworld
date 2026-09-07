@@ -15,6 +15,20 @@ import 'package:flutter/material.dart';
 /// `picture` is deliberately ABSENT: its payload is an uploaded image, not
 /// typed fields, so it keeps its own camera-shaped library at
 /// `/games/pictures`. Everything else is text and fits one form.
+/// What a kind is FOR, from the teacher's side. The library groups by this
+/// rather than listing fifteen kinds flat: "ask the room" is a thing you want
+/// to do; "this_or_that" is a thing the code calls a row.
+enum ContentPurpose {
+  ask('Ask the room'),
+  move('Get them moving'),
+  play('Play with words'),
+  write('Write it down');
+
+  const ContentPurpose(this.label);
+
+  final String label;
+}
+
 @immutable
 class ContentKindSpec {
   const ContentKindSpec({
@@ -25,6 +39,7 @@ class ContentKindSpec {
     required this.icon,
     required this.fields,
     required this.blurb,
+    required this.purpose,
     this.summaryKey,
   });
 
@@ -50,6 +65,10 @@ class ContentKindSpec {
   /// Never an instruction for how to use the screen — the screen is obvious;
   /// this says what the words are FOR (docs/CONDITIONS.md).
   final String blurb;
+
+  /// What this kind is for — the group it sits under when a teacher is
+  /// choosing what to write.
+  final ContentPurpose purpose;
 
   /// Payload key to show as a row's headline, when it isn't the first field.
   final String? summaryKey;
@@ -138,6 +157,7 @@ class ContentField {
 const List<ContentKindSpec> authorableKinds = [
   ContentKindSpec(
     kind: ContentKind.thisOrThat,
+    purpose: ContentPurpose.ask,
     title: 'This or that',
     one: 'pair',
     many: 'pairs',
@@ -160,6 +180,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.question,
+    purpose: ContentPurpose.ask,
     title: 'Questions of the day',
     one: 'question',
     many: 'questions',
@@ -176,6 +197,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.doIt,
+    purpose: ContentPurpose.move,
     title: 'Do its',
     one: 'do it',
     many: 'do its',
@@ -205,6 +227,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.charades,
+    purpose: ContentPurpose.move,
     title: 'Charades',
     one: 'prompt',
     many: 'prompts',
@@ -227,6 +250,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.riddle,
+    purpose: ContentPurpose.play,
     title: 'Riddles',
     one: 'riddle',
     many: 'riddles',
@@ -250,6 +274,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.factOrFib,
+    purpose: ContentPurpose.ask,
     title: 'Fact or fib',
     one: 'claim',
     many: 'claims',
@@ -280,6 +305,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.category,
+    purpose: ContentPurpose.ask,
     title: 'Categories',
     one: 'category',
     many: 'categories',
@@ -296,6 +322,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.storyStarter,
+    purpose: ContentPurpose.write,
     title: 'Story starters',
     one: 'starter',
     many: 'starters',
@@ -312,6 +339,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.storyTwist,
+    purpose: ContentPurpose.write,
     title: 'Story twists',
     one: 'twist',
     many: 'twists',
@@ -328,6 +356,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.quote,
+    purpose: ContentPurpose.ask,
     title: 'Quotes',
     one: 'quote',
     many: 'quotes',
@@ -351,6 +380,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.line,
+    purpose: ContentPurpose.move,
     title: 'Lines to perform',
     one: 'line',
     many: 'lines',
@@ -367,6 +397,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.asIf,
+    purpose: ContentPurpose.move,
     title: 'As ifs',
     one: 'as if',
     many: 'as ifs',
@@ -383,6 +414,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.rhymeWord,
+    purpose: ContentPurpose.play,
     title: 'Rhyme words',
     one: 'word',
     many: 'words',
@@ -399,6 +431,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.writePrompt,
+    purpose: ContentPurpose.write,
     title: 'Write to a friend',
     one: 'prompt',
     many: 'prompts',
@@ -415,6 +448,7 @@ const List<ContentKindSpec> authorableKinds = [
   ),
   ContentKindSpec(
     kind: ContentKind.fillBlank,
+    purpose: ContentPurpose.play,
     title: 'Fill in the blanks',
     one: 'template',
     many: 'templates',

@@ -10,6 +10,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/game_content/our_content.dart';
 import 'package:differentworld/features/game_content/our_content_form_screen.dart';
 import 'package:differentworld/features/game_content/our_content_kind_screen.dart';
+import 'package:differentworld/features/game_content/our_content_library_screen.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -193,6 +194,69 @@ void main() {
     expect(find.text('What has hands?'), findsOneWidget);
     expect(find.text('A clock'), findsOneWidget);
     expect(find.text('Add a riddle'), findsOneWidget);
+  });
+
+  testWidgets('day one is one way in, not fifteen empty rows', (tester) async {
+    await tester.pumpWidget(wrap(const OurContentLibraryScreen()));
+    await tester.pumpAndSettle();
+
+    // The first version listed every kind with "None yet" beside it — the
+    // wall of rows this screen exists to avoid.
+    expect(find.text('None yet'), findsNothing);
+    expect(find.text('This or that'), findsNothing);
+    expect(find.text('Nothing of yours yet'), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, 'Write something'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('once something is written, the index leads with it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => db),
+          viewerProvider.overrideWithValue(
+            Viewer(member: member, space: space),
+          ),
+          ourContentProvider(ContentKind.riddle).overrideWith(
+            (ref) => Stream.value([
+              const OurContentItem(
+                id: 'r1',
+                kind: ContentKind.riddle,
+                payload: {'prompt': 'p', 'answer': 'a'},
+                createdAt: now,
+              ),
+            ]),
+          ),
+        ],
+        child: const MaterialApp(home: OurContentLibraryScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Riddles'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    // Everything else stays behind one row.
+    expect(find.text('Questions of the day'), findsNothing);
+    expect(find.text('Write something else'), findsOneWidget);
+  });
+
+  testWidgets('the picker groups the full set by what it is for', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap(const OurContentPickerScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ask the room'), findsOneWidget);
+    expect(find.text('This or that'), findsOneWidget);
+    // Further down the list — a lazy ListView hasn't built it yet, which is
+    // the point: the full set is here, but it is not what you land on.
+    await tester.scrollUntilVisible(find.text('Riddles'), 200);
+    expect(find.text('Riddles'), findsOneWidget);
+    expect(find.text('Play with words'), findsOneWidget);
   });
 
   testWidgets('an empty list invites rather than showing a blank screen', (

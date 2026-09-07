@@ -3,6 +3,7 @@ import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_voices.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
+import 'package:differentworld/shared/widgets/adaptive_control_row.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:flutter/material.dart';
 
@@ -153,24 +154,24 @@ class TypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Text(
-          'Type',
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-          ),
+    // The pills are fixed-width and there are several: on a 320dp phone the
+    // label plus the row of them overflowed by 34dp and the last one was
+    // clipped off the screen. Below 360 they take their own line.
+    return AdaptiveControlRow(
+      content: Text(
+        'Type',
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
         ),
-        const SizedBox(width: 14),
-        for (final t in SpeakType.values) ...[
+      ),
+      controls: [
+        for (final t in SpeakType.values)
           _TypePill(
             type: t,
             selected: t == selected,
             onTap: () => onChanged(t),
           ),
-          const SizedBox(width: 8),
-        ],
       ],
     );
   }

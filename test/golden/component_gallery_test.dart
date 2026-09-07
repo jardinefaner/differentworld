@@ -2338,10 +2338,14 @@ void _plate(
           ),
           size: Size(width, height),
         );
-        await expectLater(
-          find.byType(MaterialApp),
-          matchesGoldenFile('../../gallery/${name}__$mode.png'),
-        );
+        // Pixels differ by design in a stress pass (rescaled or resized);
+        // the overflow assertion already happened during pump.
+        if (!isStressRun) {
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('../../gallery/${name}__$mode.png'),
+          );
+        }
       },
       skip: !runGoldens,
     );
@@ -2361,8 +2365,8 @@ void _platePumped(
     testWidgets(
       '$name · $mode',
       (tester) async {
-        await tester.binding.setSurfaceSize(Size(440, height));
-        tester.view.physicalSize = Size(440, height);
+        await tester.binding.setSurfaceSize(plateSize(Size(440, height)));
+        tester.view.physicalSize = plateSize(Size(440, height));
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
@@ -2388,10 +2392,14 @@ void _platePumped(
         for (var i = 0; i < frames; i++) {
           await tester.pump(const Duration(milliseconds: 120));
         }
-        await expectLater(
-          find.byType(MaterialApp),
-          matchesGoldenFile('../../gallery/${name}__$mode.png'),
-        );
+        // Pixels differ by design in a stress pass (rescaled or resized);
+        // the overflow assertion already happened during pump.
+        if (!isStressRun) {
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('../../gallery/${name}__$mode.png'),
+          );
+        }
       },
       skip: !runGoldens,
     );
@@ -2419,8 +2427,8 @@ void _scenePlate(
       '$name · $mode',
       (tester) async {
         final theme = mode == 'dark' ? buildDarkTheme() : buildLightTheme();
-        await tester.binding.setSurfaceSize(Size(width, height));
-        tester.view.physicalSize = Size(width, height);
+        await tester.binding.setSurfaceSize(plateSize(Size(width, height)));
+        tester.view.physicalSize = plateSize(Size(width, height));
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
@@ -2432,10 +2440,14 @@ void _scenePlate(
         } else {
           await tester.pumpAndSettle(const Duration(seconds: 1));
         }
-        await expectLater(
-          find.byType(MaterialApp),
-          matchesGoldenFile('../../gallery/${name}__$mode.png'),
-        );
+        // Pixels differ by design in a stress pass (rescaled or resized);
+        // the overflow assertion already happened during pump.
+        if (!isStressRun) {
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('../../gallery/${name}__$mode.png'),
+          );
+        }
       },
       skip: !runGoldens,
     );
