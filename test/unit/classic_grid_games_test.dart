@@ -600,19 +600,29 @@ void _shapesIWasWrongAbout() {
     });
   });
 
-  test('Snakes & Ladders moves the token and never leaves the board', () {
+  test('Snakes & Ladders moves both tokens and never leaves the board', () {
+    // Two tokens now, because one made it a solitaire walk with nobody to
+    // beat. The original guarantee still holds per side: a token never
+    // duplicates and never falls off the board.
     const g = SnakesLaddersGame();
     var w = g.initialState(const _NoContent());
-    for (var i = 0; i < 40; i++) {
+    for (var i = 0; i < 60; i++) {
       w = tap(g, w, 0);
       final b = board(g, w);
-      expect(
-        b.cells.where((c) => c.face == '🔴').length,
-        1,
-        reason: 'exactly one token, always',
-      );
+      final at = SnakesLaddersGame.positionsOf(b);
+      expect(at, hasLength(2));
+      for (final p in at) {
+        expect(p, inInclusiveRange(0, b.cells.length - 1));
+      }
+      // One face per token, or one shared face when they land together.
+      final tokenCells = b.cells
+          .where((c) => c.face == '🔴' || c.face == '🔵' || c.face == '🔴🔵')
+          .length;
+      expect(tokenCells, inInclusiveRange(1, 2), reason: 'no stray tokens');
+      if (b.done) break;
     }
-    expect(g.titleFor(board(g, w)), 'Home!');
+    expect(board(g, w).done, isTrue, reason: 'somebody gets home');
+    expect(g.outcomeFor(board(g, w)), contains('home'));
   });
 
   group('Dots & Boxes', () {

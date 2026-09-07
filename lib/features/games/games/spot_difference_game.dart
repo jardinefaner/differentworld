@@ -65,6 +65,11 @@ class SpotDifferenceGame extends GridGame {
 
   /// The marker is storage. A board that showed it would be answering its own
   /// question.
+  /// Teams alternate guesses — one wrong guess passes the board over, which
+  /// is the whole tension of spotting something first.
+  @override
+  bool get alternates => true;
+
   @override
   BoardCell present(BoardCell c) =>
       BoardCell(face: c.face, state: c.state, tint: c.tint);
@@ -87,11 +92,20 @@ class SpotDifferenceGame extends GridGame {
     ];
   }
 
-  /// One difference, one answer — finding it IS the end of the round.
+  /// One difference, one answer — finding it IS the end of the round, and
+  /// now it belongs to whoever called it. The reducer has already handed the
+  /// turn on, so the finder is the OTHER side.
   @override
-  String? outcomeFor(GridBoard b) => titleFor(b);
+  String? outcomeFor(GridBoard b) {
+    if (!b.cells.any((c) => c.tint == CellTint.right)) return null;
+    final finder = (b.turn + sides.length - 1) % sides.length;
+    return '${sides[finder]} spotted it';
+  }
 
   @override
   String? titleFor(GridBoard b) =>
       b.cells.any((c) => c.tint == CellTint.right) ? 'Found it!' : null;
+
+  @override
+  String? noteFor(GridBoard b) => turnLine(b);
 }

@@ -15,8 +15,10 @@ import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
 import 'package:differentworld/features/games/games/simon_game.dart';
+import 'package:differentworld/features/games/games/snakes_ladders_game.dart';
 import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/word_search_game.dart';
+import 'package:differentworld/features/games/games/wordle_game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -412,11 +414,22 @@ void main() {
       }
     });
 
+    test('a typed answer hands over too', () {
+      // The reducer used to flip the turn only on a TAP, so a typing game
+      // could declare sides and then never change hands.
+      const g = WordleGame();
+      var wire = g.initialState(bank());
+      final before = g.decode(wire).turn;
+      wire = g.reduce(wire, GameIntent.capture, const {'text': 'CRANE'});
+      expect(g.decode(wire).turn, isNot(before));
+    });
+
     test('the turn actually changes hands on a move', () {
       for (final g in gridGames().where((g) => g.alternates)) {
         var wire = g.initialState(bank());
         final before = g.decode(wire).turn;
-        // Find a tap the rule accepts.
+        // Find a MOVE the rule accepts — a tap, or a typed answer for the
+        // games played by typing (their onPick is deliberately null).
         for (var i = 0; i < g.cols * g.rows; i++) {
           final next = g.reduce(wire, GameIntent.pick, {'cell': i});
           if (next != wire) {
@@ -424,12 +437,38 @@ void main() {
             break;
           }
         }
+        if (g.decode(wire).turn == before && g.entryHint != null) {
+          wire = g.reduce(wire, GameIntent.capture, {
+            'text': 'CRANE'.substring(0, g.entryLength ?? 5),
+          });
+        }
         expect(
           g.decode(wire).turn,
           isNot(before),
           reason: '${g.id} never hands over',
         );
       }
+    });
+
+    test('snakes and ladders is a race, not a walk', () {
+      // One token made it a solitaire walk to square 36 with no decision in
+      // it and nobody to beat.
+      const g = SnakesLaddersGame();
+      var wire = g.initialState(bank());
+      expect(SnakesLaddersGame.positionsOf(g.decode(wire)), [0, 0]);
+
+      // One roll moves exactly ONE team.
+      wire = g.reduce(wire, GameIntent.pick, const {'cell': 0});
+      final after = SnakesLaddersGame.positionsOf(g.decode(wire));
+      expect(after.where((p) => p > 0).length, 1, reason: 'one side moved');
+
+      // Play it out; somebody gets home and is named.
+      for (var i = 0; i < 400 && !g.decode(wire).done; i++) {
+        wire = g.reduce(wire, GameIntent.pick, const {'cell': 0});
+      }
+      final end = g.decode(wire);
+      expect(end.done, isTrue, reason: 'a race ends');
+      expect(end.outcome, contains('home'));
     });
 
     test('battleship keeps score per side and names a winner', () {

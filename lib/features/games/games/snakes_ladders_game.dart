@@ -5,7 +5,12 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
-/// **Snakes & Ladders.** Roll, move, and hope.
+/// **Snakes & Ladders.** Two teams roll, move, and hope.
+///
+/// It had ONE token, which made it a solitaire walk to square 36 with no
+/// decision in it and nobody to beat — the least game-like thing in the deck.
+/// Two tokens make it the race it actually is: the room takes turns, and a
+/// ladder or a snake happens to somebody in particular.
 ///
 /// I listed this as needing a different shape because a token moves along a
 /// path. It does not: the path IS a grid, and the token is a face on one
@@ -13,7 +18,11 @@ import 'package:differentworld/features/live_session/stage_shape.dart';
 class SnakesLaddersGame extends GridGame {
   const SnakesLaddersGame();
 
-  static const _token = '🔴';
+  static const _tokens = ['🔴', '🔵'];
+
+  /// Both teams on one square. A cell holds one face, so a shared square
+  /// draws both — otherwise a token would silently vanish under the other.
+  static const _both = '🔴🔵';
   static const _snake = '🐍';
   static const _ladder = '🪜';
 
@@ -28,6 +37,12 @@ class SnakesLaddersGame extends GridGame {
     31: 6,
     33: 19,
   };
+
+  @override
+  bool get alternates => true;
+
+  @override
+  List<String> get sides => _tokens;
 
   @override
   String get id => 'snakes-ladders';
@@ -45,64 +60,97 @@ class SnakesLaddersGame extends GridGame {
   int get rows => 6;
 
   @override
-  List<BoardCell> deal(ContentSource content) => [
+  List<BoardCell> deal(ContentSource content) => _paint([0, 0]);
+
+  /// The board for a pair of positions. Built whole rather than patched,
+  /// because `copyWith(face: null)` KEEPS the old face — the trap this file
+  /// already learned once, when the token stayed behind and the board grew a
+  /// second one every move.
+  static List<BoardCell> _paint(List<int> at) => [
     for (var i = 0; i < 36; i++)
       BoardCell(
         label: '${i + 1}',
-        face: i == 0
-            ? _token
-            : (_jumps[i] == null ? null : (_jumps[i]! > i ? _ladder : _snake)),
+        face: _faceAt(i, at),
         state: CellState.shown,
       ),
   ];
 
-  static int _at(GridBoard b) =>
-      b.cells.indexWhere((c) => c.face == _token).clamp(0, b.cells.length - 1);
+  static String? _faceAt(int i, List<int> at) {
+    final here = [
+      for (var s = 0; s < at.length; s++)
+        if (at[s] == i) s,
+    ];
+    if (here.length > 1) return _both;
+    if (here.length == 1) return _tokens[here.first];
+    final jump = _jumps[i];
+    if (jump == null) return null;
+    return jump > i ? _ladder : _snake;
+  }
+
+  /// Where each side stands, read back off the board.
+  static List<int> positionsOf(GridBoard b) {
+    final out = [0, 0];
+    for (var i = 0; i < b.cells.length; i++) {
+      final f = b.cells[i].face;
+      if (f == _both) {
+        out[0] = i;
+        out[1] = i;
+      } else if (f == _tokens[0]) {
+        out[0] = i;
+      } else if (f == _tokens[1]) {
+        out[1] = i;
+      }
+    }
+    return out;
+  }
 
   /// Any tap is a roll — one to six, then the snake or the ladder if you land
   /// on one. Tapping rather than a dice button because every square is already
   /// a target and a room taps the screen anyway.
   @override
   List<BoardCell>? onPick(GridBoard b, int i) {
-    final here = _at(b);
-    if (here >= b.cells.length - 1) return null;
+    final at = positionsOf(b);
+    final side = b.turn % _tokens.length;
+    if (at[side] >= 36 - 1) return null;
     final roll = Random().nextInt(6) + 1;
-    var to = here + roll;
-    if (to >= b.cells.length) to = b.cells.length - 1;
+    var to = at[side] + roll;
+    if (to >= 36) to = 36 - 1;
     to = _jumps[to] ?? to;
-    // Built rather than copyWith'd: `copyWith(face: null)` KEEPS the old
-    // face, so the token stayed behind on the square it left and the board
-    // grew a second one every move.
-    String? faceAt(int j) {
-      if (j == to) return _token;
-      if (j == here) {
-        return _jumps[j] == null ? null : (_jumps[j]! > j ? _ladder : _snake);
-      }
-      return b.cells[j].face;
-    }
-
+    final next = [...at]..[side] = to;
     return [
-      for (var j = 0; j < b.cells.length; j++)
+      for (var j = 0; j < 36; j++)
         BoardCell(
-          label: b.cells[j].label,
-          face: faceAt(j),
+          label: '${j + 1}',
+          face: _faceAt(j, next),
           state: CellState.shown,
           tint: j == to ? CellTint.live : CellTint.none,
         ),
     ];
   }
 
-  /// Reaching the last square is the whole point of the board.
+  /// First team home. It is a RACE now, so the ending names who won.
   @override
-  String? outcomeFor(GridBoard b) => titleFor(b);
+  String? outcomeFor(GridBoard b) {
+    final at = positionsOf(b);
+    for (var s = 0; s < at.length; s++) {
+      if (at[s] >= 36 - 1) return '${_tokens[s]} is home!';
+    }
+    return null;
+  }
 
   @override
-  String? titleFor(GridBoard b) =>
-      _at(b) >= b.cells.length - 1 ? 'Home!' : null;
+  String? titleFor(GridBoard b) => outcomeFor(b);
 
+  /// Whose go, and where both teams stand — the two things a room watching a
+  /// race wants without asking.
   @override
   String? noteFor(GridBoard b) {
-    final at = _at(b);
-    return at == 0 ? null : '${at + 1}';
+    final at = positionsOf(b);
+    final turn = turnLine(b);
+    if (at[0] == 0 && at[1] == 0) return turn;
+    final where = [
+      for (var s = 0; s < at.length; s++) '${_tokens[s]} ${at[s] + 1}',
+    ].join('  ·  ');
+    return turn == null ? where : '$turn   ·   $where';
   }
 }

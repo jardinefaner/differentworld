@@ -39,6 +39,11 @@ class WordleGame extends GridGame {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
+  /// Teams alternate guesses — each row belongs to whoever called it, which
+  /// is how a room plays one board without one person owning the keyboard.
+  @override
+  bool get alternates => true;
+
   @override
   int get cols => 5;
 
@@ -134,6 +139,9 @@ class WordleGame extends GridGame {
   /// Guessed, or out of rows.
   @override
   String? outcomeFor(GridBoard b) => titleFor(b);
+
+  @override
+  String? noteFor(GridBoard b) => turnLine(b);
 
   @override
   String? titleFor(GridBoard b) {

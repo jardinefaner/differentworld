@@ -269,6 +269,10 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// Counters after one beat of the clock. Default: unchanged.
   Map<String, int> tallyAfterTick(GridBoard before) => before.tally;
 
+  /// Counters after a typed answer. Default: unchanged.
+  Map<String, int> tallyAfterEntry(GridBoard before, String text) =>
+      before.tally;
+
   /// Counters a freshly-dealt board starts with. Default: none. Simon uses it
   /// to open in "the board is talking" rather than waiting for a tap that
   /// nobody can make yet.
@@ -378,7 +382,15 @@ abstract class GridGame extends GameDefinition<GridBoard> {
         if (text.isEmpty) return state;
         final next = onEntry(b, text);
         if (next == null) return state;
-        return _settle(b.copyWith(cells: next));
+        // A typed answer hands over exactly as a tap does — otherwise the
+        // typing games could declare sides and then never change hands.
+        return _settle(
+          b.copyWith(
+            cells: next,
+            turn: alternates ? (b.turn + 1) % 2 : b.turn,
+            tally: tallyAfterEntry(b, text),
+          ),
+        );
       case GameIntent.reset:
         // Deal again. The content bank is not reachable from a pure reducer,
         // so a reset re-uses the faces already on the board, reshuffled by

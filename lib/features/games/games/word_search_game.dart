@@ -22,6 +22,11 @@ class WordSearchGame extends GridGame {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
+  /// Teams alternate hunting. One person ringing letters is a worksheet;
+  /// two teams taking turns is a race the room shouts through.
+  @override
+  bool get alternates => true;
+
   @override
   int get cols => _size;
 
@@ -134,11 +139,29 @@ class WordSearchGame extends GridGame {
     ].join('   ');
   }
 
+  /// Completing a word scores for the team that ringed the last letter.
+  @override
+  Map<String, int> tallyAfterPick(GridBoard before, int i) {
+    final c = before.cells[i];
+    if (c.face == null || c.tint == CellTint.right) return before.tally;
+    // Would this ring finish a word?
+    final after = before.copyWith(
+      cells: before.withAt(i, c.copyWith(tint: CellTint.right)),
+    );
+    return _found(after).length > _found(before).length
+        ? plusForTurn(before)
+        : before.tally;
+  }
+
   @override
   String? outcomeFor(GridBoard b) {
     final on = _onBoard(b);
     if (on.isEmpty) return null;
-    return _found(b).length == on.length ? 'Every word found' : null;
+    if (_found(b).length != on.length) return null;
+    final a = scoreOf(b, 0);
+    final c = scoreOf(b, 1);
+    if (a == c) return 'Every word found — $a each';
+    return '${sides[a > c ? 0 : 1]} found more, $a–$c';
   }
 
   @override
@@ -153,7 +176,9 @@ class WordSearchGame extends GridGame {
 
   @override
   String? noteFor(GridBoard b) {
-    final n = b.cells.where((c) => c.tint == CellTint.right).length;
-    return n == 0 ? null : '$n ringed';
+    final turn = turnLine(b);
+    final score = scoreLine(b);
+    if (score != null) return '$turn   ·   $score';
+    return turn;
   }
 }
