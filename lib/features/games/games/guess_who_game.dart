@@ -11,6 +11,12 @@ import 'package:differentworld/features/live_session/stage_shape.dart';
 /// The only game here where elimination is the whole thing rather than the
 /// ending — the board SHRINKING is the tension. `done` was already defined as
 /// "resolved and out of play, drawn quieter", which is exactly that.
+///
+/// **The board holds the secret.** It previously held none: the room
+/// eliminated faces with nothing to converge on, so there was no answer to be
+/// right or wrong about and the last face standing meant nothing. One face is
+/// now chosen at deal and kept in the tally, and the closing line says
+/// whether the room found it.
 class GuessWhoGame extends GridGame {
   const GuessWhoGame();
 
@@ -28,6 +34,15 @@ class GuessWhoGame extends GridGame {
 
   @override
   int get rows => 3;
+
+  /// Which face the board is thinking of. Stored as an index in the tally —
+  /// never in a cell, because a cell reaches the screen and this must not.
+  static int secretOf(GridBoard b) => b.score('secret');
+
+  @override
+  Map<String, int> get initialTally => {
+    'secret': Random().nextInt(cols * rows),
+  };
 
   @override
   List<BoardCell> deal(ContentSource content) {
@@ -59,10 +74,16 @@ class GuessWhoGame extends GridGame {
     return b.withAt(i, c.copyWith(state: next));
   }
 
-  /// One face left standing. The line was already computed for the board's title —
-  /// it simply never stamped `done`, so the round ran forever.
+  /// One face left standing — and now it can be RIGHT or wrong, because the
+  /// board was thinking of somebody.
   @override
-  String? outcomeFor(GridBoard b) => titleFor(b);
+  String? outcomeFor(GridBoard b) {
+    if (_left(b) != 1) return null;
+    final standing = b.cells.indexWhere((c) => c.state != CellState.done);
+    return standing == secretOf(b)
+        ? 'That is who!'
+        : 'Not this time — it was the other one';
+  }
 
   @override
   String? titleFor(GridBoard b) => _left(b) == 1 ? 'That is who!' : null;

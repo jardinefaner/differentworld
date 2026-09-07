@@ -187,9 +187,49 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// (an already-resolved square, a cell that is not this game's business).
   List<BoardCell>? onPick(GridBoard board, int i);
 
-  /// Whether a tap hands play to the other side. False for the solitaire-ish
-  /// ones (Bingo, Guess Who) where the room acts as one.
+  /// Whether a tap hands play to the other side. False for the ones where the
+  /// room acts as one.
+  ///
+  /// **This is what makes a board into something a ROOM plays.** A game with
+  /// no sides is a board being tapped: there is nothing to deliberate and no
+  /// reason for anyone to talk, so it is something people look at rather than
+  /// play. A game with sides gives the room two teams, a turn to argue over,
+  /// and one pair of hands entering what they decided — which is how this app
+  /// is meant to work everywhere else.
   bool get alternates => false;
+
+  /// The two sides. Override for game-specific tokens (Connect Four's discs);
+  /// the default reads as teams rather than colours.
+  List<String> get sides => const ['Team 1', 'Team 2'];
+
+  /// Whose go it is. Shown automatically under the board for any game that
+  /// [alternates] and hasn't overridden [noteFor] — so turning a game into a
+  /// team game costs one line.
+  String? turnLine(GridBoard b) {
+    if (!alternates || b.done || sides.isEmpty) return null;
+    return '${sides[b.turn % sides.length]} to play';
+  }
+
+  /// Per-side score, kept in the tally under `p0` / `p1`.
+  int scoreOf(GridBoard b, int side) => b.score('p$side');
+
+  /// The tally with the CURRENT side's score bumped — the shape every
+  /// two-sided rule wants.
+  Map<String, int> plusForTurn(GridBoard b, [int by = 1]) =>
+      b.plus('p${b.turn % sides.length}', by);
+
+  /// "Team 1 4 · Team 2 2", or null before anyone has scored.
+  String? scoreLine(GridBoard b) {
+    if (!alternates) return null;
+    final parts = <String>[];
+    var any = false;
+    for (var i = 0; i < sides.length; i++) {
+      final n = scoreOf(b, i);
+      if (n > 0) any = true;
+      parts.add('${sides[i]} $n');
+    }
+    return any ? parts.join('  ·  ') : null;
+  }
 
   /// **Is the round over, and what do we say about it?** Return null while
   /// the game is still being played; return the closing line when it is not.
@@ -375,7 +415,9 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     // should read "Bingo! Top row." on the screen, not keep staring at a
     // board whose state no longer changes.
     title: state.done ? (state.outcome ?? titleFor(state)) : titleFor(state),
-    note: state.done ? null : noteFor(state),
+    // Whose go it is, when the game itself has nothing louder to say. This is
+    // the line that lets a room take turns instead of watching one person tap.
+    note: state.done ? null : (noteFor(state) ?? turnLine(state)),
     behind: behindFor(state),
     cells: [
       for (final raw in state.cells)

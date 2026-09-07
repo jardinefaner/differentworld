@@ -30,6 +30,12 @@ class BattleshipGame extends GridGame {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
+  /// Two teams call squares in turn. Solitaire, this was one person tapping
+  /// twenty-five boxes; with sides it is a room arguing about where the ships
+  /// are and one pair of hands entering the call.
+  @override
+  bool get alternates => true;
+
   @override
   int get cols => 5;
 
@@ -51,14 +57,22 @@ class BattleshipGame extends GridGame {
       for (var i = 0; i < cols * rows; i++)
         BoardCell(
           label: label(i, cols),
-          // The ship rides in the FACE, unseen while the cell is hidden. The
-          // wire carries it either way — this is a room playing against the
-          // board, not two players hiding fleets from each other, so there is
-          // nothing to keep secret from the screen.
+          // The ship rides in the FACE. It is NOT automatically unseen while
+          // the cell is hidden — the renderer draws a face whenever there is
+          // one, whatever the state — so [present] does the hiding. Without
+          // that override every ship was visible from the first frame AND the
+          // coordinate labels never rendered, because a cell with a face
+          // never shows its label. The whole game was on the screen.
           face: ships.contains(i) ? _hit : _miss,
         ),
     ];
   }
+
+  /// A square not yet fired on shows its COORDINATE, not its contents. This
+  /// is the whole game: the room calls "B3" and finds out.
+  @override
+  BoardCell present(BoardCell c) =>
+      c.state == CellState.hidden ? BoardCell(label: c.label, tint: c.tint) : c;
 
   @override
   List<BoardCell>? onPick(GridBoard b, int i) {
@@ -68,15 +82,36 @@ class BattleshipGame extends GridGame {
     return b.withAt(i, b.cells[i].copyWith(state: CellState.shown));
   }
 
-  /// Every ship hit — the round is over, not merely titled.
+  /// A hit scores for whoever called it.
   @override
-  String? outcomeFor(GridBoard b) => titleFor(b);
+  Map<String, int> tallyAfterPick(GridBoard before, int i) =>
+      (before.cells[i].state == CellState.hidden &&
+          before.cells[i].face == _hit)
+      ? plusForTurn(before)
+      : before.tally;
+
+  /// Every ship found — and now it matters WHO found them.
+  @override
+  String? outcomeFor(GridBoard b) {
+    if (_sunk(b) != _ships) return null;
+    final a = scoreOf(b, 0);
+    final c = scoreOf(b, 1);
+    if (a == c) return 'All hit — a draw at $a each';
+    return '${sides[a > c ? 0 : 1]} wins, $a–$c';
+  }
 
   @override
   String? titleFor(GridBoard b) => _sunk(b) == _ships ? 'All hit!' : null;
 
   @override
   String? noteFor(GridBoard b) {
+    final score = scoreLine(b);
+    final turn = turnLine(b);
+    if (score != null && turn != null) return '$turn   ·   $score';
+    return _legacyNote(b) ?? turn;
+  }
+
+  String? _legacyNote(GridBoard b) {
     final hit = _sunk(b);
     final shots = b.cells.where((c) => c.state != CellState.hidden).length;
     if (shots == 0) return null;

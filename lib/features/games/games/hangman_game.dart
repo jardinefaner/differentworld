@@ -24,6 +24,11 @@ class HangmanGame extends GridGame {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);
 
+  /// Teams alternate letters. One person guessing a word alone is a
+  /// worksheet; two teams taking turns is a game the room shouts at.
+  @override
+  bool get alternates => true;
+
   @override
   int get cols => 7;
 
@@ -95,8 +100,23 @@ class HangmanGame extends GridGame {
   }
 
   /// Solved, or out of guesses. Both endings were already written for the title and neither ever stopped the round.
+  /// A letter that is in the word scores for the team that called it.
   @override
-  String? outcomeFor(GridBoard b) => titleFor(b);
+  Map<String, int> tallyAfterPick(GridBoard before, int i) {
+    final letter = before.cells[i].label;
+    if (letter == null || before.cells[i].state != CellState.hidden) {
+      return before.tally;
+    }
+    return wordOf(before).contains(letter) ? plusForTurn(before) : before.tally;
+  }
+
+  @override
+  String? outcomeFor(GridBoard b) {
+    final line = titleFor(b);
+    if (line == null) return null;
+    final score = scoreLine(b);
+    return score == null ? line : '$line   ·   $score';
+  }
 
   @override
   String? titleFor(GridBoard b) {

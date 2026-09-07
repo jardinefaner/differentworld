@@ -25,6 +25,12 @@ class MinesweeperGame extends GridGame {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
+  /// Teams alternate uncovering. This is what makes Minesweeper a party
+  /// game rather than a solitaire one: the room argues about which square is
+  /// safe, and the team that uncovers a mine hands the round to the others.
+  @override
+  bool get alternates => true;
+
   @override
   int get cols => 6;
 
@@ -98,8 +104,12 @@ class MinesweeperGame extends GridGame {
   /// carried on with nothing left to tap.
   @override
   String? outcomeFor(GridBoard b) {
-    if (_blown(b)) return 'Found one!';
-    return _allClear(b) ? 'All clear — every mine missed' : null;
+    if (_blown(b)) {
+      // Whoever's turn it now is did NOT set it off — the reducer already
+      // handed the turn on — so the survivor is the current side.
+      return '${sides[b.turn % sides.length]} wins — the other team found one';
+    }
+    return _allClear(b) ? 'All clear, together' : null;
   }
 
   bool _allClear(GridBoard b) => !b.cells.any(
@@ -112,6 +122,8 @@ class MinesweeperGame extends GridGame {
   @override
   String? noteFor(GridBoard b) {
     if (_blown(b)) return null;
+    final turn = turnLine(b);
+    if (turn != null) return turn;
     final safe = b.cells.where((c) => c.face != _mine).length;
     final open = b.cells
         .where((c) => c.face != _mine && c.state != CellState.hidden)

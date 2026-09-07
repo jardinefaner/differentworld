@@ -140,7 +140,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('This is for the team'), findsNothing);
-    expect(find.text('Our own'), findsOneWidget);
-    expect(find.text('This or that'), findsOneWidget);
+    expect(find.text('Ours'), findsOneWidget);
+    // NOT a list of every kind: the index leads with what the room has
+    // written, and on a fresh program that is an invitation, not a catalogue.
+    expect(find.text('Nothing of yours yet'), findsOneWidget);
   });
 }

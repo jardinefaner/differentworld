@@ -34,7 +34,9 @@ class WordSearchGame extends GridGame {
     final grid = List<String?>.filled(_size * _size, null);
     // Placed across and down only — a diagonal is a lot to ask of a six year
     // old, and this deck runs from four up.
-    for (final w in _fallback) {
+    final placed = <int, int>{}; // cell → word index
+    for (var wi = 0; wi < _fallback.length; wi++) {
+      final w = _fallback[wi];
       for (var attempt = 0; attempt < 40; attempt++) {
         final down = r.nextBool();
         final maxStart = _size - w.length;
@@ -53,6 +55,7 @@ class WordSearchGame extends GridGame {
         if (!ok) continue;
         for (var k = 0; k < w.length; k++) {
           grid[at[k]] = w[k];
+          placed[at[k]] = wi;
         }
         break;
       }
@@ -65,10 +68,12 @@ class WordSearchGame extends GridGame {
     // of the label matters: the label IS the letter, and anything that reads
     // it (a test, a renderer, a future feature) should see one character.
     return [
-      for (final ch in grid)
+      for (var i = 0; i < grid.length; i++)
         BoardCell(
-          label: ch ?? alphabet[r.nextInt(alphabet.length)],
-          face: ch == null ? null : _placed,
+          label: grid[i] ?? alphabet[r.nextInt(alphabet.length)],
+          // WHICH word, not merely "in a word" — the board has to be able to
+          // say "CAT is found" and cross it off the list.
+          face: placed[i] == null ? null : '$_placed${placed[i]}',
           state: CellState.shown,
         ),
     ];
@@ -85,14 +90,55 @@ class WordSearchGame extends GridGame {
   BoardCell present(BoardCell c) =>
       BoardCell(label: c.label, state: c.state, tint: c.tint);
 
-  /// Every letter that belongs to a word, ringed.
+  /// Which words are fully ringed.
+  static Set<int> _found(GridBoard b) {
+    final byWord = <int, List<BoardCell>>{};
+    for (final c in b.cells) {
+      final f = c.face;
+      if (f == null || !f.startsWith(_placed)) continue;
+      final wi = int.tryParse(f.substring(_placed.length));
+      if (wi == null) continue;
+      (byWord[wi] ??= []).add(c);
+    }
+    return {
+      for (final e in byWord.entries)
+        if (e.value.every((c) => c.tint == CellTint.right)) e.key,
+    };
+  }
+
+  /// Which words are ON this board at all — a word the grid could not fit is
+  /// not one the room should be asked to find.
+  static Set<int> _onBoard(GridBoard b) {
+    final out = <int>{};
+    for (final c in b.cells) {
+      final f = c.face;
+      if (f == null || !f.startsWith(_placed)) continue;
+      final wi = int.tryParse(f.substring(_placed.length));
+      if (wi != null) out.add(wi);
+    }
+    return out;
+  }
+
+  /// **The list.** Without it the room was asked to find words it was never
+  /// told — the grid hid five words and showed nobody what they were, which
+  /// is not a hard game, it is an impossible one. Found words are struck
+  /// through, so the line doubles as the score.
+  @override
+  String? titleFor(GridBoard b) {
+    final on = _onBoard(b).toList()..sort();
+    if (on.isEmpty) return null;
+    final found = _found(b);
+    return [
+      for (final wi in on)
+        if (found.contains(wi)) '✓ ${_fallback[wi]}' else _fallback[wi],
+    ].join('   ');
+  }
+
   @override
   String? outcomeFor(GridBoard b) {
-    final inWord = b.cells.where((c) => c.face == _placed);
-    if (inWord.isEmpty) return null;
-    return inWord.every((c) => c.tint == CellTint.right)
-        ? 'Every word found'
-        : null;
+    final on = _onBoard(b);
+    if (on.isEmpty) return null;
+    return _found(b).length == on.length ? 'Every word found' : null;
   }
 
   @override

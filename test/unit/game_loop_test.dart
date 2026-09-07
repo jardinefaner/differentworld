@@ -16,6 +16,7 @@ import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
 import 'package:differentworld/features/games/games/simon_game.dart';
 import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
+import 'package:differentworld/features/games/games/word_search_game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -270,6 +271,182 @@ void main() {
         isNotNull,
         reason: 'one face left standing',
       );
+    });
+  });
+
+  group('a board keeps its secrets', () {
+    // The renderer draws a cell's FACE whenever there is one, whatever the
+    // cell's state — "hidden" hides nothing by itself. A game that stores an
+    // answer in a face MUST override `present`, or it puts the answer on the
+    // screen. Battleship did not: all five ships were visible from the first
+    // frame, and because a cell with a face never shows its label, the A1–E5
+    // coordinates the game is played by never rendered either.
+    test('battleship shows coordinates, not ships, before a shot', () {
+      const g = BattleshipGame();
+      final b = GridBoard(cols: g.cols, rows: g.rows, cells: g.deal(bank()));
+      final shape = g.asShape(b)!;
+      expect(
+        shape.cells.every((c) => c.face == null),
+        isTrue,
+        reason: 'an unfired square must not show what is under it',
+      );
+      expect(
+        shape.cells.every((c) => (c.label ?? '').isNotEmpty),
+        isTrue,
+        reason: 'it shows the coordinate the room calls out',
+      );
+    });
+
+    test('battleship reveals a square once it is fired on', () {
+      const g = BattleshipGame();
+      var wire = g.initialState(bank());
+      wire = g.reduce(wire, GameIntent.pick, const {'cell': 0});
+      final shape = g.asShape(g.decode(wire))!;
+      expect(shape.cells.first.face, isNotNull, reason: 'now you know');
+    });
+
+    test('guess who is thinking of somebody', () {
+      // It held no secret: the room eliminated faces with nothing to converge
+      // on, so the last face standing meant nothing and could be neither
+      // right nor wrong.
+      const g = GuessWhoGame();
+      final b = g.decode(g.initialState(bank()));
+      final secret = GuessWhoGame.secretOf(b);
+      expect(secret, inInclusiveRange(0, g.cols * g.rows - 1));
+      // And it never reaches the screen.
+      final shape = g.asShape(b)!;
+      expect(shape.note, isNot(contains('$secret')));
+    });
+
+    test('guess who says whether the room found the right face', () {
+      const g = GuessWhoGame();
+      final start = g.decode(g.initialState(bank()));
+      final secret = GuessWhoGame.secretOf(start);
+      // Knock out everyone but the secret.
+      final right = start.copyWith(
+        cells: [
+          for (var i = 0; i < start.cells.length; i++)
+            if (i == secret)
+              start.cells[i]
+            else
+              start.cells[i].copyWith(state: CellState.done),
+        ],
+      );
+      expect(g.outcomeFor(right), 'That is who!');
+
+      // Knock out everyone but somebody else.
+      final other = secret == 0 ? 1 : 0;
+      final wrong = start.copyWith(
+        cells: [
+          for (var i = 0; i < start.cells.length; i++)
+            if (i == other)
+              start.cells[i]
+            else
+              start.cells[i].copyWith(state: CellState.done),
+        ],
+      );
+      expect(g.outcomeFor(wrong), isNot('That is who!'));
+      expect(g.outcomeFor(wrong), isNotNull);
+    });
+
+    test('bingo calls a square, by name', () {
+      // Without a caller the card just sat there: nothing said what to mark,
+      // so tapping any four in a row "won".
+      const g = BingoGame();
+      final b = g.decode(g.initialState(bank()));
+      expect(BingoGame.calledOf(b), inInclusiveRange(0, b.cells.length - 1));
+      expect(BingoGame.callOf(b), isNotNull, reason: 'and it says which');
+      expect(g.asShape(b)!.title, BingoGame.callOf(b));
+      // The name is storage — the picture is what the room sees.
+      expect(g.asShape(b)!.cells.every((c) => c.face != null), isTrue);
+    });
+
+    test('marking the called square draws the next call', () {
+      const g = BingoGame();
+      var wire = g.initialState(bank());
+      final first = BingoGame.calledOf(g.decode(wire));
+      wire = g.reduce(wire, GameIntent.pick, {'cell': first});
+      final after = g.decode(wire);
+      expect(after.cells[first].state, CellState.done);
+      expect(BingoGame.calledOf(after), isNot(first), reason: 'a new call');
+    });
+
+    test('marking an uncalled square does not change the call', () {
+      const g = BingoGame();
+      final wire = g.initialState(bank());
+      final called = BingoGame.calledOf(g.decode(wire));
+      final other = called == 0 ? 1 : 0;
+      final after = g.decode(g.reduce(wire, GameIntent.pick, {'cell': other}));
+      expect(
+        BingoGame.calledOf(after),
+        called,
+        reason: 'pointing at the wrong picture costs nothing',
+      );
+    });
+
+    test('word search shows the words it hid', () {
+      const g = WordSearchGame();
+      final b = GridBoard(cols: g.cols, rows: g.rows, cells: g.deal(bank()));
+      final title = g.asShape(b)!.title ?? '';
+      // Without the list the room was asked to find words it was never told,
+      // which is not a hard game but an impossible one.
+      expect(title, isNotEmpty);
+      expect(title.split(RegExp(r'\s+')).length, greaterThanOrEqualTo(3));
+    });
+  });
+
+  group('a room can take turns', () {
+    // The point the whole deck was missing. Connect Four works because it
+    // says whose go it is: the room splits into teams, argues, and one pair
+    // of hands enters what they decided. A board with no sides is something
+    // people look at.
+    test('a two-sided game says whose turn it is, under the board', () {
+      for (final g in gridGames().where((g) => g.alternates)) {
+        final b = GridBoard(cols: g.cols, rows: g.rows, cells: g.deal(bank()));
+        final note = g.asShape(b)!.note;
+        expect(
+          note,
+          isNotNull,
+          reason: '${g.id} alternates but never says whose go it is',
+        );
+      }
+    });
+
+    test('the turn actually changes hands on a move', () {
+      for (final g in gridGames().where((g) => g.alternates)) {
+        var wire = g.initialState(bank());
+        final before = g.decode(wire).turn;
+        // Find a tap the rule accepts.
+        for (var i = 0; i < g.cols * g.rows; i++) {
+          final next = g.reduce(wire, GameIntent.pick, {'cell': i});
+          if (next != wire) {
+            wire = next;
+            break;
+          }
+        }
+        expect(
+          g.decode(wire).turn,
+          isNot(before),
+          reason: '${g.id} never hands over',
+        );
+      }
+    });
+
+    test('battleship keeps score per side and names a winner', () {
+      const g = BattleshipGame();
+      var wire = g.initialState(bank());
+      // Shoot every square; the two sides alternate as they go.
+      for (var i = 0; i < g.cols * g.rows; i++) {
+        wire = g.reduce(wire, GameIntent.pick, {'cell': i});
+      }
+      final b = g.decode(wire);
+      expect(b.done, isTrue);
+      expect(
+        g.scoreOf(b, 0) + g.scoreOf(b, 1),
+        5,
+        reason: 'every hit belongs to somebody',
+      );
+      expect(b.outcome, isNotNull);
     });
   });
 

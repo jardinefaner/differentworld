@@ -31,21 +31,60 @@ class BingoGame extends GridGame {
   @override
   List<BoardCell> deal(ContentSource content) {
     final picks = content.take(ContentKind.picture, cols * rows);
-    final faces = [for (final p in picks) p.payload['image']! as String];
+    final cards = [
+      for (final p in picks)
+        (
+          p.payload['image']! as String,
+          ((p.payload['label'] as String?) ?? '').trim(),
+        ),
+    ];
     // A short bank should still fill the card rather than leave holes — a
     // half-empty bingo card reads as broken, not as a short deck.
-    while (faces.length < cols * rows) {
-      if (faces.isEmpty) {
-        faces.add('★');
+    while (cards.length < cols * rows) {
+      if (cards.isEmpty) {
+        cards.add(('★', 'star'));
       } else {
-        faces.addAll(List.of(faces));
+        cards.addAll(List.of(cards));
       }
     }
-    faces.shuffle(Random());
+    cards.shuffle(Random());
     return [
       for (var i = 0; i < cols * rows; i++)
-        BoardCell(face: faces[i], state: CellState.shown),
+        // The NAME rides in the label. A cell with a face never renders its
+        // label, so this is storage — and it is what lets the board call
+        // "dog" instead of leaving the room to invent the calls.
+        BoardCell(
+          face: cards[i].$1,
+          label: cards[i].$2,
+          state: CellState.shown,
+        ),
     ];
+  }
+
+  /// Which square has been called. Bingo without a caller is not a game: the
+  /// card sat there and whoever tapped four in a row "won", because nothing
+  /// ever said what to mark. The board calls now.
+  static int calledOf(GridBoard b) => b.tally['call'] ?? -1;
+
+  /// The called square's name, or null when there is nothing outstanding.
+  static String? callOf(GridBoard b) {
+    final i = calledOf(b);
+    if (i < 0 || i >= b.cells.length) return null;
+    final name = (b.cells[i].label ?? '').trim();
+    return name.isEmpty ? null : name;
+  }
+
+  @override
+  Map<String, int> get initialTally => {'call': Random().nextInt(cols * rows)};
+
+  /// Draw the next call from the squares still unmarked.
+  static int _drawFrom(GridBoard b, {required int justMarked}) {
+    final open = [
+      for (var i = 0; i < b.cells.length; i++)
+        if (i != justMarked && b.cells[i].state != CellState.done) i,
+    ];
+    if (open.isEmpty) return -1;
+    return open[Random().nextInt(open.length)];
   }
 
   /// Every square starts face-up — you are not uncovering anything, you are
@@ -59,13 +98,26 @@ class BingoGame extends GridGame {
     return b.withAt(i, c.copyWith(state: next));
   }
 
+  /// Marking the called square draws the next call. Marking any other square
+  /// is left alone — a room points at the wrong picture all the time, and
+  /// punishing that would punish whoever's hand got there first.
+  @override
+  Map<String, int> tallyAfterPick(GridBoard before, int i) {
+    if (i != calledOf(before)) return before.tally;
+    if (before.cells[i].state == CellState.done) return before.tally;
+    return {...before.tally, 'call': _drawFrom(before, justMarked: i)};
+  }
+
   /// A completed line is the whole game; it just never ended. The line was already computed for the board's title —
   /// it simply never stamped `done`, so the round ran forever.
   @override
   String? outcomeFor(GridBoard b) => titleFor(b);
 
   @override
-  String? titleFor(GridBoard b) => _hasLine(b) ? 'Bingo!' : null;
+  String? titleFor(GridBoard b) {
+    if (_hasLine(b)) return 'Bingo!';
+    return callOf(b);
+  }
 
   @override
   String? noteFor(GridBoard b) {
