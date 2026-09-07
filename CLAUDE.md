@@ -463,6 +463,45 @@ When you ASK "is X served":
   Drawer / omnibox / settings entries are derived facts the agent
   reconciles against.
 
+### Games — a board with no SIDES is not a game
+
+The deck's founding defect, found 2026-09-07 by the user: *"all games are
+what people look at... i can see the connect four, with having it say
+who's next... i could create a team in person, and have them talk among
+themselves, and i enter where they want to do this."*
+
+Connect Four worked. Seventeen of the other eighteen did not, for one
+reason: **no sides.** `GridBoard.turn` had existed since the first
+classic and only two games ever used it, so the rest were a board being
+tapped — nothing to deliberate, no reason for a room to talk, something
+people look at rather than play.
+
+The rule for any new `GridGame`:
+
+1. **Ask who is playing.** If the answer is "the room, against the
+   board" (Bingo's caller, Guess Who's secret) or "everyone at once"
+   (Simon, Scavenger, Boggle), solo is right. Otherwise it wants
+   `alternates => true`, which buys the whose-go line, `sides`,
+   `plusForTurn` / `scoreOf` and `scoreLine` for one line of code.
+2. **A game must be able to END.** `outcomeFor` returns the closing
+   line; `_settle` stamps it. `done` sat unused for the entire life of
+   the deck while `GameScaffold` drew a "Round complete!" beat nothing
+   could ever reach.
+3. **The room must be able to SEE what it needs.** Not what the code
+   comment claims — what the renderer draws. `ShapeStageView` draws a
+   cell's `face` whenever there is one, **whatever its state**: "hidden"
+   hides nothing by itself, and a cell with a face never renders its
+   label. Battleship showed every ship for exactly this reason. A game
+   storing an answer in a face MUST override `present`.
+4. **A game must supply what it asks for.** Word Search hid five words
+   and showed the list nowhere; Bingo had no caller, so tapping any four
+   in a row "won". If the room needs to know something to play, the
+   board says it.
+
+`test/unit/game_loop_test.dart` enforces 1, 2 and (per game) 3 and 4 —
+including a ledger where every grid game is either known to end or
+`noEnding` **with a written reason**.
+
 ### Curricula — a session is a runnable, castable deck
 
 The Through-My-Eyes curriculum is authored as a **beat-by-beat runnable deck**,
