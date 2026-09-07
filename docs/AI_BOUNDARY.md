@@ -22,6 +22,46 @@ has tested against real features is a slogan.
 
 ---
 
+## Why this stopped being only a principle (2026-09-07)
+
+The line was written as a conviction. It is now also, apparently, the shape
+of school procurement.
+
+Relayed to us in a market brief (**links below are the brief's, not
+independently verified by this repo — check them before quoting any number
+externally**):
+
+- **NYC Public Schools** — a one-year moratorium reported to cover ~600,000
+  students: no student-facing generative AI in grades 2K–8, no individual
+  screen use in 2K–2, daily screen limits for grades 3–8, and AI barred from
+  grading, behaviour monitoring, or consequential decisions about a student.
+  Teacher-led screens and staff use of AI for planning and operations stay
+  permitted. The guidance is reported to extend explicitly to **after-school
+  and community-based providers** — which is us.
+  <https://www.schools.nyc.gov/about-us/policies/guidance-on-artificial-intelligence>
+- **LAUSD** — reported to have restricted student access to generative-AI
+  platforms for 2026–27 while it develops safeguards.
+  <https://www.k12dive.com/news/lausd-restricts-all-students-from-using-ai-tools/829612/>
+
+**What it changes here: nothing about the rule, and a lot about the stakes.**
+The distinction those policies draw — AI used *by a child* vs. AI used *by an
+educator to prepare* vs. technology used *collectively under adult direction*
+vs. technology *making judgments about a child* — is the same cut this
+document already makes, and the app already sits on the permitted side of all
+four: the phone is the teacher's controller, the screen is shared, the child
+touches the app mainly to keep something they made.
+
+So the practical consequence is that **the "Violates" section below is not a
+matter of taste any more**. A feature in it is not merely off-brand; it is
+plausibly the thing that makes the app ineligible for the settings it is built
+for. `/speak` is the live example — see below — and it is now a procurement
+risk, not just a design one.
+
+The three acts in [CONDITIONS.md](CONDITIONS.md) say the same thing in a
+different room: machines work before and after the show, never during it.
+
+---
+
 ## Shipped
 
 ### Preserves

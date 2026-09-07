@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
@@ -6,6 +8,7 @@ import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_settings_sheet.dart';
+import 'package:differentworld/features/games/grid_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +49,10 @@ class GameRunner<S> extends ConsumerStatefulWidget {
 class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
   late final LocalGameController _controller;
   late final ContentEngine _engine;
+
+  /// The clock, for the games that have one (the mole moves on its own).
+  /// Null for every other game, which is most of them.
+  Timer? _clock;
   // Teacher-chosen settings (the Settings contract). Defaults until tuned;
   // the reseed closure reads this field, so "play again" + applied changes
   // both honor the current values.
@@ -70,6 +77,22 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
           ? null
           : () => widget.def.initialStateFor(_engine, _values),
     );
+    _startClockIfNeeded();
+  }
+
+  /// Drive [GameIntent.tick] for a game that declares a clock. The reducer
+  /// ignores a tick once the round is done, so the timer costs nothing after
+  /// the end — but it is still cancelled in [dispose], because a periodic
+  /// timer outliving its State is the classic leak.
+  void _startClockIfNeeded() {
+    // Typed as Object so `is GridGame` promotes: `widget.def` is
+    // GameDefinition<S>, and S is not GridBoard from in here.
+    final Object grid = widget.def;
+    if (grid is! GridGame || !grid.ticks) return;
+    _clock = Timer.periodic(grid.tickEvery, (_) {
+      if (!mounted) return;
+      _controller.send(GameIntent.tick);
+    });
   }
 
   /// Open the settings sheet; applying starts a fresh round with the new
@@ -87,6 +110,7 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
 
   @override
   void dispose() {
+    _clock?.cancel();
     _controller.dispose();
     super.dispose();
   }

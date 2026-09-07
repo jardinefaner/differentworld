@@ -84,6 +84,7 @@ class NowNextGame extends GameDefinition<NowNextState> {
         if (i > 0) s['i'] = i - 1;
       case GameIntent.reset:
         s['i'] = 0;
+      case GameIntent.tick:
       case GameIntent.reveal:
       case GameIntent.pick:
       case GameIntent.tally:

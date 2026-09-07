@@ -63,6 +63,8 @@ class GridBoard {
     required this.cells,
     this.turn = 0,
     this.done = false,
+    this.outcome,
+    this.tally = const <String, int>{},
   });
 
   factory GridBoard.fromWire(Map<String, dynamic> m) => GridBoard(
@@ -70,6 +72,11 @@ class GridBoard {
     rows: (m['r'] as num?)?.toInt() ?? 4,
     turn: (m['t'] as num?)?.toInt() ?? 0,
     done: m['d'] == true,
+    outcome: m['o'] as String?,
+    tally: {
+      for (final e in (m['k'] as Map? ?? const <String, dynamic>{}).entries)
+        '${e.key}': (e.value as num?)?.toInt() ?? 0,
+    },
     cells: [
       for (final c in (m['cells'] as List? ?? const <dynamic>[]))
         if (c is Map) BoardCell.fromWire(c.cast<String, dynamic>()),
@@ -84,22 +91,55 @@ class GridBoard {
   final int turn;
   final bool done;
 
+  /// The line to show when the round is over — "Bingo! Top row." — or null
+  /// while it is still being played. Set by the reducer from
+  /// [GridGame.outcomeFor]; a game never writes it directly.
+  final String? outcome;
+
+  /// Counters a rule needs that the cells can't hold — misses, wrong letters,
+  /// guesses used, whose score is what. Small ints only; it rides the wire, so
+  /// a board stays JSON-trivial and casts to a screen unchanged.
+  ///
+  /// Without this the classics had nowhere to count, which is part of why
+  /// none of them could end: "three misses and you're out" needs a place to
+  /// keep the three.
+  final Map<String, int> tally;
+
   Map<String, dynamic> toWire() => {
     'c': cols,
     'r': rows,
     't': turn,
     'd': done,
+    if (outcome != null) 'o': outcome,
+    if (tally.isNotEmpty) 'k': tally,
     'cells': [for (final c in cells) c.toWire()],
   };
 
-  GridBoard copyWith({List<BoardCell>? cells, int? turn, bool? done}) =>
-      GridBoard(
-        cols: cols,
-        rows: rows,
-        cells: cells ?? this.cells,
-        turn: turn ?? this.turn,
-        done: done ?? this.done,
-      );
+  GridBoard copyWith({
+    List<BoardCell>? cells,
+    int? turn,
+    bool? done,
+    String? outcome,
+    Map<String, int>? tally,
+  }) => GridBoard(
+    cols: cols,
+    rows: rows,
+    cells: cells ?? this.cells,
+    turn: turn ?? this.turn,
+    done: done ?? this.done,
+    outcome: outcome ?? this.outcome,
+    tally: tally ?? this.tally,
+  );
+
+  /// Read a counter, defaulting to zero.
+  int score(String key) => tally[key] ?? 0;
+
+  /// The tally with [key] bumped by [by] — the shape every counting rule
+  /// wants, so none of them re-spell the map copy.
+  Map<String, int> plus(String key, [int by = 1]) => {
+    ...tally,
+    key: score(key) + by,
+  };
 
   int count(CellState s) => cells.where((c) => c.state == s).length;
 
@@ -150,6 +190,44 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// Whether a tap hands play to the other side. False for the solitaire-ish
   /// ones (Bingo, Guess Who) where the room acts as one.
   bool get alternates => false;
+
+  /// **Is the round over, and what do we say about it?** Return null while
+  /// the game is still being played; return the closing line when it is not.
+  ///
+  /// This is the half of a game loop the shape was missing. `GridBoard` has
+  /// carried a `done` flag since the first classic shipped, `GameScaffold`
+  /// has always drawn the "Round complete!" beat from it — and NOTHING ever
+  /// set it, so nineteen classics dealt a board, accepted taps forever and
+  /// could not be won, lost or finished. A game without an ending is a
+  /// demonstration.
+  ///
+  /// Called after every pick, entry and tick. The reducer stamps `done` and
+  /// the line onto the board, which lights the existing end-of-round beat
+  /// (Play again · Done) with no per-game UI.
+  String? outcomeFor(GridBoard b) => null;
+
+  /// **Does this game have a clock?** Most don't — a classic waits for a tap.
+  /// The few that are about being quick rather than being right (the mole
+  /// that moves on its own, a sequence that plays itself back) do.
+  bool get ticks => false;
+
+  /// How often [onTick] fires while [ticks] is true and the round is live.
+  Duration get tickEvery => const Duration(seconds: 1);
+
+  /// What one beat of the clock does to the board. Return null to let the
+  /// tick pass without changing anything.
+  List<BoardCell>? onTick(GridBoard b) => null;
+
+  /// Counters after a tap on [i] — pure: read [before], return the new tally.
+  /// Default: unchanged.
+  ///
+  /// Separate from [onPick] because a rule's cells and a rule's counters are
+  /// genuinely different questions, and folding them together would mean
+  /// changing the signature every game is written against.
+  Map<String, int> tallyAfterPick(GridBoard before, int i) => before.tally;
+
+  /// Counters after one beat of the clock. Default: unchanged.
+  Map<String, int> tallyAfterTick(GridBoard before) => before.tally;
 
   /// The line above the board, when the board needs one. Most do not.
   String? titleFor(GridBoard b) => null;
@@ -203,10 +281,19 @@ abstract class GridGame extends GameDefinition<GridBoard> {
 
   @override
   Set<GameIntent> activeIntents(GridBoard state) => {
-    GameIntent.pick,
+    if (!state.done) GameIntent.pick,
     GameIntent.reset,
-    if (entryHint != null) GameIntent.capture,
+    if (entryHint != null && !state.done) GameIntent.capture,
   };
+
+  /// Ask the game whether that move ended the round, and stamp the answer.
+  /// Every state-changing branch of [reduce] goes through here so no game can
+  /// accidentally be the one that never ends.
+  Map<String, dynamic> _settle(GridBoard b) {
+    final line = outcomeFor(b);
+    if (line == null) return b.toWire();
+    return b.copyWith(done: true, outcome: line).toWire();
+  }
 
   @override
   Map<String, dynamic> reduce(
@@ -217,6 +304,9 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     final b = decode(state);
     switch (intent) {
       case GameIntent.pick:
+        // A finished round takes no more taps. Without this a won board keeps
+        // accepting picks behind the "Round complete!" beat.
+        if (b.done) return state;
         final i = (args['cell'] as num?)?.toInt();
         if (i == null || i < 0 || i >= b.cells.length) return state;
         final next = onPick(b, i);
@@ -224,31 +314,42 @@ abstract class GridGame extends GameDefinition<GridBoard> {
         // column with no room left. Returning the state unchanged is what
         // keeps a double-tap from costing a turn.
         if (next == null) return state;
-        return b
-            .copyWith(
-              cells: next,
-              turn: alternates ? (b.turn + 1) % 2 : b.turn,
-            )
-            .toWire();
+        return _settle(
+          b.copyWith(
+            cells: next,
+            turn: alternates ? (b.turn + 1) % 2 : b.turn,
+            tally: tallyAfterPick(b, i),
+          ),
+        );
+      case GameIntent.tick:
+        if (b.done || !ticks) return state;
+        final next = onTick(b);
+        if (next == null) return state;
+        return _settle(b.copyWith(cells: next, tally: tallyAfterTick(b)));
       case GameIntent.capture:
+        if (b.done) return state;
         final text = (args['text'] as String? ?? '').trim();
         if (text.isEmpty) return state;
         final next = onEntry(b, text);
         if (next == null) return state;
-        return b.copyWith(cells: next).toWire();
+        return _settle(b.copyWith(cells: next));
       case GameIntent.reset:
         // Deal again. The content bank is not reachable from a pure reducer,
         // so a reset re-uses the faces already on the board, reshuffled by
         // the game if it cares (most classics keep the same set).
-        return b
-            .copyWith(
-              cells: [
-                for (final c in b.cells) c.copyWith(state: CellState.hidden),
-              ],
-              turn: 0,
-              done: false,
-            )
-            .toWire();
+        //
+        // Built explicitly rather than with copyWith, for the reason this
+        // file already warns about on `BoardCell.face`: copyWith CANNOT clear
+        // a field. `copyWith(done: false)` left the previous round's outcome
+        // line and its tally in place, so "Play again" started you on three
+        // misses and ended the new round on the first tick.
+        return GridBoard(
+          cols: b.cols,
+          rows: b.rows,
+          cells: [
+            for (final c in b.cells) c.copyWith(state: CellState.hidden),
+          ],
+        ).toWire();
       // Every other intent is a no-op for a board: there is no "next slide"
       // and no answer to reveal. Returning state unchanged means the standard
       // control bar can still send them harmlessly.
@@ -263,8 +364,11 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     kind: ShapeKind.grid,
     cols: state.cols,
     rows: state.rows,
-    title: titleFor(state),
-    note: noteFor(state),
+    // Once the round is over the closing line IS the title — the room
+    // should read "Bingo! Top row." on the screen, not keep staring at a
+    // board whose state no longer changes.
+    title: state.done ? (state.outcome ?? titleFor(state)) : titleFor(state),
+    note: state.done ? null : noteFor(state),
     behind: behindFor(state),
     cells: [
       for (final raw in state.cells)

@@ -58,7 +58,10 @@ class FactOrFibGame extends GameDefinition<FactState> {
         [
           c.payload['statement']! as String,
           c.payload['isTrue']! as bool,
-          c.payload['note']! as String,
+          // `note` is OPTIONAL — the authoring form lets a teacher add a
+          // claim without the backstory, and `payload['note']!` would throw a
+          // null-check on the first one they wrote.
+          (c.payload['note'] as String?) ?? '',
         ],
     ];
     return {'i': 0, 'r': false, 'd': false, 'n': items.length, 'items': items};

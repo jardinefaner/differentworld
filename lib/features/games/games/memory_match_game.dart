@@ -172,6 +172,7 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
         s['flipped'] = const <int>[];
         s['matched'] = const <int>[];
         s['d'] = false;
+      case GameIntent.tick:
       case GameIntent.next:
       case GameIntent.reveal:
       case GameIntent.tally:

@@ -98,6 +98,7 @@ class TimerGame extends GameDefinition<TimerState> {
         s['rem'] = init;
         s['end'] = null;
         s['run'] = false;
+      case GameIntent.tick:
       case GameIntent.next:
       case GameIntent.back:
       case GameIntent.pick:

@@ -35,6 +35,11 @@ enum GameIntent {
   /// intent that carries a selection (a vote side, a bracket pick).
   pick,
 
+  /// One beat of the clock, for the games that have one (the mole moves on
+  /// its own; a sequence plays itself back). Driven by the runner, never by a
+  /// person — so it carries no args and a game without a clock ignores it.
+  tick,
+
   /// Count one more of the room's responses — `args: {'by': int}` (default
   /// 1), optional `{'bucket': String}`. The heart of the host-present,
   /// teacher-tallies model.
@@ -319,6 +324,7 @@ Map<String, dynamic> deckReduce(
       s['i'] = 0;
       s['r'] = false;
       s['d'] = false;
+    case GameIntent.tick:
     case GameIntent.pick:
     case GameIntent.tally:
     case GameIntent.capture:
@@ -363,6 +369,7 @@ Map<String, dynamic> revealDeckReduce(
       s['i'] = 0;
       s['r'] = false;
       s['d'] = false;
+    case GameIntent.tick:
     case GameIntent.pick:
     case GameIntent.tally:
     case GameIntent.capture:

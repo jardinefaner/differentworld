@@ -101,6 +101,11 @@ class DotsBoxesGame extends GridGame {
     for (final c in cells) c,
   ];
 
+  /// Every box claimed. The line was already computed for the board's title —
+  /// it simply never stamped `done`, so the round ran forever.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) {
     final r = b.cells.where((c) => c.face == _red).length;

@@ -76,6 +76,7 @@ class PickerGame extends GameDefinition<PickerState> {
       case GameIntent.reset:
         s['spun'] = false;
         s['i'] = 0;
+      case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
       case GameIntent.pick:

@@ -59,6 +59,11 @@ class BingoGame extends GridGame {
     return b.withAt(i, c.copyWith(state: next));
   }
 
+  /// A completed line is the whole game; it just never ended. The line was already computed for the board's title —
+  /// it simply never stamped `done`, so the round ran forever.
+  @override
+  String? outcomeFor(GridBoard b) => titleFor(b);
+
   @override
   String? titleFor(GridBoard b) => _hasLine(b) ? 'Bingo!' : null;
 
