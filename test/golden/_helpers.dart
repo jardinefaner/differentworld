@@ -218,6 +218,17 @@ void beginOverflowWatch() {
   };
 }
 
+/// **Known limit: attribution is only reliable at moderate scales.** At
+/// `STRESS_TEXT_SCALE=3.0` the suite finds real overflows (~48 lines) but two
+/// consecutive runs blamed four entirely different screens with no overlap —
+/// an overflow raised while a LATER plate is still pumping lands on whichever
+/// plate drains next. So CI gates at 2.0, which is deterministic and currently
+/// zero, and 3.0 stays a manual pass whose screen names are a hint rather than
+/// a verdict. Fixing this means draining synchronously at the end of each
+/// plate's pump rather than at teardown; until then, do not wire 3.0 into CI —
+/// a gate that names an innocent screen gets muted, and then it protects
+/// nothing.
+///
 /// Overflows seen since [beginOverflowWatch], asserted by
 /// [drainExpectedExceptions].
 final List<String> recordedOverflows = <String>[];

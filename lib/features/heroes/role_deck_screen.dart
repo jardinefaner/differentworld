@@ -265,21 +265,32 @@ class DottedSlot extends StatelessWidget {
       ),
       alignment: Alignment.center,
       padding: const EdgeInsets.all(14),
+      // The card's height is fixed by the grid, so at large text the column
+      // has to be allowed to give rather than to overflow: the label takes
+      // what is left after the icon and ellipsizes if that is not enough.
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.add, color: scheme.onSurfaceVariant),
           const SizedBox(height: 8),
-          Text(
-            '$label’s card',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
+          Flexible(
+            child: Text(
+              '$label’s card',
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
           ),
           const SizedBox(height: 2),
-          Text(
-            'tap to make',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
+          // "tap to make" is what the empty card is FOR, so it may
+          // disappear before the name does when space runs out.
+          Flexible(
+            child: Text(
+              'tap to make',
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],
