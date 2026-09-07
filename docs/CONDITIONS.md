@@ -121,11 +121,37 @@ Three routes, in the order they cost a teacher anything:
    activities, the picture library, day templates, routine scripts. Right
    for a director on a planning afternoon, wrong as the only door.
 
-Where the existing substrate already supports this: `content_items` is a
-real synced table, `activities.owner_member_id` already records who made
-one, and the picture library already takes uploads. The gap is not
-storage. It is that route 1 barely exists, and route 3 is the only
-front door.
+### What is built (2026-09-07)
+
+Routes 1 and 3 both exist now, and they are the SAME door reached from two
+places — a single kind schema
+(`lib/features/game_content/content_kinds.dart`) that fifteen content kinds
+declare themselves in, and one generated form, list and index built from it.
+Adding a sixteenth kind means adding a `ContentKindSpec` and nothing else;
+a test fails if a `ContentKind` ships without one.
+
+- **Route 3** — `/library/ours` lists every kind with how many this program
+  has written; `/library/ours/:kind` is add / edit / remove-with-undo.
+- **Route 1** — `OursStrip` sits on the game's end-of-round beat
+  (`game_scaffold.dart`, so all 41 games at once) and reads
+  "40 ready · 2 pairs yours · Add ours", plus `OursFooter` on the four
+  activities that are their own screen rather than a game. It is suppressed
+  in kid mode and on any cast / speak stage — the door leads OUT of the
+  activity — and it is on the WRAP beat rather than mid-play deliberately: a
+  teacher authors between rounds, never while thirty children wait.
+- **Route 2** — authoring by keeping already existed as `CaptureSpec`'s
+  crowd-grow, which banks what a room produced during play.
+
+Authored rows carry `space_id` + `source='staff'` and fingerprint on their
+own id, so two identical items both survive — a room is allowed to repeat
+itself. They merge into `bankedContentProvider` alongside the curated seeds
+with **zero game-side code**: an activity cannot tell the difference between
+a line we shipped and a line the room wrote, which is the whole point.
+
+What remains: `picture` keeps its own camera-shaped library (its payload is
+an upload, not typed fields), and the strip is mapped to 13 activities —
+kinds with no activity route yet (`quote`) are reachable only through the
+library.
 
 ---
 

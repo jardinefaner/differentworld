@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/letters.dart';
+import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/activity_prompt.dart';
@@ -73,91 +74,95 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
     final pairs = letterPairs(roster, _salt);
 
     return EdgeScaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-          children: [
-            const ContentHeader(
-              title: 'Letters',
-            ),
-            if (groups.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final g in groups)
-                      ChoiceChip(
-                        label: Text(g.name),
-                        selected: g.id == selected?.id,
-                        onSelected: (_) => setState(() => _groupId = g.id),
+      body: OursFooter(
+        route: '/activity/letters',
+        child: SafeArea(
+          child: ListView(
+            // 24, not 96: OursFooter below already clears the omnibox bar.
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            children: [
+              const ContentHeader(
+                title: 'Letters',
+              ),
+              if (groups.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final g in groups)
+                        ChoiceChip(
+                          label: Text(g.name),
+                          selected: g.id == selected?.id,
+                          onSelected: (_) => setState(() => _groupId = g.id),
+                        ),
+                    ],
+                  ),
+                ),
+              if (prompt != null && prompt.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: ActivityPrompt(
+                    eyebrow: 'Today’s prompt',
+                    prompt: prompt,
+                    padding: const EdgeInsets.all(18),
+                  ),
+                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        setState(() => _promptIndex++);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
                       ),
-                  ],
-                ),
-              ),
-            if (prompt != null && prompt.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: ActivityPrompt(
-                  eyebrow: 'Today’s prompt',
-                  prompt: prompt,
-                  padding: const EdgeInsets.all(18),
-                ),
-              ),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      unawaited(HapticFeedback.selectionClick());
-                      setState(() => _promptIndex++);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('New prompt'),
                     ),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('New prompt'),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: pairs.isEmpty
+                          ? null
+                          : () {
+                              unawaited(HapticFeedback.selectionClick());
+                              setState(() => _salt++);
+                            },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.shuffle, size: 18),
+                      label: const Text('Shuffle pairs'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (pairs.isEmpty)
+                _NoPairsNote(hasGroups: groups.isNotEmpty)
+              else ...[
+                // "everyone writes one, gets one" described the list directly
+                // under it — every name appears once on each side, with an
+                // arrow between. And "Write it on paper" was a permanent
+                // how-to: true forever, which is why it stopped being read.
+                // The paper instruction belongs where it is NEWS — the empty
+                // state, before there is anything else to look at.
+                Text(
+                  'Today’s pairs',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: pairs.isEmpty
-                        ? null
-                        : () {
-                            unawaited(HapticFeedback.selectionClick());
-                            setState(() => _salt++);
-                          },
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    icon: const Icon(Icons.shuffle, size: 18),
-                    label: const Text('Shuffle pairs'),
-                  ),
-                ),
+                const SizedBox(height: 8),
+                for (final pair in pairs)
+                  _PairRow(from: pair.from.firstName, to: pair.to.firstName),
               ],
-            ),
-            const SizedBox(height: 16),
-            if (pairs.isEmpty)
-              _NoPairsNote(hasGroups: groups.isNotEmpty)
-            else ...[
-              // "everyone writes one, gets one" described the list directly
-              // under it — every name appears once on each side, with an
-              // arrow between. And "Write it on paper" was a permanent
-              // how-to: true forever, which is why it stopped being read.
-              // The paper instruction belongs where it is NEWS — the empty
-              // state, before there is anything else to look at.
-              Text(
-                'Today’s pairs',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final pair in pairs)
-                _PairRow(from: pair.from.firstName, to: pair.to.firstName),
             ],
-          ],
+          ),
         ),
       ),
     );

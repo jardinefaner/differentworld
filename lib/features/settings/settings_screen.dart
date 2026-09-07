@@ -239,16 +239,34 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const _SettingsDivider(),
               ],
-              ListTile(
-                leading: const Icon(Icons.image_outlined),
-                title: const Text('Game pictures'),
-                subtitle: const Text(
-                  'Your own photos for Reveal the Picture — kids guess as '
-                  'the grid lifts',
+              // Authoring is staff-only. A guardian has no `space_id`, so the
+              // write would fail at the DAO anyway — but offering a door that
+              // ends in an error is the "hiding a button is not gating an
+              // action" trap in reverse, and both authoring rows are the same
+              // exposure, so both are gated here.
+              if (viewer is! GuardianViewer) ...[
+                ListTile(
+                  leading: const Icon(Icons.edit_note_outlined),
+                  title: const Text('Our own'),
+                  subtitle: const Text(
+                    'Questions, pairs, riddles and the rest, written by your '
+                    'team — played alongside what came with the app',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/library/ours'),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/games/pictures'),
-              ),
+                const _SettingsDivider(),
+                ListTile(
+                  leading: const Icon(Icons.image_outlined),
+                  title: const Text('Game pictures'),
+                  subtitle: const Text(
+                    'Your own photos for Reveal the Picture — kids guess as '
+                    'the grid lifts',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/games/pictures'),
+                ),
+              ],
               const _SettingsDivider(),
               ListTile(
                 leading: const Icon(Icons.grid_view_rounded),

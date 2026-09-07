@@ -67,6 +67,9 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_share_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
+import 'package:differentworld/features/game_content/our_content_form_screen.dart';
+import 'package:differentworld/features/game_content/our_content_kind_screen.dart';
+import 'package:differentworld/features/game_content/our_content_library_screen.dart';
 import 'package:differentworld/features/game_content/picture_library_screen.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_runner.dart';
@@ -2331,6 +2334,37 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/games/pictures',
             builder: (_, _) => const PictureLibraryScreen(),
+          ),
+          // What this room wrote for itself (docs/CONDITIONS.md). The index
+          // lists every authorable kind; the child route is one kind's items.
+          GoRoute(
+            path: '/library/ours',
+            builder: (_, _) => const OurContentLibraryScreen(),
+            routes: [
+              GoRoute(
+                path: ':kind',
+                builder: (_, state) => OurContentKindScreen(
+                  kind: state.pathParameters['kind'] ?? '',
+                ),
+                routes: [
+                  // The form is its own route, not a Navigator.push, so an
+                  // edit link survives a cold launch and web back works.
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, state) => OurContentFormScreen(
+                      kind: state.pathParameters['kind'] ?? '',
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => OurContentFormScreen(
+                      kind: state.pathParameters['kind'] ?? '',
+                      id: state.uri.queryParameters['id'],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           // Mindful Minute — a calm breathing break (the regulation gap).
           GoRoute(

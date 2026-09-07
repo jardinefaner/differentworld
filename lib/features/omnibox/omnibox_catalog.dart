@@ -17,6 +17,7 @@ import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
+import 'package:differentworld/features/game_content/content_kinds.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
@@ -353,6 +354,43 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/routines'),
       ),
+    // Staff-only: authoring needs a space, which a guardian doesn't have.
+    if (viewer is! GuardianViewer) ...[
+      OmniboxEntry(
+        id: 'page.our-own',
+        label: 'Our own',
+        category: OmniboxCategory.page,
+        icon: Icons.edit_note_outlined,
+        keywords: const [
+          'our own',
+          'write our own',
+          'custom content',
+          'author',
+          'add content',
+          'my own questions',
+          'content library',
+        ],
+        onSelect: (ctx, _) => ctx.push('/library/ours'),
+      ),
+      // One entry per authorable kind — a teacher types "riddles" and lands
+      // on OUR riddles, which is the whole point of the door existing.
+      for (final spec in authorableKinds)
+        OmniboxEntry(
+          id: 'page.our-own.${spec.kind}',
+          label: 'Our ${spec.many}',
+          category: OmniboxCategory.page,
+          icon: spec.icon,
+          keywords: [
+            spec.one,
+            spec.many,
+            spec.title.toLowerCase(),
+            'our ${spec.many}',
+            'add ${spec.one}',
+            'write ${spec.one}',
+          ],
+          onSelect: (ctx, _) => ctx.push('/library/ours/${spec.kind}'),
+        ),
+    ],
     OmniboxEntry(
       id: 'page.game-pictures',
       label: 'Game pictures',
