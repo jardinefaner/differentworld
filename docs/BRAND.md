@@ -28,11 +28,21 @@ the logging quietly feeds.
 - **The bet**: calm and beauty are trust signals. A parent decides in
   sixty seconds whether this is "school homework" or "a window into my
   kid's day."
+- **The line we do not cross**: *AI backstage; children, teachers,
+  objects, movement, and conversation frontstage* (VISION.md, "the one
+  non-negotiable"). It belongs in positioning, not just in ethics: the
+  moment a parent sees a generated face where their child's should be,
+  or hears a synthetic voice reading to the room, the sixty-second
+  judgement lands on "a toy that talks" — which is a different category
+  with different competitors and none of the trust. Every model in this
+  product works where nobody sees it, and what a room looks at is a
+  person, a thing, or each other.
 
 ## Personality — the calm host
 
 The app behaves like the best teacher in the building: present, warm,
-never performing. Knows what's next. Never panics offline. Hands a kid
+never performing — and it is never the one talking to the room. A host
+hands things to people; it does not take the floor. Knows what's next. Never panics offline. Hands a kid
 the device without fear. Says one short sentence, then gets out of the
 way. "The interface should feel like a deep breath, not a dashboard"
 (VISION.md).
