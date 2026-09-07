@@ -123,57 +123,24 @@ class SettingsScreen extends ConsumerWidget {
 
           // Space-level settings (label is vertical-aware — "Program"
           // for childcare, "Company" for construction, etc.)
+          // Grouped by what somebody came here to DO, not by what the row
+          // touches. "Program" used to hold config, an annual action, two
+          // archives, two people screens and a device preference — six
+          // different errands behind one heading, so finding any of them
+          // meant reading all of them.
           _SettingsGroup(
             label: labels.space,
             children: [
-              // Brianna-persona: rather than greying out silently
-              // when a teacher taps "Program settings", we explain
-              // why with the lock chip + tooltip-snackbar. The
-              // affordance stays visible so the new hire learns the
-              // permission model.
+              // Brianna-persona: rather than greying out silently when a
+              // teacher taps this, we explain why with the lock chip. The
+              // affordance stays visible so a new hire learns the model.
               if (viewer.canManageSpace)
                 ListTile(
                   leading: const Icon(Icons.school_outlined),
                   title: const Text('Program settings'),
-                  subtitle: const Text(
-                    "What's tracked program-wide, pickup window, "
-                    'defaults',
-                  ),
+                  subtitle: const Text('Pickup window, what’s tracked'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/settings/program'),
-                ),
-              // Year rollover + its receipt. Grouped with Program because
-              // both change the shape of the program rather than a day.
-              if (viewer.canManageSpace)
-                ListTile(
-                  leading: const Icon(Icons.event_repeat_outlined),
-                  title: const Text('Start a new year'),
-                  subtitle: const Text(
-                    'Move everyone up, retire who has moved on — '
-                    'nothing is deleted',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/settings/rollover'),
-                ),
-              if (viewer.canManageSpace)
-                ListTile(
-                  leading: const Icon(Icons.archive_outlined),
-                  title: const Text('Closed rooms'),
-                  subtitle: const Text(
-                    'Rooms you have retired — reopen any of them',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/settings/closed-rooms'),
-                ),
-              if (viewer.canManageSpace)
-                ListTile(
-                  leading: const Icon(Icons.history_outlined),
-                  title: const Text('Past children'),
-                  subtitle: const Text(
-                    'Everyone who moved on — their books still open',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/settings/alumni'),
                 )
               else
                 const CapabilityLockedTile(
@@ -183,18 +150,31 @@ class SettingsScreen extends ConsumerWidget {
                   child: ListTile(
                     leading: Icon(Icons.school_outlined),
                     title: Text('Program settings'),
-                    subtitle: Text(
-                      "What's tracked program-wide, pickup window, "
-                      'defaults',
-                    ),
+                    subtitle: Text('Pickup window, what’s tracked'),
                     trailing: Icon(Icons.chevron_right),
                   ),
                 ),
               const _SettingsDivider(),
               ListTile(
+                leading: const Icon(Icons.directions_bus_outlined),
+                title: const Text('Vehicles'),
+                // Kept: a staffer cannot tell from the word alone that this
+                // is where pre-trip checks live.
+                subtitle: const Text('Fleet, pre-trip checks, check-in/out'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/vehicles'),
+              ),
+            ],
+          ),
+
+          _SettingsGroup(
+            label: 'People',
+            children: [
+              ListTile(
                 leading: const Icon(Icons.groups_outlined),
+                // No subtitle. "Team" is not a word anybody needs explained,
+                // and the line under it doubled the row's height to say so.
                 title: const Text('Team'),
-                subtitle: const Text('Members and their abilities'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/settings/team'),
               ),
@@ -202,25 +182,16 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.shield_outlined),
                 title: const Text('Roles & permissions'),
-                subtitle: const Text(
-                  'What each role can do by default',
-                ),
+                subtitle: const Text('What each role can do by default'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/settings/roles'),
               ),
-              const _SettingsDivider(),
-              ListTile(
-                leading: const Icon(Icons.language_outlined),
-                title: const Text('Language'),
-                subtitle: Text(
-                  ref.watch(localeOverrideProvider).value == null
-                      ? 'Following your device'
-                      : 'English',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showLanguagePicker(context, ref),
-              ),
-              const _SettingsDivider(),
+            ],
+          ),
+
+          _SettingsGroup(
+            label: 'Resources',
+            children: [
               ListTile(
                 leading: const Icon(Icons.science_outlined),
                 title: const Text('Try it out'),
@@ -231,32 +202,6 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => context.push('/settings/sandbox'),
               ),
               const _SettingsDivider(),
-              ListTile(
-                leading: const Icon(Icons.directions_bus_outlined),
-                title: const Text('Vehicles'),
-                subtitle: const Text(
-                  'Fleet vehicles, pre-trip checks, check-in/out',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/vehicles'),
-              ),
-            ],
-          ),
-
-          // Library management (Activities / Locations) intentionally
-          // lives in the omnibox now, not in Settings. The bottom
-          // composer is the spine for "find / open / manage" — typing
-          // "activities" or "locations" surfaces the screens. Keeping
-          // them in Settings too made the menu busier without adding
-          // a new path. Settings is now preferences-only.
-
-          // Resources — editorial reference content that ships with
-          // the binary. The Teacher Toolkit is the first one;
-          // anything else that's "read-only library of curated
-          // moves / phrases / scripts" lives here too.
-          _SettingsGroup(
-            label: 'Resources',
-            children: [
               ListTile(
                 leading: const Icon(Icons.menu_book_outlined),
                 title: const Text('Teacher Toolkit'),
@@ -326,6 +271,20 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               const TextSizeTile(),
               const _SettingsDivider(),
+              ListTile(
+                leading: const Icon(Icons.language_outlined),
+                title: const Text('Language'),
+                // The VALUE, not an explanation — what a person wants from
+                // this row is which language is on.
+                subtitle: Text(
+                  ref.watch(localeOverrideProvider).value == null
+                      ? 'Following your device'
+                      : 'English',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showLanguagePicker(context, ref),
+              ),
+              const _SettingsDivider(),
               const _OutdoorModeTile(),
               const _SettingsDivider(),
               const _DisplayStyleTile(),
@@ -363,6 +322,50 @@ class SettingsScreen extends ConsumerWidget {
 
           // About — version + privacy commitment. The privacy row is
           // non-negotiable for v1; childcare regulators read this.
+          _SettingsGroup(
+            label: 'Kept, not gone',
+            children: [
+              if (viewer.canManageSpace) ...[
+                ListTile(
+                  leading: const Icon(Icons.archive_outlined),
+                  title: const Text('Closed rooms'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/closed-rooms'),
+                ),
+                const _SettingsDivider(),
+                ListTile(
+                  leading: const Icon(Icons.history_outlined),
+                  title: const Text('Past children'),
+                  // Kept: the reassurance IS the information — a director
+                  // needs to know the books did not close with the year.
+                  subtitle: const Text('Their books are still open'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/alumni'),
+                ),
+              ],
+            ],
+          ),
+
+          // Its own heading because it is not navigation: it moves every
+          // child in the program up a year. A row that changes the shape of
+          // the whole program should not sit in a list of places to go.
+          if (viewer.canManageSpace)
+            _SettingsGroup(
+              label: 'Once a year',
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.event_repeat_outlined),
+                  title: const Text('Start a new year'),
+                  subtitle: const Text(
+                    'Moves everyone up and retires who has left. '
+                    'Nothing is deleted.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/rollover'),
+                ),
+              ],
+            ),
+
           _SettingsGroup(
             label: 'About',
             children: [
