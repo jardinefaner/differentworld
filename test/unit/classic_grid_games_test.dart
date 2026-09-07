@@ -9,12 +9,17 @@ import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/games/battleship_game.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
+import 'package:differentworld/features/games/games/boggle_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/games/games/four_corners_game.dart';
 import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/hangman_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/minesweeper_game.dart';
+import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
+import 'package:differentworld/features/games/games/simon_game.dart';
+import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
+import 'package:differentworld/features/games/games/word_search_game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
@@ -194,6 +199,7 @@ void main() {
   });
 
   _more();
+  _last();
 
   test('every classic describes itself as a grid', () {
     // The reason they cast to a screen that has never heard of them.
@@ -206,6 +212,11 @@ void main() {
       const MinesweeperGame(),
       const HangmanGame(),
       const FourCornersGame(),
+      const WordSearchGame(),
+      const BoggleGame(),
+      const WhackAMoleGame(),
+      const SimonGame(),
+      const ScavengerBingoGame(),
     ]) {
       final shape = g.asShape(board(g, g.initialState(const _NoContent())));
       expect(shape?.kind, ShapeKind.grid, reason: '${g.id} must be a grid');
@@ -376,5 +387,96 @@ void _more() {
       expect(b.cells.where((c) => c.tint == CellTint.live).length, 1);
       expect(b.cells[3].tint, CellTint.live);
     });
+  });
+}
+
+// ── the last five ─────────────────────────────────────────────────────────
+
+void _last() {
+  test('Word Search hides real words among the letters', () {
+    const g = WordSearchGame();
+    final b = board(g, g.initialState(const _NoContent()));
+    final letters = [for (final c in b.cells) c.label ?? ''].join();
+    expect(b.cells.length, 64);
+    expect(letters.length, 64);
+    // At least one seeded word must actually be findable across or down.
+    final rows = [
+      for (var r = 0; r < 8; r++) letters.substring(r * 8, r * 8 + 8),
+    ];
+    final colsOf = [
+      for (var c = 0; c < 8; c++)
+        [for (var r = 0; r < 8; r++) letters[r * 8 + c]].join(),
+    ];
+    expect(
+      [...rows, ...colsOf].any(
+        (line) =>
+            line.contains('CAT') ||
+            line.contains('SUN') ||
+            line.contains('TREE') ||
+            line.contains('BOOK') ||
+            line.contains('STAR'),
+      ),
+      isTrue,
+      reason: 'a word search with no words in it is a grid of noise',
+    );
+  });
+
+  test('Boggle deals from the real dice, not random letters', () {
+    const g = BoggleGame();
+    final b = board(g, g.initialState(const _NoContent()));
+    expect(b.cells.length, 16);
+    // Every letter must come from a die face. A bag of random letters gives
+    // boards with four Zs and nothing to make.
+    final faces = BoggleGame.dice.join();
+    for (final c in b.cells) {
+      expect(faces.contains(c.label!), isTrue, reason: '${c.label} off-dice');
+    }
+  });
+
+  test('Whack-a-Mole moves the mole on a hit and ignores a miss', () {
+    const g = WhackAMoleGame();
+    final start = g.initialState(const _NoContent());
+    final b0 = board(g, start);
+    final mole = b0.cells.indexWhere((c) => c.face == '🐹');
+    final miss = (mole + 1) % 9;
+    // A miss must cost nothing — this game is about speed, not punishment.
+    expect(tap(g, start, miss), start);
+    final hit = board(g, tap(g, start, mole));
+    expect(hit.cells.where((c) => c.face == '🐹').length, 1);
+    expect(hit.cells[mole].face, isNot('🐹'));
+  });
+
+  group('Simon', () {
+    const g = SimonGame();
+
+    test('a right pad extends the pattern; a wrong one starts over', () {
+      final start = g.initialState(const _NoContent());
+      final b0 = board(g, start);
+      final want = SimonGame.patternOf(b0).first;
+      final right = board(g, tap(g, start, want));
+      expect(SimonGame.patternOf(right).length, 2, reason: 'one more light');
+
+      final wrongPad = (want + 1) % 4;
+      final wrong = board(g, tap(g, start, wrongPad));
+      // Restart, not game-over — a room of six year olds keeps playing.
+      expect(SimonGame.patternOf(wrong).length, 1);
+    });
+
+    test('the pattern never reaches the screen', () {
+      // It is STORED in the pads. If a pad rendered its label, the board
+      // would be showing the room the answer it is meant to remember.
+      final shape = g.asShape(board(g, g.initialState(const _NoContent())))!;
+      expect(shape.cells.every((c) => c.label == null), isTrue);
+      expect(shape.cells.every((c) => c.face == null), isTrue);
+    });
+  });
+
+  test('Scavenger Hunt marks a find, and un-marks a mistake', () {
+    const g = ScavengerBingoGame();
+    final start = g.initialState(const _NoContent());
+    expect(board(g, start).cells.length, 9);
+    final once = tap(g, start, 4);
+    expect(board(g, once).cells[4].tint, CellTint.right);
+    expect(board(g, tap(g, once, 4)).cells[4].tint, CellTint.none);
   });
 }

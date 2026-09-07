@@ -212,13 +212,14 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Column(
           children: [
-            Text(
-              s.done ? 'You found them all!' : 'Find the matching pairs',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white70,
+            if (s.done)
+              Text(
+                'You found them all!',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white70,
+                ),
               ),
-            ),
             const SizedBox(height: 4),
             Text(
               '${s.pairsFound} / ${s.pairsTotal} pairs',
@@ -249,7 +250,7 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
     kind: ShapeKind.grid,
     cols: MemoryMatchGame.columnsFor(s.cards.length),
     rows: (s.cards.length / MemoryMatchGame.columnsFor(s.cards.length)).ceil(),
-    title: s.done ? 'You found them all!' : 'Find the matching pairs',
+    title: s.done ? 'You found them all!' : null,
     note: '${s.pairsFound} / ${s.pairsTotal} pairs',
     cells: [
       for (var i = 0; i < s.cards.length; i++)
@@ -285,13 +286,14 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             child: Column(
               children: [
-                Text(
-                  s.done ? 'You found them all!' : 'Find the matching pairs',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white70,
+                if (s.done)
+                  Text(
+                    'You found them all!',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white70,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 4),
                 Text(
                   '${s.pairsFound} / ${s.pairsTotal} pairs',

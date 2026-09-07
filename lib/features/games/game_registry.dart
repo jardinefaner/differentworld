@@ -4,6 +4,7 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/battleship_game.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
+import 'package:differentworld/features/games/games/boggle_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
@@ -24,10 +25,14 @@ import 'package:differentworld/features/games/games/picker_game.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
+import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
+import 'package:differentworld/features/games/games/simon_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
+import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_game.dart';
+import 'package:differentworld/features/games/games/word_search_game.dart';
 import 'package:differentworld/features/live_board/board_game.dart';
 
 /// Every host-run game, by id — the single source of truth for resolving a
@@ -77,6 +82,11 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   MinesweeperGame(),
   HangmanGame(),
   FourCornersGame(),
+  WordSearchGame(),
+  BoggleGame(),
+  WhackAMoleGame(),
+  SimonGame(),
+  ScavengerBingoGame(),
   // The Live Board — the phone-as-instrument surface (docs/LIVE_BOARD.md).
   // Cast-only: driven by LiveBoardScreen via castStage, rendered by the
   // existing cast receiver.
