@@ -68,7 +68,8 @@ class CrosswordGame extends GridGame {
 
   @override
   List<BoardCell> deal(ContentSource content) {
-    final puzzle = _puzzles[Random().nextInt(_puzzles.length)];
+    final which = Random().nextInt(_puzzles.length);
+    final puzzle = _puzzles[which];
     // Each square remembers the letter it wants and which clue it belongs to;
     // both are storage, blanked by present() until the word is solved.
     final want = List<String?>.filled(_size * _size, null);
@@ -88,7 +89,11 @@ class CrosswordGame extends GridGame {
       for (var i = 0; i < _size * _size; i++)
         BoardCell(
           // "letter|clueIndex" — one string, because a cell has one label.
-          label: want[i] == null ? null : '${want[i]}|${owner[i]}',
+          // "letter|clueIndex|puzzleIndex". The puzzle rides on every
+          // square because a crossing square belongs to TWO words and only
+          // one owner fits — so the clue must be a lookup, not something
+          // rebuilt from whichever letters happen to be selected.
+          label: want[i] == null ? null : '${want[i]}|${owner[i]}|$which',
           state: want[i] == null ? CellState.done : CellState.hidden,
         ),
     ];
@@ -113,11 +118,14 @@ class CrosswordGame extends GridGame {
   @override
   List<BoardCell>? onPick(GridBoard b, int i) {
     if (b.cells[i].label == null) return null;
-    final clue = (b.cells[i].label ?? '').split('|').last;
+    final parts = (b.cells[i].label ?? '').split('|');
+    if (parts.length < 2) return null;
+    final clue = parts[1];
     return [
       for (final c in b.cells)
         c.copyWith(
-          tint: (c.label ?? '').split('|').last == clue && c.label != null
+          tint:
+              c.label != null && (c.label ?? '').split('|').elementAt(1) == clue
               ? CellTint.live
               : CellTint.none,
         ),
@@ -153,21 +161,12 @@ class CrosswordGame extends GridGame {
     // rather than a permanent instruction.
     final live = b.cells.where((c) => c.tint == CellTint.live).toList();
     if (live.isEmpty) return null;
-    final idx = int.tryParse((live.first.label ?? '').split('|').last);
-    if (idx == null) return null;
-    for (final p in _puzzles) {
-      if (idx < p.length && _matches(b, p, idx)) return p[idx].clue;
-    }
-    return null;
-  }
-
-  /// Which of the bundled puzzles this board came from — matched on the
-  /// selected word's length and letters, since the board does not carry an id.
-  bool _matches(GridBoard b, List<_Entry> p, int idx) {
-    final picked = [
-      for (final c in b.cells)
-        if (c.tint == CellTint.live) _letter(c),
-    ].join();
-    return p[idx].word == picked;
+    final parts = (live.first.label ?? '').split('|');
+    if (parts.length < 3) return null;
+    final idx = int.tryParse(parts[1]);
+    final which = int.tryParse(parts[2]);
+    if (idx == null || which == null) return null;
+    if (which >= _puzzles.length || idx >= _puzzles[which].length) return null;
+    return _puzzles[which][idx].clue;
   }
 }

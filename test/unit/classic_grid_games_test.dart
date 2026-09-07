@@ -536,6 +536,28 @@ void _shapesIWasWrongAbout() {
   group('Crossword', () {
     const g = CrosswordGame();
 
+    test('every square in every puzzle can ask for its clue', () {
+      // This was flaky, and the flake was the bug: a crossing square belongs
+      // to TWO words but only one owner fits in a cell, so rebuilding the
+      // clue from the selected letters failed for whichever word lost the
+      // crossing. Which puzzle got dealt decided whether it worked. Now the
+      // puzzle rides on the square and the clue is a lookup — so EVERY
+      // square of EVERY deal must produce one.
+      for (var trial = 0; trial < 30; trial++) {
+        final start = g.initialState(const _NoContent());
+        final b = board(g, start);
+        for (var i = 0; i < b.cells.length; i++) {
+          if (b.cells[i].label == null) continue;
+          final after = board(g, tap(g, start, i));
+          expect(
+            g.titleFor(after),
+            isNotNull,
+            reason: 'square $i produced no clue',
+          );
+        }
+      }
+    });
+
     test('tapping a square asks for that word’s clue', () {
       final start = g.initialState(const _NoContent());
       final b0 = board(g, start);
