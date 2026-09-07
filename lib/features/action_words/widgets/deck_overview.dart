@@ -363,11 +363,18 @@ class _ActionTray extends StatelessWidget {
                         children: [
                           Icon(a.icon, size: 16, color: ink),
                           const SizedBox(width: 5),
-                          Text(
-                            a.label,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: ink,
+                          // Flexible so the label can ellipsize instead of
+                          // pushing the row off its own edge — a Row with
+                          // mainAxisSize.min still cannot shrink its
+                          // children, it just stops asking for extra.
+                          Flexible(
+                            child: Text(
+                              a.label,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: ink,
+                              ),
                             ),
                           ),
                         ],

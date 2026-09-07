@@ -324,6 +324,13 @@ keep the map fresh, and three agents maintain + query them.
   outranks the others**: a feature that VISION wants and this forbids
   does not get built. Read it before adding a model, a generated asset,
   or a synthetic voice to anything.
+- **[docs/CONDITIONS.md](docs/CONDITIONS.md)** — the *how it grows*:
+  conditions, not content, and the three acts (set the condition · the
+  room fills it · keep what happened). One grid shape bought nineteen
+  games; 40 bundled cards bought forty cards. Before adding content, ask
+  whether a room would supply it better — and note the acts make the AI
+  rule fall out rather than needing to be remembered: machines work
+  before and after the show, never during it.
 - **[docs/BRAND.md](docs/BRAND.md)** — the *how it shows up*: positioning
   (book, not ledger — Brightwheel is the foil), the calm-host
   personality, the five visual laws, voice, the Mobbin reference set,

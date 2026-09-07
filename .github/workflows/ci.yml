@@ -67,6 +67,15 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
           bash scripts/check_type_adherence.sh "$BASE"
 
+      # The third of the same family: no NEW off-scale gap (AppGap's seven
+      # steps). 1,906 call sites used 29 different values before the scale
+      # existed, and that sprawl is the reason screens read as assembled
+      # rather than designed.
+      - name: Spacing scale
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          bash scripts/check_spacing_scale.sh "$BASE"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -109,6 +118,24 @@ jobs:
       # sensitive and regenerated locally), so this is unit + widget.
       - name: Test
         run: flutter test
+
+      # Overflow gate. Every plate rendered again at 200% text —
+      # `beginOverflowWatch` turns "a RenderFlex overflowed" from a console
+      # line nobody reads into a failed test.
+      #
+      # Its own pass, because STRESS_TEXT_SCALE changes what the plates ARE
+      # and cannot share a run with the pixel comparison.
+      #
+      # 200% and not 300% deliberately. 300% is the more useful target — iOS
+      # AX5 is ~310%, a setting real people use — and it DOES find real
+      # overflows. But two consecutive 300% runs blamed four different
+      # screens with no overlap between them, so the harness cannot yet say
+      # WHICH plate overflowed; the errors surface while a later plate is
+      # pumping and land on whoever drains next. A gate that names an
+      # innocent screen is worse than no gate, because it gets muted.
+      # 200% is deterministic and currently zero. See test/golden/_helpers.dart.
+      - name: Overflow at 200% text
+        run: STRESS_TEXT_SCALE=2.0 RUN_GOLDENS=1 flutter test test/golden/screens_gallery_test.dart
 
   build-android:
     name: Build Android (debug APK)

@@ -142,23 +142,11 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.volume_up_outlined,
-                    size: 18,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Tap a word to hear it',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+              // No caption. "Tap a word to hear it" was a permanent
+              // instruction on a screen built for children who cannot read
+              // it — and it was the widest thing on the row, so at large
+              // text it overflowed off the side while explaining nothing to
+              // its audience. The words are the affordance.
               const SizedBox(height: 12),
               KidProgressDots(filled: _selected.length, total: kPicksPerDay),
             ],
