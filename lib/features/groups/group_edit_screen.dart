@@ -336,6 +336,11 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                 final ageBandField = DropdownButtonFormField<String>(
                   key: const ValueKey('group-edit-age-band'),
                   initialValue: _ageBand,
+                  // The selected label sits in a Row beside the arrow, and a
+                  // long band name overflowed it by 14dp on a 320dp phone at
+                  // 150% text. isExpanded lets the label take the room it has
+                  // and ellipsize instead of running off the side.
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Age band',
                     border: OutlineInputBorder(),

@@ -127,14 +127,19 @@ class DeckOverview extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverGrid(
+            // A fixed EXTENT that grows with the user's text scale, not a
+            // fixed RATIO. A ratio is a fixed height wrapped around text: at
+            // the 150% floor the headline needed more room than 0.62 gave it
+            // and the tile overflowed. This is the same fix the Brain Breaks
+            // deck already carries, for the same reason.
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               mainAxisSpacing: Insets.md,
               crossAxisSpacing: Insets.md,
-              // Slightly taller than square — room for the emoji + a two-line
-              // headline + the eyebrow. Taller again when each tile also carries
-              // its action tray (48dp chips, up to two rows) without crowding.
-              childAspectRatio: actionsForBeat != null ? 0.62 : 0.92,
+              mainAxisExtent: _tileExtent(
+                context,
+                withActions: actionsForBeat != null,
+              ),
             ),
             delegate: SliverChildBuilderDelegate(
               (context, i) => _BeatTile(
@@ -178,6 +183,16 @@ class DeckOverview extends StatelessWidget {
 /// One beat as a tappable tile — emoji glyph, the headline, and the eyebrow
 /// label, on a low-alpha tint of the beat's (or deck's) accent. Content-driven
 /// fill, so the text colour is picked for contrast via [AppColors.onAccent].
+/// How tall a beat tile needs to be, given the reader's text scale. The
+/// fixed chrome (emoji, padding, the action tray when present) plus a text
+/// block that GROWS — so the tile gets taller as the type does rather than
+/// clipping it.
+double _tileExtent(BuildContext context, {required bool withActions}) {
+  final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+  final chrome = withActions ? 176.0 : 84.0;
+  return chrome + 104 * scale;
+}
+
 class _BeatTile extends StatelessWidget {
   const _BeatTile({
     required this.beat,

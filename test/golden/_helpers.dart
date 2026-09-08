@@ -281,7 +281,7 @@ void beginOverflowWatch() {
           );
       final where = (creator == null || creator.isEmpty)
           ? ''
-          : '\n      ${creator.split(' ← ').take(6).join(' ← ')}';
+          : '\n      ${creator.split(' ← ').take(12).join(' ← ')}';
       recordedOverflows.add('${text.split('\n').first}$where');
     }
     previous?.call(details);
