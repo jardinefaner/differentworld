@@ -542,14 +542,32 @@ void _shapesIWasWrongAbout() {
     });
   });
 
-  test('Scattergories fills the next empty category', () {
+  group('Scattergories', () {
     const g = ScattergoriesGame();
-    var w = g.initialState(const _NoContent());
-    w = type(g, w, 'Badger');
-    final b = board(g, w);
-    expect(b.cells.first.tint, CellTint.right);
-    expect(b.cells.first.label, contains('Badger'));
-    expect(g.noteFor(b), startsWith('1 of'));
+
+    test('an answer starting with the letter fills the next category', () {
+      var w = g.initialState(const _NoContent());
+      final letter = ScattergoriesGame.letterOf(board(g, w));
+      final word = '${letter.toUpperCase()}adger';
+      w = type(g, w, word);
+      final b = board(g, w);
+      expect(b.cells.first.tint, CellTint.right);
+      expect(b.cells.first.label, contains(word));
+    });
+
+    test('an answer that ignores the letter is not accepted', () {
+      // Any word used to be accepted for any category, so nothing could be
+      // wrong and there was nothing to play against. The rule of the game is
+      // that the answer starts with the letter.
+      final w = g.initialState(const _NoContent());
+      final letter = ScattergoriesGame.letterOf(board(g, w)).toUpperCase();
+      // Any letter but the round's own — the deal is random, so pick one.
+      final wrong = letter == 'Z' ? 'Antelope' : 'Zebra';
+      final before = board(g, w);
+      final after = board(g, type(g, w, wrong));
+      expect(after.cells.first.tint, isNot(CellTint.right));
+      expect(after.turn, isNot(before.turn), reason: 'and it costs the turn');
+    });
   });
 
   group('Crossword', () {
@@ -586,11 +604,46 @@ void _shapesIWasWrongAbout() {
       expect(g.titleFor(after), isNotNull, reason: 'a clue should appear');
     });
 
-    test('a wrong answer changes nothing', () {
+    test('a wrong answer costs the turn and clears the selection', () {
+      // It used to change NOTHING — onEntry returned null, the reducer read
+      // that as "declined", and a wrong answer had no feedback, no
+      // consequence and no turn change. A wrong answer is a move now.
       var w = g.initialState(const _NoContent());
       final b0 = board(g, w);
       w = tap(g, w, b0.cells.indexWhere((c) => c.label != null));
-      expect(type(g, w, 'NOPE'), w);
+      final before = board(g, w);
+      expect(
+        before.cells.any((c) => c.tint == CellTint.live),
+        isTrue,
+        reason: 'a word is selected',
+      );
+
+      final after = board(g, type(g, w, 'NOPE'));
+      expect(after.turn, isNot(before.turn), reason: 'it passes over');
+      expect(
+        after.cells.any((c) => c.tint == CellTint.live),
+        isFalse,
+        reason: 'and the selection clears',
+      );
+      expect(
+        after.cells.where((c) => c.state == CellState.shown).length,
+        before.cells.where((c) => c.state == CellState.shown).length,
+        reason: 'but nothing is solved by being wrong',
+      );
+    });
+
+    test('a right answer keeps the board with the same team', () {
+      var w = g.initialState(const _NoContent());
+      final b0 = board(g, w);
+      final at = b0.cells.indexWhere((c) => c.label != null);
+      w = tap(g, w, at);
+      final before = board(g, w);
+      final want = [
+        for (final c in before.cells)
+          if (c.tint == CellTint.live) (c.label ?? '').split('|').first,
+      ].join();
+      final after = board(g, type(g, w, want));
+      expect(after.turn, before.turn, reason: 'get it right, go again');
     });
 
     test('the wanted letters never reach the board', () {

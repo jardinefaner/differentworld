@@ -11,8 +11,10 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/games/battleship_game.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
+import 'package:differentworld/features/games/games/dots_boxes_game.dart';
 import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
+import 'package:differentworld/features/games/games/scattergories_game.dart';
 import 'package:differentworld/features/games/games/scavenger_bingo_game.dart';
 import 'package:differentworld/features/games/games/simon_game.dart';
 import 'package:differentworld/features/games/games/snakes_ladders_game.dart';
@@ -469,6 +471,66 @@ void main() {
       final end = g.decode(wire);
       expect(end.done, isTrue, reason: 'a race ends');
       expect(end.outcome, contains('home'));
+    });
+
+    test('a wrong answer costs the turn; a right one does not', () {
+      // The rule the user asked for, and the reason conferring before you
+      // answer is worth anything.
+      const g = ScattergoriesGame();
+      var wire = g.initialState(bank());
+      final letter = ScattergoriesGame.letterOf(g.decode(wire));
+      final before = g.decode(wire).turn;
+
+      // Right: starts with the letter, board stays with the same team.
+      wire = g.reduce(wire, GameIntent.capture, {'text': '${letter}pple'});
+      expect(g.decode(wire).turn, before, reason: 'a good answer keeps it');
+      expect(g.scoreOf(g.decode(wire), before), 1);
+
+      // Wrong: does not start with the letter, board passes over.
+      final wrongLetter = letter.toUpperCase() == 'Z' ? 'A' : 'Z';
+      wire = g.reduce(wire, GameIntent.capture, {'text': '${wrongLetter}ebra'});
+      expect(
+        g.decode(wire).turn,
+        isNot(before),
+        reason: 'a wrong one costs it',
+      );
+    });
+
+    test('closing a box means you go again', () {
+      // The rule Dots & Boxes turns on. It was "implemented" by a helper that
+      // returned the cells unchanged — an identity function with a comment
+      // claiming it handed the turn back.
+      //
+      // Built deterministically: draw three edges of one box, then the
+      // fourth. A loop that hopes to stumble on a closure can pass without
+      // ever testing the rule.
+      const g = DotsBoxesGame();
+      const side = 7; // the board is side x side; box (1,1) sits at 1*7+1
+      const box = 1 * side + 1;
+      final edges = [
+        (1 - 1) * side + 1,
+        (1 + 1) * side + 1,
+        1 * side + 0,
+        1 * side + 2,
+      ];
+      var wire = g.initialState(bank());
+      // Three edges: each hands over, so the turn alternates as normal.
+      for (final e in edges.take(3)) {
+        final next = g.reduce(wire, GameIntent.pick, {'cell': e});
+        expect(next, isNot(wire), reason: 'edge $e must be playable');
+        wire = next;
+      }
+      final before = g.decode(wire);
+      expect(before.cells[box].face, isNull, reason: 'box still open');
+
+      wire = g.reduce(wire, GameIntent.pick, {'cell': edges.last});
+      final after = g.decode(wire);
+      expect(after.cells[box].face, isNotNull, reason: 'the box closed');
+      expect(
+        after.turn,
+        before.turn,
+        reason: 'closing a box keeps the board — that is the whole game',
+      );
     });
 
     test('battleship keeps score per side and names a winner', () {

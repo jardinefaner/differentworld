@@ -132,6 +132,30 @@ class CrosswordGame extends GridGame {
     ];
   }
 
+  /// Whether [text] solves the word currently selected.
+  static bool _solves(GridBoard b, String text) {
+    final picked = [
+      for (var i = 0; i < b.cells.length; i++)
+        if (b.cells[i].tint == CellTint.live) i,
+    ];
+    if (picked.isEmpty) return false;
+    final want = [for (final i in picked) _letter(b.cells[i])].join();
+    return text.toUpperCase().replaceAll(RegExp('[^A-Z]'), '') == want;
+  }
+
+  /// Right answer, same team goes again; wrong answer passes the clue over.
+  /// Teams alternate on MISTAKES, which is what makes it worth conferring
+  /// before you answer.
+  @override
+  bool get alternates => true;
+
+  @override
+  bool handsOverAfterEntry(GridBoard before, String text) =>
+      !_solves(before, text);
+
+  @override
+  String? noteFor(GridBoard b) => turnLine(b);
+
   /// Type the selected word; every square of it opens at once.
   @override
   List<BoardCell>? onEntry(GridBoard b, String text) {
@@ -140,9 +164,11 @@ class CrosswordGame extends GridGame {
         if (b.cells[i].tint == CellTint.live) i,
     ];
     if (picked.isEmpty) return null;
-    final want = [for (final i in picked) _letter(b.cells[i])].join();
-    if (text.toUpperCase().replaceAll(RegExp('[^A-Z]'), '') != want) {
-      return null;
+    if (!_solves(b, text)) {
+      // A wrong answer is a MOVE, not a no-op: it clears the selection and
+      // hands the clue to the other team. Returning null meant a wrong answer
+      // did nothing at all — no feedback, no consequence, no turn.
+      return [for (final c in b.cells) c.copyWith(tint: CellTint.none)];
     }
     return [
       for (var i = 0; i < b.cells.length; i++)

@@ -68,7 +68,6 @@ class DotsBoxesGame extends GridGame {
 
     // Closing a box claims it — and in this game that means you go again, so
     // the turn only advances when nothing was closed.
-    var closed = false;
     for (var br = 1; br < _side; br += 2) {
       for (var bc = 1; bc < _side; bc += 2) {
         final at = br * _side + bc;
@@ -87,19 +86,45 @@ class DotsBoxesGame extends GridGame {
               else
                 cells[j],
           ];
-          closed = true;
         }
       }
     }
-    // `alternates` flips the turn for us, so undo it when a box was closed.
-    return closed ? _keepTurn(cells) : cells;
+    return cells;
   }
 
-  /// A marker row: closing a box means the same player goes again. GridGame
-  /// alternates on every accepted pick, so this hands the turn back.
-  List<BoardCell> _keepTurn(List<BoardCell> cells) => [
-    for (final c in cells) c,
-  ];
+  /// **Closing a box means you go again** — the rule the whole game turns on,
+  /// because it is what makes a chain worth setting up.
+  ///
+  /// This used to be attempted with a `_keepTurn` helper that returned the
+  /// cells UNCHANGED — an identity function with a comment claiming it handed
+  /// the turn back. It did nothing, so closing a box passed the board on like
+  /// any other move and the game's central rule was silently absent.
+  @override
+  bool handsOverAfterPick(GridBoard before, int i) => !_closesABox(before, i);
+
+  /// Would playing edge [i] complete a box? Computed from the board BEFORE
+  /// the move, which is what the turn hook is handed.
+  bool _closesABox(GridBoard b, int i) {
+    final r = i ~/ _side;
+    final c = i % _side;
+    if (_isDot(r, c) || _isBox(r, c)) return false;
+    if (b.cells[i].state != CellState.hidden) return false;
+    bool drawn(int e) => e == i || b.cells[e].state == CellState.shown;
+    for (var br = 1; br < _side; br += 2) {
+      for (var bc = 1; bc < _side; bc += 2) {
+        final at = br * _side + bc;
+        if (b.cells[at].face != null) continue;
+        final edges = [
+          (br - 1) * _side + bc,
+          (br + 1) * _side + bc,
+          br * _side + bc - 1,
+          br * _side + bc + 1,
+        ];
+        if (edges.every(drawn)) return true;
+      }
+    }
+    return false;
+  }
 
   /// Every box claimed. The line was already computed for the board's title —
   /// it simply never stamped `done`, so the round ran forever.

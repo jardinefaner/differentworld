@@ -70,10 +70,38 @@ class ScattergoriesGame extends GridGame {
 
   /// Typed answers fill the next empty category in order, so the room works
   /// down the board without anyone choosing where each one goes.
+  /// **The rule of the game:** an answer has to start with the letter. This
+  /// was not checked at all — any word was accepted for any category, so
+  /// nothing could be wrong and there was nothing to play against.
+  static bool _startsRight(GridBoard b, String text) {
+    final t = text.trim();
+    if (t.isEmpty) return false;
+    return t[0].toUpperCase() == letterOf(b).toUpperCase();
+  }
+
+  /// Teams alternate on MISTAKES: a good answer keeps the board, a word that
+  /// does not start with the letter passes it over.
+  @override
+  bool get alternates => true;
+
+  @override
+  bool handsOverAfterEntry(GridBoard before, String text) =>
+      !_startsRight(before, text);
+
+  /// A good answer scores for the team that gave it.
+  @override
+  Map<String, int> tallyAfterEntry(GridBoard before, String text) =>
+      _startsRight(before, text) ? plusForTurn(before) : before.tally;
+
   @override
   List<BoardCell>? onEntry(GridBoard b, String text) {
     final next = b.cells.indexWhere((c) => c.tint == CellTint.none);
     if (next < 0) return null;
+    if (!_startsRight(b, text)) {
+      // A wrong answer is a move: it costs the turn. The category stays open
+      // for the other team.
+      return [for (final c in b.cells) c];
+    }
     return b.withAt(
       next,
       b.cells[next].copyWith(
@@ -99,7 +127,9 @@ class ScattergoriesGame extends GridGame {
 
   @override
   String? noteFor(GridBoard b) {
-    final n = b.cells.where((c) => c.tint == CellTint.right).length;
-    return n == 0 ? null : '$n of ${b.cells.length}';
+    final turn = turnLine(b);
+    final score = scoreLine(b);
+    if (score != null) return '$turn   ·   $score';
+    return turn;
   }
 }

@@ -273,6 +273,19 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   Map<String, int> tallyAfterEntry(GridBoard before, String text) =>
       before.tally;
 
+  /// Whether an accepted TAP hands the board to the other side. Only consulted
+  /// when [alternates]. Default: yes, every move hands over.
+  ///
+  /// Override for the rules where a good move earns another go — closing a box
+  /// in Dots & Boxes — so the game does not silently take the reward away.
+  bool handsOverAfterPick(GridBoard before, int i) => true;
+
+  /// Whether an accepted typed ANSWER hands over. Default: yes.
+  ///
+  /// The typing games invert this: a right answer keeps the board and a wrong
+  /// one passes it, which is the thing that makes them worth playing in teams.
+  bool handsOverAfterEntry(GridBoard before, String text) => true;
+
   /// Counters a freshly-dealt board starts with. Default: none. Simon uses it
   /// to open in "the board is talking" rather than waiting for a tap that
   /// nobody can make yet.
@@ -367,7 +380,9 @@ abstract class GridGame extends GameDefinition<GridBoard> {
         return _settle(
           b.copyWith(
             cells: next,
-            turn: alternates ? (b.turn + 1) % 2 : b.turn,
+            turn: alternates && handsOverAfterPick(b, i)
+                ? (b.turn + 1) % 2
+                : b.turn,
             tally: tallyAfterPick(b, i),
           ),
         );
@@ -387,7 +402,9 @@ abstract class GridGame extends GameDefinition<GridBoard> {
         return _settle(
           b.copyWith(
             cells: next,
-            turn: alternates ? (b.turn + 1) % 2 : b.turn,
+            turn: alternates && handsOverAfterEntry(b, text)
+                ? (b.turn + 1) % 2
+                : b.turn,
             tally: tallyAfterEntry(b, text),
           ),
         );
