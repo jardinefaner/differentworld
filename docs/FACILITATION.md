@@ -50,7 +50,10 @@ The pieces are real and individually well-built. **This is not a rewrite.**
 
 ### The turn problem, stated precisely
 
-Four things answer "who's up" and none of them know about each other:
+**Five** things answer "who's up" and none of them know about each other. (The
+first survey said four — `rooms/fair_turns.dart` was found later, while
+migrating photo-turns. Worth recording: the count was wrong because the survey
+grepped for turn-shaped *names*, and that file calls it `nextUp`.)
 
 - `GridGame.turn` + `alternates` — two sides, flip on a move
   (`lib/features/games/grid_game.dart`)
@@ -58,6 +61,8 @@ Four things answer "who's up" and none of them know about each other:
   persisted, re-synced against the eligible roster
 - photo turns — per-child turn through a roster in a session
 - `rotation_engine.dart` — pair-history-aware grouping
+- `rooms/fair_turns.dart` (`nextUp`) — least-turns-first across a whole TERM,
+  read from the `room_events` log. Fairness over weeks, not within a round.
 
 **These are not duplicates and must not be merged.** Fair-draw, side-alternation
 and pair-history grouping are genuinely different algorithms with different
@@ -111,7 +116,8 @@ Implementations wrap what already exists rather than replacing it:
 |---|---|---|
 | `AlternatingSides` | `GridGame.turn` | two sides, flip on an accepted move |
 | `FairDraw` | `picker_logic.dart` | everyone before anyone repeats |
-| `RosterOrder` | photo turns | each child once, in order |
+| `RosterOrder` | — | each child once, in a fixed order |
+| `EveryoneOnce` | photo turns | everyone once, **the adult picks the order** |
 | `NoTurn` | — | the room acts as one (the honest default) |
 
 **What this buys:** any activity can say *"take turns"* and get the whose-go
@@ -166,8 +172,8 @@ revertible.
    its existing `alternates` API, so no game file changes.
 3. **`RoomState` read-model** composed from the providers above. New surfaces
    read it; existing ones are untouched until they have a reason to move.
-4. **`FairDraw` / `RosterOrder`** move behind `TurnSource`, unchanged in
-   behaviour, pinned by their existing tests.
+4. **`FairDraw`** is wrapped; `nextUp` (term-long fairness) is the remaining
+   un-wrapped rule and the least urgent — it is already pure and tested.
 5. **`moves` generalised** out of the block-run sheet, so any surface can offer
    "what you can change right now."
 

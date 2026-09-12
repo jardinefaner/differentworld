@@ -13,7 +13,12 @@ import 'package:flutter/foundation.dart';
 /// owns advancing it.
 @immutable
 class Steps {
-  const Steps({required this.index, required this.total, this.label});
+  const Steps({required this.index, required this.total, this.label})
+    // `at()` clamps to `total - 1`, and `clamp(0, -1)` THROWS. Nothing reaches
+    // a zero-total today (`fromWire` returns null for one), but the
+    // constructor accepted it silently and the throw would surface on the
+    // first navigation rather than at the mistake.
+    : assert(total > 0, 'Steps needs at least one step');
 
   /// 0-based, so it indexes a list without arithmetic at the call site.
   final int index;
@@ -51,10 +56,11 @@ class Steps {
   Steps get forward => at(index + 1);
   Steps get back => at(index - 1);
 
-  /// Read a grid game's wire-state, which stores the index as `i` and the
-  /// count as `n`. An adapter rather than a dependency: this file must not
-  /// import the games layer, or the engine ends up owned by one of its
-  /// consumers.
+  /// An adapter rather than a dependency: this file must not import the games
+  /// layer, or the engine ends up owned by one of its consumers. The index is
+  /// `i` and the count is `n`.
+  /// Read a grid game's wire-state. Null when there is no count to show —
+  /// a game that has not dealt yet must not render "1 / 0".
   static Steps? fromWire(Map<String, dynamic> wire, {String? label}) {
     final n = (wire['n'] as num?)?.toInt();
     if (n == null || n <= 0) return null;
