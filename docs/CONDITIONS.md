@@ -139,8 +139,14 @@ a test fails if a `ContentKind` ships without one.
   in kid mode and on any cast / speak stage — the door leads OUT of the
   activity — and it is on the WRAP beat rather than mid-play deliberately: a
   teacher authors between rounds, never while thirty children wait.
-- **Route 2** — authoring by keeping already existed as `CaptureSpec`'s
-  crowd-grow, which banks what a room produced during play.
+- **Route 2** — authoring by keeping. This doc previously claimed it
+  "already existed as `CaptureSpec`'s crowd-grow". **That was wrong**:
+  `CaptureSpec` was declared, never overridden by any game, and read by
+  nothing, so no round ever banked anything. It has been deleted. What
+  exists now is `GameDefinition.keepsake` + `KeepThisButton`, which write
+  an `EntryKind.classMemory` — and deliberately for only a FEW activities
+  (Scattergories, Penny, Potions), because a memory full of "Team 1 wins"
+  buries the things worth keeping.
 
 Authored rows carry `space_id` + `source='staff'` and fingerprint on their
 own id, so two identical items both survive — a room is allowed to repeat

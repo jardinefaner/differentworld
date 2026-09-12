@@ -192,7 +192,7 @@ overage $2.50/M msgs, ~$10/1,000 connections. Measured This-or-That footprint:
 0a. **DONE (`feat/game-framework` 3dd15da).** The framework spine:
    `game.dart` (`GameIntent` incl. `tally`/`submit`, `GameReducer`,
    `GameDefinition<S>` with the first-class `buildStage` slot, `GameVibe`,
-   `CaptureSpec`) + `game_controller.dart` (`GameController` +
+   `keepsake`) + `game_controller.dart` (`GameController` +
    `LocalGameController`) + a unit test. Analyze clean, 3/3 pass.
 0b. **DONE (`feat/game-framework` 78f0f1b).** `GameScaffold` (control
    bar/panel from `activeIntents` + a per-game reveal label + progress +

@@ -83,7 +83,10 @@ kids themselves (Ava).
 - ⬜ Duplicate / spam-join handling
 
 ### Outcome (the app's spine)
-- ✅ Capture evidence from a game (CaptureSpec → content_items / entries)
+- 🔶 Capture evidence from a game — was ticked against `CaptureSpec`, which
+  never worked (declared, never overridden, read by nothing; now deleted).
+  PARTIAL via `GameDefinition.keepsake` → `class_memory`: Scattergories keeps
+  the words the room found; every other game keeps nothing, on purpose.
 - 💭 Save a round's highlights to the growth book / showcase
 
 ### Recommended build order
