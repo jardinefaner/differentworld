@@ -293,7 +293,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                identity,
+                // Flexible, not fixed: on a landscape phone the identity block
+                // alone is taller than the viewport, which left the roster
+                // Expanded at zero AND still overflowed by 42dp. It now yields
+                // — scrolling within whatever share it gets — so the roster
+                // below it stays reachable instead of being squeezed out.
+                Flexible(
+                  child: SingleChildScrollView(child: identity),
+                ),
                 Expanded(
                   child: _RosterGrid(
                     subjects: filtered,

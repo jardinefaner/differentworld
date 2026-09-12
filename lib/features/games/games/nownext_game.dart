@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/shared/widgets/fit_or_scroll.dart';
 import 'package:flutter/material.dart';
 
 /// Now & Next — the highest daily-value presentable (docs/VISION.md #18). The
@@ -120,7 +121,11 @@ class NowNextGame extends GameDefinition<NowNextState> {
     final next = s.upNext;
     return SafeArea(
       bottom: false,
-      child: Center(
+      // Now & Next is the most-read board in the app, so it must survive a
+      // projector held sideways: centred when there is room, scrolling when
+      // there is not (99dp over on a landscape phone, which clipped "Next"
+      // — the half the board exists to show).
+      child: FitOrScroll(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: Padding(

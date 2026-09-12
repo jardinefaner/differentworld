@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/fit_or_scroll.dart';
 import 'package:flutter/material.dart';
 
 /// `/activity/breathe` — Mindful Minute. The calm counterpart to the
@@ -129,11 +130,15 @@ class _BreatheScreenState extends State<BreatheScreen>
   }
 
   Widget _animated(BuildContext context) {
-    return Center(
+    // Centres in portrait, scrolls in landscape. The breathing circle is that
+    // size deliberately — a room reads it from across the floor — so on a
+    // 390dp-tall viewport the viewport moves rather than the content shrinking.
+    // The Spacers that used to do the centring are gone: FitOrScroll's Align
+    // does it, and a Spacer inside a scroll view has unbounded flex.
+    return FitOrScroll(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Spacer(),
           AnimatedBuilder(
             animation: _controller,
             builder: (context, _) {
@@ -180,7 +185,6 @@ class _BreatheScreenState extends State<BreatheScreen>
                 : 'Follow the circle — in, hold, out',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           ),
-          const Spacer(),
         ],
       ),
     );

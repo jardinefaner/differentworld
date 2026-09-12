@@ -194,57 +194,73 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               length: 3,
               child: Column(
                 children: [
-                  // ContentHeader reserves chrome height + status bar
-                  // inset so the avatar/identity row below sits clear
-                  // of the floating chrome pills (Wave 53 layout law,
-                  // wave 59 conformance).
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ContentHeader(
-                      title: member.displayName,
-                      bottomGap: 4,
-                    ),
-                  ),
-                  Center(
-                    child: PersonAvatar(
-                      name: member.displayName,
-                      photoUrl: member.avatarUrl,
-                      radius: 40,
-                      // Director can change anyone's photo; everyone else
-                      // can change their own.
-                      onTap: (canManage || me?.id == member.id)
-                          ? () => PhotoSourceSheet.show(
-                              context,
-                              ref,
-                              entity: PhotoEntity.member,
-                              entityId: member.id,
-                              hasExisting: member.avatarUrl != null,
-                              displayName: member.displayName,
-                            )
-                          : null,
-                    ),
-                  ),
-                  // No centred name here — the flush-left ContentHeader above
-                  // already carries it; repeating it centred broke the
-                  // one-left-edge law and read as a duplicate.
-                  const SizedBox(height: 4),
-                  Center(
-                    child: Text(
-                      RoleLabels.of(currentRole, vertical: vertical),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  // Flexible, not fixed: on a landscape phone the identity block is
+                  // 5dp taller than the viewport leaves it, which squeezed the tab
+                  // content below. It scrolls within its share so the TABS — the
+                  // reason anyone opens this screen — stay put.
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ContentHeader reserves chrome height + status bar
+                          // inset so the avatar/identity row below sits clear
+                          // of the floating chrome pills (Wave 53 layout law,
+                          // wave 59 conformance).
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: ContentHeader(
+                              title: member.displayName,
+                              bottomGap: 4,
+                            ),
+                          ),
+                          Center(
+                            child: PersonAvatar(
+                              name: member.displayName,
+                              photoUrl: member.avatarUrl,
+                              radius: 40,
+                              // Director can change anyone's photo; everyone else
+                              // can change their own.
+                              onTap: (canManage || me?.id == member.id)
+                                  ? () => PhotoSourceSheet.show(
+                                      context,
+                                      ref,
+                                      entity: PhotoEntity.member,
+                                      entityId: member.id,
+                                      hasExisting: member.avatarUrl != null,
+                                      displayName: member.displayName,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          // No centred name here — the flush-left ContentHeader above
+                          // already carries it; repeating it centred broke the
+                          // one-left-edge law and read as a duplicate.
+                          const SizedBox(height: 4),
+                          Center(
+                            child: Text(
+                              RoleLabels.of(currentRole, vertical: vertical),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // "How you show up" — the self-authored archetype (decorates,
+                          // never gates). Editable only on your OWN profile.
+                          ArchetypeCard(
+                            memberId: member.id,
+                            archetypeId: caps.getString(MemberCaps.archetype),
+                            editable: me?.id == member.id,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // "How you show up" — the self-authored archetype (decorates,
-                  // never gates). Editable only on your OWN profile.
-                  ArchetypeCard(
-                    memberId: member.id,
-                    archetypeId: caps.getString(MemberCaps.archetype),
-                    editable: me?.id == member.id,
-                  ),
-                  const SizedBox(height: 12),
                   const TabBar(
                     isScrollable: true,
                     tabAlignment: TabAlignment.center,

@@ -11,6 +11,7 @@ import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/fit_or_scroll.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -208,7 +209,13 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
     final verb = (item.payload['verb'] as String?) ?? '';
 
     return SafeArea(
-      child: Padding(
+      // Fills the screen upright — the action card stretches, which is the
+      // point of it ("big, glanceable across the room"). In landscape the
+      // header + card + button are ~37dp taller than the viewport, so it
+      // scrolls instead of clipping the "We did it!" button off the bottom.
+      child: FitOrScroll(
+        hasFlexChild: true,
+        alignment: Alignment.topCenter,
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
