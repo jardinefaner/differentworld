@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/game_content/content_kinds.dart';
 import 'package:differentworld/features/game_content/our_content.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
@@ -154,7 +155,6 @@ class OursFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (authorKindsFor(route).isEmpty) return child;
     return Column(
       children: [
         Expanded(child: child),
@@ -162,7 +162,16 @@ class OursFooter extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: OursStrip(route: route),
+            child: Row(
+              children: [
+                // Facet 5 — the instruments, from inside the activity.
+                const RoomToolsButton(),
+                const Spacer(),
+                // Facet "the room writes its own", when this activity has a
+                // kind to write. Renders nothing when it does not.
+                OursStrip(route: route, compact: true),
+              ],
+            ),
           ),
         ),
       ],

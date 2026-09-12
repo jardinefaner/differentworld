@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/class_memory/class_memory.dart';
+import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/shared/widgets/activity_prompt.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -161,6 +163,23 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
                   ),
                 ],
               ),
+              // Keep the QUESTION, not the thoughts — the thoughts were said
+              // out loud and the app never had them, and asking a counselor to
+              // type while thirty children wait is the opposite of the point.
+              // A question the room sat with is worth having in March; the
+              // "question" sort is the one that can come back.
+              if (question != null && question.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: KeepThisButton(
+                    text: question,
+                    sort: ClassMemorySort.question,
+                    context_: _count == 0
+                        ? null
+                        : '$_count ${_count == 1 ? 'thought' : 'thoughts'}',
+                    label: 'Keep this question',
+                  ),
+                ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: _newQuestion,

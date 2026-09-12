@@ -106,6 +106,7 @@ import 'package:differentworld/features/games/games/snakes_ladders_game.dart';
 import 'package:differentworld/features/games/games/spot_difference_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/games/timer_game.dart';
 import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/games/word_search_game.dart';
@@ -2005,6 +2006,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/present/now-next',
             builder: (_, _) => const NowNextScreen(live: false),
+          ),
+          // Talk Time had NO route — the thesis names it as a core instrument
+          // and it was reachable only from the cast cockpit, so a counselor
+          // not casting could not start a timer at all.
+          GoRoute(
+            path: '/present/timer',
+            builder: (_, _) => const GameRunner(def: TimerGame()),
           ),
           GoRoute(
             path: '/live/now-next',

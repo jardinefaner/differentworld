@@ -89,6 +89,17 @@ abstract class ContentKind {
   /// result is REVEALED and read aloud.
   static const fillBlank = 'fill_blank';
 
+  /// One thing to find outside — payload `{text}`. THE case for a room
+  /// supplying content better than we can: what is actually out of *this*
+  /// door is not something a bundled list can know (docs/CONDITIONS.md).
+  static const scavengerThing = 'scavenger_thing';
+
+  /// A **Four Corners** question — payload `{question, a, b, c, d}`. The
+  /// corners are the four answers; everyone goes and stands in one. Without
+  /// this the board showed four positions and asked nothing, so the activity
+  /// depended entirely on the adult inventing a question on the spot.
+  static const fourCorners = 'four_corners';
+
   /// A **Write-to-a-friend** prompt (docs/VISION.md 2026-06-19) — payload
   /// `{text}`. The room writes notes to each other (on paper, "To:" / "From:"
   /// at the top); the app pairs everyone so each child writes one and gets one.

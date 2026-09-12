@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
+import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
@@ -246,6 +247,7 @@ class _GameControlBar extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  if (!done) const RoomToolsButton(compact: true),
                   if (!done)
                     IconButton.filledTonal(
                       onPressed: active.contains(GameIntent.back)
@@ -386,6 +388,14 @@ class _GameControlPanel extends StatelessWidget {
               ),
               OursStrip(key: const ValueKey('ours-strip-panel'), route: gameId),
             ] else ...[
+              // Pick a name, start a timer, flash "eyes up" — WITHOUT leaving
+              // the activity. This is the whole point of facet 5: the
+              // instruments were built and unreachable from in here.
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: RoomToolsButton(),
+              ),
+              const SizedBox(height: 4),
               SizedBox(
                 width: double.infinity,
                 height: 72,
