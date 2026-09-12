@@ -49,7 +49,13 @@ void main() {
     test('fraction is bounded', () {
       expect(const Steps(index: 0, total: 4).fraction, closeTo(0.25, 1e-9));
       expect(const Steps(index: 3, total: 4).fraction, 1.0);
-      expect(const Steps(index: 0, total: 0).fraction, 0);
+    });
+
+    test('a zero-total Steps is rejected at construction', () {
+      // Not merely unused — `at()` clamps to `total - 1` and `clamp(0, -1)`
+      // throws, so a zero-total would have failed on the first navigation
+      // instead of at the mistake.
+      expect(() => Steps(index: 0, total: 0), throwsA(isA<AssertionError>()));
     });
   });
 
@@ -181,6 +187,40 @@ void main() {
       expect(t.advance().current, isNull);
     });
 
+    test('a seeded draw is reproducible, refills included', () {
+      // The rng is CARRIED now, so the interesting case — the order of a
+      // fresh round after the bag empties — is pinnable rather than luck.
+      List<String> run(int seed) {
+        TurnSource t = FairDraw.fresh(
+          eligible: eligible,
+          names: names,
+          rng: Random(seed),
+        );
+        final seen = <String>[];
+        for (var i = 0; i < eligible.length * 2; i++) {
+          t = t.advance();
+          seen.add(t.current!.subjectId!);
+        }
+        return seen;
+      }
+
+      expect(run(11), run(11), reason: 'same seed, same sequence');
+    });
+
+    test('a derived state does not share a collection with its parent', () {
+      // The doc promises this of states produced by advance(); a promise in a
+      // comment that the code does not keep is the failure mode to avoid.
+      final t =
+          FairDraw.fresh(
+                eligible: List.of(eligible),
+                names: Map.of(names),
+                rng: Random(4),
+              ).advance()
+              as FairDraw;
+      expect(() => t.eligible.add('zzz'), throwsUnsupportedError);
+      expect(() => t.names['zzz'] = 'Z', throwsUnsupportedError);
+    });
+
     test('the drawn person carries an id, so a surface can link to them', () {
       final t = FairDraw.fresh(
         eligible: eligible,
@@ -192,12 +232,79 @@ void main() {
     });
   });
 
+  group('EveryoneOnce — everyone once, the adult picks', () {
+    const ids = ['a', 'b', 'c'];
+    const names = {'a': 'Amara', 'b': 'Bo', 'c': 'Chen'};
+
+    test('nobody is automatically up — that IS the rule', () {
+      const t = EveryoneOnce(ids: ids, names: names);
+      expect(t.current, isNull);
+      expect(
+        t.choices.map((h) => h.subjectId),
+        ids,
+        reason:
+            'a non-empty choices list is how a surface knows to show a picker',
+      );
+    });
+
+    test('the count is what the room needs, not a name', () {
+      const t = EveryoneOnce(ids: ids, names: names, done: {'a'});
+      expect(t.remaining, 2);
+      expect(t.line, '2 still to go');
+      expect(t.hasGone('a'), isTrue);
+      expect(t.hasGone('b'), isFalse);
+    });
+
+    test('choosing marks that child and removes them from the choices', () {
+      const t = EveryoneOnce(ids: ids, names: names);
+      final after = t.advance(chosen: 'b') as EveryoneOnce;
+      expect(after.hasGone('b'), isTrue);
+      expect(after.choices.map((h) => h.subjectId), ['a', 'c']);
+      expect(t.remaining, 3, reason: 'pure — the original is untouched');
+      expect(
+        () => after.done.add('c'),
+        throwsUnsupportedError,
+        reason: 'a derived state owns collections nobody else can mutate',
+      );
+    });
+
+    test('advancing with no choice changes nothing', () {
+      // The adult has not picked yet; guessing for them would be wrong.
+      const t = EveryoneOnce(ids: ids, names: names);
+      expect((t.advance() as EveryoneOnce).remaining, 3);
+    });
+
+    test('done when everyone has gone, and it stops announcing', () {
+      const t = EveryoneOnce(ids: ids, names: names, done: {'a', 'b', 'c'});
+      expect(t.isDone, isTrue);
+      expect(t.line, isNull);
+      expect(t.choices, isEmpty);
+    });
+
+    test('an empty roster is not "done" — there is nothing to finish', () {
+      const t = EveryoneOnce(ids: [], names: {});
+      expect(
+        t.isDone,
+        isFalse,
+        reason: 'an empty room has not completed a round',
+      );
+    });
+
+    test('done may include ids not on the roster, and is ignored', () {
+      // The real set is a MERGE of this session and what the data layer says
+      // already shot — which can name a child who has since left the group.
+      const t = EveryoneOnce(ids: ids, names: names, done: {'a', 'gone'});
+      expect(t.remaining, 2);
+    });
+  });
+
   group('the role holds across implementations', () {
     test('every source answers the same three questions', () {
       final sources = <TurnSource>[
         const NoTurn(),
         const AlternatingSides(sides: ['A', 'B']),
         const RosterOrder(ids: ['x'], names: {'x': 'Ex'}),
+        const EveryoneOnce(ids: ['x'], names: {'x': 'Ex'}),
         FairDraw.fresh(
           eligible: const ['x'],
           names: const {'x': 'Ex'},
@@ -209,6 +316,7 @@ void main() {
         // which is what lets an activity hold one without knowing which it is.
         expect(() => s.current, returnsNormally);
         expect(() => s.line, returnsNormally);
+        expect(() => s.choices, returnsNormally);
         expect(s.advance(), isA<TurnSource>());
       }
     });

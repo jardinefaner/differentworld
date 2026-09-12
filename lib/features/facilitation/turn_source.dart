@@ -6,22 +6,35 @@ import 'package:flutter/foundation.dart';
 /// Whose turn it is — the facilitation engine's third facet
 /// (docs/FACILITATION.md).
 ///
-/// **One role, several algorithms.** Four things in this app already answer
-/// "who is up", and they are NOT duplicates: two sides flipping on a move
-/// (a grid game), a fair bag where everyone is picked before anyone repeats
-/// (the name picker), each child once in order (photo turns), and
-/// pair-history-aware grouping (the rotation engine). Their correctness
-/// conditions are genuinely different and merging them would destroy what
-/// each is good at.
+/// **One role, several algorithms.** FIVE things in this app already answer
+/// "who is up", and they are NOT duplicates: two sides flipping on a move (a
+/// grid game); a fair bag where everyone is picked before anyone repeats (the
+/// name picker); everyone once with the ADULT choosing the order (photo
+/// turns); pair-history-aware grouping (the rotation engine); and
+/// least-turns-first across a whole term, read from the `room_events` log
+/// (`rooms/fair_turns.dart`). Their correctness conditions are genuinely
+/// different and merging them would destroy what each is good at.
+///
+/// **Who decides differs too**, which is the thing that shaped this interface:
+/// some rules pick for you ([FairDraw] draws, [AlternatingSides] flips), and
+/// some only track who is left while a person chooses ([EveryoneOnce]). Both
+/// are real facilitation, so `advance` takes an optional `chosen` and
+/// `choices` is non-empty exactly when the adult is the one deciding.
 ///
 /// What they share is a ROLE: *something that names who is up, and advances*.
 /// This is that role. An activity asks for a turn and gets the whose-go line,
 /// the label and the advance rule without writing one — which is what makes a
 /// fifth hand-rolled implementation unnecessary rather than merely discouraged.
 ///
-/// Every implementation is **immutable and pure**: `advance()` returns the next
-/// state rather than mutating, so a turn can ride the wire to a cast screen and
-/// survive a rebuild the same way a game's board does.
+/// Every implementation is **pure**: `advance()` returns the next state rather
+/// than mutating, so a turn can ride the wire to a cast screen and survive a
+/// rebuild the same way a game's board does.
+///
+/// **The precise immutability guarantee**, because the earlier version of this
+/// comment over-promised: a state produced by `advance()` holds *unmodifiable*
+/// collections and cannot be corrupted by whoever built the previous one. A
+/// state you construct DIRECTLY holds the collections you passed — a literal
+/// at the call site is fine, a list you keep and mutate is not.
 @immutable
 class TurnHolder {
   const TurnHolder({required this.label, this.subjectId, this.side});
@@ -54,11 +67,17 @@ class TurnHolder {
 abstract class TurnSource {
   const TurnSource();
 
-  /// Who is up, or null when nobody is (the room acts as one, or play is over).
+  /// Who is up, or null when nobody is — the room acts as one, play is over,
+  /// or the rule leaves the choice to a person and they have not made it.
   TurnHolder? get current;
 
-  /// The next state. Pure — never mutates, always returns.
-  TurnSource advance();
+  /// Who COULD go next. Empty when the RULE decides; non-empty exactly when a
+  /// person does, which is how a surface knows whether to render a picker.
+  List<TurnHolder> get choices => const [];
+
+  /// The next state. Pure — never mutates, always returns. `chosen` is the id
+  /// a person picked; rules that decide for themselves ignore it.
+  TurnSource advance({String? chosen});
 
   /// The line to show under the board. Null when there is no turn to announce;
   /// a surface showing "null to play" is worse than showing nothing.
@@ -75,7 +94,7 @@ class NoTurn extends TurnSource {
   TurnHolder? get current => null;
 
   @override
-  TurnSource advance() => this;
+  TurnSource advance({String? chosen}) => this;
 
   @override
   String? get line => null;
@@ -100,9 +119,15 @@ class AlternatingSides extends TurnSource {
       : TurnHolder(label: sides[at % sides.length], side: at % sides.length);
 
   @override
-  TurnSource advance() => sides.isEmpty
+  TurnSource advance({String? chosen}) => sides.isEmpty
       ? this
-      : AlternatingSides(sides: sides, at: (at + 1) % sides.length);
+      // Unmodifiable, not the caller's list: a DERIVED state is the one that
+      // rides the wire and outlives the call, so it must not share a
+      // collection someone else can still mutate.
+      : AlternatingSides(
+          sides: List.unmodifiable(sides),
+          at: (at + 1) % sides.length,
+        );
 }
 
 /// Each person once, in the order given — the photo-turns shape. Ends rather
@@ -132,7 +157,11 @@ class RosterOrder extends TurnSource {
   }
 
   @override
-  TurnSource advance() => RosterOrder(ids: ids, names: names, at: at + 1);
+  TurnSource advance({String? chosen}) => RosterOrder(
+    ids: List.unmodifiable(ids),
+    names: Map.unmodifiable(names),
+    at: at + 1,
+  );
 
   @override
   String? get line {
@@ -151,6 +180,7 @@ class FairDraw extends TurnSource {
     required this.bag,
     required this.eligible,
     required this.names,
+    required this.rng,
     this.drawn,
   });
 
@@ -163,11 +193,18 @@ class FairDraw extends TurnSource {
     bag: FairBag.fresh(eligible, rng),
     eligible: eligible,
     names: names,
+    rng: rng,
   );
 
   final FairBag bag;
   final List<String> eligible;
   final Map<String, String> names;
+
+  /// Carried, not re-created per call. `FairBag.draw` only reaches the rng
+  /// when the bag REFILLS — so a `Random()` made fresh inside `advance` was
+  /// harmless for correctness and made the one interesting case (the draw
+  /// order of a new round) impossible to pin in a test.
+  final Random rng;
 
   /// Who the last [advance] drew. Null before the first draw — the engine
   /// announces nobody rather than guessing.
@@ -179,14 +216,15 @@ class FairDraw extends TurnSource {
       : TurnHolder(label: names[drawn!] ?? drawn!, subjectId: drawn);
 
   @override
-  TurnSource advance() {
+  TurnSource advance({String? chosen}) {
     if (eligible.isEmpty) return this;
-    // `rng` is only reached when the bag refills; FairBag owns the fairness.
-    final r = bag.draw(1, eligible, Random());
+    // FairBag owns the fairness; this only threads the state forward.
+    final r = bag.draw(1, eligible, rng);
     return FairDraw(
       bag: r.bag,
-      eligible: eligible,
-      names: names,
+      eligible: List.unmodifiable(eligible),
+      names: Map.unmodifiable(names),
+      rng: rng,
       drawn: r.drawn.isEmpty ? null : r.drawn.first,
     );
   }
@@ -196,4 +234,65 @@ class FairDraw extends TurnSource {
     final c = current;
     return c == null ? null : "${c.label}'s turn";
   }
+}
+
+/// **Everyone once — and the ADULT picks the order.** The photo-turns rule:
+/// a roster, a set of who has already had a go, and a counselor who chooses
+/// whoever is ready rather than whoever is next alphabetically.
+///
+/// Distinct from [RosterOrder], which imposes an order, and from [FairDraw],
+/// which picks for you. Taking that choice away would be the "rewrite a
+/// working feature to fit a diagram" move docs/FACILITATION.md forbids — the
+/// counselor picking the child who is actually ready IS the feature.
+///
+/// [done] is supplied by the caller each build rather than accumulated here,
+/// because the real set is a MERGE: who has gone in this session, plus who
+/// already shot according to the data layer (so a process-kill mid-session
+/// does not show everyone still to go).
+@immutable
+class EveryoneOnce extends TurnSource {
+  const EveryoneOnce({
+    required this.ids,
+    required this.names,
+    this.done = const {},
+  });
+
+  final List<String> ids;
+  final Map<String, String> names;
+  final Set<String> done;
+
+  List<String> get remainingIds => [
+    for (final id in ids)
+      if (!done.contains(id)) id,
+  ];
+
+  int get remaining => remainingIds.length;
+
+  bool get isDone => ids.isNotEmpty && remainingIds.isEmpty;
+
+  /// Whether [id] has already had their go.
+  bool hasGone(String id) => done.contains(id);
+
+  /// Nobody is automatically up — that is the whole point of this rule.
+  @override
+  TurnHolder? get current => null;
+
+  @override
+  List<TurnHolder> get choices => [
+    for (final id in remainingIds)
+      TurnHolder(label: names[id] ?? id, subjectId: id),
+  ];
+
+  @override
+  TurnSource advance({String? chosen}) => chosen == null
+      ? this
+      : EveryoneOnce(
+          ids: List.unmodifiable(ids),
+          names: Map.unmodifiable(names),
+          done: Set.unmodifiable({...done, chosen}),
+        );
+
+  /// What the room needs to know here is not a name but a COUNT.
+  @override
+  String? get line => isDone ? null : '$remaining still to go';
 }

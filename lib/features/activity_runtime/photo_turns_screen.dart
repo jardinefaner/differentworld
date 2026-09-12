@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/facilitation/turn_source.dart';
 import 'package:differentworld/features/kid_mode/screen_pinning.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
@@ -274,7 +275,17 @@ class _PhotoTurnsScreenState extends ConsumerState<PhotoTurnsScreen> {
       );
     }
 
-    final remaining = roster.where((c) => !done.contains(c.id)).length;
+    // Who is left, through the facilitation engine (docs/FACILITATION.md)
+    // rather than an ad-hoc set comprehension. EveryoneOnce is the rule this
+    // screen actually runs — everyone gets a go, and the ADULT picks the order
+    // (whoever is ready, not whoever is next alphabetically), which is why it
+    // is not RosterOrder.
+    final turns = EveryoneOnce(
+      ids: [for (final c in roster) c.id],
+      names: {for (final c in roster) c.id: c.firstName},
+      done: done,
+    );
+    final remaining = turns.remaining;
     final anyDone = done.isNotEmpty;
 
     return ListView(
@@ -290,8 +301,12 @@ class _PhotoTurnsScreenState extends ConsumerState<PhotoTurnsScreen> {
         for (final child in roster)
           _RosterRow(
             child: child,
-            done: done.contains(child.id),
-            onTap: () => unawaited(_startTurn(child)),
+            done: turns.hasGone(child.id),
+            // Inert while a turn is launching. `_startTurn` already refuses a
+            // second tap, but refusing it SILENTLY is the thing the rule
+            // forbids: a row that looks tappable and does nothing is worse
+            // than one that plainly cannot be tapped yet.
+            onTap: _launching ? null : () => unawaited(_startTurn(child)),
           ),
         const SizedBox(height: 16),
         // Review — available the moment anyone has shot, so staff can pick
@@ -328,7 +343,10 @@ class _RosterRow extends StatelessWidget {
 
   final Subject child;
   final bool done;
-  final VoidCallback onTap;
+
+  /// Null while another turn is launching — the row then renders inert rather
+  /// than accepting a tap it would silently drop.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -537,6 +555,10 @@ class _ReviewPhotoState extends ConsumerState<_ReviewPhoto> {
         children: [
           Positioned.fill(
             child: GestureDetector(
+              // Opaque like the favorite button beside it: with the default
+              // deferToChild a tap can miss while the image is still loading
+              // and the tile is effectively transparent.
+              behavior: HitTestBehavior.opaque,
               onTap: _openViewer,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
