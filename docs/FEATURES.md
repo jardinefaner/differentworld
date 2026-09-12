@@ -505,6 +505,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Facilitation
+**Path**: `lib/features/facilitation/`
+**Purpose**: The coordination layer the ADULT runs a room with — the six things the screen holds so a counselor doesn't have to: what we're doing · what step we're on · who's involved and whose turn · what's next · what the adult can change · what to remember ([FACILITATION.md](FACILITATION.md), [VISION.md](VISION.md) 2026-09-12).
+**Personas served**: Indirectly all staff — this is the layer the activity, game and session surfaces are built ON, not a screen anyone opens. Jordan and Pat benefit most: it is the part of facilitation that currently lives in an experienced counselor's head.
+**Discovery surfaces**:
+- Routes: **none — this is a library layer, not a destination.** It has no screen by design; a route here would mean the engine had become a place instead of a seam.
+- Omnibox: none
+- Slash: none
+- Drawer: none
+- Settings: none
+**Capabilities**: None. Pure value types with no I/O, no provider and no persistence — they are read and composed by whatever surface is running the room.
+**Data**: None of its own. `Steps` reads a game's wire-state; `FairDraw` wraps the picker's `FairBag`, which persists in SharedPreferences under the picker's own key. Adding a table here would violate the layer's rule (it composes; it never stores).
+**Surfaces**:
+- *Steps* — `lib/features/facilitation/steps.dart`. One value type for "where are we", replacing three encodings of the same idea (a grid game's wire `i`/`n`, a session script's beats, an activity's slide index). Carries `counter` / `spoken` / `fraction` so a control bar, a cast screen and the day strip stop each knowing three formats.
+- *TurnSource* — `lib/features/facilitation/turn_source.dart`. One ROLE with four algorithms: `NoTurn` (the honest default — most activities are not turn-based), `AlternatingSides` (the grid games' two sides), `RosterOrder` (each child once, then done), `FairDraw` (everyone before anyone repeats — **wraps** the picker's existing `FairBag` rather than reimplementing it). All immutable and pure, so a turn survives the wire to a cast screen.
+**Depends on**: Picker (`FairBag`, wrapped by `FairDraw`). Nothing else — the layer deliberately imports no feature it serves, or it would be owned by one of its own consumers.
+**Consumed by**: Nothing yet — the seams are built, and the existing surfaces have deliberately NOT been rewired (`GridGame` keeps its `alternates` API; the picker keeps its screen). The migration order is in [FACILITATION.md](FACILITATION.md); photo-turns onto `RosterOrder` is the intended first adopter.
+**Last verified**: 2026-09-12
+
+---
+
 ## Groups
 **Path**: `lib/features/groups/`
 **Purpose**: Classrooms / cohorts. Roster, age band, capabilities, staffing.
