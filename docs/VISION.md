@@ -31,6 +31,13 @@ that. It's built on one belief:
 is a whole person with a way of working that the tools should fit — not
 fight.**
 
+**Said from the adult's side (2026-09-12, and the version that sells):**
+*Different World reduces the invisible coordination work required to run a great
+classroom. The screen is not primarily for the child — it is the shared state of
+the room.* The north star above is the same product described from the child's
+side; see the 2026-09-12 entry under "New dreams land here" for the thirteen
+headaches it names and why that framing is the one a director can act on.
+
 So the app optimizes for three things the ledgers don't:
 
 1. **Making, not consuming.** Screens that give kids a *reason to
@@ -431,6 +438,63 @@ not "games" — and (2) give existing content (the schedule, the photo feed) a
 
 A dated log so nothing spoken is lost. Promote each into a theme above
 once it has a home.
+
+- **2026-09-12** — **The thesis, sharpened: Different World reduces the invisible
+  coordination work required to run a great classroom.** In the user's words:
+  *"The headaches you're solving are less 'kids need another educational app' and
+  more teachers and after-school staff need a better operating system for running
+  real-world learning… The screen is not primarily for the child. It is the shared
+  state of the room."*
+
+  **What the screen knows:** what we're doing → what step we're on → who's involved
+  → what happens next → what the adult can change → what should be remembered
+  afterward. That sentence is the product definition. It is why Pick Someone, Talk
+  Time, room capacity, readiness, activity states, shared nouns/sets, Do/Notice, the
+  day strip, the teacher controller and profiles are not miscellaneous classroom
+  widgets — they are **pieces of one facilitation engine**.
+
+  **The thirteen headaches named**, and they are the pitch: activities are
+  fragmented across worksheets / slides / timers / YouTube / notes; too much prep
+  lives in one experienced adult's head; new staff know *what* the activity is but
+  not how to run it moment by moment; transitions are messy ("who goes first?",
+  "how long?", "what if someone finishes early?") and eat enormous time; existing
+  edtech means one screen per child, against the push to reduce screen exposure at
+  5–7; worksheets are static and cannot react to the room, switch difficulty,
+  randomize, pick a student or track rounds; activities never accumulate into a
+  reusable library (a great activity is reinvented six months later);
+  differentiation is manual labour across readers, pre-readers and movers; behaviour
+  management and instruction are separated, so the adult constantly context-switches;
+  documentation happens after the fact, as another task; parents see outputs, not
+  process; programs depend on individual staff quality, and tacit knowledge leaves
+  when a strong facilitator does; and most classroom software optimizes engagement
+  **with software** rather than with people, objects, movement and environment.
+
+  **The three that matter most**, in the user's framing:
+  1. *"I know what I want the kids to do, but running it is exhausting."* → turn an
+     idea into a repeatable sequence.
+  2. *"I want technology to help without putting every child on a device."* → one
+     adult-controlled interface orchestrates a whole physical room.
+  3. *"We do hundreds of good things with kids, but none of that knowledge
+     compounds."* → every activity, noun, variation, reflection and successful
+     facilitation pattern becomes reusable infrastructure.
+
+  **The moat, stated plainly:** *"You're not building a collection of activities.
+  You're gradually encoding how adults create experiences for children."* #3 is the
+  long-term defensibility — a content library is copyable, an accumulating record of
+  how facilitation actually works in THIS program is not.
+
+  **Why this reframing earns its place at the top of the doc:** the north star above
+  is written from the CHILD's side (a story worth telling, making not consuming).
+  True, and it does not sell. This says the same product from the ADULT's side, in
+  the language a director actually budgets in — staff capacity, onboarding time,
+  transition minutes, knowledge retention. Same app; the argument a supervisor can
+  say yes to.
+
+  - **Status:** thesis (shipped pieces exist across the facilitation engine —
+    Spotlight/picker, Talk Time, the day strip, nouns, readiness + capacity caps,
+    the cast controller, archetype profiles — but they have never been *named* as
+    one engine, in the product or in the pitch)
+  - **Lives in:** this entry; the supervisor proposal deck built 2026-09-12
 
 - **2026-06-20** — **Every named thing, anywhere, is a live entity you can tap
   for its details — and free-text names auto-detect ("autotagging").** In the
