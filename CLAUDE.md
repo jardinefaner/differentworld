@@ -463,6 +463,33 @@ When you ASK "is X served":
   Drawer / omnibox / settings entries are derived facts the agent
   reconciles against.
 
+### A documented type is not a working feature
+
+Twice in one session (2026-09-12) a claim came from what a type PROMISED
+rather than what the code DID:
+
+- `CaptureSpec` was declared for "a game produces durable evidence",
+  never overridden by any game, and **read by nothing**. Three docs said
+  the capability existed — `CONDITIONS.md` called it shipped,
+  `FEATURE_CHECKLISTS.md` carried a ✅ against it. No round ever banked
+  anything. Deleted; `GameDefinition.keepsake` replaced it.
+- A `@immutable` doc comment promised a turn could "ride the wire and
+  survive a rebuild" while `advance()` aliased the caller's collections
+  into the derived state.
+
+This codebase documents itself unusually well, and that is exactly the
+trap: the prose is good enough to be believed without checking. Before
+repeating that a capability exists — in a doc, a commit body, or to the
+user — **grep for a CONSUMER, not just a declaration**:
+
+```sh
+grep -rn "\.thatHook\b" lib/ | grep -v "the file that declares it"
+```
+
+Empty means the hook is decorative. The same check applies to a
+`@immutable` claim (does `copyWith`/`advance` actually copy?) and to any
+"✅ shipped" line in a checklist.
+
 ### Games — a board with no SIDES is not a game
 
 The deck's founding defect, found 2026-09-07 by the user: *"all games are
