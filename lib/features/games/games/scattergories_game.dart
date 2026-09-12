@@ -116,6 +116,22 @@ class ScattergoriesGame extends GridGame {
 
   /// Every category answered. The count was already on the board; nothing
   /// ever declared the round finished.
+  /// The room's OWN answers — six words they produced under a constraint.
+  /// This is the rare game whose round leaves real language behind, which is
+  /// exactly the bar for keeping something: not that it finished, but that
+  /// they made it.
+  @override
+  String? keepsake(GridBoard b) {
+    final answers = [
+      for (final c in b.cells)
+        if (c.tint == CellTint.right)
+          if ((c.label ?? '').split('\n') case final parts)
+            if (parts.length > 1) parts.last.trim(),
+    ];
+    if (answers.length < 2) return null;
+    return '${letterOf(b)}: ${answers.join(' · ')}';
+  }
+
   @override
   String? outcomeFor(GridBoard b) =>
       b.cells.every((c) => c.tint == CellTint.right)

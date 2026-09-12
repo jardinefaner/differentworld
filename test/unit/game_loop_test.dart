@@ -682,6 +682,47 @@ void main() {
     });
   });
 
+  group('what a round leaves behind', () {
+    // `GameDefinition.capture` was declared for this and is DEAD — never
+    // overridden, and read by nothing, so overriding it would have done
+    // nothing. `keepsake` replaces it, and the important half of the design is
+    // that it is null for MOST games: a class memory full of "Team 1 wins,
+    // 3–2" buries the few things actually worth keeping.
+    test('almost every game keeps nothing, on purpose', () {
+      final keepers = <String>[];
+      for (final g in gridGames()) {
+        final b = GridBoard(cols: g.cols, rows: g.rows, cells: g.deal(bank()));
+        if (g.keepsake(b) != null) keepers.add(g.id);
+      }
+      expect(
+        keepers.length,
+        lessThan(4),
+        reason: 'a keeper on every game is noise, not memory: $keepers',
+      );
+    });
+
+    test('scattergories keeps the words the room actually produced', () {
+      const g = ScattergoriesGame();
+      final start = g.decode(g.initialState(bank()));
+      // Nothing answered yet — nothing to keep.
+      expect(g.keepsake(start), isNull);
+
+      final letter = ScattergoriesGame.letterOf(start);
+      var wire = start.toWire();
+      for (final w in ['pple', 'nt', 'rm']) {
+        wire = g.reduce(wire, GameIntent.capture, {'text': '$letter$w'});
+      }
+      final kept = g.keepsake(g.decode(wire));
+      expect(kept, isNotNull);
+      expect(kept, contains(letter));
+      expect(
+        kept,
+        contains('·'),
+        reason: 'it keeps the answers, not just that the round happened',
+      );
+    });
+  });
+
   group('the tally survives the wire', () {
     test('counters round-trip so a cast screen sees the same score', () {
       const game = WhackAMoleGame();
