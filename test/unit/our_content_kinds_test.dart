@@ -29,6 +29,8 @@ void main() {
         ContentKind.quote,
         ContentKind.fillBlank,
         ContentKind.writePrompt,
+        ContentKind.scavengerThing,
+        ContentKind.fourCorners,
       };
       final withDoors = authorableKinds.map((s) => s.kind).toSet();
       expect(
@@ -90,6 +92,8 @@ void main() {
       ContentKind.quote: {'text', 'author'},
       ContentKind.fillBlank: {'template', 'blanks'},
       ContentKind.writePrompt: {'text'},
+      ContentKind.scavengerThing: {'text'},
+      ContentKind.fourCorners: {'question', 'a', 'b', 'c', 'd'},
     };
 
     test('each spec writes exactly the payload keys its seeds use', () {

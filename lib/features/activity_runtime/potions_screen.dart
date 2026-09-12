@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/potions.dart';
+import 'package:differentworld/features/class_memory/class_memory.dart';
+import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -181,7 +183,21 @@ class _PotionsScreenState extends State<PotionsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            // The potion the room invented is a "word" — a thing they made up
+            // and will keep saying. Brewing another wipes it, so the keeper
+            // sits BEFORE that button, not after it.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: KeepThisButton(
+                text: recipe.effect,
+                sort: ClassMemorySort.word,
+                context_: [
+                  for (final ing in recipe.ingredients) ing.name,
+                ].join(' · '),
+                label: 'Keep this potion',
+              ),
+            ),
+            const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: _brewAnother,
               style: FilledButton.styleFrom(

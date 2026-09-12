@@ -28,12 +28,51 @@ class FourCornersGame extends GridGame {
   int get rows => 2;
 
   @override
-  List<BoardCell> deal(ContentSource content) => const [
-    BoardCell(label: 'Front left', state: CellState.shown),
-    BoardCell(label: 'Front right', state: CellState.shown),
-    BoardCell(label: 'Back left', state: CellState.shown),
-    BoardCell(label: 'Back right', state: CellState.shown),
-  ];
+  /// The four corners are the four ANSWERS, when the room has written a
+  /// question. Without one the board showed four positions and asked nothing,
+  /// so the activity depended entirely on the adult inventing a question on
+  /// the spot — the corners were furniture.
+  ///
+  /// The question rides in cell 0's `face`, which `present` strips: a face is
+  /// storage here, and the room reads the question from the title.
+  @override
+  List<BoardCell> deal(ContentSource content) {
+    const positions = ['Front left', 'Front right', 'Back left', 'Back right'];
+    final picked = content.take(ContentKind.fourCorners, 1);
+    if (picked.isEmpty) {
+      return [
+        for (final p in positions) BoardCell(label: p, state: CellState.shown),
+      ];
+    }
+    final p = picked.first.payload;
+    String opt(String key, int i) {
+      final v = p[key];
+      return (v is String && v.trim().isNotEmpty) ? v.trim() : positions[i];
+    }
+
+    final q = (p['question'] as String?)?.trim() ?? '';
+    return [
+      for (final (i, key) in ['a', 'b', 'c', 'd'].indexed)
+        BoardCell(
+          label: opt(key, i),
+          face: i == 0 && q.isNotEmpty ? q : null,
+          state: CellState.shown,
+        ),
+    ];
+  }
+
+  /// The question is storage, not a face to draw — the renderer would paint it
+  /// over the first corner and hide that corner's label.
+  @override
+  BoardCell present(BoardCell c) =>
+      BoardCell(label: c.label, state: c.state, tint: c.tint);
+
+  /// The question, above the corners, where the room reads it.
+  @override
+  String? titleFor(GridBoard b) {
+    final q = b.cells.isEmpty ? null : b.cells.first.face;
+    return (q == null || q.isEmpty) ? null : q;
+  }
 
   /// A tap marks the corner the room chose. One at a time — tapping another
   /// moves the mark rather than adding a second, because the room is standing

@@ -44,7 +44,15 @@ class ScavengerBingoGame extends GridGame {
 
   @override
   List<BoardCell> deal(ContentSource content) {
-    final things = List.of(_things)..shuffle(Random());
+    // The room's own list first. What is actually outside THIS door is not
+    // something a bundled list can know — nine stock prompts are the seed, not
+    // the plan (docs/CONDITIONS.md).
+    final ours = [
+      for (final c in content.take(ContentKind.scavengerThing, 9))
+        if (c.payload['text'] case final String t)
+          if (t.trim().isNotEmpty) t.trim(),
+    ];
+    final things = [...ours, ...(List.of(_things)..shuffle(Random()))];
     return [
       for (final t in things.take(9))
         BoardCell(label: t, state: CellState.shown),
