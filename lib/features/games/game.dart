@@ -288,6 +288,20 @@ abstract class GameDefinition<S> {
   /// If non-null, `capture` / `submit` produce durable evidence and the
   /// runner routes the write here (crowd-grow + a growth-book entry).
   CaptureSpec? get capture => null;
+
+  /// **What this game leaves behind, if anything** — the engine's sixth facet
+  /// (docs/FACILITATION.md), reached from the end-of-round beat.
+  ///
+  /// Null by default and null for MOST games, deliberately. A brain break is
+  /// meant to be ephemeral, and a class memory full of "Team 1 wins, 3–2" is
+  /// noise that buries the handful of things actually worth keeping. Override
+  /// only when the room PRODUCED something — the words they found, the answers
+  /// they gave — not merely when it finished.
+  ///
+  /// This supersedes [CaptureSpec] in practice: that hook is declared, has
+  /// never been overridden by any game, and — the part that matters — is read
+  /// by NOTHING, so overriding it would have had no effect.
+  String? keepsake(S state) => null;
 }
 
 /// The shared advance/back/reveal/reset reducer for the picture-DECK games

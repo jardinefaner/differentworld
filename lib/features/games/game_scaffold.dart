@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
+import 'package:differentworld/features/class_memory/class_memory.dart';
+import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/game.dart';
@@ -73,6 +75,19 @@ class GameScaffold<S> extends StatelessWidget {
           final state = def.decode(wire);
           final active = def.activeIntents(state);
           final done = wire['d'] == true;
+          // What this round leaves behind, if the game says it leaves
+          // anything. Most say nothing, deliberately — a brain break is meant
+          // to be ephemeral, and a class memory full of "Team 1 wins" buries
+          // the few things worth keeping.
+          final keepText = done ? def.keepsake(def.decode(wire)) : null;
+          final keeper = (keepText == null || keepText.trim().isEmpty)
+              ? null
+              : KeepThisButton(
+                  text: keepText,
+                  sort: ClassMemorySort.discovery,
+                  context_: def.title,
+                  label: 'Keep what we made',
+                );
           // Keyboard control for a laptop/projector host
           // (docs/PLATFORM_RUBRIC.md, P3): ← back · Space reveal · → / Enter
           // next · Space/+/= tally. Each binds only when its intent is live.
@@ -132,6 +147,7 @@ class GameScaffold<S> extends StatelessWidget {
                             Expanded(child: stage),
                             _GameControlBar(
                               gameId: def.id,
+                              keepsake: keeper,
                               wire: wire,
                               done: done,
                               active: active,
@@ -155,6 +171,7 @@ class GameScaffold<S> extends StatelessWidget {
                               Expanded(child: stage),
                               _GameControlPanel(
                                 gameId: def.id,
+                                keepsake: keeper,
                                 wire: wire,
                                 done: done,
                                 active: active,
@@ -188,6 +205,7 @@ int _intOf(Map<String, dynamic> m, String k, int fallback) =>
 class _GameControlBar extends StatelessWidget {
   const _GameControlBar({
     required this.gameId,
+    required this.keepsake,
     required this.wire,
     required this.done,
     required this.active,
@@ -198,6 +216,11 @@ class _GameControlBar extends StatelessWidget {
 
   /// The game's id — the key the "add ours" door looks up.
   final String gameId;
+
+  /// The end-of-round keeper, when this game produced something worth
+  /// remembering. Null for most games, which is the point — see
+  /// `GameDefinition.keepsake`.
+  final Widget? keepsake;
 
   final Map<String, dynamic> wire;
   final bool done;
@@ -273,6 +296,7 @@ class _GameControlBar extends StatelessWidget {
                       route: gameId,
                       compact: true,
                     ),
+                    ?keepsake,
                   ] else ...[
                     FilledButton.tonalIcon(
                       onPressed: active.contains(GameIntent.reveal)
@@ -307,6 +331,7 @@ class _GameControlBar extends StatelessWidget {
 class _GameControlPanel extends StatelessWidget {
   const _GameControlPanel({
     required this.gameId,
+    required this.keepsake,
     required this.wire,
     required this.done,
     required this.active,
@@ -317,6 +342,11 @@ class _GameControlPanel extends StatelessWidget {
 
   /// The game's id — the key the "add ours" door looks up.
   final String gameId;
+
+  /// The end-of-round keeper, when this game produced something worth
+  /// remembering. Null for most games, which is the point — see
+  /// `GameDefinition.keepsake`.
+  final Widget? keepsake;
 
   final Map<String, dynamic> wire;
   final bool done;
@@ -387,6 +417,7 @@ class _GameControlPanel extends StatelessWidget {
                 ),
               ),
               OursStrip(key: const ValueKey('ours-strip-panel'), route: gameId),
+              ?keepsake,
             ] else ...[
               // Pick a name, start a timer, flash "eyes up" — WITHOUT leaving
               // the activity. This is the whole point of facet 5: the
