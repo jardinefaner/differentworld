@@ -71,22 +71,6 @@ typedef GameReducer =
       Map<String, dynamic> args,
     );
 
-/// Where a [GameIntent.capture] / [GameIntent.submit] writes its durable
-/// evidence (docs/GAMES.md). The intent stays pure; the runner performs
-/// the write as a side effect, presenter-only in a live session.
-enum CaptureTarget { crowdGrow, entry, both }
-
-/// Declares that a game's `capture` produces durable evidence.
-class CaptureSpec {
-  const CaptureSpec({required this.target, required this.contentKind});
-
-  /// crowd-grow into `content_items`, a growth-book `entries` row, or both.
-  final CaptureTarget target;
-
-  /// The bank kind to crowd-grow into (e.g. `ContentKind.rhymeWord`).
-  final String contentKind;
-}
-
 /// Per-game character (docs/GAMES.md decision: a distinct vibe + hero
 /// shape per game). The [GameDefinition.buildStage] owns the hero shape +
 /// the per-game wrap beat; this carries the chrome tint the shared
@@ -287,8 +271,6 @@ abstract class GameDefinition<S> {
 
   /// If non-null, `capture` / `submit` produce durable evidence and the
   /// runner routes the write here (crowd-grow + a growth-book entry).
-  CaptureSpec? get capture => null;
-
   /// **What this game leaves behind, if anything** — the engine's sixth facet
   /// (docs/FACILITATION.md), reached from the end-of-round beat.
   ///
@@ -298,9 +280,10 @@ abstract class GameDefinition<S> {
   /// only when the room PRODUCED something — the words they found, the answers
   /// they gave — not merely when it finished.
   ///
-  /// This supersedes [CaptureSpec] in practice: that hook is declared, has
-  /// never been overridden by any game, and — the part that matters — is read
-  /// by NOTHING, so overriding it would have had no effect.
+  /// This replaced `CaptureSpec`, which was declared for the same job, never
+  /// overridden by any game, and — the part that mattered — read by nothing,
+  /// so an override would have had no effect. It was deleted rather than left
+  /// to look load-bearing.
   String? keepsake(S state) => null;
 }
 
