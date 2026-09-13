@@ -170,7 +170,7 @@ paper), and that is fine.
 
 ---
 
-## The rules (with teeth, eventually)
+## The rules — and rule 2 has teeth
 
 1. **A facilitation surface reads `RoomState`. It does not re-derive a facet.**
    If you are about to compute "who is here" or "what block is live" inside a
@@ -183,10 +183,16 @@ paper), and that is fine.
 4. **A facet with no owner is a gap, not a licence to invent.** Name it here
    first.
 
-A checker (`scripts/check_facilitation.sh`) should eventually assert #2 by
-failing on a new `turn`/`whoseTurn` field outside `TurnSource` implementations —
-the same shape as the theme and spacing guards. Not written yet; noted so it is
-a decision rather than an omission.
+**Rule 2 has teeth.** `scripts/check_facilitation.sh` fails on a NEW
+turn-shaped declaration in the diff, outside the five sanctioned owners — the
+same shape as the theme and spacing guards. It matches a VOCABULARY rather
+than one word (`whoseTurn`, `turnIndex`, `currentPlayer`, `nextUp`, …) because
+the original survey found only four of the five turn implementations: it
+grepped for turn-shaped names and `rooms/fair_turns.dart` calls it `nextUp`.
+It is diff-scoped, so it stops a sixth rather than demanding a rewrite of the
+five that are correct, and it has been verified to actually fail on a
+synthetic field — a checker that cannot fail is worse than none, because it is
+believed.
 
 ---
 
