@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -18,6 +19,14 @@ class BingoGame extends GridGame {
 
   @override
   String get title => 'Bingo';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Bingo'),
+    RoomBeat('Listen for what is called', detail: 'Find it and tap it'),
+    RoomBeat('Four in a line wins', detail: 'Across, down, or slanted'),
+    RoomBeat('Shout BINGO when you get it'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);

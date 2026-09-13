@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -32,6 +33,17 @@ class ConnectFourGame extends GridGame {
 
   @override
   bool get alternates => true;
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Connect Four'),
+    RoomBeat('Get four in a row to win', detail: 'Across, up, or slanted'),
+    // The rule a room of four-year-olds cannot guess from looking, and the
+    // one that makes the first minute confusing if nobody says it: you pick a
+    // COLUMN, not a square.
+    RoomBeat('Pick a column', detail: 'Your circle drops to the bottom'),
+    RoomBeat('Team 1 starts', detail: 'The red circles'),
+  ];
 
   @override
   List<BoardCell> deal(ContentSource content) =>
