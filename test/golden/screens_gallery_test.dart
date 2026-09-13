@@ -201,6 +201,24 @@ late final Viewer _viewer;
 /// Their plates are committed; we skip only the (local-only) golden test so
 /// the suite stays green. Re-render one of these manually if its screen
 /// changes.
+/// Plates whose CONTENT is deliberately different every run, so a pixel
+/// golden can never pass. They still render — the overflow watch and any
+/// build crash still apply — only the comparison is skipped, and each one
+/// carries its reason the way the grid-game ledger carries `noEnding`.
+///
+/// They are here rather than silently green because until 2026-09-13 the
+/// gallery's drain swallowed golden mismatches, so these two "passed" along
+/// with every genuinely-drifted plate. Naming them is the difference between
+/// a known exception and a hole.
+const Map<String, String> _unstableByDesign = {
+  // _deckFrom shuffles the Do It deck with no seed, so a different card is on
+  // screen each run. Seeding it would change what a room actually gets.
+  'screens/do_it': 'shuffles its deck every run',
+  // The forge seeds from DateTime.now().microsecondsSinceEpoch — generating a
+  // different activity IS the feature.
+  'screens/activity_forge': 'generates from a clock seed',
+};
+
 const Set<String> _leakyTimer = {
   'screens/activity_arc',
   'screens/capture',
@@ -725,8 +743,9 @@ Future<void> _pumpAndShoot(
   WidgetTester tester,
   String goldenToken,
   Widget appChild,
-  Size size,
-) async {
+  Size size, {
+  bool compare = true,
+}) async {
   beginOverflowWatch();
   final applied = plateSize(size);
   await tester.binding.setSurfaceSize(applied);
@@ -764,7 +783,7 @@ Future<void> _pumpAndShoot(
   // plate reflows everything. The assertion that matters already happened
   // during pump: an overflow would have thrown. Comparing here would fail
   // every plate for the wrong reason and bury the real signal.
-  if (!isStressRun) {
+  if (!isStressRun && compare) {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('../../gallery/$goldenToken.png'),
@@ -813,6 +832,7 @@ void _screenPlate(
   double height = 900,
 }) {
   final skip = !runGoldens || _leakyTimer.contains(name);
+  final compare = !_unstableByDesign.containsKey(name);
   for (final mode in const ['light', 'dark']) {
     testWidgets('$name - $mode', (tester) async {
       await _pumpAndShoot(
@@ -820,6 +840,7 @@ void _screenPlate(
         '${name}__$mode',
         _app(mode, _shellRouter(screen)),
         Size(width, height),
+        compare: compare,
       );
     }, skip: skip);
   }

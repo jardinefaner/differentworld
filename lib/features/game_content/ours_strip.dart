@@ -4,7 +4,9 @@ import 'package:differentworld/features/game_content/content_kinds.dart';
 import 'package:differentworld/features/game_content/our_content.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/speak/speak_immersive.dart';
+import 'package:differentworld/shared/widgets/shell_metrics.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,21 +149,32 @@ class OursStrip extends ConsumerWidget {
 ///
 /// Renders nothing extra when the route has no authorable kind, so wrapping a
 /// screen is always safe.
-class OursFooter extends StatelessWidget {
+class OursFooter extends ConsumerWidget {
   const OursFooter({required this.route, required this.child, super.key});
 
   final String route;
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The live strip floats OVER route content just above the omnibox bar, so
+    // a FIXED bottom control has to clear it or the strip covers the control —
+    // ShellMetrics.liveStripHeight documents exactly this, from the
+    // message-composer bug. This footer is a fixed bottom control and did not,
+    // so on every screen using it the Room tools button was a pale sliver
+    // half-hidden behind "Live · Outdoor free play". It went unseen because
+    // the golden gate that would have caught it was swallowing its own
+    // failures (see drainExpectedExceptions).
+    final liveInset = ref.watch(liveBlockProvider) == null
+        ? 0.0
+        : ShellMetrics.liveStripHeight;
     return Column(
       children: [
         Expanded(child: child),
         SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.fromLTRB(12, 0, 12, liveInset),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 // The labelled control needs roughly 300dp of row beside the
