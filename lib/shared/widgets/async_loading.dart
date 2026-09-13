@@ -16,7 +16,17 @@ import 'package:flutter/material.dart';
 enum LoadingVariant { list, cards, spinner }
 
 class LoadingSlot extends StatelessWidget {
-  const LoadingSlot({this.variant = LoadingVariant.list, super.key});
+  const LoadingSlot({
+    this.variant = LoadingVariant.list,
+    this.inline = false,
+    super.key,
+  });
+
+  /// Set when this sits INSIDE a scroll view (a child of a `ListView` or a
+  /// `Column`) rather than being the screen's body. The default is a body
+  /// that owns its own scrolling, and using that default inside another list
+  /// throws — see [SkeletonList.inline].
+  final bool inline;
 
   /// Backwards-compatible shorthand. The old usage `const LoadingSlot()`
   /// continues to compile.
@@ -25,8 +35,8 @@ class LoadingSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (variant) {
-      LoadingVariant.list => const SkeletonList(),
-      LoadingVariant.cards => const SkeletonCards(),
+      LoadingVariant.list => SkeletonList(inline: inline),
+      LoadingVariant.cards => SkeletonCards(inline: inline),
       LoadingVariant.spinner => const Center(
         child: CircularProgressIndicator(),
       ),

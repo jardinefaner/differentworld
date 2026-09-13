@@ -291,11 +291,16 @@ class _VerbsBoard extends StatelessWidget {
                       children: [
                         Text(v.emoji, style: const TextStyle(fontSize: 22)),
                         const SizedBox(width: 8),
-                        Text(
-                          v.label,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: gold,
-                            fontWeight: FontWeight.w400,
+                        // Flexible so a long verb wraps instead of running
+                        // 1.4px past the tile at 1.5 text — the verb is the
+                        // content here, so it is the tile that gives way.
+                        Flexible(
+                          child: Text(
+                            v.label,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: gold,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                         ),
                       ],

@@ -241,8 +241,19 @@ Size? _readStressViewport() {
 ///
 /// Text-scale stress still applies to a fixed canvas, and should: a component
 /// that breaks at 200% text is genuinely broken, at any size.
-Size plateSize(Size authored, {bool fixedCanvas = false}) =>
-    fixedCanvas ? authored : (stressViewport ?? authored);
+Size plateSize(Size authored, {bool fixedCanvas = false}) {
+  if (!fixedCanvas) return stressViewport ?? authored;
+  // A reference card's HEIGHT was framed for 1.0 text, so at 1.3 the same card
+  // is 1.3 times as tall — otherwise every stacked plate reports an overflow
+  // that says nothing about the component, only that somebody once picked 330
+  // and the text now needs 343.
+  //
+  // The WIDTH deliberately does not grow. Text that will not fit its row at
+  // 1.3 is a real defect in the component, and that is exactly the signal this
+  // sweep exists to find — so horizontal overflow still fails.
+  final scale = stressTextScale ?? 1.0;
+  return Size(authored.width, authored.height * scale);
+}
 
 /// Drain the exceptions a plate legitimately produces — a screen's direct
 /// Postgrest read, a missing plugin channel — while REFUSING to swallow a
