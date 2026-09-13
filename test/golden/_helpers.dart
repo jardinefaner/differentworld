@@ -268,7 +268,21 @@ Size plateSize(Size authored, {bool fixedCanvas = false}) {
 /// reports zero overflows, so this gate costs nothing today — and it is what
 /// makes `STRESS_TEXT_SCALE=2.0` able to fail instead of merely log.
 void drainExpectedExceptions(WidgetTester tester) {
-  while (tester.takeException() != null) {
+  // A GOLDEN MISMATCH arrives as one of these pending async errors, so the
+  // bare drain swallowed it and the plate "passed". That silently disarmed
+  // every plate in screens_gallery: a control row added to five activity
+  // screens changed 9.6% of the pixels on a 440x900 plate — against a 2%
+  // tolerance — and the suite still reported all tests passed. The comment
+  // below used to reason only about overflows and a red box in the PNG;
+  // nobody had asked what a pixel-diff failure looks like on its way out.
+  Object? pending;
+  while ((pending = tester.takeException()) != null) {
+    final text = pending.toString();
+    if (text.contains('Pixel test failed') ||
+        text.contains('image sizes do not match') ||
+        text.contains('Golden "')) {
+      throw StateError('Golden mismatch reached the drain:\n$text');
+    }
     // Genuinely expected: a screen's direct Postgrest read, a missing plugin
     // channel. Overflows are NOT handled here — see [recordedOverflows].
   }
