@@ -33,12 +33,18 @@ while [ $# -gt 0 ]; do
       shift ;;
     --sizes) SIZES="$2"; shift 2 ;;
     --scales) SCALES="$2"; shift 2 ;;
+    # Narrowing the grid must not silently narrow the SUITES too. The default
+    # list omits component_gallery_test.dart, so `--sizes phone-landscape`
+    # reported "clean" on a combination that --full had just failed — the
+    # overflow was in a component plate the default list never renders.
+    --suites) SUITES="$2"; shift 2 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
 
 log=$(mktemp -t dw-overflow)
 fails=0
+others=0
 combos=0
 
 IFS=',' read -ra SIZE_LIST <<< "$SIZES"
@@ -51,24 +57,47 @@ for size in "${SIZE_LIST[@]}"; do
     if RUN_GOLDENS=1 STRESS_VIEWPORT="$size" STRESS_TEXT_SCALE="$scale" \
         flutter test $SUITES > "$log" 2>&1; then
       echo "clean"
-    else
+    elif grep -qE "overflowed by [0-9]+ pixels|Layout overflow" "$log"; then
       fails=$((fails + 1))
       echo "OVERFLOW"
-      # Name the plates, not just the count — a gate that says "something
+      # Name the plate, not just the count — a gate that says "something
       # broke" gets muted, and then it protects nothing.
-      grep -oE "^[a-z_/]+ - (light|dark)" "$log" | sort -u | head -20 \
-        | sed 's/^/      /'
+      #
+      # Read the FAILING-TESTS block, nothing else. Two earlier attempts were
+      # both wrong in instructive ways: the original anchored its pattern to
+      # the line start, but `flutter test` prefixes every line with a
+      # timestamp and counter, so it printed nothing on every run since it was
+      # written. The replacement matched plate names ANYWHERE in the log —
+      # which matched the progress lines too, and so listed the first twenty
+      # plates alphabetically whether they failed or not. Naming an innocent
+      # screen is worse than naming none, because it gets the gate muted.
+      sed -n '/^Failing tests:/,$p' "$log" | sed '1d;s/.*\.dart: //' \
+        | sort -u | head -20 | sed 's/^/      /'
       grep -oE "Layout overflow \([0-9]+\)|overflowed by [0-9]+ pixels on the [a-z]+" "$log" \
         | sort | uniq -c | sort -rn | head -6 | sed 's/^/      /'
+    else
+      # A failure with no overflow in it is NOT an overflow, and saying it is
+      # makes the whole sweep unbelievable. The --full run reported 32 of 32
+      # combinations as overflowing when several were only
+      # theme_gallery_test.dart failing an image-SIZE comparison, because it
+      # asserted matchesGoldenFile directly and so never honoured isStressRun.
+      others=$((others + 1))
+      echo "FAILED (not an overflow)"
+      sed -n '/^Failing tests:/,$p' "$log" | sed '1d;s/.*\.dart: //' \
+        | sort -u | head -6 | sed 's/^/      /'
     fi
   done
 done
 
 rm -f "$log"
 echo
-if [ "$fails" -eq 0 ]; then
+if [ "$others" -gt 0 ]; then
+  echo "$others of $combos combinations failed for a reason that is NOT an overflow."
+  echo "  Fix those first — they hide whatever the sweep was meant to find."
+fi
+if [ "$fails" -eq 0 ] && [ "$others" -eq 0 ]; then
   echo "No overflow in $combos size x scale combinations."
   exit 0
 fi
-echo "$fails of $combos combinations overflowed."
+[ "$fails" -gt 0 ] && echo "$fails of $combos combinations overflowed."
 exit 1
