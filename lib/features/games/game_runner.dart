@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
+import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
@@ -71,11 +72,22 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
       ...?widget.initialValues,
     };
     _controller = LocalGameController(
-      initial: widget.seed ?? widget.def.initialStateFor(_engine, _values),
-      reduce: widget.def.reduce,
+      // The run-script's cursor lives in the WIRE, seeded here rather than in
+      // 41 initialState overrides, and every intent goes through
+      // RunScriptWire so the briefing behaves identically on this device and
+      // on a paired screen.
+      initial: RunScriptWire.seed(
+        widget.def,
+        widget.seed ?? widget.def.initialStateFor(_engine, _values),
+      ),
+      reduce: (state, intent, args) =>
+          RunScriptWire.reduce(widget.def, state, intent, args),
       reseed: widget.seed != null
           ? null
-          : () => widget.def.initialStateFor(_engine, _values),
+          : () => RunScriptWire.seed(
+              widget.def,
+              widget.def.initialStateFor(_engine, _values),
+            ),
     );
     _startClockIfNeeded();
   }

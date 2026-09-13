@@ -217,7 +217,30 @@ const Map<String, String> _unstableByDesign = {
   // The forge seeds from DateTime.now().microsecondsSinceEpoch — generating a
   // different activity IS the feature.
   'screens/activity_forge': 'generates from a clock seed',
+  // Same unseeded shuffle as do_it. It was NOT "sitting at the tolerance
+  // margin", which is what it looked like — it passed on the luck of the
+  // deal, failed light one run and dark the next, and passed twice in
+  // isolation. A plate that fails on a coin flip is the kind that gets a
+  // gate muted, so it is classified rather than tolerated.
+  'screens/fill_blank': 'shuffles its deck every run',
+  'screens/penny': 'shuffles its deck every run',
+  'screens/letters': 'shuffles its deck every run',
 };
+
+/// True when this plate's CONTENT is stable enough to compare pixels.
+///
+/// Keyed off the golden token inside [_pumpAndShoot] rather than wired into
+/// each plate helper, because there are four helpers (_screenPlate,
+/// _bareScreenPlate, _rosterPlate, _richPlate) and only one of them had the
+/// check — which is how `penny` and `letters` stayed comparable while being
+/// exactly as shuffled as `do_it`. One funnel, no helper can forget.
+bool _comparable(String goldenToken) {
+  // The token already carries the `screens/` prefix; prepending it again
+  // looked up `screens/screens/do_it` and quietly matched nothing, so the
+  // skip list appeared to do nothing at all for three more runs.
+  final base = goldenToken.replaceAll('__light', '').replaceAll('__dark', '');
+  return !_unstableByDesign.containsKey(base);
+}
 
 const Set<String> _leakyTimer = {
   'screens/activity_arc',
@@ -743,9 +766,8 @@ Future<void> _pumpAndShoot(
   WidgetTester tester,
   String goldenToken,
   Widget appChild,
-  Size size, {
-  bool compare = true,
-}) async {
+  Size size,
+) async {
   beginOverflowWatch();
   final applied = plateSize(size);
   await tester.binding.setSurfaceSize(applied);
@@ -783,7 +805,7 @@ Future<void> _pumpAndShoot(
   // plate reflows everything. The assertion that matters already happened
   // during pump: an overflow would have thrown. Comparing here would fail
   // every plate for the wrong reason and bury the real signal.
-  if (!isStressRun && compare) {
+  if (!isStressRun && _comparable(goldenToken)) {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('../../gallery/$goldenToken.png'),
@@ -832,7 +854,6 @@ void _screenPlate(
   double height = 900,
 }) {
   final skip = !runGoldens || _leakyTimer.contains(name);
-  final compare = !_unstableByDesign.containsKey(name);
   for (final mode in const ['light', 'dark']) {
     testWidgets('$name - $mode', (tester) async {
       await _pumpAndShoot(
@@ -840,7 +861,6 @@ void _screenPlate(
         '${name}__$mode',
         _app(mode, _shellRouter(screen)),
         Size(width, height),
-        compare: compare,
       );
     }, skip: skip);
   }

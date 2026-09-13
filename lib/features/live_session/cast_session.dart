@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -106,7 +107,11 @@ class CastSession {
   /// game reads content. Re-casting the same game = "play again" with fresh
   /// content.
   void cast(GameDefinition<dynamic> def, ContentSource content) {
-    _session.reseed(_wire(def.id, def.initialState(content)));
+    // Seeded with the run-script's cursor, so a game arriving on a room screen
+    // opens by telling that room what it is about to play.
+    _session.reseed(
+      _wire(def.id, RunScriptWire.seed(def, def.initialState(content))),
+    );
   }
 
   /// Put a stage on the screen from an EXPLICIT, pre-built wire-state —
@@ -180,7 +185,9 @@ class CastSession {
         const <String, dynamic>{};
     // Re-describe after every intent — the shape IS the state, so a stale
     // shape would show the room the previous move.
-    return _wire(id, def.reduce(gameWire, mapped, args));
+    // Through RunScriptWire, so a paired room screen is briefed by the same
+    // Next the phone already sends — the cursor rides the wire, not the phone.
+    return _wire(id, RunScriptWire.reduce(def, gameWire, mapped, args));
   }
 
   static GameIntent? _intentByName(String name) {

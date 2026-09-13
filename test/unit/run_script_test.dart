@@ -1,8 +1,11 @@
+import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
+import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The run-script exists so a SUBSTITUTE can start any activity by finding
@@ -10,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// because "some games have instructions" is the state this is meant to leave
 /// behind, not arrive at.
 void main() {
+  _wireTests();
   group('run-script', () {
     test('the three pilots answer what, how it ends, and who starts', () {
       final pilots = <GameDefinition<dynamic>>[
@@ -54,6 +58,71 @@ void main() {
             '${liveGames.length} games can be started by someone who does '
             'not know the rules.',
       );
+    });
+  });
+}
+
+/// The cursor in the WIRE — the half that makes a script reach the room
+/// rather than only the phone holding it.
+void _wireTests() {
+  group('run-script wire', () {
+    const g = ConnectFourGame();
+
+    Map<String, dynamic> seeded() =>
+        RunScriptWire.seed(g, g.initialState(LocalContentBank.seeded()));
+
+    test('a scripted game opens on its first beat', () {
+      expect(RunScriptWire.indexOf(seeded()), 0);
+    });
+
+    test('a game with no script is never seeded', () {
+      const plain = LightsOutGame();
+      final wire = RunScriptWire.seed(
+        plain,
+        plain.initialState(LocalContentBank.seeded()),
+      );
+      expect(RunScriptWire.indexOf(wire), isNull);
+      expect(wire.containsKey(RunScriptWire.key), isFalse);
+    });
+
+    test('next walks the beats, then hands the board over', () {
+      var wire = seeded();
+      for (var i = 1; i < g.howToPlay.length; i++) {
+        wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
+        expect(RunScriptWire.indexOf(wire), i);
+      }
+      wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
+      // Absent, not -1: the board owns the screen from here.
+      expect(RunScriptWire.indexOf(wire), isNull);
+      expect(wire.containsKey(RunScriptWire.key), isFalse);
+    });
+
+    test('back steps, and stops at the first beat', () {
+      var wire = RunScriptWire.reduce(g, seeded(), GameIntent.next, const {});
+      expect(RunScriptWire.indexOf(wire), 1);
+      wire = RunScriptWire.reduce(g, wire, GameIntent.back, const {});
+      expect(RunScriptWire.indexOf(wire), 0);
+      wire = RunScriptWire.reduce(g, wire, GameIntent.back, const {});
+      expect(RunScriptWire.indexOf(wire), 0, reason: 'no beat -1');
+    });
+
+    test('the board cannot start behind the instructions', () {
+      // The defect this guards: a stray tap during the rules quietly playing a
+      // move, which the adult reading the beats aloud would never see.
+      final wire = seeded();
+      final after = RunScriptWire.reduce(g, wire, GameIntent.pick, {'cell': 0});
+      expect(after, wire, reason: 'pick is swallowed while briefing');
+      expect(RunScriptWire.indexOf(after), 0, reason: 'still on beat one');
+    });
+
+    test('play again re-briefs — a second round has new children in it', () {
+      var wire = seeded();
+      for (var i = 0; i < g.howToPlay.length; i++) {
+        wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
+      }
+      expect(RunScriptWire.indexOf(wire), isNull);
+      wire = RunScriptWire.reduce(g, wire, GameIntent.reset, const {});
+      expect(RunScriptWire.indexOf(wire), 0);
     });
   });
 }

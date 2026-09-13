@@ -15,17 +15,23 @@ import 'package:flutter/material.dart';
 /// same class as a projection stage, because that is what it is. The colours
 /// come from the game's own vibe so the script and the board it introduces
 /// read as one thing rather than a system screen bolted in front of a game.
-class RunScriptView extends StatefulWidget {
+class RunScriptView extends StatelessWidget {
   const RunScriptView({
     required this.script,
+    required this.index,
     required this.title,
     required this.surface,
     required this.onLine,
-    required this.onDone,
+    this.onNext,
+    this.onBack,
     super.key,
   });
 
   final RunScript script;
+
+  /// Which beat, from the WIRE (run_script_wire.dart) — never local state, so
+  /// the phone and the room screen are never on different beats.
+  final int index;
 
   /// The game's name, shown small — the room's anchor if someone looks up
   /// halfway through.
@@ -38,36 +44,23 @@ class RunScriptView extends StatefulWidget {
   /// knows the vibe; content-driven colours have no theme to ask.
   final Color onLine;
 
-  /// Called when the last beat is passed — the board takes over.
-  final VoidCallback onDone;
-
-  @override
-  State<RunScriptView> createState() => _RunScriptViewState();
-}
-
-class _RunScriptViewState extends State<RunScriptView> {
-  late Steps _at = Steps(index: 0, total: widget.script.length);
-
-  void _next() {
-    if (_at.index >= _at.total - 1) {
-      widget.onDone();
-      return;
-    }
-    setState(() => _at = _at.at(_at.index + 1));
-  }
-
-  void _back() {
-    if (_at.index == 0) return;
-    setState(() => _at = _at.at(_at.index - 1));
-  }
+  /// Sending the intents. **Null on a cast receiver**, which is a display and
+  /// must never own the cursor — two devices that can both advance the rules
+  /// is two devices that disagree about which rule the room just heard.
+  final VoidCallback? onNext;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
-    final beat = widget.script[_at.index];
-    final quiet = widget.onLine.withValues(alpha: 0.72);
-    final last = _at.index == _at.total - 1;
+    final at = Steps(
+      index: index.clamp(0, script.length - 1),
+      total: script.length,
+    );
+    final beat = script[at.index];
+    final quiet = onLine.withValues(alpha: 0.72);
+    final last = at.index == at.total - 1;
     return ColoredBox(
-      color: widget.surface,
+      color: surface,
       child: SafeArea(
         // Not FitOrScroll here: its Align(center) collapses the Expanded, so
         // the whole script rendered as a small block floating mid-screen with
@@ -91,7 +84,7 @@ class _RunScriptViewState extends State<RunScriptView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.title,
+                      title,
                       style:
                           Theme.of(
                             context,
@@ -101,7 +94,7 @@ class _RunScriptViewState extends State<RunScriptView> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${_at.human} of ${_at.total}',
+                      '${at.human} of ${at.total}',
                       style:
                           Theme.of(
                             context,
@@ -122,7 +115,7 @@ class _RunScriptViewState extends State<RunScriptView> {
                               beat.line,
                               style: Theme.of(context).textTheme.displaySmall
                                   ?.copyWith(
-                                    color: widget.onLine, // raw-canvas
+                                    color: onLine, // raw-canvas
                                     fontWeight: FontWeight.w400,
                                   ),
                             ),
@@ -141,20 +134,21 @@ class _RunScriptViewState extends State<RunScriptView> {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        if (_at.index > 0)
+                        if (at.index > 0 && onBack != null)
                           TextButton(
-                            onPressed: _back,
+                            onPressed: onBack,
                             style: TextButton.styleFrom(foregroundColor: quiet),
                             child: const Text('Back'),
                           ),
                         const Spacer(),
-                        FilledButton.icon(
-                          onPressed: _next,
-                          icon: Icon(
-                            last ? Icons.play_arrow : Icons.arrow_forward,
+                        if (onNext != null)
+                          FilledButton.icon(
+                            onPressed: onNext,
+                            icon: Icon(
+                              last ? Icons.play_arrow : Icons.arrow_forward,
+                            ),
+                            label: Text(last ? 'Start' : 'Next'),
                           ),
-                          label: Text(last ? 'Start' : 'Next'),
-                        ),
                       ],
                     ),
                   ],
