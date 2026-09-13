@@ -45,6 +45,15 @@ void main() {
           ),
           size: const Size(440, 2020),
         );
+        // A stress run RESIZES the plate (STRESS_VIEWPORT) or reflows it
+        // (STRESS_TEXT_SCALE), so the pixels are supposed to differ — the
+        // assertion that matters is the overflow watch during pump. This
+        // suite reached for matchesGoldenFile directly instead of going
+        // through expectGolden, so it never inherited that rule, and every
+        // viewport in scripts/check_overflow_matrix.sh --full failed here on
+        // an image-size mismatch. The sweep then reported all 32 combinations
+        // as "OVERFLOW" when several had no overflow at all.
+        if (isStressRun) return;
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('goldens/theme_gallery__after.png'),
@@ -67,6 +76,7 @@ void main() {
           ),
           size: const Size(440, 2020),
         );
+        if (isStressRun) return;
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('goldens/theme_gallery__after-dark.png'),
