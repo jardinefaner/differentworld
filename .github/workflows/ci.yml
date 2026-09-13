@@ -76,6 +76,14 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
           bash scripts/check_spacing_scale.sh "$BASE"
 
+      # docs/FACILITATION.md rule 2: whose-go goes through TurnSource. Five
+      # independent answers to "who's up" already exist and none of them knows
+      # about the others; this stops a sixth being invented inside a screen.
+      - name: Facilitation — no new hand-rolled turns
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          bash scripts/check_facilitation.sh "$BASE"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
