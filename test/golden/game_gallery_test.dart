@@ -1,13 +1,16 @@
 import 'dart:convert';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/run_script_view.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_stage.dart';
+import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/memory_match_game.dart';
 import 'package:differentworld/features/games/games/name_it_game.dart';
@@ -17,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import '_helpers.dart';
 
 /// THE GAMES tier of the component bible — the EXPERIENCE layer's visual atoms
@@ -363,6 +365,23 @@ void main() {
   // The card games are deck-seeded (seedsFromContentBank=false) — hand them a
   // sample board of real deck art so the stage shows its true layout.
   const deck = 'assets/card_games/everyday';
+  // The run-script — what the ROOM is told before the board appears. Plated
+  // because it is the first thing a room sees for any scripted game, and
+  // because the organism plates deliberately show the BOARD (they build
+  // initialState directly, without the runner's cursor seeding).
+  _scene('games/run_script', width: 440, height: 560, (ctx) {
+    const g = CharadesGame();
+    return RunScriptView(
+      script: g.howToPlay,
+      index: 1,
+      title: g.title,
+      surface: g.vibe.surface,
+      onLine: AppColors.onAccent(g.vibe.surface),
+      onNext: () {},
+      onBack: () {},
+    );
+  });
+
   _scene('games/stage_name-it', width: 440, height: 560, (ctx) {
     const game = NameItGame();
     final wire = <String, dynamic>{

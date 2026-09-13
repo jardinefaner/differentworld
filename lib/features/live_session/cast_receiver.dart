@@ -1,6 +1,10 @@
 import 'dart:async';
+
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/facilitation/run_script_view.dart';
+import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
@@ -142,6 +146,22 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
           icon: Icons.system_update_alt,
           text: 'This session needs a newer version of the app.',
         ),
+      );
+    } else if (RunScriptWire.indexOf(CastSession.gameStateOf(_meta))
+        case final at?) {
+      // The room is being told what it is about to play. This is the whole
+      // reason the cursor lives in the wire: the instructions are FOR the
+      // children, so they have to reach the screen the children are watching.
+      //
+      // No callbacks — a receiver is a DISPLAY. Two devices that can both
+      // advance the rules is two devices that disagree about which rule the
+      // room just heard, and the adult holding the phone would never see it.
+      body = RunScriptView(
+        script: def.howToPlay,
+        index: at,
+        title: def.title,
+        surface: def.vibe.surface,
+        onLine: AppColors.onAccent(def.vibe.surface),
       );
     } else {
       // The clean stage — full-bleed, nothing else (no SafeArea by design).
