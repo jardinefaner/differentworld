@@ -63,7 +63,7 @@ for size in "${SIZE_LIST[@]}"; do
     if RUN_GOLDENS=1 STRESS_VIEWPORT="$size" STRESS_TEXT_SCALE="$scale" \
         flutter test $SUITES > "$log" 2>&1; then
       echo "clean"
-    elif grep -qE "overflowed by [0-9]+ pixels|Layout overflow" "$log"; then
+    elif grep -qE "overflowed by [0-9.]+ pixels|Layout overflow" "$log"; then
       fails=$((fails + 1))
       echo "OVERFLOW"
       cp "$log" "$keep/$size-$scale.log"
@@ -80,9 +80,13 @@ for size in "${SIZE_LIST[@]}"; do
       # screen is worse than naming none, because it gets the gate muted.
       sed -n '/^Failing tests:/,$p' "$log" | sed '1d;s/.*\.dart: //' \
         | sort -u | head -20 | sed 's/^/      /'
-      grep -oE "Layout overflow \([0-9]+\)|overflowed by [0-9]+ pixels on the [a-z]+" "$log" \
+      grep -oE "Layout overflow \([0-9]+\)|overflowed by [0-9.]+ pixels on the [a-z]+" "$log" \
         | sort | uniq -c | sort -rn | head -6 | sed 's/^/      /'
     else
+      # Match a DECIMAL pixel count: Flutter reports "overflowed by 1.4 pixels"
+      # for a sub-pixel overflow, and an integer-only pattern filed those under
+      # "not an overflow" — worlds/verbs was misfiled that way at 1.5 across
+      # four sizes.
       # A failure with no overflow in it is NOT an overflow, and saying it is
       # makes the whole sweep unbelievable. The --full run reported 32 of 32
       # combinations as overflowing when several were only

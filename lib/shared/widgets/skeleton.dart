@@ -182,6 +182,7 @@ class SkeletonList extends StatelessWidget {
     this.rowCount = 6,
     this.showHeader = true,
     this.hasTrailing = false,
+    this.inline = false,
     super.key,
   });
 
@@ -189,11 +190,24 @@ class SkeletonList extends StatelessWidget {
   final bool showHeader;
   final bool hasTrailing;
 
+  /// Set when this skeleton is a CHILD of a scroll view rather than a screen
+  /// body. A `ListView` inside another `ListView`'s children is handed an
+  /// unbounded height and throws "Vertical viewport was given unbounded
+  /// height" — class_memory_screen did exactly that, so its loading state
+  /// rendered a red error frame instead of a skeleton. Inline shrink-wraps
+  /// and stops scrolling, so the outer list owns the scrolling; it also drops
+  /// the chrome-clearing padding, which the outer list has already applied.
+  final bool inline;
+
   @override
   Widget build(BuildContext context) {
     return SkeletonShimmer(
       child: ListView(
-        padding: const EdgeInsets.only(top: 56, bottom: 96),
+        shrinkWrap: inline,
+        physics: inline ? const NeverScrollableScrollPhysics() : null,
+        padding: inline
+            ? EdgeInsets.zero
+            : const EdgeInsets.only(top: 56, bottom: 96),
         children: [
           if (showHeader) ...[
             const Padding(
@@ -216,15 +230,22 @@ class SkeletonList extends StatelessWidget {
 /// Full-screen card-grid skeleton — for screens with bigger cards
 /// (Today, Family Today). Renders N tall cards stacked.
 class SkeletonCards extends StatelessWidget {
-  const SkeletonCards({this.cardCount = 3, super.key});
+  const SkeletonCards({this.cardCount = 3, this.inline = false, super.key});
 
   final int cardCount;
+
+  /// See [SkeletonList.inline] — same trap, same fix.
+  final bool inline;
 
   @override
   Widget build(BuildContext context) {
     return SkeletonShimmer(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 56, 16, 96),
+        shrinkWrap: inline,
+        physics: inline ? const NeverScrollableScrollPhysics() : null,
+        padding: inline
+            ? const EdgeInsets.symmetric(horizontal: 16)
+            : const EdgeInsets.fromLTRB(16, 56, 16, 96),
         children: [
           const SkeletonLine(widthFactor: 0.45, height: 24),
           const SizedBox(height: 6),

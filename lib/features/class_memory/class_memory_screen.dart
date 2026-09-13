@@ -70,7 +70,7 @@ class ClassMemoryScreen extends ConsumerWidget {
                         ref.invalidate(classMemoriesProvider(groupId)),
                   )
                 else if (async.isLoading && total == 0)
-                  const LoadingSlot()
+                  const LoadingSlot(inline: true)
                 else if (total == 0)
                   const EmptyState(
                     icon: Icons.auto_stories_outlined,
