@@ -42,7 +42,13 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# One temp file for the run, but every FAILING combination's output is kept
+# under build/overflow/ — a sweep whose evidence is deleted the moment it
+# fails is a sweep you cannot diagnose from, which cost a whole round of
+# guessing about why a combination reported a failure with no test names.
 log=$(mktemp -t dw-overflow)
+keep=build/overflow
+rm -rf "$keep"; mkdir -p "$keep"
 fails=0
 others=0
 combos=0
@@ -60,6 +66,7 @@ for size in "${SIZE_LIST[@]}"; do
     elif grep -qE "overflowed by [0-9]+ pixels|Layout overflow" "$log"; then
       fails=$((fails + 1))
       echo "OVERFLOW"
+      cp "$log" "$keep/$size-$scale.log"
       # Name the plate, not just the count — a gate that says "something
       # broke" gets muted, and then it protects nothing.
       #
@@ -83,6 +90,7 @@ for size in "${SIZE_LIST[@]}"; do
       # asserted matchesGoldenFile directly and so never honoured isStressRun.
       others=$((others + 1))
       echo "FAILED (not an overflow)"
+      cp "$log" "$keep/$size-$scale.log"
       sed -n '/^Failing tests:/,$p' "$log" | sed '1d;s/.*\.dart: //' \
         | sort -u | head -6 | sed 's/^/      /'
     fi
@@ -91,6 +99,7 @@ done
 
 rm -f "$log"
 echo
+[ -n "$(ls -A "$keep" 2>/dev/null)" ] && echo "Full output per failing combination: $keep/"
 if [ "$others" -gt 0 ]; then
   echo "$others of $combos combinations failed for a reason that is NOT an overflow."
   echo "  Fix those first — they hide whatever the sweep was meant to find."

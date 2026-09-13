@@ -2307,6 +2307,11 @@ class _Labeled extends StatelessWidget {
 /// Render one component's plate (its variants) under light + dark, each written
 /// to `gallery/<name>__<theme>.png`. [height] sizes the capture surface so the
 /// plate isn't swimming in empty canvas. Skipped unless `RUN_GOLDENS=1`.
+/// Every plate in THIS suite is a fixed canvas — see `plateSize`. These are
+/// reference cards for components, organisms and surfaces; the app's actual
+/// screens live in `screens_gallery_test.dart` and those DO get swept across
+/// viewports, because a screen stands for a device and a reference card does
+/// not. The text-scale stress still applies here, and should.
 void _plate(
   String name,
   Widget Function(BuildContext) build, {
@@ -2337,6 +2342,10 @@ void _plate(
             ),
           ),
           size: Size(width, height),
+          // A component plate's canvas is an authoring choice, not a device —
+          // see plateSize. The viewport sweep leaves it alone; the text-scale
+          // stress still applies.
+          fixedCanvas: true,
         );
         // Pixels differ by design in a stress pass (rescaled or resized);
         // the overflow assertion already happened during pump.
@@ -2365,8 +2374,13 @@ void _platePumped(
     testWidgets(
       '$name · $mode',
       (tester) async {
-        await tester.binding.setSurfaceSize(plateSize(Size(440, height)));
-        tester.view.physicalSize = plateSize(Size(440, height));
+        await tester.binding.setSurfaceSize(
+          plateSize(Size(440, height), fixedCanvas: true),
+        );
+        tester.view.physicalSize = plateSize(
+          Size(440, height),
+          fixedCanvas: true,
+        );
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
@@ -2427,8 +2441,13 @@ void _scenePlate(
       '$name · $mode',
       (tester) async {
         final theme = mode == 'dark' ? buildDarkTheme() : buildLightTheme();
-        await tester.binding.setSurfaceSize(plateSize(Size(width, height)));
-        tester.view.physicalSize = plateSize(Size(width, height));
+        await tester.binding.setSurfaceSize(
+          plateSize(Size(width, height), fixedCanvas: true),
+        );
+        tester.view.physicalSize = plateSize(
+          Size(width, height),
+          fixedCanvas: true,
+        );
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);

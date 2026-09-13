@@ -214,6 +214,10 @@ void main() {
   });
 }
 
+/// A fixed canvas — see `plateSize`. These are reference cards for the world
+/// vocabulary at sizes chosen to show each atom well, not screens standing for
+/// a device, so the viewport sweep leaves them alone. Text-scale stress still
+/// applies.
 void _scene(
   String name,
   Widget Function(BuildContext) build, {
@@ -223,8 +227,13 @@ void _scene(
   testWidgets(
     name,
     (tester) async {
-      await tester.binding.setSurfaceSize(plateSize(Size(width, height)));
-      tester.view.physicalSize = plateSize(Size(width, height));
+      await tester.binding.setSurfaceSize(
+        plateSize(Size(width, height), fixedCanvas: true),
+      );
+      tester.view.physicalSize = plateSize(
+        Size(width, height),
+        fixedCanvas: true,
+      );
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
