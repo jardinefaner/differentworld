@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,16 @@ class CharadesGame extends GameDefinition<CharadesState> {
 
   @override
   String get title => 'Charades';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Charades'),
+    RoomBeat('One person acts out a word', detail: 'Everybody else guesses'),
+    // Stated as its own beat because it is the rule that gets broken first,
+    // and a substitute who has not played before will not think to say it.
+    RoomBeat('No talking and no sounds', detail: 'Acting only'),
+    RoomBeat('Call out your guess'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);

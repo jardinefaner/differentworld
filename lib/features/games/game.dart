@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
@@ -285,6 +286,19 @@ abstract class GameDefinition<S> {
   /// so an override would have had no effect. It was deleted rather than left
   /// to look load-bearing.
   String? keepsake(S state) => null;
+
+  /// **What the ROOM is told before the board appears** — the run-script
+  /// (`lib/features/facilitation/room_beat.dart`).
+  ///
+  /// Empty by default, and empty is a gap rather than a choice: a game with
+  /// no script is one a substitute cannot start. The deck assumed the adult
+  /// already knew the rules, which is exactly the assumption that fails for
+  /// the person holding the room on a Tuesday they did not plan.
+  ///
+  /// Kid-facing, in the children's words, because these beats go on the
+  /// screen the ROOM is looking at — not into a panel the adult reads while
+  /// twenty children wait. Same law the curriculum's room slides obey.
+  RunScript get howToPlay => const [];
 }
 
 /// The shared advance/back/reveal/reset reducer for the picture-DECK games

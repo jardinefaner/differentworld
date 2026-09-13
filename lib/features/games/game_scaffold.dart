@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/class_memory/class_memory.dart';
 import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
+import 'package:differentworld/features/facilitation/run_script_view.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
@@ -67,109 +69,90 @@ class GameScaffold<S> extends StatelessWidget {
         // directly (_castGame). A second cast icon in the same pill was the
         // "two cast icons" duplication.
       ],
-      body: StreamBuilder<Map<String, dynamic>>(
-        stream: controller.states,
-        initialData: controller.state,
-        builder: (context, snapshot) {
-          final wire = snapshot.data ?? controller.state;
-          final state = def.decode(wire);
-          final active = def.activeIntents(state);
-          final done = wire['d'] == true;
-          // What this round leaves behind, if the game says it leaves
-          // anything. Most say nothing, deliberately — a brain break is meant
-          // to be ephemeral, and a class memory full of "Team 1 wins" buries
-          // the few things worth keeping.
-          final keepText = done ? def.keepsake(def.decode(wire)) : null;
-          final keeper = (keepText == null || keepText.trim().isEmpty)
-              ? null
-              : KeepThisButton(
-                  text: keepText,
-                  sort: ClassMemorySort.discovery,
-                  context_: def.title,
-                  label: 'Keep what we made',
-                );
-          // Keyboard control for a laptop/projector host
-          // (docs/PLATFORM_RUBRIC.md, P3): ← back · Space reveal · → / Enter
-          // next · Space/+/= tally. Each binds only when its intent is live.
-          return PresenterShortcuts(
-            onBack: active.contains(GameIntent.back)
-                ? () => _send(GameIntent.back)
-                : null,
-            onReveal: active.contains(GameIntent.reveal)
-                ? () => _send(GameIntent.reveal)
-                : null,
-            onNext: active.contains(GameIntent.next)
-                ? () => _send(GameIntent.next)
-                : null,
-            onTally: active.contains(GameIntent.tally)
-                ? () => _send(GameIntent.tally)
-                : null,
-            child: ColoredBox(
-              color: def.vibe.surface,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= _wideBreakpoint;
-                  final stage = def.buildStage(context, state);
-                  final revealLabel = def.revealLabel(
-                    revealed: wire['r'] == true,
+      // The run-script comes FIRST when the game has one: the room is told
+      // what it is about to play before the board appears, so a substitute
+      // who does not know the game can still start it (room_beat.dart).
+      body: _RunScriptGate(
+        def: def,
+        child: StreamBuilder<Map<String, dynamic>>(
+          stream: controller.states,
+          initialData: controller.state,
+          builder: (context, snapshot) {
+            final wire = snapshot.data ?? controller.state;
+            final state = def.decode(wire);
+            final active = def.activeIntents(state);
+            final done = wire['d'] == true;
+            // What this round leaves behind, if the game says it leaves
+            // anything. Most say nothing, deliberately — a brain break is meant
+            // to be ephemeral, and a class memory full of "Team 1 wins" buries
+            // the few things worth keeping.
+            final keepText = done ? def.keepsake(def.decode(wire)) : null;
+            final keeper = (keepText == null || keepText.trim().isEmpty)
+                ? null
+                : KeepThisButton(
+                    text: keepText,
+                    sort: ClassMemorySort.discovery,
+                    context_: def.title,
+                    label: 'Keep what we made',
                   );
-                  // The stage is the instrument (memory, reveal, what's
-                  // missing): the game owns the whole single-device shape, so
-                  // there is no second copy of the board to tap and no
-                  // control bar to leave room for. Checked FIRST — a game
-                  // that offers this also has a buildControls remote, which
-                  // is for the cast cockpit, not for here.
-                  final live = def.buildLiveStage(
-                    context,
-                    state,
-                    controller.send,
-                  );
-                  if (live != null) return SafeArea(child: live);
-
-                  // Full control override (poll, timer, …): one layout — the
-                  // stage fills, the game's own controls sit in the bar.
-                  final custom = def.buildControls(
-                    context,
-                    state,
-                    controller.send,
-                  );
-                  if (custom != null) {
-                    return Column(
-                      children: [
-                        Expanded(child: stage),
-                        _CustomControlBar(child: custom),
-                      ],
+            // Keyboard control for a laptop/projector host
+            // (docs/PLATFORM_RUBRIC.md, P3): ← back · Space reveal · → / Enter
+            // next · Space/+/= tally. Each binds only when its intent is live.
+            return PresenterShortcuts(
+              onBack: active.contains(GameIntent.back)
+                  ? () => _send(GameIntent.back)
+                  : null,
+              onReveal: active.contains(GameIntent.reveal)
+                  ? () => _send(GameIntent.reveal)
+                  : null,
+              onNext: active.contains(GameIntent.next)
+                  ? () => _send(GameIntent.next)
+                  : null,
+              onTally: active.contains(GameIntent.tally)
+                  ? () => _send(GameIntent.tally)
+                  : null,
+              child: ColoredBox(
+                color: def.vibe.surface,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= _wideBreakpoint;
+                    final stage = def.buildStage(context, state);
+                    final revealLabel = def.revealLabel(
+                      revealed: wire['r'] == true,
                     );
-                  }
-                  return wide
-                      ? Column(
-                          children: [
-                            Expanded(child: stage),
-                            _GameControlBar(
-                              gameId: def.id,
-                              keepsake: keeper,
-                              wire: wire,
-                              done: done,
-                              active: active,
-                              revealLabel: revealLabel,
-                              onIntent: _send,
-                              onDone: () {
-                                if (context.canPop()) context.pop();
-                              },
-                            ),
-                          ],
-                        )
-                      : SafeArea(
-                          child: Column(
+                    // The stage is the instrument (memory, reveal, what's
+                    // missing): the game owns the whole single-device shape, so
+                    // there is no second copy of the board to tap and no
+                    // control bar to leave room for. Checked FIRST — a game
+                    // that offers this also has a buildControls remote, which
+                    // is for the cast cockpit, not for here.
+                    final live = def.buildLiveStage(
+                      context,
+                      state,
+                      controller.send,
+                    );
+                    if (live != null) return SafeArea(child: live);
+
+                    // Full control override (poll, timer, …): one layout — the
+                    // stage fills, the game's own controls sit in the bar.
+                    final custom = def.buildControls(
+                      context,
+                      state,
+                      controller.send,
+                    );
+                    if (custom != null) {
+                      return Column(
+                        children: [
+                          Expanded(child: stage),
+                          _CustomControlBar(child: custom),
+                        ],
+                      );
+                    }
+                    return wide
+                        ? Column(
                             children: [
-                              // The stage takes every pixel the controls don't
-                              // need. A fixed-height stage (was 220) clipped
-                              // any game whose stage stacks vertically — the
-                              // riddle prompt + its revealed answer card sat
-                              // below the fold and read as "cut off" on
-                              // phones.
                               Expanded(child: stage),
-                              _GameControlPanel(
+                              _GameControlBar(
                                 gameId: def.id,
                                 keepsake: keeper,
                                 wire: wire,
@@ -182,13 +165,38 @@ class GameScaffold<S> extends StatelessWidget {
                                 },
                               ),
                             ],
-                          ),
-                        );
-                },
+                          )
+                        : SafeArea(
+                            child: Column(
+                              children: [
+                                // The stage takes every pixel the controls don't
+                                // need. A fixed-height stage (was 220) clipped
+                                // any game whose stage stacks vertically — the
+                                // riddle prompt + its revealed answer card sat
+                                // below the fold and read as "cut off" on
+                                // phones.
+                                Expanded(child: stage),
+                                _GameControlPanel(
+                                  gameId: def.id,
+                                  keepsake: keeper,
+                                  wire: wire,
+                                  done: done,
+                                  active: active,
+                                  revealLabel: revealLabel,
+                                  onIntent: _send,
+                                  onDone: () {
+                                    if (context.canPop()) context.pop();
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                  },
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -526,4 +534,39 @@ class GameVerbBar extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Shows a game's run-script before its board, once per mount.
+///
+/// A separate widget rather than state on [GameScaffold] because the scaffold
+/// is stateless and the only thing that needs remembering here is whether the
+/// room has been told the rules yet.
+class _RunScriptGate<S> extends StatefulWidget {
+  const _RunScriptGate({required this.def, required this.child});
+
+  final GameDefinition<S> def;
+  final Widget child;
+
+  @override
+  State<_RunScriptGate<S>> createState() => _RunScriptGateState<S>();
+}
+
+class _RunScriptGateState<S> extends State<_RunScriptGate<S>> {
+  bool _told = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final script = widget.def.howToPlay;
+    if (_told || script.isEmpty) return widget.child;
+    final surface = widget.def.vibe.surface;
+    return RunScriptView(
+      script: script,
+      title: widget.def.title,
+      surface: surface,
+      // The stage colour is content-driven, so no theme governs the
+      // foreground — pick by luminance, or the pale vibes get white on light.
+      onLine: AppColors.onAccent(surface),
+      onDone: () => setState(() => _told = true),
+    );
+  }
 }
