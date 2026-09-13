@@ -135,8 +135,9 @@ Future<void> pumpAt(
   required Widget app,
   required Size size,
   Duration settle = const Duration(seconds: 1),
+  bool fixedCanvas = false,
 }) async {
-  final applied = plateSize(size);
+  final applied = plateSize(size, fixedCanvas: fixedCanvas);
   await tester.binding.setSurfaceSize(applied);
   tester.view.physicalSize = applied;
   tester.view.devicePixelRatio = 1;
@@ -227,7 +228,21 @@ Size? _readStressViewport() {
 /// or the sweep override when one is set. Every gallery pump funnel goes
 /// through this — a suite that sets the surface size directly is a hole in the
 /// sweep.
-Size plateSize(Size authored) => stressViewport ?? authored;
+///
+/// Pass `fixedCanvas: true` for a plate whose size is an AUTHORING choice
+/// rather than a device. The distinction is the whole meaning of the viewport
+/// sweep: a SCREEN plate stands for a phone or a desktop window and must fit
+/// whatever we rotate it to, while a COMPONENT plate is a reference card whose
+/// canvas was picked to show the component well. Forcing a 440x440 reference
+/// card into a 780x390 landscape box and calling the result a defect tests
+/// nothing about the product — `molecules/loading_slot` "overflowed by 469
+/// pixels" purely because the card is taller than the box somebody resized it
+/// into.
+///
+/// Text-scale stress still applies to a fixed canvas, and should: a component
+/// that breaks at 200% text is genuinely broken, at any size.
+Size plateSize(Size authored, {bool fixedCanvas = false}) =>
+    fixedCanvas ? authored : (stressViewport ?? authored);
 
 /// Drain the exceptions a plate legitimately produces — a screen's direct
 /// Postgrest read, a missing plugin channel — while REFUSING to swallow a

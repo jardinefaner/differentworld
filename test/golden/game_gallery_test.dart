@@ -450,6 +450,11 @@ void main() {
 }
 
 /// Render one game scene once (games own their surface — no light/dark pair).
+/// A fixed canvas — see `plateSize`. A `stage_` / `atom_` / `molecule_` plate
+/// is a reference card for one piece of a game. The `organism_` plates are
+/// different and deliberately NOT fixed: `_organismScene` renders the complete
+/// surface a teacher and a room actually see, so it stands for a device and
+/// must survive every viewport the sweep rotates it to.
 void _scene(
   String name,
   Widget Function(BuildContext) build, {
@@ -459,8 +464,13 @@ void _scene(
   testWidgets(
     name,
     (tester) async {
-      await tester.binding.setSurfaceSize(plateSize(Size(width, height)));
-      tester.view.physicalSize = plateSize(Size(width, height));
+      await tester.binding.setSurfaceSize(
+        plateSize(Size(width, height), fixedCanvas: true),
+      );
+      tester.view.physicalSize = plateSize(
+        Size(width, height),
+        fixedCanvas: true,
+      );
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -509,6 +519,10 @@ void _organismScene(
   testWidgets(
     name,
     (tester) async {
+      // NOT a fixed canvas, deliberately: this is the whole assembled game
+      // surface, so it stands for a device and the viewport sweep must reach
+      // it. `games/organism_as-if` overflowing by 32px at 320dp is a real
+      // defect, and this is the plate that has to keep finding it.
       await tester.binding.setSurfaceSize(plateSize(Size(width, height)));
       tester.view.physicalSize = plateSize(Size(width, height));
       tester.view.devicePixelRatio = 1;
