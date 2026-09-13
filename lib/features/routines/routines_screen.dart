@@ -13,6 +13,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/fit_or_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -135,33 +136,38 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
       final theme = Theme.of(context);
       final scheme = theme.colorScheme;
       // Centered in the bounded Expanded — EmptyState would over-fill here.
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.event_available_outlined,
-                size: 48,
-                color: scheme.primary.withValues(alpha: 0.7),
+      //
+      // FitOrScroll rather than a bare Center: in landscape the Expanded is
+      // about 390dp tall, and at 130% text this column wants 8dp more than
+      // that. A Center cannot give ground and a Spacer cannot shrink below
+      // zero, so the room got a black-and-yellow stripe under "Nothing
+      // planned yet today". It still centres whenever it fits, which is
+      // every portrait phone.
+      return FitOrScroll(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.event_available_outlined,
+              size: 48,
+              color: scheme.primary.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Nothing planned yet today',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'When staff plan the day, it appears here for the room.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Nothing planned yet today',
-                style: theme.textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'When staff plan the day, it appears here for the room.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }

@@ -94,23 +94,57 @@ class CuesGame extends GameDefinition<CueState> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),
       color: cue.color,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(cue.emoji, style: const TextStyle(fontSize: 140)),
-            const SizedBox(height: 16),
-            Text(
-              cue.label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: AppColors.onAccent(cue.color),
-                fontWeight: FontWeight.w400,
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // The emoji sizes to the stage it is actually given rather than to
+          // a number picked on a tall phone. At 320dp with 130% text the
+          // fixed 140pt glyph plus a display-size label overran the stage by
+          // 112px — and a cue is the one thing in the room everybody is
+          // looking at, so it cannot be the thing that gets clipped.
+          //
+          // Shrinking beats scrolling here: a scrollable cue can hide its own
+          // label, and nobody scrolls a screen they are reading from across
+          // the floor.
+          final glyph = constraints.hasBoundedHeight
+              ? (constraints.maxHeight * 0.42).clamp(48.0, 140.0)
+              : 140.0;
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // noScaling because the glyph is already sized FROM the
+                // available height — letting the text scaler multiply it
+                // again put it 1.5x past the box I had just measured. It is
+                // also the honest reading: this emoji is a picture, and the
+                // text-size preference is about reading text. The LABEL still
+                // scales, which is the part somebody set that preference for.
+                Text(
+                  cue.emoji,
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(fontSize: glyph),
+                ),
+                const SizedBox(height: 16),
+                // scaleDown rather than a smaller style: at 100% text the
+                // label is full display size, and it only gives ground on the
+                // narrow-and-large combinations where something has to.
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      cue.label,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: AppColors.onAccent(cue.color),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
