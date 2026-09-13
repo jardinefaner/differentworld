@@ -141,6 +141,35 @@ control bar stop each knowing three formats.
 
 ---
 
+## Facet 6 — what a round leaves behind
+
+`GameDefinition.keepsake(state)` + `KeepThisButton` write an
+`EntryKind.classMemory`. **The bar is deliberately high**, and the rule is
+easier to state as what it is NOT:
+
+> Not *that the round finished*. That the room **produced** something — and
+> that the app actually **holds** it.
+
+| Activity | Keeps | Why |
+|---|---|---|
+| Scattergories | the answers | six words the room made under a constraint |
+| Penny | the question | a question worth coming back to |
+| Potions | the potion | a name the room invented and will keep using |
+| Story Starters | the opener | the story was spoken; the door can open again |
+| **Boggle** | **nothing** | looks like an obvious keeper and is not: the board tracks only the letters ringed for ONE word, so the words are shouted and never held. Keeping "the last word someone spelled" is a keepsake of the wrong thing. |
+| **every other game** | **nothing** | a class memory full of "Team 1 wins, 3–2" buries the few worth having |
+
+**Known gap, deliberately not guessed at.** Pattern Maker holds the child's
+snapped tile in `State` as bytes and writes nothing — close the screen and the
+pattern is gone. It is the strongest remaining case (a real artifact, actually
+made), and fixing it needs a product decision this layer should not make alone:
+`EntryKind.workSample` is per-SUBJECT, and Pattern Maker has no roster context,
+so somebody has to answer *whose* pattern it is — one child's, or the room's.
+Letters has the same shape with no digital artifact at all (the notes are on
+paper), and that is fine.
+
+---
+
 ## The rules (with teeth, eventually)
 
 1. **A facilitation surface reads `RoomState`. It does not re-derive a facet.**

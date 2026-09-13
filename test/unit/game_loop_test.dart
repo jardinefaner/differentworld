@@ -11,6 +11,7 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/games/battleship_game.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
+import 'package:differentworld/features/games/games/boggle_game.dart';
 import 'package:differentworld/features/games/games/dots_boxes_game.dart';
 import 'package:differentworld/features/games/games/guess_who_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
@@ -426,29 +427,29 @@ void main() {
       expect(g.decode(wire).turn, isNot(before));
     });
 
-    test('the turn actually changes hands on a move', () {
+    test('a two-sided game hands over on SOME move', () {
+      // Not "every move hands over" — that was this test's first form and it
+      // was flaky 1-in-5, because the rules where a move legitimately KEEPS
+      // the turn are real ones: closing a box in Dots & Boxes earns another
+      // go, and a right answer keeps the board in Scattergories and Crossword.
+      // The guarantee that matters is that the board CAN change hands.
       for (final g in gridGames().where((g) => g.alternates)) {
         var wire = g.initialState(bank());
         final before = g.decode(wire).turn;
-        // Find a MOVE the rule accepts — a tap, or a typed answer for the
-        // games played by typing (their onPick is deliberately null).
-        for (var i = 0; i < g.cols * g.rows; i++) {
+        var handedOver = false;
+
+        for (var i = 0; i < g.cols * g.rows && !handedOver; i++) {
           final next = g.reduce(wire, GameIntent.pick, {'cell': i});
-          if (next != wire) {
-            wire = next;
-            break;
-          }
+          if (next == wire) continue;
+          wire = next;
+          handedOver = g.decode(wire).turn != before;
         }
-        if (g.decode(wire).turn == before && g.entryHint != null) {
-          wire = g.reduce(wire, GameIntent.capture, {
-            'text': 'CRANE'.substring(0, g.entryLength ?? 5),
-          });
+        if (!handedOver && g.entryHint != null) {
+          // A typing game hands over on a WRONG answer, by design.
+          wire = g.reduce(wire, GameIntent.capture, const {'text': 'zzzzz'});
+          handedOver = g.decode(wire).turn != before;
         }
-        expect(
-          g.decode(wire).turn,
-          isNot(before),
-          reason: '${g.id} never hands over',
-        );
+        expect(handedOver, isTrue, reason: '${g.id} never hands over');
       }
     });
 
@@ -699,6 +700,17 @@ void main() {
         lessThan(4),
         reason: 'a keeper on every game is noise, not memory: $keepers',
       );
+    });
+
+    test('boggle keeps nothing — it never HAD the words', () {
+      // Worth pinning as a decision rather than an omission. Boggle looks like
+      // an obvious keeper (the room finds words) but the board only tracks the
+      // letters currently ringed for ONE word; the words are shouted and never
+      // recorded. Keeping "the last word someone spelled" would be a keepsake
+      // of the wrong thing.
+      const g = BoggleGame();
+      final b = GridBoard(cols: g.cols, rows: g.rows, cells: g.deal(bank()));
+      expect(g.keepsake(b), isNull);
     });
 
     test('scattergories keeps the words the room actually produced', () {

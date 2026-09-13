@@ -82,6 +82,18 @@ class StoryStartersGame extends GameDefinition<StoryState> {
   @override
   StoryState decode(Map<String, dynamic> state) => StoryState.fromMap(state);
 
+  /// The opener the room built a story on. The STORY itself was spoken aloud
+  /// and the app never had it — but a room that built a good one may want the
+  /// same door to open again, and the opener is the part we can honestly
+  /// keep. Same reasoning as Penny keeping its question.
+  @override
+  String? keepsake(StoryState state) {
+    if (state.starters.isEmpty) return null;
+    final at = state.index.clamp(0, state.starters.length - 1);
+    final opener = state.starters[at].trim();
+    return opener.isEmpty ? null : opener;
+  }
+
   @override
   Map<String, dynamic> reduce(
     Map<String, dynamic> state,
