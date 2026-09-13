@@ -162,15 +162,28 @@ class OursFooter extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                // Facet 5 — the instruments, from inside the activity.
-                const RoomToolsButton(),
-                const Spacer(),
-                // Facet "the room writes its own", when this activity has a
-                // kind to write. Renders nothing when it does not.
-                OursStrip(route: route, compact: true),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // The labelled control needs roughly 300dp of row beside the
+                // strip, and that requirement grows with the text scale — at
+                // 320dp and 130% it overran by a hair, which is still a
+                // yellow-and-black stripe across the bottom of every activity
+                // a room is looking at. Below that, the label goes and the
+                // icon stays: this is a control you reach for mid-activity,
+                // so losing the target would be the wrong trade.
+                final scale = MediaQuery.textScalerOf(context).scale(1);
+                final tight = constraints.maxWidth < 300 * scale;
+                return Row(
+                  children: [
+                    // Facet 5 — the instruments, from inside the activity.
+                    RoomToolsButton(compact: tight),
+                    const Spacer(),
+                    // Facet "the room writes its own", when this activity has
+                    // a kind to write. Renders nothing when it does not.
+                    OursStrip(route: route, compact: true),
+                  ],
+                );
+              },
             ),
           ),
         ),
