@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -14,7 +15,27 @@ class HangmanGame extends GridGame {
   const HangmanGame();
 
   static const _letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  static const _lives = 6;
+
+  /// How many wrong guesses the room gets. Six is the playground number; a
+  /// younger room wants eight, a room that has played it wants four.
+  static const _lives = (8, 6, 4);
+
+  @override
+  List<GameSetting> get settings => [difficulty()];
+
+  /// The lives ride in the tally, because every line that reads them — the
+  /// ending, the note, the bar — is a pure function of the BOARD and has no
+  /// settings in hand.
+  @override
+  Map<String, int> tallyFrom(Map<String, Object?> values) => {
+    'lives': difficultyFrom(values).pick(_lives),
+  };
+
+  /// A board seeded before the knob existed carries no 'lives'.
+  static int _allowed(GridBoard b) =>
+      b.tally['lives'] is int && b.tally['lives']! > 0
+      ? b.tally['lives']!
+      : GameDifficulty.usual.pick(_lives);
 
   @override
   String get id => 'hangman';
@@ -99,7 +120,7 @@ class HangmanGame extends GridGame {
   /// Lives left, as a bar — the gallows this version does not draw.
   @override
   double? progressFor(GridBoard b) =>
-      ((_lives - _wrong(b)) / _lives).clamp(0.0, 1.0);
+      ((_allowed(b) - _wrong(b)) / _allowed(b)).clamp(0.0, 1.0);
 
   int _wrong(GridBoard b) =>
       b.cells.take(26).where((c) => c.tint == CellTint.wrong).length;
@@ -136,7 +157,7 @@ class HangmanGame extends GridGame {
   @override
   String? titleFor(GridBoard b) {
     if (_solved(b)) return 'You got it!';
-    if (_wrong(b) >= _lives) return 'Out of guesses — it was ${wordOf(b)}';
+    if (_wrong(b) >= _allowed(b)) return 'Out of guesses — it was ${wordOf(b)}';
     return null;
   }
 
@@ -149,12 +170,12 @@ class HangmanGame extends GridGame {
         .where((c) => c.tint == CellTint.right)
         .map((c) => c.label)
         .toSet();
-    final over = _solved(b) || _wrong(b) >= _lives;
+    final over = _solved(b) || _wrong(b) >= _allowed(b);
     final shown = [
       for (final ch in wordOf(b).split(''))
         if (over || got.contains(ch)) ch else '_',
     ].join(' ');
     if (over) return shown;
-    return '$shown   ·   ${_lives - _wrong(b)} left';
+    return '$shown   ·   ${_allowed(b) - _wrong(b)} left';
   }
 }

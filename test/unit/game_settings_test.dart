@@ -116,6 +116,40 @@ void main() {
     }
   });
 
+  test('turning the how-hard knob CHANGES the board', () {
+    // Minesweeper's mines, Lights Out's scramble and Hangman's guesses were
+    // each a `static const` typed once: the room the game was tuned for got a
+    // good round and every other room got that same round. A teacher says
+    // "make it easier for the little ones"; they should never be asked to
+    // think in mines.
+    var checked = 0;
+    for (final g in tunable()) {
+      if (!g.settings.any((s) => s.id == difficultyId)) continue;
+      checked++;
+      final defaults = defaultSettingValues(g.settings);
+      // Many deals, because a board is dealt at random: two levels CAN land
+      // on the same shape once, never fifteen times running.
+      var differed = false;
+      for (var i = 0; i < 15 && !differed; i++) {
+        final gentle = g.initialStateFor(bank(), {
+          ...defaults,
+          difficultyId: 'gentle',
+        });
+        final tricky = g.initialStateFor(bank(), {
+          ...defaults,
+          difficultyId: 'tricky',
+        });
+        differed = gentle.toString() != tricky.toString();
+      }
+      expect(
+        differed,
+        isTrue,
+        reason: '${g.id} declares a level and deals the same board anyway',
+      );
+    }
+    expect(checked, greaterThanOrEqualTo(3), reason: 'the classics lost it');
+  });
+
   test('a seed with no settings still works — every other path', () {
     // `initialState` (no values) is what the /live path and every test
     // fixture call. It must produce the game's own defaults, not an empty

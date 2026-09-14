@@ -76,6 +76,11 @@ class _GameSettingsSheetState extends State<_GameSettingsSheet> {
       value: _values.multiSetting(s.id, s.initial),
       onChanged: (v) => setState(() => _values[s.id] = v),
     ),
+    final ChoiceSetting s => _ChoiceControl(
+      setting: s,
+      value: _values.choiceSetting(s.id, s.initial),
+      onChanged: (v) => setState(() => _values[s.id] = v),
+    ),
   };
 }
 
@@ -187,6 +192,54 @@ class _MultiControl extends StatelessWidget {
                   }
                   onChanged(next);
                 },
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A row of chips for a [ChoiceSetting] — exactly one stays selected.
+///
+/// `ChoiceChip` rather than `FilterChip`: Material draws the single-select
+/// shape without a checkmark, which is the visual difference between "these
+/// are on" and "this is the one".
+class _ChoiceControl extends StatelessWidget {
+  const _ChoiceControl({
+    required this.setting,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final ChoiceSetting setting;
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          setting.label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final (option, label) in setting.options)
+              ChoiceChip(
+                label: Text(label),
+                selected: value == option,
+                // Re-tapping the chosen one keeps it — a round always has a
+                // level, so there is no "none" to fall back to.
+                onSelected: (_) => onChanged(option),
               ),
           ],
         ),

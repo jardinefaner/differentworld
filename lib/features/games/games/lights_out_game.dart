@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -40,14 +41,30 @@ class LightsOutGame extends GridGame {
   @override
   int get rows => 5;
 
+  /// How many backwards moves the scramble takes — the only thing that makes
+  /// this puzzle easy or hard, and it was typed once as an 8.
+  static const _scramble = (4, 8, 14);
+
   @override
-  List<BoardCell> deal(ContentSource content) {
+  List<GameSetting> get settings => [difficulty()];
+
+  @override
+  List<BoardCell> dealWith(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => _scrambled(difficultyFrom(values).pick(_scramble));
+
+  @override
+  List<BoardCell> deal(ContentSource content) =>
+      _scrambled(GameDifficulty.usual.pick(_scramble));
+
+  List<BoardCell> _scrambled(int steps) {
     // Scrambled by PLAYING it backwards from solved, never at random: a random
     // board can be unsolvable, and handing a room an impossible puzzle is a
     // worse outcome than an easy one.
     final r = Random();
     var on = List<bool>.filled(cols * rows, false);
-    for (var k = 0; k < 8; k++) {
+    for (var k = 0; k < steps; k++) {
       on = _flip(on, r.nextInt(cols * rows), cols, rows);
     }
     return [

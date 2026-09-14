@@ -57,6 +57,74 @@ class MultiSetting extends GameSetting {
   Object? get defaultValue => initial;
 }
 
+/// A single pick from a short list — how hard, which mode. Options are
+/// `(value, label)` pairs and exactly one is always chosen.
+///
+/// Distinct from [MultiSetting] on purpose: a row of chips where any number
+/// can be on, and a row where exactly one is, look nearly the same and behave
+/// nothing alike. A teacher who taps "Gentle" expecting "Usual" to switch off
+/// and finds both lit has been told something false about the round.
+class ChoiceSetting extends GameSetting {
+  const ChoiceSetting({
+    required super.id,
+    required super.label,
+    required this.options,
+    required this.initial,
+    super.hint,
+  });
+
+  final List<(String, String)> options;
+  final String initial;
+
+  @override
+  Object? get defaultValue => initial;
+}
+
+/// **How hard** — the knob a substitute reaches for when the room in front of
+/// them is younger or older than the one the game was tuned for.
+///
+/// One spelling for every game, because "make it easier for the little ones"
+/// is one thought. The MECHANIC differs per game (fewer mines, a shorter
+/// scramble, more guesses) and that is the game's business; the teacher is
+/// never asked to think in mines.
+ChoiceSetting difficulty({String label = 'How hard'}) => ChoiceSetting(
+  id: difficultyId,
+  label: label,
+  options: const [
+    ('gentle', 'Gentle'),
+    ('usual', 'Usual'),
+    ('tricky', 'Tricky'),
+  ],
+  initial: 'usual',
+);
+
+/// The key [difficulty] writes under.
+const String difficultyId = 'difficulty';
+
+/// The three rooms a game gets played in.
+enum GameDifficulty {
+  gentle,
+  usual,
+  tricky;
+
+  /// Pick the value for this level — the one line a game writes to adopt the
+  /// knob: `level.pick(mines: (3, 5, 8))`.
+  T pick<T>((T, T, T) three) => switch (this) {
+    GameDifficulty.gentle => three.$1,
+    GameDifficulty.usual => three.$2,
+    GameDifficulty.tricky => three.$3,
+  };
+}
+
+/// Read the chosen level, falling back to [GameDifficulty.usual] for a seed
+/// with no settings — the same contract as [roundsFrom] and [secondsFrom].
+GameDifficulty difficultyFrom(Map<String, Object?> values) =>
+    switch (values[difficultyId]) {
+      'gentle' => GameDifficulty.gentle,
+      'tricky' => GameDifficulty.tricky,
+      _ => GameDifficulty.usual,
+    };
+
 /// **How long a round is** — the knob a substitute actually reaches for.
 ///
 /// "We have ten minutes" is the most common constraint in the building, and
@@ -134,6 +202,9 @@ Map<String, Object?> defaultSettingValues(List<GameSetting> settings) => {
 /// Typed reads for a values map (the runner passes `Map<String, Object?>`).
 extension GameSettingValues on Map<String, Object?> {
   int intSetting(String id, int fallback) => (this[id] as int?) ?? fallback;
+
+  String choiceSetting(String id, String fallback) =>
+      (this[id] as String?) ?? fallback;
 
   Set<String> multiSetting(String id, Set<String> fallback) {
     final v = this[id];

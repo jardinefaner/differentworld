@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -15,7 +16,20 @@ class MinesweeperGame extends GridGame {
   const MinesweeperGame();
 
   static const _mine = '💣';
-  static const _mines = 5;
+
+  /// Five on a 5x5 is the room this game was tuned for. A younger room wants
+  /// three; a room that has played it before wants eight. The teacher picks a
+  /// LEVEL — nobody should be asked to think in mines.
+  static const _mines = (3, 5, 8);
+
+  @override
+  List<GameSetting> get settings => [difficulty()];
+
+  @override
+  List<BoardCell> dealWith(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => _lay(difficultyFrom(values).pick(_mines));
 
   @override
   String get id => 'minesweeper';
@@ -52,10 +66,13 @@ class MinesweeperGame extends GridGame {
   int get rows => 5;
 
   @override
-  List<BoardCell> deal(ContentSource content) {
+  List<BoardCell> deal(ContentSource content) =>
+      _lay(GameDifficulty.usual.pick(_mines));
+
+  List<BoardCell> _lay(int count) {
     final r = Random();
     final mines = <int>{};
-    while (mines.length < _mines) {
+    while (mines.length < count) {
       mines.add(r.nextInt(cols * rows));
     }
     return [
