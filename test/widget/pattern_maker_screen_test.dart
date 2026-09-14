@@ -12,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '_briefing.dart';
+
 // A valid 1×1 transparent PNG — enough for the cells to mount.
 final Uint8List _png = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
@@ -33,6 +35,7 @@ void main() {
       ProviderScope(child: MaterialApp.router(routerConfig: router)),
     );
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     expect(find.text('Make a Pattern'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Snap your tile'), findsOneWidget);

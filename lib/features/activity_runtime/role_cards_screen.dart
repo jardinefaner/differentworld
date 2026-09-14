@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/role_capture.dart';
 import 'package:differentworld/features/activity_runtime/roles.dart';
+import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
@@ -65,55 +66,62 @@ class _RoleCardsScreenState extends State<RoleCardsScreen> {
     return EdgeScaffold(
       body: OursFooter(
         route: '/activity/roles',
-        child: SafeArea(
-          bottom: false,
-          child: ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ContentHeader(
-                  title: 'Role Cards',
-                  subtitle: deck.tagline,
-                ),
-              ),
-              if (roleDecks.length > 1)
-                _DeckSwitcher(
-                  decks: roleDecks,
-                  selected: _deckIndex,
-                  onSelect: (i) => setState(() => _deckIndex = i),
-                ),
-              Padding(
-                // Bottom 96 clears the floating omnibox bar (~76) so the last
-                // grid row isn't hidden behind it (rubric A3).
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                child: GridView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 150,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    // Cell grows with text scale (smaller cells than the other
-                    // decks) so name + "builds …" never clip.
-                    mainAxisExtent:
-                        64 +
-                        64 * (MediaQuery.textScalerOf(context).scale(14) / 14),
+        // The room is told what this is before it starts — these three are
+        // the ones a substitute has never done before (activity_brief.dart).
+        child: ActivityBrief(
+          route: '/activity/roles',
+          title: 'Role Cards',
+          child: SafeArea(
+            bottom: false,
+            child: ListView(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ContentHeader(
+                    title: 'Role Cards',
+                    subtitle: deck.tagline,
                   ),
-                  children: [
-                    for (var i = 0; i < deck.cards.length; i++)
-                      AccentCardTile(
-                        color: _palette[i % _palette.length],
-                        emoji: deck.cards[i].emoji,
-                        title: deck.cards[i].name,
-                        tagline: 'builds ${deck.cards[i].builds}',
-                        semanticLabel:
-                            'Role: ${deck.cards[i].name}, builds ${deck.cards[i].builds}',
-                        onTap: () => _open(context, deck.cards[i]),
-                      ),
-                  ],
                 ),
-              ),
-            ],
+                if (roleDecks.length > 1)
+                  _DeckSwitcher(
+                    decks: roleDecks,
+                    selected: _deckIndex,
+                    onSelect: (i) => setState(() => _deckIndex = i),
+                  ),
+                Padding(
+                  // Bottom 96 clears the floating omnibox bar (~76) so the last
+                  // grid row isn't hidden behind it (rubric A3).
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  child: GridView(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 150,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      // Cell grows with text scale (smaller cells than the other
+                      // decks) so name + "builds …" never clip.
+                      mainAxisExtent:
+                          64 +
+                          64 *
+                              (MediaQuery.textScalerOf(context).scale(14) / 14),
+                    ),
+                    children: [
+                      for (var i = 0; i < deck.cards.length; i++)
+                        AccentCardTile(
+                          color: _palette[i % _palette.length],
+                          emoji: deck.cards[i].emoji,
+                          title: deck.cards[i].name,
+                          tagline: 'builds ${deck.cards[i].builds}',
+                          semanticLabel:
+                              'Role: ${deck.cards[i].name}, builds ${deck.cards[i].builds}',
+                          onTap: () => _open(context, deck.cards[i]),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

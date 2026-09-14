@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '_briefing.dart';
+
 void main() {
   Widget harness() {
     final router = GoRouter(
@@ -25,6 +27,7 @@ void main() {
   testWidgets('shows the catalog with role tiles', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     // ContentHeader titles render as-is — sentence case (the Calm brand).
     expect(find.text('Role Cards'), findsOneWidget);
@@ -36,6 +39,7 @@ void main() {
   testWidgets('tapping a role flips to its card face', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     await tester.tap(find.text('Ant'));
     await tester.pumpAndSettle();
@@ -47,6 +51,7 @@ void main() {
   testWidgets('switching to the People deck swaps the cards', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     // Animals are showing first.
     expect(find.text('Ant'), findsOneWidget);

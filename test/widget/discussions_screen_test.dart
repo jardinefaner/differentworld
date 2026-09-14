@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '_briefing.dart';
+
 void main() {
   Widget harness() {
     final router = GoRouter(
@@ -22,6 +24,7 @@ void main() {
   testWidgets('opens on setup — topic + age picker, no typing', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Group Discussion'), findsOneWidget);
@@ -34,6 +37,7 @@ void main() {
   ) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     await tester.tap(find.textContaining('Start —'));
     await tester.pumpAndSettle();
@@ -53,6 +57,7 @@ void main() {
   testWidgets('advancing to the end reaches the wrap-up', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     await tester.tap(find.textContaining('Start —'));
     await tester.pumpAndSettle();

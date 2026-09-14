@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:differentworld/features/activity_runtime/pattern_maker.dart';
+import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -98,55 +99,61 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
     return EdgeScaffold(
       body: OursFooter(
         route: '/activity/pattern',
-        child: SafeArea(
-          bottom: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-            children: [
-              const ContentHeader(
-                title: 'Make a Pattern',
-              ),
-              if (tile == null)
-                _Intro(
-                  prompt: _prompt,
-                  capturing: _capturing,
-                  onSnap: _snap,
-                  onNewPrompt: _newPrompt,
-                )
-              else ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    // RepaintBoundary so _makePoster can rasterize the clean
-                    // square pattern (the rounded clip is display-only).
-                    child: RepaintBoundary(
-                      key: _patternKey,
-                      child: PatternCanvas(tile: tile, config: _config),
+        // The room is told what this is before it starts — these three are
+        // the ones a substitute has never done before (activity_brief.dart).
+        child: ActivityBrief(
+          route: '/activity/pattern',
+          title: 'Make a Pattern',
+          child: SafeArea(
+            bottom: false,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+              children: [
+                const ContentHeader(
+                  title: 'Make a Pattern',
+                ),
+                if (tile == null)
+                  _Intro(
+                    prompt: _prompt,
+                    capturing: _capturing,
+                    onSnap: _snap,
+                    onNewPrompt: _newPrompt,
+                  )
+                else ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      // RepaintBoundary so _makePoster can rasterize the clean
+                      // square pattern (the rounded clip is display-only).
+                      child: RepaintBoundary(
+                        key: _patternKey,
+                        child: PatternCanvas(tile: tile, config: _config),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                _Controls(
-                  config: _config,
-                  capturing: _capturing,
-                  onConfig: (c) => setState(() => _config = c),
-                  onNewTile: _snap,
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: _capturing ? null : _makePoster,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(56),
+                  const SizedBox(height: 24),
+                  _Controls(
+                    config: _config,
+                    capturing: _capturing,
+                    onConfig: (c) => setState(() => _config = c),
+                    onNewTile: _snap,
                   ),
-                  icon: const Icon(Icons.print_outlined),
-                  label: const Text(
-                    'Make a poster',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _capturing ? null : _makePoster,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                    ),
+                    icon: const Icon(Icons.print_outlined),
+                    label: const Text(
+                      'Make a poster',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
