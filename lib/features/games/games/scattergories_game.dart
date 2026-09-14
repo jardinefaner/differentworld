@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -41,7 +42,7 @@ class ScattergoriesGame extends GridGame {
       detail: 'One person types it in',
     ),
     RoomBeat('A wrong letter passes the turn'),
-    RoomBeat('Fill all six to finish'),
+    RoomBeat('Fill all six before the bar runs out'),
   ];
 
   @override
@@ -55,6 +56,53 @@ class ScattergoriesGame extends GridGame {
 
   @override
   String? get entryHint => 'An answer, then the next';
+
+  /// **The sand.** Scattergories IS the clock — "how many can you get before
+  /// time runs out" is the whole game, and without one a team could sit on a
+  /// single category until somebody gave up. It shipped without one: six
+  /// squares, all the time in the world, and nothing to play against.
+  ///
+  /// Ninety seconds by default, and settable, because a room of six-year-olds
+  /// and a room of eleven-year-olds do not want the same ninety.
+  static const int defaultSeconds = 90;
+
+  @override
+  List<GameSetting> get settings => [
+    seconds(label: 'How long', max: 240),
+  ];
+
+  @override
+  Map<String, int> tallyFrom(Map<String, Object?> values) => {
+    'secs': secondsFrom(values, fallback: defaultSeconds),
+  };
+
+  /// A board seeded before this game had a clock (an older phone casting, a
+  /// fixture) carries no 'secs' — it gets the default rather than no round.
+  static int _allowed(GridBoard b) =>
+      b.tally['secs'] is int && b.tally['secs']! > 0
+      ? b.tally['secs']!
+      : defaultSeconds;
+
+  static int leftOn(GridBoard b) =>
+      (_allowed(b) - b.score('elapsed')).clamp(0, _allowed(b));
+
+  @override
+  bool get ticks => true;
+
+  /// The clock does nothing to the squares; it only runs. Returning the cells
+  /// unchanged is what tells the reducer a beat happened, so `tallyAfterTick`
+  /// and `outcomeFor` both get their go.
+  @override
+  List<BoardCell>? onTick(GridBoard b) => b.cells;
+
+  @override
+  Map<String, int> tallyAfterTick(GridBoard before) => before.plus('elapsed');
+
+  /// The sand running out, drawn as a bar the whole room can watch — the same
+  /// instrument Boggle uses, for the same reason: a number nobody is looking
+  /// at is not a constraint.
+  @override
+  double? progressFor(GridBoard b) => (leftOn(b) / _allowed(b)).clamp(0.0, 1.0);
 
   static String letterOf(GridBoard b) =>
       b.cells.isEmpty ? '' : (b.cells.last.face ?? '');
@@ -146,10 +194,16 @@ class ScattergoriesGame extends GridGame {
   }
 
   @override
-  String? outcomeFor(GridBoard b) =>
-      b.cells.every((c) => c.tint == CellTint.right)
-      ? 'All of them, with ${letterOf(b)}'
-      : null;
+  String? outcomeFor(GridBoard b) {
+    final filled = b.cells.where((c) => c.tint == CellTint.right).length;
+    if (filled == b.cells.length) return 'All of them, with ${letterOf(b)}';
+    if (leftOn(b) > 0) return null;
+    // Time. Say what they got — a round that ends on a buzzer and reports
+    // nothing reads as a round that broke.
+    return filled == 0
+        ? 'Time! Nothing starts with ${letterOf(b)}, then'
+        : 'Time! $filled of ${b.cells.length}';
+  }
 
   @override
   String? titleFor(GridBoard b) => 'Everything starts with ${letterOf(b)}';
@@ -158,7 +212,12 @@ class ScattergoriesGame extends GridGame {
   String? noteFor(GridBoard b) {
     final turn = turnLine(b);
     final score = scoreLine(b);
-    if (score != null) return '$turn\n$score';
-    return turn;
+    // The clock only appears once it is worth watching (the half-second
+    // rule): a countdown sitting at 1:30 is furniture, one saying 0:20 is the
+    // game. The bar above carries it the rest of the time.
+    final left = leftOn(b);
+    final clock = left <= 20 && !b.done ? '${left}s' : null;
+    final lines = [turn, ?score, ?clock];
+    return lines.join('\n');
   }
 }

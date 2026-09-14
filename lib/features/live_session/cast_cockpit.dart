@@ -6,6 +6,7 @@ import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_clock.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_settings_sheet.dart';
@@ -98,8 +99,15 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     );
   }
 
+  /// The cast is the authority (docs/LIVE_SESSIONS.md), so the cockpit winds
+  /// the clock for whatever is on the screen. Nothing did before, so Whack-a-
+  /// Mole, Simon and Boggle cast a still picture to the room: the mole never
+  /// moved, the sequence never played, the sand never ran out.
+  final _clock = GameClock();
+
   @override
   void dispose() {
+    _clock.stop();
     unawaited(WakelockPlus.disable());
     // Do NOT dispose the session — it lives in castSessionProvider so the cast
     // PERSISTS when we leave (only an explicit Stop ends it). The anchor.
@@ -192,6 +200,10 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     });
     final gameId = CastSession.gameIdOf(snap.meta);
     final def = gameId == null ? null : gameById(gameId);
+    // Follow whatever is cast. Cheap for the ~40 games with no clock (no timer
+    // is created), and re-pointing at the game already running is a no-op, so
+    // this is safe to call on every build.
+    _clock.follow(def, () => _send(GameIntent.tick));
     // The live world is the one thing a stranded caster can still present
     // locally (the present screen runs without a Receiver). Null when the
     // journey isn't set up → the banner falls back to a "check the code" hint.

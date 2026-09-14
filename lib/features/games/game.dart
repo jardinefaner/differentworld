@@ -37,8 +37,9 @@ enum GameIntent {
   pick,
 
   /// One beat of the clock, for the games that have one (the mole moves on
-  /// its own; a sequence plays itself back). Driven by the runner, never by a
-  /// person — so it carries no args and a game without a clock ignores it.
+  /// its own; a sequence plays itself back; the sand runs out). Driven by
+  /// whoever holds the reducer — a `GameClock`, never a person — so it
+  /// carries no args and a game without a clock ignores it.
   tick,
 
   /// Count one more of the room's responses — `args: {'by': int}` (default
@@ -273,6 +274,19 @@ abstract class GameDefinition<S> {
   /// `castSeedFor` (cast_seeding.dart) is the one thing that knows how any
   /// game is seeded; ask it, not this.
   bool get seedsFromContentBank => true;
+
+  /// **Does this game have a clock?** Most don't — a game waits for a tap.
+  /// The few that are about being QUICK rather than being right do: the mole
+  /// that moves on its own, a sequence that plays itself back, sand that runs
+  /// out while the room is still shouting.
+  ///
+  /// Declaring it is the whole job. Whoever holds the reducer winds a
+  /// `GameClock` (game_clock.dart) and `tick` arrives on its own, wherever
+  /// the game is being played — one device, cast to a TV, or across two.
+  bool get ticks => false;
+
+  /// How often [ticks] fires while the round is live.
+  Duration get tickEvery => const Duration(seconds: 1);
 
   /// **True when a round cannot exist without a choice only the caller can
   /// make** — which world, which text, which marks on the board.

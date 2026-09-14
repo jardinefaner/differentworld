@@ -5,11 +5,11 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_clock.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_settings_sheet.dart';
-import 'package:differentworld/features/games/grid_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,7 +63,7 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
 
   /// The clock, for the games that have one (the mole moves on its own).
   /// Null for every other game, which is most of them.
-  Timer? _clock;
+  final _clock = GameClock();
   // Teacher-chosen settings (the Settings contract). Defaults until tuned;
   // the reseed closure reads this field, so "play again" + applied changes
   // both honor the current values.
@@ -100,22 +100,11 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
           ? widget.reseed
           : () => widget.def.initialStateFor(_engine, _values),
     );
-    _startClockIfNeeded();
-  }
-
-  /// Drive [GameIntent.tick] for a game that declares a clock. The reducer
-  /// ignores a tick once the round is done, so the timer costs nothing after
-  /// the end — but it is still cancelled in [dispose], because a periodic
-  /// timer outliving its State is the classic leak.
-  void _startClockIfNeeded() {
-    // Typed as Object so `is GridGame` promotes: `widget.def` is
-    // GameDefinition<S>, and S is not GridBoard from in here.
-    final Object grid = widget.def;
-    if (grid is! GridGame || !grid.ticks) return;
-    _clock = Timer.periodic(grid.tickEvery, (_) {
-      if (!mounted) return;
-      _controller.send(GameIntent.tick);
-    });
+    // This State is the authority here (it owns the local reducer), so it
+    // winds the clock. It used to do so with a bespoke timer that read
+    // `ticks` off GridGame directly — the only clock in the app, which is
+    // why three games froze on every other surface.
+    _clock.follow(widget.def, () => _controller.send(GameIntent.tick));
   }
 
   /// Open the settings sheet; applying starts a fresh round with the new
@@ -133,7 +122,7 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
 
   @override
   void dispose() {
-    _clock?.cancel();
+    _clock.stop();
     _controller.dispose();
     super.dispose();
   }

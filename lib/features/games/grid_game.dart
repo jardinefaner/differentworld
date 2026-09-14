@@ -2,6 +2,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/shape_stage_view.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
@@ -273,15 +274,8 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// (Play again · Done) with no per-game UI.
   String? outcomeFor(GridBoard b) => null;
 
-  /// **Does this game have a clock?** Most don't — a classic waits for a tap.
-  /// The few that are about being quick rather than being right (the mole
-  /// that moves on its own, a sequence that plays itself back) do.
-  bool get ticks => false;
-
-  /// How often [onTick] fires while [ticks] is true and the round is live.
-  Duration get tickEvery => const Duration(seconds: 1);
-
-  /// What one beat of the clock does to the board. Return null to let the
+  /// What one beat of the clock does to the board. Declare
+  /// [GameDefinition.ticks] to get one. Return null to let the
   /// tick pass without changing anything.
   List<BoardCell>? onTick(GridBoard b) => null;
 
@@ -371,12 +365,38 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   GridBoard decode(Map<String, dynamic> state) => GridBoard.fromWire(state);
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) => GridBoard(
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  /// The board, with the teacher's knobs in hand.
+  ///
+  /// Every classic used to build its board here and ignore [settings]
+  /// entirely, so a grid game with a knob was dealt at its defaults no matter
+  /// what anybody chose. Override [dealWith] when a setting changes the BOARD
+  /// (how many mines, how scrambled) and [tallyFrom] when it changes a
+  /// COUNTER (seconds on the clock, guesses allowed) — the construction of
+  /// the board itself stays here, once.
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => GridBoard(
     cols: cols,
     rows: rows,
-    cells: deal(content),
-    tally: initialTally,
+    cells: dealWith(content, values),
+    tally: {...initialTally, ...tallyFrom(values)},
   ).toWire();
+
+  /// [deal], with the settings. Default: ignore them.
+  List<BoardCell> dealWith(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => deal(content);
+
+  /// Counters a SETTING seeds, merged over [initialTally]. These survive Play
+  /// again — a knob the teacher set is not a counter the round earned.
+  Map<String, int> tallyFrom(Map<String, Object?> values) =>
+      const <String, int>{};
 
   @override
   Set<GameIntent> activeIntents(GridBoard state) => {
@@ -466,7 +486,15 @@ abstract class GridGame extends GameDefinition<GridBoard> {
           cells: [
             for (final c in b.cells) c.copyWith(state: CellState.hidden),
           ],
-          tally: initialTally,
+          // The seconds ON the clock survive Play again; the seconds SPENT
+          // do not. `tallyFrom({})` names which keys are knobs rather than
+          // counters, so a re-deal through the pure reducer (no content, no
+          // values) keeps what the teacher chose.
+          tally: {
+            ...initialTally,
+            for (final k in tallyFrom(const <String, Object?>{}).keys)
+              k: ?b.tally[k],
+          },
         ).toWire();
       // Every other intent is a no-op for a board: there is no "next slide"
       // and no answer to reveal. Returning state unchanged means the standard

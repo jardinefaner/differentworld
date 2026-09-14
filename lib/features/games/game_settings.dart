@@ -92,6 +92,39 @@ int roundsFrom(Map<String, Object?> values, {required int fallback}) {
   return v is int && v > 0 ? v : fallback;
 }
 
+/// **How long the sand lasts**, in seconds — the shared "how long" knob, for
+/// the same reason [roundLength] is the shared "how many".
+///
+/// A timed game's duration is the single thing a teacher most wants to change
+/// and the thing most likely to be a `static const` somebody typed once: an
+/// afterschool room of six-year-olds and a room of eleven-year-olds do not
+/// want the same ninety seconds.
+IntSetting seconds({
+  required String label,
+  int initial = 90,
+  int min = 30,
+  int max = 300,
+  int step = 15,
+}) => IntSetting(
+  id: secondsId,
+  label: label,
+  min: min,
+  max: max,
+  initial: initial,
+  step: step,
+  hint: 'Seconds',
+);
+
+/// The key [seconds] writes under.
+const String secondsId = 'seconds';
+
+/// Read the chosen duration, falling back to [fallback] when the game was
+/// seeded without settings — the same contract as [roundsFrom].
+int secondsFrom(Map<String, Object?> values, {required int fallback}) {
+  final v = values[secondsId];
+  return v is int && v > 0 ? v : fallback;
+}
+
 /// The default value map for a settings list (each setting's default), keyed
 /// by id — what the runner starts from before the teacher tunes anything.
 Map<String, Object?> defaultSettingValues(List<GameSetting> settings) => {

@@ -2115,6 +2115,38 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### The CLOCK was the same count — three games, and one surface wound it
+
+Three games declare `ticks`: Whack-a-Mole (the mole moves on its own), Simon
+(the sequence plays itself back), Boggle (the sand runs out). Exactly ONE
+surface wound a clock — `GameRunner._startClockIfNeeded`, a private method of
+one State that read `ticks` off `GridGame` directly. So all three worked in a
+hand and **froze everywhere else**: cast Whack-a-Mole to a TV and the room
+watches a still picture of a mole; run it across two devices and the same.
+
+`GameClock` (`lib/features/games/game_clock.dart`) is the one winder, and it
+belongs to the **authority** — the object that reduces — not to a view. That
+placement is load-bearing: there is exactly one authority per session however
+many screens are watching, which a view is NOT. A clock in `GameView` would
+run twice the moment a presenter opened the fullscreen stage over its own
+board, because the board underneath stays mounted. The three owners are
+`GameRunner` (one device), `_CastCockpitState` (the cast authority) and
+`_LiveGameScreenState` **when presenting only** — a joined controller forwards
+its intents rather than reducing them, so a controller that ticked would double
+the rate.
+
+`ticks` / `tickEvery` moved from `GridGame` up to `GameDefinition`, so a clock
+is a game-level idea and a non-grid game can have one.
+
+Related, same wave: **a `GridGame` ignored its own settings.** `GridGame`
+built its board in `initialState` and never overrode `initialStateFor`, so a
+classic with a knob was dealt at its defaults no matter what anybody chose.
+It now seeds through `initialStateFor` once, with two hooks — `dealWith` (a
+setting that changes the BOARD) and `tallyFrom` (one that changes a COUNTER).
+The pure reducer's Play again carries the `tallyFrom` keys forward, because a
+knob the teacher set is not a counter the round earned: the seconds ON the
+clock survive a replay, the seconds SPENT do not.
+
 ### The SEED was the same count — five doors, three knew only the bank
 
 Having fixed the briefing and the ending, I asked the count question of the

@@ -69,6 +69,53 @@ void main() {
     }
   });
 
+  test('turning the how-long knob CHANGES the sand', () {
+    // Same check for the other shared knob. Both timed classics shipped with
+    // a `static const _seconds = 90` nobody could reach: a room of
+    // six-year-olds and a room of eleven-year-olds got the same ninety.
+    var checked = 0;
+    for (final g in tunable()) {
+      if (!g.settings.any((s) => s.id == secondsId)) continue;
+      checked++;
+      final defaults = defaultSettingValues(g.settings);
+      final brisk = g.initialStateFor(bank(), {...defaults, secondsId: 45});
+      expect(
+        ((brisk['k'] as Map?) ?? const {})['secs'],
+        45,
+        reason: '${g.id} declares a duration and deals its own anyway',
+      );
+    }
+    expect(
+      checked,
+      greaterThanOrEqualTo(2),
+      reason: 'the timed classics lost their clock',
+    );
+  });
+
+  test('a knob survives Play again, and a counter does not', () {
+    // Play again through the PURE reducer (no content, no values — the path a
+    // seeded game takes when nothing wires a reseed). The seconds ON the
+    // clock are the teacher's choice; the seconds SPENT are the round's.
+    for (final g in tunable()) {
+      if (!g.settings.any((s) => s.id == secondsId)) continue;
+      final defaults = defaultSettingValues(g.settings);
+      var wire = g.initialStateFor(bank(), {...defaults, secondsId: 45});
+      for (var i = 0; i < 5; i++) {
+        wire = g.reduce(wire, GameIntent.tick, const {});
+      }
+      final spent = ((wire['k'] as Map?) ?? const {})['elapsed'];
+      expect(spent, isNot(0), reason: '${g.id} did not count the beats');
+      final again = g.reduce(wire, GameIntent.reset, const {});
+      final tally = (again['k'] as Map?) ?? const {};
+      expect(tally['secs'], 45, reason: '${g.id} lost the chosen duration');
+      expect(
+        tally['elapsed'] ?? 0,
+        0,
+        reason: '${g.id} started the new round part-way through the old one',
+      );
+    }
+  });
+
   test('a seed with no settings still works — every other path', () {
     // `initialState` (no values) is what the /live path and every test
     // fixture call. It must produce the game's own defaults, not an empty

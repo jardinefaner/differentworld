@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -55,8 +56,26 @@ class BoggleGame extends GridGame {
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
-  /// The sand. Ninety ticks of one second, counted down in the tally.
-  static const _seconds = 90;
+  /// The sand. Ninety ticks of one second by default, counted down in the
+  /// tally — and settable, because a room of six-year-olds and a room of
+  /// eleven-year-olds do not want the same ninety.
+  static const int defaultSeconds = 90;
+
+  @override
+  List<GameSetting> get settings => [
+    seconds(label: 'How long', max: 240),
+  ];
+
+  @override
+  Map<String, int> tallyFrom(Map<String, Object?> values) => {
+    'secs': secondsFrom(values, fallback: defaultSeconds),
+  };
+
+  /// A board seeded before the knob existed carries no 'secs'.
+  static int _allowed(GridBoard b) =>
+      b.tally['secs'] is int && b.tally['secs']! > 0
+      ? b.tally['secs']!
+      : defaultSeconds;
 
   @override
   bool get ticks => true;
@@ -69,7 +88,7 @@ class BoggleGame extends GridGame {
 
   @override
   String? outcomeFor(GridBoard b) {
-    if (b.score('elapsed') < _seconds) return null;
+    if (b.score('elapsed') < _allowed(b)) return null;
     final ringed = b.cells.where((c) => c.tint == CellTint.live).length;
     return ringed == 0 ? 'Time! How many did you get?' : 'Time!';
   }
@@ -78,7 +97,7 @@ class BoggleGame extends GridGame {
   /// only appeared as a number under twenty seconds before.
   @override
   double? progressFor(GridBoard b) =>
-      (1 - b.score('elapsed') / _seconds).clamp(0.0, 1.0);
+      (1 - b.score('elapsed') / _allowed(b)).clamp(0.0, 1.0);
 
   @override
   int get cols => 4;
@@ -114,7 +133,7 @@ class BoggleGame extends GridGame {
       for (final c in b.cells)
         if (c.tint == CellTint.live) c.label ?? '',
     ].join();
-    final left = _seconds - b.score('elapsed');
+    final left = _allowed(b) - b.score('elapsed');
     // The clock only appears once it is worth watching. A countdown that
     // starts at 1:30 and sits there is furniture; one that says 0:20 is the
     // game (the half-second rule — live state, read at a glance).

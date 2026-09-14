@@ -8,6 +8,7 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_clock.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/features/games/game_view.dart';
@@ -140,6 +141,13 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
         SessionRole.control => _Mode.control,
       };
     });
+    // The PRESENTER is the authority here (a joined controller forwards its
+    // intents for the presenter to reduce), so the presenter is the one that
+    // winds the clock — and only the presenter, or a two-device Whack-a-Mole
+    // would run at double speed.
+    if (role == SessionRole.present) {
+      _clock.follow(_def, () => c.send(GameIntent.tick));
+    }
     // The presenter announces to the program lobby so the room can find +
     // join from Today — without anyone navigating to this game's route first.
     if (role == SessionRole.present) {
@@ -160,6 +168,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
   }
 
   void _leave() {
+    _clock.stop();
     for (final sub in _subs) {
       unawaited(sub.cancel());
     }
@@ -181,8 +190,12 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     });
   }
 
+  /// Wound only while this device is presenting — see [_open].
+  final _clock = GameClock();
+
   @override
   void dispose() {
+    _clock.stop();
     for (final sub in _subs) {
       unawaited(sub.cancel());
     }
