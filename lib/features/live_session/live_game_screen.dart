@@ -6,9 +6,11 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
+import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
+import 'package:differentworld/features/games/game_motion.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_lobby.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -261,10 +263,19 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     // The room (presenter) always shows the public stage; the controller of a
     // secret-role game (the teacher) sees the secret stage instead, so they
     // can mark the room's guess.
-    final stage = isPresenter
-        ? _def.buildStage(context, state)
-        : (_def.buildSecretStage(context, state) ??
-              _def.buildStage(context, state));
+    // The burst on both screens; the buzz only in the hand holding the phone.
+    final stage = GameMotion(
+      enabled: true,
+      haptics: !isPresenter,
+      child: CelebrationLayer(
+        done: _wire['d'] == true,
+        accent: _def.vibe.accent,
+        child: isPresenter
+            ? _def.buildStage(context, state)
+            : (_def.buildSecretStage(context, state) ??
+                  _def.buildStage(context, state)),
+      ),
+    );
     return Column(
       children: [
         if (isPresenter)

@@ -5,6 +5,8 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/facilitation/run_script_view.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
+import 'package:differentworld/features/games/celebration.dart';
+import 'package:differentworld/features/games/game_motion.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
@@ -135,9 +137,13 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
       // (stage_shape.dart). This is the whole point of shapes: a screen
       // mounted on a wall and never updated can still show an activity that
       // shipped after it.
-      body = ColoredBox(
-        color: const Color(0xFF0C0D14), // raw-canvas: TV stage
-        child: ShapeStageView(shape: shape),
+      body = GameMotion(
+        enabled: true,
+        haptics: false,
+        child: ColoredBox(
+          color: const Color(0xFF0C0D14), // raw-canvas: TV stage
+          child: ShapeStageView(shape: shape),
+        ),
       );
     } else if (def == null) {
       // Not describable either — an older phone, or a stage with no shape.
@@ -165,11 +171,19 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
       );
     } else {
       // The clean stage — full-bleed, nothing else (no SafeArea by design).
-      body = ColoredBox(
-        color: def.vibe.surface,
-        child: def.buildStage(
-          context,
-          def.decode(CastSession.gameStateOf(_meta)),
+      // The room's screen celebrates an ending too; it never buzzes — a
+      // tablet on a wall vibrating on every tap is a fault, not a feature.
+      final gameWire = CastSession.gameStateOf(_meta);
+      body = GameMotion(
+        enabled: true,
+        haptics: false,
+        child: ColoredBox(
+          color: def.vibe.surface,
+          child: CelebrationLayer(
+            done: gameWire['d'] == true,
+            accent: def.vibe.accent,
+            child: def.buildStage(context, def.decode(gameWire)),
+          ),
         ),
       );
     }

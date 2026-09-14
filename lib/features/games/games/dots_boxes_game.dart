@@ -48,6 +48,23 @@ class DotsBoxesGame extends GridGame {
   @override
   bool get alternates => true;
 
+  @override
+  List<String> get sides => const ['Red', 'Yellow'];
+
+  /// Dots, edges and boxes drawn as what they are — the board used to be a
+  /// 7×7 of white squares with a middle dot in some of them, and the edges
+  /// that ARE the game were invisible.
+  @override
+  ShapeStyle get style => ShapeStyle.lattice;
+
+  /// A claimed box shows its side's colour; the token emoji stays as storage.
+  @override
+  BoardCell present(BoardCell c) => c.face == _red
+      ? BoardCell(state: c.state, tint: c.tint, slot: 1)
+      : c.face == _yellow
+      ? BoardCell(state: c.state, tint: c.tint, slot: 2)
+      : c;
+
   static bool _isDot(int r, int c) => r.isEven && c.isEven;
   static bool _isBox(int r, int c) => r.isOdd && c.isOdd;
 
@@ -147,14 +164,16 @@ class DotsBoxesGame extends GridGame {
     final y = b.cells.where((c) => c.face == _yellow).length;
     if (r + y < _boxes * _boxes) return null;
     if (r == y) return 'A draw!';
-    return '${r > y ? _red : _yellow} wins!';
+    return '${r > y ? sides[0] : sides[1]} wins!';
   }
 
   @override
   String? noteFor(GridBoard b) {
     final r = b.cells.where((c) => c.face == _red).length;
     final y = b.cells.where((c) => c.face == _yellow).length;
-    if (r + y == 0) return b.turn == 0 ? _red : _yellow;
-    return '$_red $r · $_yellow $y';
+    final turn = turnLine(b);
+    if (r + y == 0) return turn;
+    final score = '${sides[0]} $r  ·  ${sides[1]} $y';
+    return turn == null ? score : '$turn\n$score';
   }
 }

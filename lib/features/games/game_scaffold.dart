@@ -8,6 +8,7 @@ import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/facilitation/run_script_view.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
+import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
@@ -203,7 +204,13 @@ class GameScaffold<S> extends StatelessWidget {
                     return SafeArea(
                       child: Column(
                         children: [
-                          Expanded(child: live),
+                          Expanded(
+                            child: CelebrationLayer(
+                              done: done,
+                              accent: def.vibe.accent,
+                              child: live,
+                            ),
+                          ),
                           if (done)
                             RoundWrap(
                               key: const ValueKey('round-wrap'),
@@ -229,10 +236,18 @@ class GameScaffold<S> extends StatelessWidget {
                     state,
                     controller.send,
                   );
+                  // The same burst over every stage, from the framework:
+                  // the eleventh game somebody adds celebrates like the
+                  // first.
+                  final celebrated = CelebrationLayer(
+                    done: done,
+                    accent: def.vibe.accent,
+                    child: stage,
+                  );
                   if (custom != null) {
                     return Column(
                       children: [
-                        Expanded(child: stage),
+                        Expanded(child: celebrated),
                         _CustomControlBar(child: custom),
                       ],
                     );
@@ -240,7 +255,7 @@ class GameScaffold<S> extends StatelessWidget {
                   return wide
                       ? Column(
                           children: [
-                            Expanded(child: stage),
+                            Expanded(child: celebrated),
                             _GameControlBar(
                               gameId: def.id,
                               keepsake: keeper,
@@ -264,7 +279,7 @@ class GameScaffold<S> extends StatelessWidget {
                               // riddle prompt + its revealed answer card sat
                               // below the fold and read as "cut off" on
                               // phones.
-                              Expanded(child: stage),
+                              Expanded(child: celebrated),
                               _GameControlPanel(
                                 gameId: def.id,
                                 keepsake: keeper,

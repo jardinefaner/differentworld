@@ -113,6 +113,11 @@ class BattleshipGame extends GridGame {
     return '${sides[a > c ? 0 : 1]} wins, $a–$c';
   }
 
+  /// Ships found so far, as a bar that fills.
+  @override
+  double? progressFor(GridBoard b) =>
+      _sunk(b) == 0 ? null : (_sunk(b) / _ships).clamp(0.0, 1.0);
+
   @override
   String? titleFor(GridBoard b) => _sunk(b) == _ships ? 'All hit!' : null;
 
@@ -120,7 +125,7 @@ class BattleshipGame extends GridGame {
   String? noteFor(GridBoard b) {
     final score = scoreLine(b);
     final turn = turnLine(b);
-    if (score != null && turn != null) return '$turn   ·   $score';
+    if (score != null && turn != null) return '$turn\n$score';
     return _legacyNote(b) ?? turn;
   }
 

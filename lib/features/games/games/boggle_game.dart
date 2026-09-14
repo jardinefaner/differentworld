@@ -74,6 +74,12 @@ class BoggleGame extends GridGame {
     return ringed == 0 ? 'Time! How many did you get?' : 'Time!';
   }
 
+  /// The sand running out, as a bar the whole room can watch — the clock
+  /// only appeared as a number under twenty seconds before.
+  @override
+  double? progressFor(GridBoard b) =>
+      (1 - b.score('elapsed') / _seconds).clamp(0.0, 1.0);
+
   @override
   int get cols => 4;
 

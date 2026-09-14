@@ -94,9 +94,46 @@ class SimonGame extends GridGame {
   @override
   Map<String, int> get initialTally => const {'showAt': 0};
 
+  /// Four pads, one colour each, lit one at a time — the thing Simon IS.
+  @override
+  ShapeStyle get style => ShapeStyle.pads;
+
   /// The pads are storage as well as board, so nothing they hold may show.
+  /// Each pad keeps its own colour slot by position, so the room can say
+  /// the pattern back as colours — "red, green, blue".
   @override
   BoardCell present(BoardCell c) => BoardCell(state: c.state, tint: c.tint);
+
+  @override
+  StageShape? asShape(GridBoard state) {
+    final base = super.asShape(state);
+    if (base == null) return null;
+    return StageShape(
+      kind: base.kind,
+      cols: base.cols,
+      rows: base.rows,
+      title: base.title,
+      note: base.note,
+      style: base.style,
+      progress: base.progress,
+      cells: [
+        for (var i = 0; i < base.cells.length; i++)
+          ShapeCell(
+            state: base.cells[i].state,
+            tint: base.cells[i].tint,
+            slot: i + 1,
+          ),
+      ],
+    );
+  }
+
+  /// How far through the pattern the room is, once it is the room's turn.
+  @override
+  double? progressFor(GridBoard b) {
+    final n = patternOf(b).length;
+    if (n == 0 || showingOf(b)) return null;
+    return progressOf(b) / n;
+  }
 
   /// One beat: light the next pad of the pattern, or fall silent and hand
   /// over to the room.

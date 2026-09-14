@@ -13,6 +13,7 @@ class BoardCell {
     this.label,
     this.state = CellState.hidden,
     this.tint = CellTint.none,
+    this.slot = 0,
   });
 
   factory BoardCell.fromWire(Map<String, dynamic> m) => BoardCell(
@@ -24,12 +25,16 @@ class BoardCell {
           0,
           CellTint.values.length - 1,
         )],
+    slot: ((m['p'] as num?)?.toInt() ?? 0).clamp(0, 8),
   );
 
   final String? face;
   final String? label;
   final CellState state;
   final CellTint tint;
+
+  /// Palette slot, 1..8 — which side's disc, which pad. See `ShapeCell.slot`.
+  final int slot;
 
   /// **[copyWith] cannot CLEAR a field.** `copyWith(face: null)` keeps the
   /// existing face, because null is how the parameter says "unchanged". Snakes
@@ -40,11 +45,13 @@ class BoardCell {
     String? label,
     CellState? state,
     CellTint? tint,
+    int? slot,
   }) => BoardCell(
     face: face ?? this.face,
     label: label ?? this.label,
     state: state ?? this.state,
     tint: tint ?? this.tint,
+    slot: slot ?? this.slot,
   );
 
   Map<String, dynamic> toWire() => {
@@ -52,6 +59,7 @@ class BoardCell {
     if (face != null) 'f': face,
     if (label != null) 'l': label,
     if (tint != CellTint.none) 'c': tint.index,
+    if (slot != 0) 'p': slot,
   };
 }
 
@@ -231,17 +239,23 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   Map<String, int> plusForTurn(GridBoard b, [int by = 1]) =>
       b.plus('p${b.turn % sides.length}', by);
 
-  /// "Team 1 4 · Team 2 2", or null before anyone has scored.
+  /// "Team 1  4 – 2  Team 2" — the scoreboard convention, name outside its
+  /// number — or null before anyone has scored. It used to read "Team 1 4 ·
+  /// Team 2 2", which puts a name next to a digit and asks the room to parse
+  /// "1 4".
   String? scoreLine(GridBoard b) {
     if (!alternates) return null;
-    final parts = <String>[];
     var any = false;
     for (var i = 0; i < sides.length; i++) {
-      final n = scoreOf(b, i);
-      if (n > 0) any = true;
-      parts.add('${sides[i]} $n');
+      if (scoreOf(b, i) > 0) any = true;
     }
-    return any ? parts.join('  ·  ') : null;
+    if (!any) return null;
+    if (sides.length == 2) {
+      return '${sides[0]}  ${scoreOf(b, 0)} – ${scoreOf(b, 1)}  ${sides[1]}';
+    }
+    return [
+      for (var i = 0; i < sides.length; i++) '${sides[i]} ${scoreOf(b, i)}',
+    ].join('  ·  ');
   }
 
   /// **Is the round over, and what do we say about it?** Return null while
@@ -340,6 +354,15 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// A picture underneath the whole board (Reveal-the-Picture style). Null for
   /// every classic here; kept because the shape offers it.
   String? behindFor(GridBoard b) => null;
+
+  /// How the board is drawn — tiles unless the game says otherwise. Connect
+  /// Four is holes, Simon and Four Corners are pads, Dots & Boxes a lattice.
+  /// One word per game, and the renderer does the rest on every screen.
+  ShapeStyle get style => ShapeStyle.tiles;
+
+  /// The board's own measure, 0..1, when it has one — the sand left in
+  /// Boggle, the lives left in Hangman. Null (most games) draws nothing.
+  double? progressFor(GridBoard b) => null;
 
   @override
   bool get seedsFromContentBank => false;
@@ -467,6 +490,8 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     // the line that lets a room take turns instead of watching one person tap.
     note: state.done ? null : (noteFor(state) ?? turnLine(state)),
     behind: behindFor(state),
+    style: style,
+    progress: state.done ? null : progressFor(state),
     cells: [
       for (final raw in state.cells)
         if (present(raw) case final c)
@@ -475,6 +500,7 @@ abstract class GridGame extends GameDefinition<GridBoard> {
             face: c.face,
             label: c.label,
             tint: c.tint,
+            slot: c.slot,
           ),
     ],
   );

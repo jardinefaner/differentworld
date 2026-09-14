@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/program_hub_bento_setting.d
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/entities/entity_providers.dart';
+import 'package:differentworld/features/games/game_motion.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
@@ -305,6 +306,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SettingsDivider(),
               const _OutdoorModeTile(),
+              const _SettingsDivider(),
+              const GameMotionTile(),
               const _SettingsDivider(),
               const _DisplayStyleTile(),
               const _SettingsDivider(),

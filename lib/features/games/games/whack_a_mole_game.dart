@@ -124,6 +124,11 @@ class WhackAMoleGame extends GridGame {
     return '$hits ${hits == 1 ? 'hit' : 'hits'}';
   }
 
+  /// Misses left, as a bar that shrinks — the round is over when it empties.
+  @override
+  double? progressFor(GridBoard b) =>
+      ((_lives - b.score('miss')) / _lives).clamp(0.0, 1.0);
+
   @override
   String? noteFor(GridBoard b) {
     final hits = b.score('hit');

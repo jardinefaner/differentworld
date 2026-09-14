@@ -96,6 +96,11 @@ class HangmanGame extends GridGame {
     );
   }
 
+  /// Lives left, as a bar — the gallows this version does not draw.
+  @override
+  double? progressFor(GridBoard b) =>
+      ((_lives - _wrong(b)) / _lives).clamp(0.0, 1.0);
+
   int _wrong(GridBoard b) =>
       b.cells.take(26).where((c) => c.tint == CellTint.wrong).length;
 

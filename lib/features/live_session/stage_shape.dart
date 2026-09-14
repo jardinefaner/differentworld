@@ -64,6 +64,31 @@ enum CellTint {
   live,
 }
 
+/// How a whole board is DRAWN — the second axis of the vocabulary, beside
+/// [ShapeKind]. A grid of tiles and a grid of holes carry the same cells; the
+/// style says what a cell looks like, so the classics stop being nineteen
+/// boards of identical white squares with emoji on them.
+///
+/// Still closed, still small: one entry per look the receiver can draw. An
+/// older receiver that meets a style it does not know reads it as [tiles],
+/// which is what it drew before.
+enum ShapeStyle {
+  /// Rounded square tiles — the default, and right for most boards.
+  tiles,
+
+  /// Big rounded pads, one colour each — Simon, Four Corners. Meant to be
+  /// looked at from across a room and lit one at a time.
+  pads,
+
+  /// A framed board of round holes; a face-up cell is a disc dropped into
+  /// its hole — Connect Four.
+  holes,
+
+  /// A dots-and-edges lattice at double resolution: even/even cells are
+  /// dots, odd/even are edges, odd/odd are boxes — Dots & Boxes.
+  lattice,
+}
+
 /// One position on a [ShapeKind.grid].
 class ShapeCell {
   const ShapeCell({
@@ -71,6 +96,7 @@ class ShapeCell {
     this.label,
     this.face,
     this.tint = CellTint.none,
+    this.slot = 0,
   });
 
   factory ShapeCell.fromWire(Map<String, dynamic> m) => ShapeCell(
@@ -82,9 +108,16 @@ class ShapeCell {
           0,
           CellTint.values.length - 1,
         )],
+    slot: ((m['p'] as num?)?.toInt() ?? 0).clamp(0, 8),
   );
 
   final CellState state;
+
+  /// Which of the board's palette slots this cell belongs to — 1..8, or 0
+  /// for none. IDENTITY rather than judgement, which is what [tint] is for:
+  /// "this is the red side's disc", "this is pad three". The receiver picks
+  /// the colour for a slot in its own palette, so no hex crosses the wire.
+  final int slot;
 
   /// What the cover says while hidden — "B3". Null when the cover is blank,
   /// which is right for Memory: nobody calls a card by coordinate.
@@ -102,6 +135,7 @@ class ShapeCell {
     if (label != null) 'l': label,
     if (face != null) 'f': face,
     if (tint != CellTint.none) 'c': tint.index,
+    if (slot != 0) 'p': slot,
   };
 }
 
@@ -118,12 +152,22 @@ class StageShape {
     this.note,
     this.behind,
     this.behindIsImage = false,
+    this.style = ShapeStyle.tiles,
+    this.progress,
   });
 
   final ShapeKind kind;
   final int cols;
   final int rows;
   final List<ShapeCell> cells;
+
+  /// How the board is drawn — see [ShapeStyle].
+  final ShapeStyle style;
+
+  /// How far through something the room is, 0..1 — the sand left in Boggle,
+  /// the lives left in Hangman. Drawn as a thin bar under the note. Null
+  /// when the board has nothing to measure, which is most of them.
+  final double? progress;
 
   /// The line above the board — "Find the matching pairs". Optional, because
   /// a board that explains itself does not need one.
@@ -146,6 +190,8 @@ class StageShape {
     if (note != null) 'n': note,
     if (behind != null) 'b': behind,
     if (behindIsImage) 'bi': true,
+    if (style != ShapeStyle.tiles) 'st': style.index,
+    if (progress != null) 'pr': progress,
   };
 
   /// Null when the wire carries no shape — an older phone, or a game that has
@@ -168,6 +214,14 @@ class StageShape {
       note: m['n'] as String?,
       behind: m['b'] as String?,
       behindIsImage: m['bi'] == true,
+      // An unknown style (a newer phone) reads as tiles — the look every
+      // receiver already had.
+      style: switch ((m['st'] as num?)?.toInt() ?? 0) {
+        final i when i >= 0 && i < ShapeStyle.values.length =>
+          ShapeStyle.values[i],
+        _ => ShapeStyle.tiles,
+      },
+      progress: (m['pr'] as num?)?.toDouble().clamp(0.0, 1.0),
     );
   }
 }
