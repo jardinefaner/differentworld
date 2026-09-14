@@ -60,7 +60,10 @@ class CrosswordGame extends GridGame {
     RoomBeat('We are doing a Crossword'),
     RoomBeat('Tap a row of squares to see its clue'),
     RoomBeat('Shout the answer — one person types it'),
-    RoomBeat('Right, you keep the board', detail: 'Wrong, the other team gets it'),
+    RoomBeat(
+      'Right, you keep the board',
+      detail: 'Wrong, the other team gets it',
+    ),
     RoomBeat('Fill every square to finish'),
   ];
 

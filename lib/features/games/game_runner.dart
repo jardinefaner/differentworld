@@ -82,12 +82,13 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
       ),
       reduce: (state, intent, args) =>
           RunScriptWire.reduce(widget.def, state, intent, args),
+      // Play again deals fresh content and goes STRAIGHT to the board — no
+      // RunScriptWire.seed here. The runner's reseed bypasses the reducer, so
+      // seeding the cursor in it re-briefed every round behind the wire rule
+      // that says a room which just played does not need the rules again.
       reseed: widget.seed != null
           ? null
-          : () => RunScriptWire.seed(
-              widget.def,
-              widget.def.initialStateFor(_engine, _values),
-            ),
+          : () => widget.def.initialStateFor(_engine, _values),
     );
     _startClockIfNeeded();
   }

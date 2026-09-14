@@ -48,7 +48,10 @@ class GameScaffold<S> extends StatelessWidget {
   void _rules() =>
       controller.send(GameIntent.reveal, {RunScriptWire.rulesArg: true});
 
-  static void _noSend(GameIntent intent, [Map<String, dynamic> args = const {}]) {}
+  static void _noSend(
+    GameIntent intent, [
+    Map<String, dynamic> args = const {},
+  ]) {}
 
   @override
   Widget build(BuildContext context) {

@@ -23,7 +23,10 @@ class LightsOutGame extends GridGame {
   @override
   RunScript get howToPlay => const [
     RoomBeat('We are playing Lights Out'),
-    RoomBeat('Tap a light and its neighbours flip', detail: 'Up, down, left, right'),
+    RoomBeat(
+      'Tap a light and its neighbours flip',
+      detail: 'Up, down, left, right',
+    ),
     RoomBeat('Turn every light off to win'),
     RoomBeat('Argue about the next tap first'),
   ];

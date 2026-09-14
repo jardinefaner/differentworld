@@ -36,7 +36,10 @@ class ScattergoriesGame extends GridGame {
   RunScript get howToPlay => const [
     RoomBeat('We are playing Scattergories'),
     RoomBeat('One letter, six kinds of thing'),
-    RoomBeat('Shout an answer that starts with the letter', detail: 'One person types it in'),
+    RoomBeat(
+      'Shout an answer that starts with the letter',
+      detail: 'One person types it in',
+    ),
     RoomBeat('A wrong letter passes the turn'),
     RoomBeat('Fill all six to finish'),
   ];
