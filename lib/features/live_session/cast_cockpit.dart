@@ -11,6 +11,7 @@ import 'package:differentworld/features/games/cards/castable_card_games.dart';
 import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
@@ -579,24 +580,34 @@ class _Driving extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wire = CastSession.gameStateOf(meta);
-    final state = def.decode(wire);
-
     // The board you look at is the board you touch — here too. The preview
     // fills most of the phone already, so a second copy of it at thumbnail
     // size underneath is the same redundancy the single-device screens had,
     // just with a longer excuse: "the TV holds the display" is true, and
     // irrelevant to the fact that the display is ALSO right here in your hand.
-    final live = def.buildLiveStage(context, state, send);
-    if (live != null) return live;
+    //
+    // `remote`: it drives, it touches, it sees a secret, and it stays SILENT
+    // so the room's screen is the one that sounds.
+    final view = GameView(
+      def: def,
+      wire: wire,
+      audience: GameAudience.remote,
+      send: send,
+    );
+    // While the room is being briefed the phone shows the SAME beats, with
+    // the Next that moves them. It used to show the board instead — and for a
+    // board game that board's only verbs are a tap the briefing swallows and
+    // a reset, so the room sat on beat one with no way forward at all.
+    if (GameView.isBriefing(wire)) return view;
+
+    final state = def.decode(wire);
+    if (def.buildLiveStage(context, state, send) != null) return view;
 
     final custom = def.buildControls(context, state, send);
     return Column(
       children: [
         Expanded(
-          child: ColoredBox(
-            color: def.vibe.surface,
-            child: def.buildStage(context, state),
-          ),
+          child: ColoredBox(color: def.vibe.surface, child: view),
         ),
         if (custom != null)
           CastBar(child: custom)

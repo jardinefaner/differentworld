@@ -6,11 +6,10 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
-import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
-import 'package:differentworld/features/games/game_motion.dart';
+import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_lobby.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -264,23 +263,21 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     final state = _def.decode(_wire);
     // A game with custom controls (poll, timer) owns the bar; otherwise the
     // standard intents bar. Same override the single-device scaffold honors.
+    // No control bar under a briefing: it offers verbs for a board the room
+    // cannot see yet, and RunScriptView carries its own Next.
+    final briefing = GameView.isBriefing(_wire);
     final custom = _def.buildControls(context, state, c.send);
     // The room (presenter) always shows the public stage; the controller of a
     // secret-role game (the teacher) sees the secret stage instead, so they
     // can mark the room's guess.
-    // The burst on both screens; the buzz only in the hand holding the phone.
-    final stage = GameMotion(
-      enabled: true,
-      haptics: !isPresenter,
-      sound: isPresenter,
-      child: CelebrationLayer(
-        done: _wire['d'] == true,
-        accent: _def.vibe.accent,
-        child: isPresenter
-            ? _def.buildStage(context, state)
-            : (_def.buildSecretStage(context, state) ??
-                  _def.buildStage(context, state)),
-      ),
+    // The briefing, the stage, the burst, the buzz and the sound — one
+    // answer, from whose screen this is. A presenter is the room's screen
+    // holding the keys; a controller is a phone driving it.
+    final stage = GameView(
+      def: _def,
+      wire: _wire,
+      audience: isPresenter ? GameAudience.presenter : GameAudience.remote,
+      send: c.send,
     );
     return Column(
       children: [
@@ -302,7 +299,9 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
         else
           _ControllerHeader(status: _status, onLeave: _leave),
         Expanded(child: stage),
-        if (custom != null)
+        if (briefing)
+          const SizedBox.shrink()
+        else if (custom != null)
           _CustomLiveBar(child: custom)
         else
           GameIntentBar(
@@ -318,14 +317,17 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
   // ── Secret (actor) view — the secret stage only; the actor just watches
   // (e.g. Charades' word) and never drives. ────────────────────────────────
   Widget _secretView(BuildContext context) {
-    final state = _def.decode(_wire);
     return Column(
       children: [
         _ControllerHeader(status: _status, onLeave: _leave),
+        // The actor watches; they never drive — so no send, and the beats
+        // reach them as a display exactly as they reach the room.
         Expanded(
-          child:
-              _def.buildSecretStage(context, state) ??
-              _def.buildStage(context, state),
+          child: GameView(
+            def: _def,
+            wire: _wire,
+            audience: GameAudience.host,
+          ),
         ),
       ],
     );

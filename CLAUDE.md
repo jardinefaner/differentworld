@@ -2012,6 +2012,45 @@ today. Acceptance bar for any such surface: a unit test that flattens
 the rendered artifact for Child A and asserts no other child's name
 appears (`test/unit/summer_book_privacy_test.dart` is the template).
 
+### One decision, four surfaces — the briefing that never reached the cockpit
+
+Found by the user, 2026-09-14, in one sentence: *"i dont see the beats when
+im casting."*
+
+Four places render a game from its wire-state — `GameScaffold` (one device),
+`cast_receiver` (the TV), `cast_cockpit._Driving` (the phone driving that TV)
+and `LiveGameScreen._stageView` (two-device). Each decided **for itself**
+whether the wire was showing a briefing or a board. Two asked; two did not.
+
+The result was not cosmetic. Cast a scripted board game and the TV showed
+beat one, the phone showed the board, and a board game's live intents are
+`pick` (which `RunScriptWire` swallows during a briefing) and `reset` — so
+there was **no verb anywhere that could advance the room past the first
+rule**. A hard lock, shipped, behind a green suite.
+
+And there were **two doors onto the wire**: `CastSession.cast` seeded the
+run-script cursor, `castStage` did not — so the seven picture games cast
+without briefing anybody at all.
+
+The fix is the shape, not the instances: **`lib/features/games/game_view.dart`
+is the one thing that draws a game.** A surface declares `GameAudience`
+(host · remote · room · presenter) and gets the briefing, the stage, the
+secret, the celebration, the motion, the sound and the haptics resolved
+together — because those are not seven choices, they are one answer to
+"whose screen is this". `CastSession.freshWire` is the one way a stage
+reaches the wire.
+
+Rules:
+- **A surface never builds its own `RunScriptView`** and never reads
+  `RunScriptWire.indexOf` — it renders `GameView` and asks
+  `GameView.isBriefing` only to drop its OWN chrome.
+  `test/unit/one_game_renderer_test.dart` greps both layers and fails on a
+  fifth answer.
+- **A new cast door seeds through `CastSession.freshWire`.**
+- The general lesson: when the same question is answered in N places, the
+  bug is not that one of them is wrong — it is that the count is N. Check
+  the count first (`grep -c` across the surfaces) before fixing an instance.
+
 ### A game's SEEDED path is the app path — it must produce what `deal` produces
 
 Bingo shipped with no caller and Guess Who's secret was always square zero

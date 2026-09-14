@@ -1,13 +1,10 @@
 import 'dart:async';
 
-import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/facilitation/run_script_view.dart';
-import 'package:differentworld/features/facilitation/run_script_wire.dart';
-import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game_motion.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -153,37 +150,17 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
           text: 'This session needs a newer version of the app.',
         ),
       );
-    } else if (RunScriptWire.indexOf(CastSession.gameStateOf(_meta))
-        case final at?) {
-      // The room is being told what it is about to play. This is the whole
-      // reason the cursor lives in the wire: the instructions are FOR the
-      // children, so they have to reach the screen the children are watching.
-      //
-      // No callbacks — a receiver is a DISPLAY. Two devices that can both
-      // advance the rules is two devices that disagree about which rule the
-      // room just heard, and the adult holding the phone would never see it.
-      body = RunScriptView(
-        script: def.howToPlay,
-        index: at,
-        title: def.title,
-        surface: def.vibe.surface,
-        onLine: AppColors.onAccent(def.vibe.surface),
-      );
     } else {
-      // The clean stage — full-bleed, nothing else (no SafeArea by design).
-      // The room's screen celebrates an ending too; it never buzzes — a
-      // tablet on a wall vibrating on every tap is a fault, not a feature.
-      final gameWire = CastSession.gameStateOf(_meta);
-      body = GameMotion(
-        enabled: true,
-        haptics: false,
-        child: ColoredBox(
-          color: def.vibe.surface,
-          child: CelebrationLayer(
-            done: gameWire['d'] == true,
-            accent: def.vibe.accent,
-            child: def.buildStage(context, def.decode(gameWire)),
-          ),
+      // The clean stage — full-bleed, nothing else (no SafeArea by design) —
+      // or the briefing, when the room is still being told what it is about
+      // to play. [GameView] owns that choice for every surface; a receiver
+      // is the `room` audience, so it draws and never drives.
+      body = ColoredBox(
+        color: def.vibe.surface,
+        child: GameView(
+          def: def,
+          wire: CastSession.gameStateOf(_meta),
+          audience: GameAudience.room,
         ),
       );
     }

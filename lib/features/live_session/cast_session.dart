@@ -107,11 +107,7 @@ class CastSession {
   /// game reads content. Re-casting the same game = "play again" with fresh
   /// content.
   void cast(GameDefinition<dynamic> def, ContentSource content) {
-    // Seeded with the run-script's cursor, so a game arriving on a room screen
-    // opens by telling that room what it is about to play.
-    _session.reseed(
-      _wire(def.id, RunScriptWire.seed(def, def.initialState(content))),
-    );
+    _session.reseed(freshWire(def.id, def.initialState(content)));
   }
 
   /// Put a stage on the screen from an EXPLICIT, pre-built wire-state —
@@ -119,7 +115,26 @@ class CastSession {
   /// slideshow). The caller builds the self-describing state; the game's
   /// pure reducer drives it from there, same as any cast game.
   void castStage(String gameId, Map<String, dynamic> state) {
-    _session.reseed(_wire(gameId, state));
+    _session.reseed(freshWire(gameId, state));
+  }
+
+  /// A FRESH stage on the wire — the one way a game arrives on a screen,
+  /// whichever door it came through.
+  ///
+  /// It seeds the run-script cursor, so the room is told what it is about to
+  /// play. That used to live in [cast] alone, and [castStage] — the door the
+  /// seven picture games, the world and the board all use — skipped it: a
+  /// cast Bingo simply never briefed anybody. Two ways in, one of which did
+  /// the job.
+  ///
+  /// NOT used by the meta-reducer: seeding on every intent would re-brief the
+  /// room after each tap.
+  static Map<String, dynamic> freshWire(
+    String gameId,
+    Map<String, dynamic> state,
+  ) {
+    final def = gameById(gameId);
+    return _wire(gameId, def == null ? state : RunScriptWire.seed(def, state));
   }
 
   /// The wire: the game id and its state as before, PLUS the stage described

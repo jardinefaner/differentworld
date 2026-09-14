@@ -1,17 +1,16 @@
 import 'dart:async';
 
-import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/class_memory/class_memory.dart';
 import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
-import 'package:differentworld/features/facilitation/run_script_view.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
+import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/games/round_wrap.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -120,18 +119,15 @@ class GameScaffold<S> extends StatelessWidget {
           final wire = snapshot.data ?? controller.state;
           // The briefing comes first, and it reads from the WIRE so this
           // device and a paired room screen are never on different beats.
-          if (RunScriptWire.indexOf(wire) case final at?) {
-            final briefSurface = def.vibe.surface;
-            return RunScriptView(
-              script: def.howToPlay,
-              index: at,
-              title: def.title,
-              surface: briefSurface,
-              // Content-driven fill, so no theme governs the foreground — pick
-              // by luminance or the pale vibes get white on light.
-              onLine: AppColors.onAccent(briefSurface),
-              onNext: () => _send(GameIntent.next),
-              onBack: () => _send(GameIntent.back),
+          // [GameView] draws it — the same widget the cast receiver, the
+          // cockpit and the live screen use, so there is one answer to "what
+          // does this wire-state look like" rather than four.
+          if (GameView.isBriefing(wire)) {
+            return GameView(
+              def: def,
+              wire: wire,
+              audience: GameAudience.host,
+              send: controller.send,
             );
           }
           final state = def.decode(wire);
