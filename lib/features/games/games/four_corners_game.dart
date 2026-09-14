@@ -70,11 +70,39 @@ class FourCornersGame extends GridGame {
     ];
   }
 
+  /// Four big pads, one per corner, in four colours — readable from the far
+  /// side of a room, which is where the room is standing.
+  @override
+  ShapeStyle get style => ShapeStyle.pads;
+
   /// The question is storage, not a face to draw — the renderer would paint it
   /// over the first corner and hide that corner's label.
   @override
   BoardCell present(BoardCell c) =>
       BoardCell(label: c.label, state: c.state, tint: c.tint);
+
+  @override
+  StageShape? asShape(GridBoard state) {
+    final base = super.asShape(state);
+    if (base == null) return null;
+    return StageShape(
+      kind: base.kind,
+      cols: base.cols,
+      rows: base.rows,
+      title: base.title,
+      note: base.note,
+      style: base.style,
+      cells: [
+        for (var i = 0; i < base.cells.length; i++)
+          ShapeCell(
+            state: base.cells[i].state,
+            label: base.cells[i].label,
+            tint: base.cells[i].tint,
+            slot: i + 1,
+          ),
+      ],
+    );
+  }
 
   /// The question, above the corners, where the room reads it.
   @override

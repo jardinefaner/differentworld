@@ -158,7 +158,7 @@ class ScattergoriesGame extends GridGame {
   String? noteFor(GridBoard b) {
     final turn = turnLine(b);
     final score = scoreLine(b);
-    if (score != null) return '$turn   ·   $score';
+    if (score != null) return '$turn\n$score';
     return turn;
   }
 }

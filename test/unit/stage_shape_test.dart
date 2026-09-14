@@ -48,6 +48,42 @@ void main() {
     // the TV serves both, which is only true if they speak one vocabulary.
   });
 
+  test('style, slot and progress survive the wire', () {
+    const before = StageShape(
+      kind: ShapeKind.grid,
+      cols: 2,
+      rows: 2,
+      style: ShapeStyle.holes,
+      progress: 0.4,
+      cells: [
+        ShapeCell(state: CellState.shown, slot: 1),
+        ShapeCell(state: CellState.shown, slot: 2, tint: CellTint.live),
+        ShapeCell(state: CellState.hidden),
+        ShapeCell(state: CellState.hidden),
+      ],
+    );
+    final after = StageShape.fromWire(before.toWire())!;
+    expect(after.style, ShapeStyle.holes);
+    expect(after.progress, closeTo(0.4, 1e-9));
+    expect(after.cells[0].slot, 1);
+    expect(after.cells[1].slot, 2);
+    expect(after.cells[1].tint, CellTint.live);
+    expect(after.cells[2].slot, 0);
+  });
+
+  test('an older phone sends no style — the receiver draws tiles', () {
+    final wire = const StageShape(
+      kind: ShapeKind.grid,
+      cols: 1,
+      rows: 1,
+      cells: [ShapeCell(state: CellState.hidden)],
+    ).toWire();
+    expect(wire.containsKey('st'), isFalse, reason: 'tiles is the default');
+    expect(wire.containsKey('pr'), isFalse);
+    final after = StageShape.fromWire({...wire, 'st': 99})!;
+    expect(after.style, ShapeStyle.tiles, reason: 'unknown style → tiles');
+  });
+
   test('a shape survives the wire', () {
     final before = revealShape(rev: [true, ...List<bool>.filled(15, false)]);
     final after = StageShape.fromWire(before.toWire())!;

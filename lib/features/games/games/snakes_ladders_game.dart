@@ -42,8 +42,9 @@ class SnakesLaddersGame extends GridGame {
   @override
   bool get alternates => true;
 
+  /// The sides by name; the TOKENS on the board stay the coloured discs.
   @override
-  List<String> get sides => _tokens;
+  List<String> get sides => const ['Red', 'Blue'];
 
   @override
   String get id => 'snakes-ladders';
@@ -143,7 +144,7 @@ class SnakesLaddersGame extends GridGame {
   String? outcomeFor(GridBoard b) {
     final at = positionsOf(b);
     for (var s = 0; s < at.length; s++) {
-      if (at[s] >= 36 - 1) return '${_tokens[s]} is home!';
+      if (at[s] >= 36 - 1) return '${sides[s]} is home!';
     }
     return null;
   }
@@ -159,7 +160,7 @@ class SnakesLaddersGame extends GridGame {
     final turn = turnLine(b);
     if (at[0] == 0 && at[1] == 0) return turn;
     final where = [
-      for (var s = 0; s < at.length; s++) '${_tokens[s]} ${at[s] + 1}',
+      for (var s = 0; s < at.length; s++) '${sides[s]} ${at[s] + 1}',
     ].join('  ·  ');
     return turn == null ? where : '$turn   ·   $where';
   }

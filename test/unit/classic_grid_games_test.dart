@@ -170,7 +170,7 @@ void main() {
       }
       expect(g.titleFor(board(g, w)), isNull, reason: 'three is not four');
       w = tap(g, w, 3);
-      expect(g.titleFor(board(g, w)), '🔴 wins!');
+      expect(g.titleFor(board(g, w)), 'Red wins!');
     });
 
     test('a vertical line wins too', () {
@@ -178,7 +178,7 @@ void main() {
       for (final c in [2, 5, 2, 5, 2, 5, 2]) {
         w = tap(g, w, c);
       }
-      expect(g.titleFor(board(g, w)), '🔴 wins!');
+      expect(g.titleFor(board(g, w)), 'Red wins!');
     });
   });
 

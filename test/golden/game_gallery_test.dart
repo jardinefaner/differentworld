@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/theme.dart';
@@ -16,6 +17,7 @@ import 'package:differentworld/features/games/games/memory_match_game.dart';
 import 'package:differentworld/features/games/games/name_it_game.dart';
 import 'package:differentworld/features/games/games/odd_one_out_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_game.dart';
+import 'package:differentworld/features/games/grid_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -359,6 +361,56 @@ void main() {
       'games/organism_${game.id}',
       game,
       game.initialState(LocalContentBank.seeded()),
+    );
+  }
+
+  // THE CLASSICS — every GridGame, dealt over a bank that carries pictures
+  // (the picture-fed ones read the deck; the bank has none by itself). They
+  // are `seedsFromContentBank == false`, so the two loops above skip them —
+  // which is how nineteen boards shipped with no plate at all, and why the
+  // renderer's dead-tap defect was never SEEN: the gallery had nothing to
+  // look at.
+  // Real deck art, listed from disk so the plates show the bundled cards
+  // rather than broken-image glyphs.
+  final deckFiles =
+      Directory('assets/card_games/everyday')
+          .listSync()
+          .whereType<File>()
+          .map((f) => f.path.split('/').last)
+          .where((n) => n.endsWith('.png'))
+          .toList()
+        ..sort();
+  final classicsBank = LocalContentBank.seededWith([
+    ...curatedSeeds,
+    for (final (i, name) in deckFiles.indexed)
+      ContentItem(
+        kind: ContentKind.picture,
+        fingerprint: 'plate-pic$i',
+        payload: {
+          'image': 'assets/card_games/everyday/$name',
+          'label': name
+              .replaceAll(RegExp(r'^\d+-|\.png$'), '')
+              .replaceAll('-', ' '),
+        },
+      ),
+  ]);
+  for (final game in liveGames.whereType<GridGame>()) {
+    _scene('games/stage_${game.id}', width: 440, height: 560, (ctx) {
+      // A few moves in, so the plate shows a board being PLAYED, not dealt:
+      // a disc dropped, a square uncovered, a pad lit.
+      var wire = game.initialState(classicsBank);
+      for (final cell in const [0, 1, 7, 8]) {
+        wire = game.reduce(wire, GameIntent.pick, {'cell': cell});
+      }
+      return ColoredBox(
+        color: game.vibe.surface,
+        child: game.buildStage(ctx, game.decode(wire)),
+      );
+    });
+    _organismScene(
+      'games/organism_${game.id}',
+      game,
+      game.initialState(classicsBank),
     );
   }
 
