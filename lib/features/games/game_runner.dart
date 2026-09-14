@@ -6,7 +6,6 @@ import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
-import 'package:differentworld/features/games/game_motion.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_settings_sheet.dart';
@@ -139,15 +138,13 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
     super.dispose();
   }
 
+  // No GameMotion here: [GameView] provides the scope wherever a game is
+  // drawn, reading the same Preferences switch. Two sources for one policy is
+  // how the cockpit ended up with none at all.
   @override
-  Widget build(BuildContext context) => GameMotion(
-    // The per-device switch (Settings → Preferences → Game motion); the OS
-    // reduce-motion setting is honoured underneath it by GameMotion.of.
-    enabled: ref.watch(gameMotionProvider).value ?? true,
-    child: GameScaffold<S>(
-      def: widget.def,
-      controller: _controller,
-      onSettings: widget.def.settings.isEmpty ? null : _openSettings,
-    ),
+  Widget build(BuildContext context) => GameScaffold<S>(
+    def: widget.def,
+    controller: _controller,
+    onSettings: widget.def.settings.isEmpty ? null : _openSettings,
   );
 }

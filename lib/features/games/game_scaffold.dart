@@ -6,7 +6,6 @@ import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
-import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
@@ -48,21 +47,13 @@ class GameScaffold<S> extends StatelessWidget {
   void _rules() =>
       controller.send(GameIntent.reveal, {RunScriptWire.rulesArg: true});
 
-  static void _noSend(
-    GameIntent intent, [
-    Map<String, dynamic> args = const {},
-  ]) {}
-
   @override
   Widget build(BuildContext context) {
     // Whether this game draws its own tappable stage (the classics, Memory,
     // Reveal the Picture). Those get NO control panel, so the two occasional
     // verbs the panel used to carry — Room tools and Start over — live in the
-    // top pill for them instead. Probed once, with a no-op sender: the answer
-    // does not change over a round.
-    final ownsStage =
-        def.buildLiveStage(context, def.decode(controller.state), _noSend) !=
-        null;
+    // top pill for them instead.
+    final ownsStage = GameView.ownsStage(context, def, controller.state);
     return EdgeScaffold(
       actions: [
         if (onSettings case final open?)
@@ -167,32 +158,26 @@ class GameScaffold<S> extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= _wideBreakpoint;
-                  // ONE device: the phone in the host's hand is the actor's
-                  // card as well as the remote, so a game with a secret
-                  // (Charades) shows the SECRET here — the word — and keeps
-                  // `buildStage` (the category, never the word) for the
-                  // fullscreen present and the cast receiver, which face the
-                  // room. Before this Charades ran only as a two-device
-                  // session and opened on a lobby; a substitute with one phone
-                  // could not start it at all.
-                  final stage =
-                      def.buildSecretStage(context, state) ??
-                      def.buildStage(context, state);
+                  // ONE device in a hand: it drives, its board is the
+                  // instrument, and a game with a secret (Charades) shows the
+                  // WORD here, because the room cannot see this screen.
+                  // [GameView] resolves all of that from the audience, so the
+                  // scaffold is left with the question that is actually its
+                  // own: what chrome goes around it.
+                  final view = GameView(
+                    def: def,
+                    wire: wire,
+                    audience: GameAudience.host,
+                    send: controller.send,
+                  );
                   final revealLabel = def.revealLabel(
                     revealed: wire['r'] == true,
                   );
                   // The stage is the instrument (memory, reveal, what's
                   // missing): the game owns the whole single-device shape, so
                   // there is no second copy of the board to tap and no
-                  // control bar to leave room for. Checked FIRST — a game
-                  // that offers this also has a buildControls remote, which
-                  // is for the cast cockpit, not for here.
-                  final live = def.buildLiveStage(
-                    context,
-                    state,
-                    controller.send,
-                  );
-                  if (live != null) {
+                  // control bar to leave room for.
+                  if (GameView.ownsStage(context, def, wire)) {
                     // The end of the round, when there is one. The board
                     // stays on screen above it — the winning line is what
                     // the room wants to look at — and the beat carries the
@@ -200,13 +185,7 @@ class GameScaffold<S> extends StatelessWidget {
                     return SafeArea(
                       child: Column(
                         children: [
-                          Expanded(
-                            child: CelebrationLayer(
-                              done: done,
-                              accent: def.vibe.accent,
-                              child: live,
-                            ),
-                          ),
+                          Expanded(child: view),
                           if (done)
                             RoundWrap(
                               key: const ValueKey('round-wrap'),
@@ -232,18 +211,10 @@ class GameScaffold<S> extends StatelessWidget {
                     state,
                     controller.send,
                   );
-                  // The same burst over every stage, from the framework:
-                  // the eleventh game somebody adds celebrates like the
-                  // first.
-                  final celebrated = CelebrationLayer(
-                    done: done,
-                    accent: def.vibe.accent,
-                    child: stage,
-                  );
                   if (custom != null) {
                     return Column(
                       children: [
-                        Expanded(child: celebrated),
+                        Expanded(child: view),
                         _CustomControlBar(child: custom),
                       ],
                     );
@@ -251,7 +222,7 @@ class GameScaffold<S> extends StatelessWidget {
                   return wide
                       ? Column(
                           children: [
-                            Expanded(child: celebrated),
+                            Expanded(child: view),
                             _GameControlBar(
                               gameId: def.id,
                               keepsake: keeper,
@@ -275,7 +246,7 @@ class GameScaffold<S> extends StatelessWidget {
                               // riddle prompt + its revealed answer card sat
                               // below the fold and read as "cut off" on
                               // phones.
-                              Expanded(child: celebrated),
+                              Expanded(child: view),
                               _GameControlPanel(
                                 gameId: def.id,
                                 keepsake: keeper,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
@@ -114,6 +115,9 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
           final wire = snapshot.data ?? widget.controller.state;
           final state = def.decode(wire);
           final active = def.activeIntents(state);
+          // The briefing carries its own Next; the game's verbs are for the
+          // board underneath it.
+          final briefing = GameView.isBriefing(wire);
           // Keyboard control for a real projector host (same bindings as the
           // scaffold). Showing controls on a keystroke keeps them findable.
           return PresenterShortcuts(
@@ -135,7 +139,19 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Positioned.fill(child: def.buildStage(context, state)),
+                  // Through GameView, so fullscreen gets the briefing too.
+                  // It used to draw the board straight from `buildStage`,
+                  // which meant tapping Fullscreen during the rules showed a
+                  // board nobody had been told about — and, for a classic,
+                  // one with no Next anywhere to get past it.
+                  Positioned.fill(
+                    child: GameView(
+                      def: def,
+                      wire: wire,
+                      audience: GameAudience.host,
+                      send: _send,
+                    ),
+                  ),
                   _Fade(
                     visible: _controlsVisible,
                     child: SafeArea(
@@ -165,19 +181,20 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
                       ),
                     ),
                   ),
-                  _Fade(
-                    visible: _controlsVisible,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: _Controls<S>(
-                        def: def,
-                        wire: wire,
-                        state: state,
-                        active: active,
-                        send: _send,
+                  if (!briefing)
+                    _Fade(
+                      visible: _controlsVisible,
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: _Controls<S>(
+                          def: def,
+                          wire: wire,
+                          state: state,
+                          active: active,
+                          send: _send,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

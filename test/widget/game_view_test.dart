@@ -6,7 +6,10 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/features/games/game_view.dart';
+import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/live_session/shape_stage_view.dart';
@@ -114,6 +117,52 @@ void main() {
       ),
     );
     expect(find.textContaining("the room can't see this"), findsOneWidget);
+  });
+
+  testWidgets('fullscreen shows the rules, not a board nobody was told about', (
+    tester,
+  ) async {
+    // The fifth surface. It drew `buildStage` directly, so tapping Fullscreen
+    // during a briefing showed the board — and for a classic there is no Next
+    // in its verbs, so the room could not be moved on from there either.
+    final controller = LocalGameController(
+      initial: briefingWire(),
+      reduce: (state, intent, args) =>
+          RunScriptWire.reduce(four, state, intent, args),
+    );
+    addTearDown(controller.dispose);
+    await pump(
+      tester,
+      GameFullscreenScreen<GridBoard>(def: four, controller: controller),
+    );
+    await tester.pump();
+    expect(find.text('We are playing Connect Four'), findsOneWidget);
+    expect(find.byType(ShapeStageView), findsNothing);
+
+    // And Next here moves the same wire the room is reading.
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('We are playing Connect Four'), findsNothing);
+    expect(RunScriptWire.indexOf(controller.state), 1);
+  });
+
+  testWidgets('ownsStage is false while the rules are up', (tester) async {
+    // The layout probe every surface uses. A briefing is nobody's instrument,
+    // so a scaffold must not hand it the no-control-bar treatment.
+    late bool duringBriefing;
+    late bool duringPlay;
+    await pump(
+      tester,
+      Builder(
+        builder: (context) {
+          duringBriefing = GameView.ownsStage(context, four, briefingWire());
+          duringPlay = GameView.ownsStage(context, four, boardWire());
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+    expect(duringBriefing, isFalse);
+    expect(duringPlay, isTrue, reason: 'a dealt board IS the instrument');
   });
 
   testWidgets('a board is touchable in a hand and inert on a wall', (

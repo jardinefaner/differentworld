@@ -2051,6 +2051,28 @@ Rules:
   bug is not that one of them is wrong — it is that the count is N. Check
   the count first (`grep -c` across the surfaces) before fixing an instance.
 
+**Two follow-ups worth keeping, because each was a second instance of the
+same reasoning error.**
+
+- **A framework verb only exists where `activeIntents` offers it.** The
+  briefing was deliberately built to ride the existing `next` / `back`
+  intents — "every control a substitute already has drives the briefing,
+  because from the outside it is the same verb". True only for games whose
+  `activeIntents` CONTAIN `next`. A board game's are `pick` and `reset`, and
+  the briefing swallows `pick` — which is what turned a missing button into a
+  hard lock. Reasoning about the intent VOCABULARY is not the same as
+  checking it against each game's `activeIntents`.
+- **The first guard was too narrow, in the same way.** It forbade a surface
+  from BUILDING its own `RunScriptView` and did not stop a surface from never
+  asking: `game_fullscreen.dart` drew `def.buildStage` directly, so tapping
+  Fullscreen during the rules showed the board with no Next — the same lock,
+  a fifth door, passing the grep because it never mentioned a briefing at
+  all. The guard now forbids any `build*` CALL in the two layers outside
+  `game_view.dart`, so the layer has one vocabulary: `GameView.isBriefing`,
+  `GameView.ownsStage`, render `GameView`. **When you write a guard, ask what
+  a file that simply omits the behaviour looks like — an absence never
+  matches a grep for a presence.**
+
 ### A game's SEEDED path is the app path — it must produce what `deal` produces
 
 Bingo shipped with no caller and Guess Who's secret was always square zero

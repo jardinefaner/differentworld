@@ -53,6 +53,33 @@ class GameView extends ConsumerWidget {
   static bool isBriefing(Map<String, dynamic> wire) =>
       RunScriptWire.indexOf(wire) != null;
 
+  /// Whether this game draws its own TOUCHABLE board — Memory, Reveal the
+  /// Picture, every classic — as opposed to a display the scaffold puts a
+  /// control bar under.
+  ///
+  /// A layout question, and the only reason a surface would otherwise reach
+  /// for `buildLiveStage` itself. It lives here so the two game layers have
+  /// ONE vocabulary for asking about a game: `isBriefing`, `ownsStage`, and
+  /// render `GameView`. Nothing else calls a `build*` — which is what stops
+  /// a sixth surface quietly drawing a board over a briefing.
+  ///
+  /// False while briefing: the rules are nobody's instrument.
+  static bool ownsStage(
+    BuildContext context,
+    GameDefinition<dynamic> def,
+    Map<String, dynamic> wire,
+  ) {
+    if (isBriefing(wire)) return false;
+    return def.buildLiveStage(context, def.decode(wire), _noSend) != null;
+  }
+
+  /// A sender that goes nowhere — for [ownsStage], which asks whether a
+  /// widget WOULD be built and then throws it away.
+  static void _noSend(
+    GameIntent intent, [
+    Map<String, dynamic> args = const {},
+  ]) {}
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final motionOn = ref.watch(gameMotionProvider).value ?? true;

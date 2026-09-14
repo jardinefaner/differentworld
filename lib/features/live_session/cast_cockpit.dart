@@ -600,9 +600,9 @@ class _Driving extends StatelessWidget {
     // a reset, so the room sat on beat one with no way forward at all.
     if (GameView.isBriefing(wire)) return view;
 
-    final state = def.decode(wire);
-    if (def.buildLiveStage(context, state, send) != null) return view;
+    if (GameView.ownsStage(context, def, wire)) return view;
 
+    final state = def.decode(wire);
     final custom = def.buildControls(context, state, send);
     return Column(
       children: [

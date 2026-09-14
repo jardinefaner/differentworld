@@ -69,6 +69,37 @@ void main() {
     );
   });
 
+  test('nothing but GameView asks a game what to draw', () {
+    // The stronger half, and the one the first version of this test missed.
+    // Forbidding a surface from BUILDING its own briefing does not stop a
+    // surface from never asking: `game_fullscreen.dart` drew the board
+    // straight from `buildStage`, so tapping Fullscreen during the rules
+    // showed a board nobody had been told about — with no Next to escape it,
+    // exactly the lock this file exists to prevent. It passed the grep above
+    // because it never mentioned a briefing at all.
+    //
+    // So the layer has ONE vocabulary for asking about a game:
+    // `GameView.isBriefing`, `GameView.ownsStage`, and rendering `GameView`.
+    // A `build*` CALL anywhere else is a surface deciding for itself again.
+    final calls = RegExp(r'\.build(Stage|SecretStage|LiveStage)\(');
+    final offenders = <String>[];
+    for (final f in gameLayerFiles()) {
+      if (f.path.endsWith('game_view.dart')) continue;
+      for (final line in f.readAsLinesSync()) {
+        // A game DECLARING its own stage is the point; only calls count.
+        if (calls.hasMatch(line)) offenders.add('${f.path}: ${line.trim()}');
+      }
+    }
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'render GameView, or ask GameView.ownsStage — a surface that calls '
+          'build* decides for itself what the wire means, and two of four '
+          'got it wrong the last time: ${offenders.join(' | ')}',
+    );
+  });
+
   test('every audience is a real answer to whose screen this is', () {
     // A guard against the enum growing a value nobody renders: each one is
     // used by at least one surface.
