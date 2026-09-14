@@ -29,7 +29,10 @@ class MinesweeperGame extends GridGame {
     RoomBeat('Five mines are hiding'),
     RoomBeat('Tap a square', detail: 'The number says how many mines touch it'),
     RoomBeat('Hold a square to put a flag on it'),
-    RoomBeat('Clear every safe square', detail: 'Hit a mine and the other team wins'),
+    RoomBeat(
+      'Clear every safe square',
+      detail: 'Hit a mine and the other team wins',
+    ),
     RoomBeat('Team 1 taps first'),
   ];
 

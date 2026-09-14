@@ -6,6 +6,8 @@
 //
 // These are the tests that would have caught that.
 
+import 'package:differentworld/features/action_words/conductor.dart';
+import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
@@ -23,6 +25,7 @@ import 'package:differentworld/features/games/games/whack_a_mole_game.dart';
 import 'package:differentworld/features/games/games/word_search_game.dart';
 import 'package:differentworld/features/games/games/wordle_game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
+import 'package:differentworld/features/live_board/board_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -285,15 +288,16 @@ void main() {
     // did `(i + 1) % n` and sent the room silently back to item one. The
     // same discipline, for the whole registry: a game either reaches done
     // by being driven, or is an INSTRUMENT here with a written reason.
-    const instruments = <String, String>{
+    final instruments = <String, String>{
       'poll': 'a vote has no last question — it ends when the adult reveals',
       'cues': 'a signal is an interruption; it has no round',
       'now-next': 'the schedule on the wall — it ends when the day does',
       'picker': 'one spin at a time; nothing accumulates to finish',
-      'timer': 'a clock ends by reaching zero on the receiver, not in the reducer',
-      'board': 'an instrument the live board drives',
-      'world-cast': 'a slideshow driven from This Week',
-      'conductor': 'a text the conductor screen drives',
+      'timer':
+          'a clock ends by reaching zero on the receiver, not in the reducer',
+      const BoardGame().id: 'an instrument the live board drives',
+      const WorldCastGame().id: 'a slideshow driven from This Week',
+      const ConductorGame().id: 'a text the conductor screen drives',
       'four-corners': 'the board is the ROOM — see the grid ledger',
     };
 

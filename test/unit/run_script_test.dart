@@ -1,3 +1,5 @@
+import 'package:differentworld/features/action_words/conductor.dart';
+import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/activity_run_scripts.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
@@ -6,10 +8,7 @@ import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/games/bingo_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
-import 'package:differentworld/features/games/games/lights_out_game.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
-import 'package:differentworld/features/action_words/conductor.dart';
-import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/live_board/board_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -117,42 +116,45 @@ void main() {
       }
     });
 
-    test('the instruments have NO script, on purpose — and nothing else does', () {
-      // The same shape as the grid-game ledger's `noEnding`: every exception
-      // carries a written reason, so nobody later "fixes" it — and a game in
-      // NEITHER list (no script, no reason) fails the build. That is what
-      // turned "some games have instructions" into "every game a room can
-      // play is one a substitute can start".
-      final noScript = <String, String>{
-        // Signals is an interruption — Eyes up, Freeze, Line up. A signal that
-        // needs three taps of preamble is not a signal. The whole value is
-        // that it lands the instant the adult reaches for it.
-        'cues': 'it is an interruption, not an activity',
-        // A countdown explains itself, and the adult reaching for it is
-        // usually mid-transition with a room already moving.
-        'timer': 'a clock needs no rules',
-        // A sign, not a game: the day's schedule on the wall. Nobody plays it.
-        'now-next': 'it is the schedule on the wall',
-        // One button. "Tap Spin" is already on the stage.
-        'picker': 'one button, and the stage says what it does',
-        // The three cast-only instruments: driven from another screen, never
-        // opened as an activity, so there is no room to brief.
-        const BoardGame().id: 'an instrument the live board drives',
-        const WorldCastGame().id: 'the world slideshow, cast from This Week',
-        const ConductorGame().id: 'a text the conductor screen drives',
-      };
-      final actual = {
-        for (final g in liveGames)
-          if (g.howToPlay.isEmpty) g.id,
-      };
-      expect(
-        actual,
-        noScript.keys.toSet(),
-        reason:
-            'a game with no script needs a written reason here, and a game '
-            'with a reason should not have grown a script',
-      );
-    });
+    test(
+      'the instruments have NO script, on purpose — and nothing else does',
+      () {
+        // The same shape as the grid-game ledger's `noEnding`: every exception
+        // carries a written reason, so nobody later "fixes" it — and a game in
+        // NEITHER list (no script, no reason) fails the build. That is what
+        // turned "some games have instructions" into "every game a room can
+        // play is one a substitute can start".
+        final noScript = <String, String>{
+          // Signals is an interruption — Eyes up, Freeze, Line up. A signal that
+          // needs three taps of preamble is not a signal. The whole value is
+          // that it lands the instant the adult reaches for it.
+          'cues': 'it is an interruption, not an activity',
+          // A countdown explains itself, and the adult reaching for it is
+          // usually mid-transition with a room already moving.
+          'timer': 'a clock needs no rules',
+          // A sign, not a game: the day's schedule on the wall. Nobody plays it.
+          'now-next': 'it is the schedule on the wall',
+          // One button. "Tap Spin" is already on the stage.
+          'picker': 'one button, and the stage says what it does',
+          // The three cast-only instruments: driven from another screen, never
+          // opened as an activity, so there is no room to brief.
+          const BoardGame().id: 'an instrument the live board drives',
+          const WorldCastGame().id: 'the world slideshow, cast from This Week',
+          const ConductorGame().id: 'a text the conductor screen drives',
+        };
+        final actual = {
+          for (final g in liveGames)
+            if (g.howToPlay.isEmpty) g.id,
+        };
+        expect(
+          actual,
+          noScript.keys.toSet(),
+          reason:
+              'a game with no script needs a written reason here, and a game '
+              'with a reason should not have grown a script',
+        );
+      },
+    );
 
     test('the ledger: how much of the deck a substitute could start', () {
       final withScript = liveGames.where((g) => g.howToPlay.isNotEmpty).length;
@@ -198,7 +200,7 @@ void _wireTests() {
     });
 
     test('a game with no script is never seeded', () {
-      const plain = LightsOutGame();
+      const plain = TimerGame();
       final wire = RunScriptWire.seed(
         plain,
         plain.initialState(LocalContentBank.seeded()),

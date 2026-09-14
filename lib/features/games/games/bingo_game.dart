@@ -117,15 +117,51 @@ class BingoGame extends GridGame {
     return {...before.tally, 'call': _drawFrom(before, justMarked: i)};
   }
 
-  /// A completed line is the whole game; it just never ended. The line was already computed for the board's title —
-  /// it simply never stamped `done`, so the round ran forever.
+  /// A completed line is the whole game — and ONLY a line. This used to
+  /// return [titleFor], which also returns the current CALL, so the first
+  /// mark on the card ended the round with the outcome "banana". Nothing
+  /// noticed, because nothing rendered the ending; the wrap beat does now.
   @override
-  String? outcomeFor(GridBoard b) => titleFor(b);
+  String? outcomeFor(GridBoard b) {
+    final line = _lineName(b);
+    return line == null ? null : 'Bingo! $line';
+  }
 
   @override
   String? titleFor(GridBoard b) {
     if (_hasLine(b)) return 'Bingo!';
     return callOf(b);
+  }
+
+  /// Which line was completed, for the closing line — "Top row", "Left
+  /// column", "Corner to corner". Null while no line is complete.
+  String? _lineName(GridBoard b) {
+    bool done(int i) => b.cells[i].state == CellState.done;
+    const rowNames = ['Top row', 'Second row', 'Third row', 'Bottom row'];
+    const colNames = [
+      'Left column',
+      'Second column',
+      'Third column',
+      'Right column',
+    ];
+    for (var r = 0; r < b.rows; r++) {
+      if (List.generate(b.cols, (c) => r * b.cols + c).every(done)) {
+        return r < rowNames.length ? rowNames[r] : 'Row ${r + 1}';
+      }
+    }
+    for (var c = 0; c < b.cols; c++) {
+      if (List.generate(b.rows, (r) => r * b.cols + c).every(done)) {
+        return c < colNames.length ? colNames[c] : 'Column ${c + 1}';
+      }
+    }
+    final n = min(b.cols, b.rows);
+    if (List.generate(n, (k) => k * b.cols + k).every(done)) {
+      return 'Corner to corner';
+    }
+    if (List.generate(n, (k) => k * b.cols + (b.cols - 1 - k)).every(done)) {
+      return 'Corner to corner';
+    }
+    return null;
   }
 
   @override

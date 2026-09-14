@@ -61,10 +61,10 @@ void main() {
       expect(game.decode(stateAt(i: 1)).word, 'word1');
     });
 
-    test('initialState pulls rhyme words from the bank', () {
+    test('initialState pulls rhyme words from the bank, a round at a time', () {
       final s = game.initialState(LocalContentBank.seeded());
-      expect(s['n'] as int, greaterThan(0));
-      expect((s['words'] as List).length, s['n']);
+      expect(s['n'], RhymeTimeGame.roundLength, reason: 'a round, not all');
+      expect((s['words'] as List).length, greaterThanOrEqualTo(s['n'] as int));
     });
 
     test('always offers tally / next / reset', () {

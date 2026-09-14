@@ -72,9 +72,13 @@ Map<String, dynamic> guessWhoSeed(List<PictureCard> cards) =>
 Map<String, dynamic> spotDifferenceSeed(List<PictureCard> cards) {
   const game = SpotDifferenceGame();
   if (cards.isEmpty) {
-    return GridBoard(cols: game.cols, rows: game.rows, cells: const []).toWire();
+    return GridBoard(
+      cols: game.cols,
+      rows: game.rows,
+      cells: const [],
+    ).toWire();
   }
-  final need = SpotDifferenceGame.facesNeeded;
+  const need = SpotDifferenceGame.facesNeeded;
   final picked = CardRounds.draw(cards, need, cards.length);
   final faces = [for (final c in picked) c.image];
   while (faces.length < need) {

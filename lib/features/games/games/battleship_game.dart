@@ -32,7 +32,10 @@ class BattleshipGame extends GridGame {
   RunScript get howToPlay => const [
     RoomBeat('We are playing Battleship'),
     RoomBeat('Ships are hiding under the squares'),
-    RoomBeat('Call out a square, like B3', detail: 'Splash is a miss, boom is a hit'),
+    RoomBeat(
+      'Call out a square, like B3',
+      detail: 'Splash is a miss, boom is a hit',
+    ),
     RoomBeat('Find all five to finish'),
     RoomBeat('Team 1 calls first'),
   ];

@@ -37,7 +37,10 @@ class ScavengerBingoGame extends GridGame {
   @override
   RunScript get howToPlay => const [
     RoomBeat('We are going on a Scavenger Hunt'),
-    RoomBeat('The board lists things to find', detail: 'Outside, or around the room'),
+    RoomBeat(
+      'The board lists things to find',
+      detail: 'Outside, or around the room',
+    ),
     RoomBeat('Shout when you spot one — we tap it off'),
     RoomBeat('Find them all to finish'),
   ];

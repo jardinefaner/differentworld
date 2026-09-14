@@ -42,7 +42,10 @@ class WordleGame extends GridGame {
     RoomBeat('We are playing Wordle'),
     RoomBeat('A five-letter word is hiding'),
     RoomBeat('Guess a word — one person types it in'),
-    RoomBeat('Green is right, yellow is close', detail: 'Grey is not in the word'),
+    RoomBeat(
+      'Green is right, yellow is close',
+      detail: 'Grey is not in the word',
+    ),
     RoomBeat('Six goes to get it', detail: 'Teams take turns guessing'),
   ];
 
