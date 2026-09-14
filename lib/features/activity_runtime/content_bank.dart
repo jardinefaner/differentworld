@@ -196,6 +196,7 @@ final List<ContentItem> curatedSeeds = <ContentItem>[
   ..._quoteSeed,
   ..._fillBlankSeed,
   ..._writePromptSeed,
+  ..._fourCornersSeed,
 ];
 
 // ── Curated seeds ──────────────────────────────────────────────────────
@@ -1649,4 +1650,45 @@ final List<ContentItem> _writePromptSeed = <ContentItem>[
   _writePromptOf('Tell them about something you are excited for.'),
   _writePromptOf('Draw your two favourite animals having an adventure.'),
   _writePromptOf('Tell them a tiny joke to make them smile.'),
+];
+
+// ── Four Corners ───────────────────────────────────────────────────────
+// A question with four answers, one per corner of the room. Without these
+// the board dealt "Front left / Front right / Back left / Back right" and
+// asked nothing — the corners were furniture, and the activity depended
+// entirely on the adult inventing a question on the spot, which is exactly
+// what a substitute cannot do. Kid-safe, no wrong answers, and every one is
+// a question a four-year-old and a twelve-year-old can both stand on.
+ContentItem _cornersOf(String q, String a, String b, String c, String d) =>
+    ContentItem(
+      kind: ContentKind.fourCorners,
+      fingerprint: 'corners|${q.toLowerCase()}',
+      payload: {'question': q, 'a': a, 'b': b, 'c': c, 'd': d},
+    );
+
+final List<ContentItem> _fourCornersSeed = <ContentItem>[
+  _cornersOf('Which would you rather be?', 'A bird', 'A fish', 'A bear', 'A snake'),
+  _cornersOf('Best season?', 'Spring', 'Summer', 'Autumn', 'Winter'),
+  _cornersOf('Pick a superpower', 'Flying', 'Invisible', 'Super strong', 'Talk to animals'),
+  _cornersOf('Favourite kind of weather?', 'Sunny', 'Rainy', 'Snowy', 'Windy'),
+  _cornersOf('Where would you explore?', 'The ocean', 'Space', 'A jungle', 'A castle'),
+  _cornersOf('Best breakfast?', 'Pancakes', 'Cereal', 'Eggs', 'Fruit'),
+  _cornersOf('Which pet?', 'A dog', 'A cat', 'A rabbit', 'A lizard'),
+  _cornersOf('How do you like to move?', 'Run', 'Dance', 'Climb', 'Swim'),
+  _cornersOf('Best colour?', 'Red', 'Blue', 'Green', 'Yellow'),
+  _cornersOf('Pick a treat', 'Ice cream', 'Cookies', 'Popcorn', 'Fruit'),
+  _cornersOf('Where would you build a den?', 'A treehouse', 'A cave', 'Under a bed', 'On a boat'),
+  _cornersOf('Best time of day?', 'Morning', 'Lunchtime', 'After school', 'Bedtime'),
+  _cornersOf('Which instrument?', 'Drums', 'Guitar', 'Piano', 'Singing'),
+  _cornersOf('Pick a planet', 'Mars', 'Jupiter', 'Saturn', 'The Moon'),
+  _cornersOf('What would you invent?', 'A robot', 'A jetpack', 'A time machine', 'A candy tree'),
+  _cornersOf('Best way to spend a rainy day?', 'Drawing', 'Building', 'Reading', 'A movie'),
+  _cornersOf('Which dinosaur?', 'T. rex', 'Triceratops', 'Stegosaurus', 'A flying one'),
+  _cornersOf('Pick a vehicle', 'A rocket', 'A submarine', 'A train', 'A bike'),
+  _cornersOf('Favourite fruit?', 'Apple', 'Banana', 'Strawberry', 'Mango'),
+  _cornersOf('Which job for a day?', 'Firefighter', 'Chef', 'Astronaut', 'Vet'),
+  _cornersOf('Best game outside?', 'Tag', 'Hide and seek', 'Football', 'Hopscotch'),
+  _cornersOf('Pick a magic creature', 'A dragon', 'A unicorn', 'A mermaid', 'A giant'),
+  _cornersOf('Hot or cold?', 'A beach', 'A snow hill', 'A warm bath', 'An ice rink'),
+  _cornersOf('What do you do first at a party?', 'Dance', 'Eat', 'Play a game', 'Find a friend'),
 ];

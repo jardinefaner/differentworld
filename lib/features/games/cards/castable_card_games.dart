@@ -9,6 +9,7 @@ import 'package:differentworld/features/games/games/name_it_game.dart';
 import 'package:differentworld/features/games/games/name_it_screen.dart';
 import 'package:differentworld/features/games/games/odd_one_out_game.dart';
 import 'package:differentworld/features/games/games/odd_one_out_screen.dart';
+import 'package:differentworld/features/games/games/spot_difference_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 
@@ -34,4 +35,5 @@ final List<(GameDefinition<dynamic>, CardSeed)> castableCardGames =
       // already reaches them.
       (const BingoGame(), bingoSeed),
       (const GuessWhoGame(), guessWhoSeed),
+      (const SpotDifferenceGame(), spotDifferenceSeed),
     ];

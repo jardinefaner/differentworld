@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/math_inverse.dart';
+import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -109,18 +110,22 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen> {
     return EdgeScaffold(
       body: OursFooter(
         route: '/activity/math',
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                // Keyed by phase id so swapping phases gives Flutter a clean
-                // identity — the create-phase TextField never gets matched to
-                // a sibling phase's widget (tearing down its input connection).
-                child: KeyedSubtree(
-                  key: ValueKey('phase-${_run.current.id}'),
-                  child: _phaseBody(context),
+        child: ActivityBrief(
+          route: '/activity/math',
+          title: 'Many Paths',
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  // Keyed by phase id so swapping phases gives Flutter a clean
+                  // identity — the create-phase TextField never gets matched to
+                  // a sibling phase's widget (tearing down its input connection).
+                  child: KeyedSubtree(
+                    key: ValueKey('phase-${_run.current.id}'),
+                    child: _phaseBody(context),
+                  ),
                 ),
               ),
             ),

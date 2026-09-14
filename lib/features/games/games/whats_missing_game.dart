@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -82,6 +83,14 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
 
   @override
   String get title => "What's Missing";
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing What’s Missing'),
+    RoomBeat('Look hard at all the pictures'),
+    RoomBeat('Eyes closed — one disappears'),
+    RoomBeat('Eyes open — what’s gone?'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.rose);

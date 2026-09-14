@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -31,6 +32,14 @@ class WhackAMoleGame extends GridGame {
 
   @override
   String get title => 'Whack-a-Mole';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Whack-a-Mole'),
+    RoomBeat('A mole pops up and moves'),
+    RoomBeat('Shout where it is — one person taps it'),
+    RoomBeat('Miss it three times and the round is over'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);

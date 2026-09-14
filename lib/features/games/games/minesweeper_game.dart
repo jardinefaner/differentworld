@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -21,6 +22,16 @@ class MinesweeperGame extends GridGame {
 
   @override
   String get title => 'Minesweeper';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Minesweeper'),
+    RoomBeat('Five mines are hiding'),
+    RoomBeat('Tap a square', detail: 'The number says how many mines touch it'),
+    RoomBeat('Hold a square to put a flag on it'),
+    RoomBeat('Clear every safe square', detail: 'Hit a mine and the other team wins'),
+    RoomBeat('Team 1 taps first'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);

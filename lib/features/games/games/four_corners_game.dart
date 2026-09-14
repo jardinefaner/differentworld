@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -17,6 +18,14 @@ class FourCornersGame extends GridGame {
 
   @override
   String get title => 'Four Corners';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Four Corners'),
+    RoomBeat('A question with four answers', detail: 'One in each corner'),
+    RoomBeat('Go and stand in the corner you pick'),
+    RoomBeat('Then we see where everyone went'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);

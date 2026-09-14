@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +57,13 @@ class NameItGame extends GameDefinition<NameItState> {
 
   @override
   String get title => 'Name It';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Name It'),
+    RoomBeat('A picture comes up'),
+    RoomBeat('Shout what it is', detail: 'Then we see the word'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.rose);

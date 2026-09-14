@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '_briefing.dart';
+
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +34,7 @@ void main() {
   testWidgets('opens on the present phase showing the target', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pump(); // let the kid-mode microtask settle
+    await skipTheBriefing(tester);
 
     expect(find.text('12'), findsOneWidget);
     expect(find.text("Let's go"), findsOneWidget);
@@ -43,6 +46,7 @@ void main() {
   ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
+    await skipTheBriefing(tester);
 
     await tester.tap(find.text("Let's go"));
     await tester.pump(); // build create phase
@@ -57,6 +61,7 @@ void main() {
   ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
+    await skipTheBriefing(tester);
     await tester.tap(find.text("Let's go"));
     await tester.pump();
 
@@ -75,6 +80,7 @@ void main() {
   ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
+    await skipTheBriefing(tester);
     await tester.tap(find.text("Let's go"));
     await tester.pump();
 
@@ -93,6 +99,7 @@ void main() {
   ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
+    await skipTheBriefing(tester);
     await tester.tap(find.text("Let's go"));
     await tester.pump();
 

@@ -127,7 +127,7 @@ class BrainBreaksScreen extends ConsumerWidget {
     // rules, which is the same reason the stages stopped narrating themselves.
     const DeckCard(
       title: 'Bingo',
-      tagline: 'Cross them off as they’re called',
+      tagline: 'The board calls — cross them off',
       icon: Icons.grid_view_rounded,
       color: ActivityPalette.amber,
       lane: DeckLane.screen,
@@ -357,13 +357,15 @@ class BrainBreaksScreen extends ConsumerWidget {
       lane: DeckLane.reset,
       route: '/activity/potions',
     ),
+    // One device: the phone is the actor's card, the room guesses. The
+    // two-device session (/live/charades) is still one long-press away.
     const DeckCard(
       title: 'Charades',
-      tagline: 'Act it out — phone + screen',
+      tagline: 'Act it out — no words',
       icon: Icons.theater_comedy_outlined,
       color: ActivityPalette.purple,
       lane: DeckLane.reset,
-      route: '/live/charades',
+      route: '/activity/charades',
     ),
   ];
 

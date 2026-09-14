@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -32,6 +33,14 @@ class ScavengerBingoGame extends GridGame {
 
   @override
   String get title => 'Scavenger Hunt';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are going on a Scavenger Hunt'),
+    RoomBeat('The board lists things to find', detail: 'Outside, or around the room'),
+    RoomBeat('Shout when you spot one — we tap it off'),
+    RoomBeat('Find them all to finish'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);

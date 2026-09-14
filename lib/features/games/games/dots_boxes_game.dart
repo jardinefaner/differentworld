@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -25,6 +26,15 @@ class DotsBoxesGame extends GridGame {
 
   @override
   String get title => 'Dots & Boxes';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Dots & Boxes'),
+    RoomBeat('Tap between two dots to draw a line'),
+    RoomBeat('Close a box and it’s yours', detail: 'And you go again'),
+    RoomBeat('Most boxes wins'),
+    RoomBeat('Team 1 draws first'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);

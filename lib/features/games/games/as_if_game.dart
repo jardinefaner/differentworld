@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
@@ -16,6 +18,8 @@ class AsIfState {
     this.li = 0,
     this.ai = 0,
     this.performed = 0,
+    this.done = false,
+    this.roundLength = 0,
     this.lines = const [],
     this.asifs = const [],
   });
@@ -24,6 +28,8 @@ class AsIfState {
     li: (m['li'] as num?)?.toInt() ?? 0,
     ai: (m['ai'] as num?)?.toInt() ?? 0,
     performed: (m['p'] as num?)?.toInt() ?? 0,
+    done: m['d'] == true,
+    roundLength: (m['n'] as num?)?.toInt() ?? 0,
     lines: [for (final x in (m['lines'] as List? ?? const [])) x.toString()],
     asifs: [for (final x in (m['asifs'] as List? ?? const [])) x.toString()],
   );
@@ -31,6 +37,10 @@ class AsIfState {
   final int li;
   final int ai;
   final int performed;
+  final bool done;
+
+  /// How many prompts make a round.
+  final int roundLength;
   final List<String> lines;
   final List<String> asifs;
 
@@ -68,8 +78,20 @@ class AsIfGame extends GameDefinition<AsIfState> {
       for (final c in content.take(ContentKind.asIf, 999))
         c.payload['text']! as String,
     ];
-    return {'li': 0, 'ai': 0, 'p': 0, 'lines': lines, 'asifs': asifs};
+    return {
+      'li': 0,
+      'ai': 0,
+      'p': 0,
+      'd': false,
+      'n': lines.isEmpty ? 0 : min(roundLength, lines.length),
+      'lines': lines,
+      'asifs': asifs,
+    };
   }
+
+  /// A round is this many prompts. It used to cycle forever; a round that
+  /// ends is one a substitute can see the end of.
+  static const int roundLength = 8;
 
   @override
   AsIfState decode(Map<String, dynamic> state) => AsIfState.fromMap(state);
@@ -84,18 +106,27 @@ class AsIfGame extends GameDefinition<AsIfState> {
     final li = (s['li'] as num?)?.toInt() ?? 0;
     final ai = (s['ai'] as num?)?.toInt() ?? 0;
     final p = (s['p'] as num?)?.toInt() ?? 0;
+    // A fixture without 'n' (the tests, an older wire) is an endless round,
+    // exactly as before; a seeded round ends after its n-th prompt.
+    final n = (s['n'] as num?)?.toInt() ?? 0;
+    final done = s['d'] == true;
     switch (intent) {
       case GameIntent.tally: // I did it! — count + new challenge.
+        if (done) break;
         s['p'] = p + 1;
         s['li'] = li + 1;
         s['ai'] = ai + 1;
+        if (n > 0 && li + 1 >= n) s['d'] = true;
       case GameIntent.next: // Another one — new challenge, no count.
+        if (done) break;
         s['li'] = li + 1;
         s['ai'] = ai + 1;
+        if (n > 0 && li + 1 >= n) s['d'] = true;
       case GameIntent.reset:
         s['li'] = 0;
         s['ai'] = 0;
         s['p'] = 0;
+        s['d'] = false;
       case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
@@ -108,15 +139,23 @@ class AsIfGame extends GameDefinition<AsIfState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(AsIfState s) => {
-    GameIntent.tally,
-    GameIntent.next,
-    GameIntent.reset,
-  };
+  Set<GameIntent> activeIntents(AsIfState s) => s.done
+      ? {GameIntent.reset}
+      : {GameIntent.tally, GameIntent.next, GameIntent.reset};
 
   @override
   Widget buildStage(BuildContext context, AsIfState s) {
     final theme = Theme.of(context);
+    if (s.done) {
+      return GameStage.recap(
+        context,
+        emoji: '🎭',
+        title: s.performed == 0
+            ? 'That was Say It As If'
+            : 'Acted out ${s.performed}!',
+        caption: '${s.roundLength} lines, together.',
+      );
+    }
     return GameStage.frame(
       context,
       hero: GameStage.hero(context, '“${s.line}”'),
@@ -159,9 +198,11 @@ class AsIfGame extends GameDefinition<AsIfState> {
     BuildContext context,
     AsIfState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) => tallyControls(
-    send: send,
-    tallyLabel: 'I did it!',
-    nextLabel: 'Another one',
-  );
+  ) => state.done
+      ? playAgainControls(send)
+      : tallyControls(
+          send: send,
+          tallyLabel: 'I did it!',
+          nextLabel: 'Another one',
+        );
 }

@@ -11,6 +11,7 @@ import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
+import 'package:differentworld/features/games/round_wrap.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -43,8 +44,22 @@ class GameScaffold<S> extends StatelessWidget {
 
   void _send(GameIntent intent) => controller.send(intent);
 
+  /// Back to beat one of the run-script, over whatever the board is doing.
+  void _rules() =>
+      controller.send(GameIntent.reveal, {RunScriptWire.rulesArg: true});
+
+  static void _noSend(GameIntent intent, [Map<String, dynamic> args = const {}]) {}
+
   @override
   Widget build(BuildContext context) {
+    // Whether this game draws its own tappable stage (the classics, Memory,
+    // Reveal the Picture). Those get NO control panel, so the two occasional
+    // verbs the panel used to carry — Room tools and Start over — live in the
+    // top pill for them instead. Probed once, with a no-op sender: the answer
+    // does not change over a round.
+    final ownsStage =
+        def.buildLiveStage(context, def.decode(controller.state), _noSend) !=
+        null;
     return EdgeScaffold(
       actions: [
         if (onSettings case final open?)
@@ -53,6 +68,27 @@ class GameScaffold<S> extends StatelessWidget {
             icon: Icons.tune,
             onPressed: open,
           ),
+        // The rules, one tap away for the whole round — because Play again no
+        // longer re-briefs (run_script_wire.dart), this is where a substitute
+        // who missed a beat goes back to it.
+        if (def.howToPlay.isNotEmpty)
+          SecondaryActionButton(
+            tooltip: 'How to play',
+            icon: Icons.help_outline,
+            onPressed: _rules,
+          ),
+        if (ownsStage) ...[
+          SecondaryActionButton(
+            tooltip: 'Room tools',
+            icon: Icons.handyman_outlined,
+            onPressed: () => unawaited(showRoomTools(context)),
+          ),
+          SecondaryActionButton(
+            tooltip: 'Start over',
+            icon: Icons.replay,
+            onPressed: () => _send(GameIntent.reset),
+          ),
+        ],
         SecondaryActionButton(
           tooltip: 'Fullscreen',
           icon: Icons.fullscreen,
@@ -131,7 +167,17 @@ class GameScaffold<S> extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= _wideBreakpoint;
-                  final stage = def.buildStage(context, state);
+                  // ONE device: the phone in the host's hand is the actor's
+                  // card as well as the remote, so a game with a secret
+                  // (Charades) shows the SECRET here — the word — and keeps
+                  // `buildStage` (the category, never the word) for the
+                  // fullscreen present and the cast receiver, which face the
+                  // room. Before this Charades ran only as a two-device
+                  // session and opened on a lobby; a substitute with one phone
+                  // could not start it at all.
+                  final stage =
+                      def.buildSecretStage(context, state) ??
+                      def.buildStage(context, state);
                   final revealLabel = def.revealLabel(
                     revealed: wire['r'] == true,
                   );
@@ -146,7 +192,32 @@ class GameScaffold<S> extends StatelessWidget {
                     state,
                     controller.send,
                   );
-                  if (live != null) return SafeArea(child: live);
+                  if (live != null) {
+                    // The end of the round, when there is one. The board
+                    // stays on screen above it — the winning line is what
+                    // the room wants to look at — and the beat carries the
+                    // verbs the board games never had: again, done, rules.
+                    return SafeArea(
+                      child: Column(
+                        children: [
+                          Expanded(child: live),
+                          if (done)
+                            RoundWrap(
+                              key: const ValueKey('round-wrap'),
+                              line: def.outcomeLine(state),
+                              accent: def.vibe.accent,
+                              gameId: def.id,
+                              keepsake: keepText,
+                              onAgain: () => _send(GameIntent.reset),
+                              onDone: () {
+                                if (context.canPop()) context.pop();
+                              },
+                              onRules: def.howToPlay.isEmpty ? null : _rules,
+                            ),
+                        ],
+                      ),
+                    );
+                  }
 
                   // Full control override (poll, timer, …): one layout — the
                   // stage fills, the game's own controls sit in the bar.

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -26,6 +27,15 @@ class BattleshipGame extends GridGame {
 
   @override
   String get title => 'Battleship';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Battleship'),
+    RoomBeat('Ships are hiding under the squares'),
+    RoomBeat('Call out a square, like B3', detail: 'Splash is a miss, boom is a hit'),
+    RoomBeat('Find all five to finish'),
+    RoomBeat('Team 1 calls first'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);

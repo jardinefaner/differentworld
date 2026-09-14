@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -73,6 +74,14 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
 
   @override
   String get title => 'Odd One Out';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Odd One Out'),
+    RoomBeat('Four pictures — three go together'),
+    RoomBeat('Which one doesn’t belong?', detail: 'Say why'),
+    RoomBeat('Then we see the answer'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);

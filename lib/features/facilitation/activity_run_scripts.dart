@@ -43,4 +43,54 @@ const Map<String, RunScript> activityRunScripts = {
     RoomBeat('Then we take a photo of it'),
     RoomBeat('Watch what it does'),
   ],
+
+  // Do It — one real-world action at a time, big on the screen. The whole
+  // activity happens AWAY from the app, which is the part a sub would not
+  // guess from a screen showing a card.
+  '/activity/do-it': [
+    RoomBeat('We have one real thing to do'),
+    RoomBeat('It is not on the screen', detail: 'We go and do it'),
+    RoomBeat('Then we come back and say we did'),
+  ],
+
+  // Penny for a Thought — share a thought, drop a penny; the pile is the
+  // math. Both halves need saying: a sub reading "Penny" sees a question and
+  // has no reason to know pennies are involved at all.
+  '/activity/penny': [
+    RoomBeat('A penny for a thought'),
+    RoomBeat('Say what you think', detail: 'Then drop a penny in'),
+    RoomBeat('We count the pile at the end'),
+  ],
+
+  // Potions — a recipe the room makes for REAL, from the garden.
+  '/activity/potions': [
+    RoomBeat('We are making a potion'),
+    RoomBeat('The screen gives us the recipe'),
+    RoomBeat('We gather the real things', detail: 'Petals, water, a cup'),
+    RoomBeat('Then we name it together'),
+  ],
+
+  // Letters — the room writes to each other, on paper. Paper-first is the
+  // beat that stops a sub hunting for a typing surface that does not exist.
+  '/activity/letters': [
+    RoomBeat('We are writing notes to each other'),
+    RoomBeat('On paper', detail: 'The screen only says who to write to'),
+    RoomBeat('Say something kind'),
+  ],
+
+  // Fill in the Blank — the room shouts a word for each blank, then hears it
+  // read back. The order matters and is the joke: words FIRST, story after.
+  '/activity/fill-blank': [
+    RoomBeat('We are filling in the blanks'),
+    RoomBeat('Shout out a word when asked', detail: 'Do not ask what for'),
+    RoomBeat('Then we read the whole thing out'),
+  ],
+
+  // Many Paths — how many ways can we reach this number. Not a quiz: the
+  // point is the variety, and a sub told "math" will otherwise run it as one.
+  '/activity/math': [
+    RoomBeat('We have one number'),
+    RoomBeat('How many ways can we make it?', detail: 'There is no one answer'),
+    RoomBeat('We show all the ways we found'),
+  ],
 };

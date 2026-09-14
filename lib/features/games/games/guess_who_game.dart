@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -25,6 +26,15 @@ class GuessWhoGame extends GridGame {
 
   @override
   String get title => 'Guess Who';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Guess Who'),
+    RoomBeat('The board is thinking of one picture'),
+    RoomBeat('Ask a yes-or-no question', detail: 'Is it red? Can it fly?'),
+    RoomBeat('Tap the ones it can’t be', detail: 'They fade out'),
+    RoomBeat('One left — is that it?'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
