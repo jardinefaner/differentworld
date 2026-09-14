@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/activity_run_scripts.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
@@ -44,6 +45,41 @@ void main() {
       }
     });
 
+    test('every activity script answers what, and stays readable', () {
+      for (final entry in activityRunScripts.entries) {
+        final script = entry.value;
+        expect(script.length, greaterThanOrEqualTo(3), reason: entry.key);
+        expect(script.length, lessThanOrEqualTo(6), reason: entry.key);
+        for (final b in script) {
+          expect(b.line.trim(), isNotEmpty, reason: entry.key);
+          expect(
+            b.line.length,
+            lessThan(48),
+            reason: '${entry.key}: ${b.line}',
+          );
+          expect(b.detail?.trim(), isNot(''));
+        }
+        expect(
+          script.map((b) => b.line).toSet().length,
+          script.length,
+          reason: '${entry.key} repeats a line',
+        );
+      }
+    });
+
+    test('the three a substitute has never done before are covered', () {
+      // Not an arbitrary list. A sub has played Connect Four as a child; they
+      // have never done any of these, so an empty script here is the activity
+      // simply not happening.
+      for (final route in const [
+        '/activity/discussions',
+        '/activity/roles',
+        '/activity/pattern',
+      ]) {
+        expect(activityRunScripts[route], isNotNull, reason: route);
+      }
+    });
+
     test('the ledger: how much of the deck a substitute could start', () {
       final withScript = liveGames.where((g) => g.howToPlay.isNotEmpty).length;
       // Deliberately an equality, not a floor. When the next batch lands this
@@ -57,6 +93,15 @@ void main() {
             'Update this count as run-scripts land. $withScript of '
             '${liveGames.length} games can be started by someone who does '
             'not know the rules.',
+      );
+      // The activity half of the same ledger, and the same equality for the
+      // same reason: a floor would sit green while the rest stayed unrunnable.
+      expect(
+        activityRunScripts.length,
+        3,
+        reason:
+            '${activityRunScripts.length} of 11 non-game activities have a '
+            'run-script.',
       );
     });
   });

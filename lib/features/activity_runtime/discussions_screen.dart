@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/discussions.dart';
+import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -103,11 +104,17 @@ class _GroupDiscussionScreenState extends State<GroupDiscussionScreen> {
     return EdgeScaffold(
       body: OursFooter(
         route: '/activity/discussions',
-        child: switch (_phase) {
-          _Phase.setup => _setup(context),
-          _Phase.present => _present(context),
-          _Phase.done => _doneView(context),
-        },
+        // The room is told what this is before it starts — these three are
+        // the ones a substitute has never done before (activity_brief.dart).
+        child: ActivityBrief(
+          route: '/activity/discussions',
+          title: 'Group Talk',
+          child: switch (_phase) {
+            _Phase.setup => _setup(context),
+            _Phase.present => _present(context),
+            _Phase.done => _doneView(context),
+          },
+        ),
       ),
     );
   }
