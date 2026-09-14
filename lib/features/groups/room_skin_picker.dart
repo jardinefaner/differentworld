@@ -39,12 +39,18 @@ class RoomSkinChip extends ConsumerWidget {
               children: [
                 Text(skin?.emoji ?? '🎨', style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 8),
-                Text(
-                  skin == null ? 'Set room theme' : skin.name,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: skin == null
-                        ? theme.colorScheme.onSurfaceVariant
-                        : null,
+                // Flexible: a Row cannot shrink a Text below its natural
+                // width, so at 200% text this chip ran 30px past a 320dp
+                // phone. Third widget today with the identical shape —
+                // Row(min) holding an icon, a label and a trailing glyph.
+                Flexible(
+                  child: Text(
+                    skin == null ? 'Set room theme' : skin.name,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: skin == null
+                          ? theme.colorScheme.onSurfaceVariant
+                          : null,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),

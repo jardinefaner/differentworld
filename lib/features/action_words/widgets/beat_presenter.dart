@@ -988,12 +988,16 @@ class _GuidanceCard extends StatelessWidget {
                   children: [
                     Icon(Icons.bolt_outlined, size: 14, color: scheme.primary),
                     const SizedBox(width: 6),
-                    Text(
-                      'YOUR MOVE',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.primary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
+                    // Flexible — Row(min) with an unshrinkable label again,
+                    // 10px past a 320dp phone at 200%.
+                    Flexible(
+                      child: Text(
+                        'YOUR MOVE',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
                       ),
                     ),
                     if (nextLabel != null) ...[

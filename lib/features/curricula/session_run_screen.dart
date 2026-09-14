@@ -781,11 +781,16 @@ class _ToolChip extends StatelessWidget {
                 children: [
                   Icon(icon, size: 18, color: fg),
                   const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: fg,
-                      fontWeight: primary ? FontWeight.w700 : FontWeight.w600,
+                  // Flexible — same shape as RoomSkinChip, _MovePill and
+                  // AccentEdgeCard: Row(min) + an unshrinkable Text label,
+                  // 49px past a 320dp phone at 200%.
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: fg,
+                        fontWeight: primary ? FontWeight.w700 : FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -1298,11 +1303,13 @@ class _ExpandToggle extends StatelessWidget {
                 color: scheme.primary,
               ),
               const SizedBox(width: 6),
-              Text(
-                expanded ? 'Hide the full script' : 'Read the full script',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  expanded ? 'Hide the full script' : 'Read the full script',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -1594,11 +1601,13 @@ class _TimerButton extends StatelessWidget {
               children: [
                 Icon(icon, size: 18, color: scheme.onSurface),
                 const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
