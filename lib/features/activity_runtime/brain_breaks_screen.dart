@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/activity_deck.dart';
+import 'package:differentworld/features/activity_runtime/card_signals.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
@@ -57,7 +58,11 @@ class BrainBreaksScreen extends ConsumerWidget {
     // chrome ~66dp (padding + 24dp icon + gap) plus a text block that grows
     // with the user's scale. The old 140+64 was tuned for a Spacer-stretched
     // cell and left ~40% of every tile empty.
-    final tileExtent = 64 + 64 * scale;
+    // +20 for the chip line. Every tile reserves it, not just the ones that
+    // have chips: a grid of two different cell heights is the ragged deck the
+    // hug-the-top rewrite fixed, and a card with nothing to declare is the one
+    // whose title should still line up with its neighbours'.
+    final tileExtent = 84 + 64 * scale;
     // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
     // (no per-screen toggle). When on, the SAME deck of cards re-lays as
     // uniform bento tiles (2-up on a phone); off keeps the existing
@@ -223,6 +228,7 @@ class BrainBreaksScreen extends ConsumerWidget {
             icon: card.icon,
             title: card.title,
             tagline: card.tagline,
+            chips: _chips(card),
             onTap: () => unawaited(context.push(card.route)),
             onLongPress: () => unawaited(_castCard(context, ref, card)),
           ),
@@ -258,6 +264,7 @@ class BrainBreaksScreen extends ConsumerWidget {
                 icon: card.icon,
                 title: card.title,
                 tagline: card.tagline,
+                chips: _chips(card),
                 onTap: () => unawaited(context.push(card.route)),
                 onLongPress: () => unawaited(_castCard(context, ref, card)),
               ),
@@ -267,6 +274,15 @@ class BrainBreaksScreen extends ConsumerWidget {
     );
   }
 }
+
+/// What a card declares about itself, as tile chips.
+///
+/// The derivation lives in `card_signals.dart` and reads the GAME — nothing
+/// here is typed per card, so a new activity gets its chips the moment it is
+/// registered and a changed rule updates them with nobody remembering to.
+List<TileChip> _chips(DeckCard card) => [
+  for (final s in signalsFor(card.route)) TileChip(s.label, s.icon),
+];
 
 /// Put a break on the room's screen.
 ///

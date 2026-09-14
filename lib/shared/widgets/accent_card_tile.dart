@@ -1,3 +1,4 @@
+import 'package:differentworld/shared/widgets/app_gap.dart';
 import 'package:flutter/material.dart';
 
 /// A deck tile in a "grid of cards" hub — Present, Brain Breaks, Role Cards.
@@ -36,6 +37,7 @@ class AccentCardTile extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.semanticLabel,
+    this.chips = const <TileChip>[],
     super.key,
   }) : assert(
          (icon == null) != (emoji == null),
@@ -71,6 +73,14 @@ class AccentCardTile extends StatelessWidget {
   /// One clean screen-reader announcement for the whole tile; when set, the
   /// inner fragments are excluded so it reads as a single button.
   final String? semanticLabel;
+
+  /// What this card needs, at a glance — "2 teams", "90s", "camera".
+  ///
+  /// At most two are drawn. Three chips on a tile is a second tagline in
+  /// disguise, and a scroll of fifty tiles each wearing three is the wall the
+  /// chips exist to break up. The caller orders them; the tile keeps the
+  /// front of the list, so what you would be STOPPED by survives.
+  final List<TileChip> chips;
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +154,14 @@ class AccentCardTile extends StatelessWidget {
                   ),
                 ),
               ],
+              if (chips.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                // Not Flexible, and not wrapped: a chip row that reflows to a
+                // second line changes the tile's height, and these sit in a
+                // fixed-extent grid cell. One line, clipped, in a row that can
+                // give up its last chip rather than overflow.
+                _ChipRow(chips: chips.take(2).toList(), accent: color),
+              ],
             ],
           ),
         ),
@@ -158,5 +176,63 @@ class AccentCardTile extends StatelessWidget {
       );
     }
     return tile;
+  }
+}
+
+/// One glanceable fact on a tile — a label and the icon that carries it at a
+/// distance, since at 11sp the word is read second.
+@immutable
+class TileChip {
+  const TileChip(this.label, this.icon);
+
+  final String label;
+  final IconData icon;
+}
+
+/// The chips, on one line, in the accent's own quiet register.
+///
+/// They are drawn from the tile's accent rather than a semantic colour: these
+/// are properties of the activity, not statuses, and a red "camera" chip would
+/// read as a warning about a thing that is merely true.
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({required this.chips, required this.accent});
+
+  final List<TileChip> chips;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ink = Color.alphaBlend(
+      accent.withValues(alpha: 0.75),
+      theme.colorScheme.onSurfaceVariant,
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (i, chip) in chips.indexed) ...[
+          if (i > 0) const AppGap.lg(),
+          // Flexible so a long label in a narrow cell gives up its own text
+          // rather than the row overflowing. The icon always survives.
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(chip.icon, size: 13, color: ink),
+                const AppGap.xs(),
+                Flexible(
+                  child: Text(
+                    chip.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(color: ink),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }
