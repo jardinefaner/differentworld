@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
@@ -31,6 +32,13 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
 
   @override
   String get title => 'Rhyme Time';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Rhyme Time'),
+    RoomBeat('A word comes up big'),
+    RoomBeat('Shout words that rhyme', detail: 'As many as you can find'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.teal);

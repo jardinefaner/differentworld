@@ -45,6 +45,21 @@ void main() {
       }
     });
 
+    test('EVERY game script stays readable across a room', () {
+      // The pilots got this check when there were three of them; it has to
+      // cover the whole set or the eleventh script is the unchecked one.
+      for (final g in liveGames.where((g) => g.howToPlay.isNotEmpty)) {
+        final script = g.howToPlay;
+        expect(script.length, greaterThanOrEqualTo(3), reason: g.id);
+        expect(script.length, lessThanOrEqualTo(6), reason: '${g.id} too long');
+        for (final b in script) {
+          expect(b.line.trim(), isNotEmpty, reason: g.id);
+          expect(b.line.length, lessThan(48), reason: '${g.id}: ${b.line}');
+          expect(b.detail?.trim(), isNot(''), reason: g.id);
+        }
+      }
+    });
+
     test('every activity script answers what, and stays readable', () {
       for (final entry in activityRunScripts.entries) {
         final script = entry.value;
@@ -80,6 +95,24 @@ void main() {
       }
     });
 
+    test('two cockpit surfaces have NO script, on purpose', () {
+      // The same shape as the grid-game ledger's `noEnding`: an exception with
+      // a written reason, so nobody later "fixes" it.
+      const noScript = {
+        // Signals is an interruption — Eyes up, Freeze, Line up. A signal that
+        // needs three taps of preamble is not a signal. The whole value is
+        // that it lands the instant the adult reaches for it.
+        'cues': 'it is an interruption, not an activity',
+        // A countdown explains itself, and the adult reaching for it is
+        // usually mid-transition with a room already moving.
+        'timer': 'a clock needs no rules',
+      };
+      for (final entry in noScript.entries) {
+        final g = liveGames.firstWhere((g) => g.id == entry.key);
+        expect(g.howToPlay, isEmpty, reason: '${entry.key}: ${entry.value}');
+      }
+    });
+
     test('the ledger: how much of the deck a substitute could start', () {
       final withScript = liveGames.where((g) => g.howToPlay.isNotEmpty).length;
       // Deliberately an equality, not a floor. When the next batch lands this
@@ -88,7 +121,7 @@ void main() {
       // whole reason this feature exists is that nobody could see that gap.
       expect(
         withScript,
-        3,
+        13,
         reason:
             'Update this count as run-scripts land. $withScript of '
             '${liveGames.length} games can be started by someone who does '

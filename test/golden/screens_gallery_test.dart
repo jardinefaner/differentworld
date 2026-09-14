@@ -299,8 +299,15 @@ LiveBlock _demoLiveBlock() => LiveBlock(
   title: 'Outdoor free play',
   kind: 'on_site',
   isOutdoor: true,
-  startAt: DateTime.now().subtract(const Duration(minutes: 12)),
-  endAt: DateTime.now().add(const Duration(minutes: 23)),
+  // The half-minutes are not decoration. The live strip truncates its
+  // remaining time to whole minutes, so an endAt exactly 23 minutes out lands
+  // ON the boundary: render a few milliseconds late and "23m" becomes "22m".
+  // That one character drifted daily / nownext / group_detail pseudo-randomly
+  // and read as three unrelated regressions — it cost a re-baseline of plates
+  // that were never wrong. Thirty seconds of slack puts the truncation in the
+  // middle of a minute, where a slow plate cannot tip it.
+  startAt: DateTime.now().subtract(const Duration(minutes: 12, seconds: 30)),
+  endAt: DateTime.now().add(const Duration(minutes: 23, seconds: 30)),
 );
 
 void main() {

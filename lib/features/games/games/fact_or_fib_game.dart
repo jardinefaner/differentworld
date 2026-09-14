@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +47,14 @@ class FactOrFibGame extends GameDefinition<FactState> {
 
   @override
   String get title => 'Fact or Fib';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Fact or Fib'),
+    RoomBeat('Something comes up on the screen'),
+    RoomBeat('Is it true, or made up?', detail: 'Hands up for true'),
+    RoomBeat('Then we find out'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);

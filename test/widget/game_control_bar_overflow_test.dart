@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '_briefing.dart';
+
 void main() {
   /// Pump the runner at [size] and 200% text, then return the overflow
   /// messages raised while driving the round to its end.
@@ -38,6 +40,10 @@ void main() {
       ),
     );
     await tester.pump();
+    // Past the run-script and into the board. The loop below looks for
+    // "Next", and the script's LAST button says "Start" — so without this it
+    // stalls on the final beat and never reaches the wrap.
+    await skipTheBriefing(tester);
 
     for (var i = 0; i < 40; i++) {
       final reveal = find.widgetWithText(FilledButton, 'Reveal');

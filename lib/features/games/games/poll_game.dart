@@ -1,5 +1,6 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +57,14 @@ class PollGame extends GameDefinition<PollState> {
 
   @override
   String get title => 'Quick Poll';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are voting together'),
+    RoomBeat('The choices are on the screen'),
+    RoomBeat('Hand up for the one you want', detail: 'One hand each'),
+    RoomBeat('The most hands wins'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);

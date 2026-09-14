@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '_briefing.dart';
+
 void main() {
   const def = PollGame();
 
@@ -65,6 +67,8 @@ void main() {
       ),
     );
     await tester.pump();
+    // The room is briefed before the board — walk it the way a person does.
+    await skipTheBriefing(tester);
 
     expect(find.text('What should we do next?'), findsOneWidget);
     // The control button starts at "Outside  0"; tapping it tallies a vote.

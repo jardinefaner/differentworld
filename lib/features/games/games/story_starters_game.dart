@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +53,14 @@ class StoryStartersGame extends GameDefinition<StoryState> {
 
   @override
   String get title => 'Story Starters';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are making a story together'),
+    RoomBeat('The screen gives us the start'),
+    RoomBeat('One line each, around the circle'),
+    RoomBeat('Watch out for a plot twist'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);

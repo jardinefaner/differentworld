@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
@@ -51,6 +52,13 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
 
   @override
   String get title => 'Beat the Letter';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Beat the Letter'),
+    RoomBeat('You get a letter and a kind of thing'),
+    RoomBeat('Shout ones that start with it'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
