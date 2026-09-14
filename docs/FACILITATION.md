@@ -58,7 +58,15 @@ grepped for turn-shaped *names*, and that file calls it `nextUp`.)
 - `GridGame.turn` + `alternates` — two sides, flip on a move
   (`lib/features/games/grid_game.dart`)
 - `picker_logic.dart` — a fair bag: **everyone before anyone repeats**,
-  persisted, re-synced against the eligible roster
+  persisted, re-synced against the eligible roster. **Two surfaces draw from
+  it now** (2026-09-14): the standalone `/picker`, which persists its bag
+  across sessions, and `PickerGame` (Spotlight), which carries the bag in its
+  wire-state so a cast screen and the phone driving it agree about who is
+  left. Spotlight used to roll `Random().nextInt(n)` inside its control
+  widget and avoid only an immediate repeat — while Room tools offered it
+  under the words "everyone before anyone repeats". The instrument whose
+  whole selling point is fairness was the unfair one; it is one algorithm
+  again.
 - photo turns — per-child turn through a roster in a session
 - `rotation_engine.dart` — pair-history-aware grouping
 - `rooms/fair_turns.dart` (`nextUp`) — least-turns-first across a whole TERM,

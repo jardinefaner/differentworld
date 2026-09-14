@@ -20,11 +20,13 @@ class PickerScreen extends ConsumerWidget {
       def: const PickerGame(),
       live: live,
       data: ref.watch(subjectsInSpaceProvider),
-      seed: (subjects) => {
-        'names': [for (final s in subjects) s.firstName],
-        'i': 0,
-        'spun': false,
-      },
+      // Through the game, so the fair bag is dealt exactly once and the
+      // same way wherever a round starts — the seeded-path-is-the-app-path
+      // rule (CLAUDE.md).
+      // DataSeededGame re-runs this on "Spin again"/replay, so a fresh round
+      // deals a fresh bag — which is what starting over should mean.
+      seed: (subjects) =>
+          PickerGame.seedFor([for (final s in subjects) s.firstName]),
     );
   }
 }

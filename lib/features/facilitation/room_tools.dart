@@ -24,9 +24,12 @@ import 'package:go_router/go_router.dart';
 /// tasks (CLAUDE.md, "Modals — a glance, never a task"). Choosing which
 /// instrument is the glance; the instrument itself then gets a full page.
 enum RoomTool {
-  pickSomeone(
-    label: 'Pick someone',
-    hint: 'Fair turns — everyone before anyone repeats',
+  // Named for the thing it opens. It used to read "Pick someone", which is
+  // a third name for a surface the deck and the registry both call Spotlight
+  // — and a staffer who liked it could not find it again.
+  spotlight(
+    label: 'Spotlight',
+    hint: 'Pick a name — everyone before anyone repeats',
     icon: Icons.casino_outlined,
     route: '/present/picker',
   ),

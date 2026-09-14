@@ -17,12 +17,14 @@ import 'package:differentworld/features/games/game_settings_sheet.dart';
 import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
+import 'package:differentworld/features/games/games/picker_game.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:flutter/material.dart';
@@ -173,6 +175,21 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     setState(() => _showLauncher = false);
   }
 
+  /// Cast Spotlight — the room watches the name land, which is the whole
+  /// point of the instrument and the one thing it could not do: it was left
+  /// out of the launcher as "roster-seeded, would cast an empty stage", the
+  /// same objection Now & Next answered with a seed builder.
+  Future<void> _castSpotlight() async {
+    final cast = _cast; // capture before the await — ref may be gone after
+    final subjects = await ref.read(subjectsInSpaceProvider.future);
+    if (!mounted) return;
+    cast.castStage(
+      const PickerGame().id,
+      PickerGame.seedFor([for (final s in subjects) s.firstName]),
+    );
+    setState(() => _showLauncher = false);
+  }
+
   /// Cast a deck-seeded card game — read the bundled picture deck once, build
   /// the round with the game's SHARED seed (identical to its present screen),
   /// and cast it on the controller's code. An empty deck shows the game's own
@@ -266,6 +283,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
               onPresentWorld: _castWorld,
               onConduct: _castConductor,
               onNowNext: _castNowNext,
+              onSpotlight: _castSpotlight,
               onCastCard: _castCard,
             ),
           )
@@ -377,6 +395,7 @@ class _Launcher extends StatelessWidget {
     this.onPresentWorld,
     this.onConduct,
     this.onNowNext,
+    this.onSpotlight,
     this.onCastCard,
   });
 
@@ -393,6 +412,9 @@ class _Launcher extends StatelessWidget {
 
   /// Cast today's schedule as Now & Next (advanced from the phone).
   final VoidCallback? onNowNext;
+
+  /// Cast Spotlight, seeded from the roster.
+  final VoidCallback? onSpotlight;
 
   /// Cast a deck-seeded card game (Name It, Odd One Out, …) with its seed.
   final Future<void> Function(GameDefinition<dynamic> def, CardSeed seed)?
@@ -433,6 +455,16 @@ class _Launcher extends StatelessWidget {
             subtitle: "Today's schedule",
             color: ActivityPalette.green,
             onTap: onNowNext!,
+          ),
+        // Spotlight — fair turns, on the screen the room is watching. The
+        // bag rides the wire, so the TV and the phone agree about who is left.
+        if (onSpotlight != null)
+          _SimpleTile(
+            icon: Icons.casino_outlined,
+            title: 'Spotlight',
+            subtitle: 'Pick a name, fairly',
+            color: ActivityPalette.amber,
+            onTap: onSpotlight!,
           ),
         // Visual Timer — a countdown on the screen, driven from the phone. Casts
         // with its default 5:00 seed; not a game, so it isn't in the loop below.
