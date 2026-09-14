@@ -98,10 +98,15 @@ Future<void> showRoomTools(BuildContext context) async {
 /// The control itself — small, quiet, and in the body's bottom where a thumb
 /// already lives (the half-second rule). Drop it into any activity surface.
 class RoomToolsButton extends StatelessWidget {
-  const RoomToolsButton({this.compact = false, super.key});
+  const RoomToolsButton({this.compact = false, this.color, super.key});
 
   /// Icon only — for a control bar that has no width to spare.
   final bool compact;
+
+  /// Foreground for a RAW surface (the live session's dark header), where a
+  /// themed icon would be dark-on-dark in light mode. Null on a themed bar,
+  /// which is the usual case and reads from the theme as it should.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +114,7 @@ class RoomToolsButton extends StatelessWidget {
       return IconButton(
         tooltip: 'Room tools',
         onPressed: () => unawaited(showRoomTools(context)),
+        color: color,
         icon: const Icon(Icons.handyman_outlined),
       );
     }

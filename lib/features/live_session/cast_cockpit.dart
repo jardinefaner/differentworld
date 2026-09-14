@@ -7,6 +7,7 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
+import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/games/cards/castable_card_games.dart';
 import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/game.dart';
@@ -686,6 +687,16 @@ class _SwitchBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(
             children: [
+              // Pick a name, start a timer, flash "eyes up" — WITHOUT
+              // clearing the cast. This is facet 5 of the facilitation
+              // engine, and the cockpit was the surface it had never reached:
+              // a counselor mid-cast who needed a name had to stop the
+              // screen, walk back to the deck and lose the room's place,
+              // which is the exact problem Room tools exists to end. The
+              // cast survives the push — the session lives in the provider,
+              // not in this widget.
+              const RoomToolsButton(compact: true),
+              const SizedBox(width: 4),
               if (onTune case final tune?) ...[
                 IconButton.outlined(
                   onPressed: tune,

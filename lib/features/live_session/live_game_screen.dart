@@ -6,6 +6,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
+import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
@@ -369,6 +370,13 @@ class _ControllerHeader extends StatelessWidget {
         children: [
           _StatusPill(status: status),
           const Spacer(),
+          // The same instruments the scaffold and the cockpit carry. A
+          // controller is a phone in a hand, so it drives and it reaches
+          // them; the PRESENTER is a room's screen and does not.
+          const RoomToolsButton(
+            compact: true,
+            color: Colors.white70, // raw-canvas: live session header
+          ),
           TextButton.icon(
             onPressed: onLeave,
             icon: const Icon(Icons.close, color: Colors.white70),
