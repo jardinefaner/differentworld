@@ -2,6 +2,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -106,8 +107,26 @@ class CastSession {
   /// here — OFF the pure reducer — because `initialState` is the one place a
   /// game reads content. Re-casting the same game = "play again" with fresh
   /// content.
-  void cast(GameDefinition<dynamic> def, ContentSource content) {
-    _session.reseed(freshWire(def.id, def.initialState(content)));
+  /// [values] are the teacher's chosen settings (`GameSetting.id` → value);
+  /// omit them for the game's own defaults.
+  ///
+  /// It used to call `initialState` flat, so a game with knobs was cast at
+  /// its defaults no matter what anybody had chosen — the third seeding path,
+  /// and the one that ignored the contract the other two honour.
+  void cast(
+    GameDefinition<dynamic> def,
+    ContentSource content, {
+    Map<String, Object?>? values,
+  }) {
+    _session.reseed(
+      freshWire(
+        def.id,
+        def.initialStateFor(
+          content,
+          values ?? defaultSettingValues(def.settings),
+        ),
+      ),
+    );
   }
 
   /// Put a stage on the screen from an EXPLICIT, pre-built wire-state —

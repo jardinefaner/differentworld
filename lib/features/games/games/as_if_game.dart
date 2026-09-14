@@ -4,6 +4,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +70,20 @@ class AsIfGame extends GameDefinition<AsIfState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many prompts'),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
+    final rounds = roundsFrom(values, fallback: defaultRounds);
     final lines = [
       for (final c in content.take(ContentKind.line, 999))
         c.payload['text']! as String,
@@ -83,7 +97,7 @@ class AsIfGame extends GameDefinition<AsIfState> {
       'ai': 0,
       'p': 0,
       'd': false,
-      'n': lines.isEmpty ? 0 : min(roundLength, lines.length),
+      'n': lines.isEmpty ? 0 : min(rounds, lines.length),
       'lines': lines,
       'asifs': asifs,
     };
@@ -91,7 +105,7 @@ class AsIfGame extends GameDefinition<AsIfState> {
 
   /// A round is this many prompts. It used to cycle forever; a round that
   /// ends is one a substitute can see the end of.
-  static const int roundLength = 8;
+  static const int defaultRounds = 8;
 
   @override
   AsIfState decode(Map<String, dynamic> state) => AsIfState.fromMap(state);

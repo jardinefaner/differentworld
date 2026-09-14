@@ -1381,10 +1381,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/team',
             redirect: (_, _) => '/settings/team',
           ),
-          GoRoute(
-            path: '/program',
-            redirect: (_, _) => '/settings/program',
-          ),
+          // NOTE: no `/program` → `/settings/program` redirect here. It
+          // used to sit at this spot and SHADOWED the Season Hub declared
+          // further down (go_router takes the first match), so the drawer's
+          // "Program" row, the cockpit's Worlds tool, the conductor and
+          // launch-readiness all landed in settings instead. Program settings
+          // has its own path and its own three call sites.
           // Subjects-by-id alias: the staff path to a kid's profile lives
           // at /groups/:gid/students/:sid because the group context is
           // useful when you got there via a roster. But /subjects/:id
@@ -1662,8 +1664,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // The routine-script editor — edit how the everyday blocks (arrival /
           // meals / rest / …) run; the overrides feed the day-run's slides
           // (docs/VISION.md "every block carries its run-script").
+          // `/routines` is the kid-legible day (declared above); the EDITOR
+          // is a sub-path of it. Both were declared at `/routines` until
+          // 2026-09-14, so this screen had never once been reachable.
           GoRoute(
-            path: '/routines',
+            path: '/routines/scripts',
             builder: (_, _) => const RouteTitle(
               title: 'Routine scripts',
               child: RoutineScriptEditorScreen(),

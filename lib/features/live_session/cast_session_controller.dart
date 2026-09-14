@@ -98,8 +98,11 @@ class CastSessionController extends Notifier<CastSnapshot> {
   }
 
   // ── drive verbs (delegate to the live session) ──────────────────────────
-  void castGame(GameDefinition<dynamic> def, ContentSource content) =>
-      state.session?.cast(def, content);
+  void castGame(
+    GameDefinition<dynamic> def,
+    ContentSource content, {
+    Map<String, Object?>? values,
+  }) => state.session?.cast(def, content, values: values);
   void castStage(String gameId, Map<String, dynamic> wire) =>
       state.session?.castStage(gameId, wire);
   void clearStage() => state.session?.clearStage();

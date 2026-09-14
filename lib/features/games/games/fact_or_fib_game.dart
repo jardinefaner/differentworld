@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
@@ -60,8 +61,25 @@ class FactOrFibGame extends GameDefinition<FactState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
-    final picked = content.take(ContentKind.factOrFib, 10);
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  /// "We have ten minutes" is the constraint a substitute actually has, and
+  /// the round length was a hardcoded 10 until 2026-09-14.
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many statements', initial: 10),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
+    final picked = content.take(
+      ContentKind.factOrFib,
+      roundsFrom(values, fallback: 10),
+    );
     final items = [
       for (final c in picked)
         [

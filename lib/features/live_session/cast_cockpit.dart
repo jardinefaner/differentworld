@@ -11,6 +11,8 @@ import 'package:differentworld/features/games/cards/castable_card_games.dart';
 import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/games/game_settings_sheet.dart';
 import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
@@ -110,13 +112,31 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     super.dispose();
   }
 
+  /// What the teacher chose, per game id. Held here rather than on the wire:
+  /// the values shape the SEED, and a room screen renders the seeded state —
+  /// it never needs to know which knob produced it.
+  final Map<String, Map<String, Object?>> _values = {};
+
+  /// Tune the game that is currently cast, then re-cast it with the choice.
+  /// Between rounds, which is act one — never mid-play (docs/CONDITIONS.md).
+  Future<void> _tune(GameDefinition<dynamic> def) async {
+    final result = await showGameSettings(
+      context,
+      settings: def.settings,
+      initial: _values[def.id] ?? defaultSettingValues(def.settings),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _values[def.id] = result);
+    _cast.castGame(def, _contentNow(), values: result);
+  }
+
   ContentSource _contentNow() =>
       ContentEngine(ref.read(bankedContentProvider).value ?? curatedSeeds);
 
   CastSessionController get _cast => ref.read(castSessionProvider.notifier);
 
   void _castGame(GameDefinition<dynamic> def) {
-    _cast.castGame(def, _contentNow());
+    _cast.castGame(def, _contentNow(), values: _values[def.id]);
     setState(() => _showLauncher = false);
   }
 
@@ -170,7 +190,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     // "Play again" re-casts with FRESH content (the pure reducer can't pull
     // new content); everything else reduces on the authority.
     if (intent == GameIntent.reset && def != null) {
-      _cast.castGame(def, _contentNow());
+      _cast.castGame(def, _contentNow(), values: _values[def.id]);
     } else {
       _cast.send(intent, args);
     }
@@ -262,6 +282,9 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
             ),
           ),
           _SwitchBar(
+            // Only when the game HAS knobs — an empty sheet is a button that
+            // lies about what it can do.
+            onTune: def.settings.isEmpty ? null : () => unawaited(_tune(def)),
             onSwitch: () => setState(() => _showLauncher = true),
             onStop: () {
               _cast.clearStage();
@@ -641,10 +664,17 @@ class _Driving extends StatelessWidget {
 }
 
 class _SwitchBar extends StatelessWidget {
-  const _SwitchBar({required this.onSwitch, required this.onStop});
+  const _SwitchBar({
+    required this.onSwitch,
+    required this.onStop,
+    this.onTune,
+  });
 
   final VoidCallback onSwitch;
   final VoidCallback onStop;
+
+  /// Tune this game — null when it has no settings.
+  final VoidCallback? onTune;
 
   @override
   Widget build(BuildContext context) {
@@ -656,6 +686,14 @@ class _SwitchBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(
             children: [
+              if (onTune case final tune?) ...[
+                IconButton.outlined(
+                  onPressed: tune,
+                  icon: const Icon(Icons.tune),
+                  tooltip: 'Game settings',
+                ),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onSwitch,

@@ -2090,6 +2090,31 @@ successful edit when a later anchor misses — twice in this session the
 cockpit looked patched, printed nothing, and was not. Write the file after
 EACH successful replacement, or run one edit per script.
 
+### go_router takes the FIRST match — a duplicate path is a dead screen
+
+Two absolute paths were declared twice (found 2026-09-14). go_router matches
+the first and drops the rest silently: no error, no warning, and
+`no_dead_links_test` passes because a shadowed path resolves perfectly well,
+just to the wrong screen.
+
+- **`/program`** — an early `redirect: '/settings/program'` alias shadowed the
+  Season Hub declared further down. The drawer's "Program" row, the cockpit's
+  Worlds tool, the conductor and launch-readiness — eight call sites, all
+  meaning the hub — landed in settings instead. A whole screen unreachable.
+- **`/routines`** — the kid-legible day shadowed the routine-script editor,
+  which nothing else linked to, so that editor had never once been reachable.
+  The Settings row and an omnibox entry both *described* the editor
+  ("edit steps", "how the day runs") and delivered the day view.
+
+`test/unit/no_shadowed_routes_test.dart` scans the router SOURCE for a
+repeated absolute `path:` — the built router has already collapsed the
+duplicate, so by then there is nothing left to see. Nested bare segments
+(`new`, `edit`) legitimately repeat under different parents and are excluded.
+
+**The tell, if you are hunting one by hand:** a screen whose class is
+referenced exactly once (its own route) and never pushed anywhere is either
+dead or shadowed.
+
 ### A game's SEEDED path is the app path — it must produce what `deal` produces
 
 Bingo shipped with no caller and Guess Who's secret was always square zero

@@ -63,7 +63,7 @@ void main() {
 
     test('initialState pulls rhyme words from the bank, a round at a time', () {
       final s = game.initialState(LocalContentBank.seeded());
-      expect(s['n'], RhymeTimeGame.roundLength, reason: 'a round, not all');
+      expect(s['n'], RhymeTimeGame.defaultRounds, reason: 'a round, not all');
       expect((s['words'] as List).length, greaterThanOrEqualTo(s['n'] as int));
     });
 

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
 import 'package:flutter/material.dart';
@@ -66,10 +67,23 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
 
   /// A round is this many words. The bank holds fifty-odd; a round that ran
   /// through all of them was a round with no ending, which is not a game.
-  static const int roundLength = 8;
+  static const int defaultRounds = 8;
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many words'),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
+    final rounds = roundsFrom(values, fallback: defaultRounds);
     final words = [
       for (final c in (content.take(ContentKind.rhymeWord, 1000)..shuffle()))
         c.payload['word']! as String,
@@ -79,7 +93,7 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
       'f': 0,
       't': 0,
       'd': false,
-      'n': min(roundLength, words.length),
+      'n': min(rounds, words.length),
       'words': words,
     };
   }

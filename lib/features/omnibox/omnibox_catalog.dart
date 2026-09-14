@@ -354,7 +354,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'edit steps',
           'how the day runs',
         ],
-        onSelect: (ctx, _) => ctx.push('/routines'),
+        onSelect: (ctx, _) => ctx.push('/routines/scripts'),
       ),
     // Staff-only: authoring needs a space, which a guardian doesn't have.
     if (viewer is! GuardianViewer) ...[

@@ -57,6 +57,41 @@ class MultiSetting extends GameSetting {
   Object? get defaultValue => initial;
 }
 
+/// **How long a round is** — the knob a substitute actually reaches for.
+///
+/// "We have ten minutes" is the most common constraint in the building, and
+/// before this exactly two of forty-one games had any knob at all, so the
+/// answer was always "run it and stop whenever", which is how a round ends
+/// without an ending. Eleven games want this same setting with a different
+/// noun (words · letters · prompts · riddles · statements · starters), so it
+/// is one spelling with the noun passed in rather than eleven near-copies
+/// that drift in range and wording.
+///
+/// The id is fixed so every game reads it the same way — see [roundsFrom].
+IntSetting roundLength({
+  required String label,
+  int initial = 8,
+  int min = 3,
+  int max = 20,
+}) => IntSetting(
+  id: roundLengthId,
+  label: label,
+  min: min,
+  max: max,
+  initial: initial,
+);
+
+/// The key [roundLength] writes under.
+const String roundLengthId = 'rounds';
+
+/// Read the chosen round length, falling back to [fallback] when the game was
+/// seeded without settings — a cast from an older phone, a test fixture, or
+/// any path that calls `initialState` rather than `initialStateFor`.
+int roundsFrom(Map<String, Object?> values, {required int fallback}) {
+  final v = values[roundLengthId];
+  return v is int && v > 0 ? v : fallback;
+}
+
 /// The default value map for a settings list (each setting's default), keyed
 /// by id — what the runner starts from before the teacher tunes anything.
 Map<String, Object?> defaultSettingValues(List<GameSetting> settings) => {

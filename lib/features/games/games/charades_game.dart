@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
@@ -67,11 +68,28 @@ class CharadesGame extends GameDefinition<CharadesState> {
   bool get hasSecretRole => true;
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  /// "We have ten minutes" is the constraint a substitute actually has, and
+  /// the round length was a hardcoded 16 until 2026-09-14.
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many words', initial: 16),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
     // The engine returns up to 16 fresh, shuffled prompts (skipping ones
     // recently served); the items ride in the broadcast wire-state, so every
     // device maps index → the same word.
-    final picked = content.take(ContentKind.charades, 16);
+    final picked = content.take(
+      ContentKind.charades,
+      roundsFrom(values, fallback: 16),
+    );
     final items = [
       for (final c in picked)
         [c.payload['word']! as String, c.payload['category']! as String],

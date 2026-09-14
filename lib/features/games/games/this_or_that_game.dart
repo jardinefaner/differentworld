@@ -2,6 +2,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
@@ -65,9 +66,26 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   String revealLabel({required bool revealed}) => revealed ? 'Hide' : 'Discuss';
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  /// "We have ten minutes" is the constraint a substitute actually has, and
+  /// the round length was a hardcoded 8 until 2026-09-14.
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many pairs'),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
     final pairs = [
-      for (final c in content.take(ContentKind.thisOrThat, 8))
+      for (final c in content.take(
+        ContentKind.thisOrThat,
+        roundsFrom(values, fallback: 8),
+      ))
         [c.payload['a']! as String, c.payload['b']! as String],
     ];
     return {'i': 0, 'r': false, 'd': false, 'n': pairs.length, 'pairs': pairs};

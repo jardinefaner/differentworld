@@ -236,7 +236,7 @@ class SettingsScreen extends ConsumerWidget {
                     'steps your day uses',
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/routines'),
+                  onTap: () => context.push('/routines/scripts'),
                 ),
                 const _SettingsDivider(),
               ],

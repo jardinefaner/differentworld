@@ -4,6 +4,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
 import 'package:flutter/material.dart';
@@ -79,7 +80,22 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many letters'),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
+    // `count` not `rounds`: the list of [letter, category] pairs below is
+    // already called rounds, and it is the better owner of the name.
+    final count = roundsFrom(values, fallback: defaultRounds);
     final categories = [
       for (final c in content.take(ContentKind.category, 1000))
         c.payload['label']! as String,
@@ -91,7 +107,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
     // letter each round.
     final rounds = <List<String>>[];
     var prev = '';
-    for (var k = 0; k < roundLength; k++) {
+    for (var k = 0; k < count; k++) {
       var pick = _letters[rng.nextInt(_letters.length)];
       while (pick == prev) {
         pick = _letters[rng.nextInt(_letters.length)];
@@ -111,7 +127,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
 
   /// A round is this many letters. It used to be thirty, wrapping back to
   /// the first with no signal — a round with no ending is not a game.
-  static const int roundLength = 8;
+  static const int defaultRounds = 8;
 
   @override
   LetterWordsState decode(Map<String, dynamic> state) =>

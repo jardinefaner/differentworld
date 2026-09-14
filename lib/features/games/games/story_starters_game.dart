@@ -1,6 +1,7 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
@@ -66,11 +67,28 @@ class StoryStartersGame extends GameDefinition<StoryState> {
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  /// "We have ten minutes" is the constraint a substitute actually has, and
+  /// the round length was a hardcoded 8 until 2026-09-14.
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many starters'),
+  ];
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
     // 8 fresh openers from the generator (≈51k combinations; the engine skips
     // recently-served ones), then all twists to cycle through.
     final starters = [
-      for (final c in content.take(ContentKind.storyStarter, 8))
+      for (final c in content.take(
+        ContentKind.storyStarter,
+        roundsFrom(values, fallback: 8),
+      ))
         c.payload['text']! as String,
     ];
     final twists = [
