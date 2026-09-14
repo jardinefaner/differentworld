@@ -342,9 +342,19 @@ class _MovePill extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: foreground),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(color: foreground, fontWeight: FontWeight.w600),
+          // Flexible so the label WRAPS rather than running out of the pill.
+          // A Row with mainAxisSize.min still cannot shrink a Text below its
+          // natural width, so at 200% text this pill overran 320dp by 45px —
+          // and an OS-level 200% reaches the app untouched, because the text
+          // scaler clamps to AT LEAST the user's chosen floor.
+          //
+          // Wrapping, not ellipsis: the label IS the content of a pill, so a
+          // taller pill is right and a clipped word is not.
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(color: foreground, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
