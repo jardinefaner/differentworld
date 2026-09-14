@@ -61,6 +61,11 @@ class RoundWrap extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    // At the Extra-large text floor and above, five wrapped controls stack
+    // three rows deep and squeeze the board they sit under to a sliver. The
+    // add-ours door is an act-one surface reachable from the library too, so
+    // it is the one that yields; the keepsake stays — it exists only here.
+    final roomy = MediaQuery.textScalerOf(context).scale(10) < 16;
     return Material(
       color: scheme.surfaceContainerHighest,
       child: SafeArea(
@@ -114,11 +119,12 @@ class RoundWrap extends StatelessWidget {
                       icon: const Icon(Icons.help_outline),
                     ),
                   if (gameId case final id?)
-                    OursStrip(
-                      key: const ValueKey('ours-strip-wrap'),
-                      route: id,
-                      compact: true,
-                    ),
+                    if (roomy)
+                      OursStrip(
+                        key: const ValueKey('ours-strip-wrap'),
+                        route: id,
+                        compact: true,
+                      ),
                   if (keepsake case final text?)
                     if (text.trim().isNotEmpty)
                       KeepThisButton(

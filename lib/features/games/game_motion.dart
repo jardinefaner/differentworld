@@ -24,6 +24,7 @@ class GameMotion extends InheritedWidget {
     required this.enabled,
     required super.child,
     this.haptics = true,
+    this.sound = true,
     super.key,
   });
 
@@ -33,6 +34,13 @@ class GameMotion extends InheritedWidget {
   /// Whether taps and endings buzz — the phone yes, the receiver no.
   final bool haptics;
 
+  /// Whether the stage makes its sounds (Simon's notes, the win chime). On
+  /// wherever the ROOM hears the stage — one device, or the receiver — and
+  /// off on a controller phone paired to a presenter, so the room hears one
+  /// Simon rather than two out of step. Follows [enabled]: the Preferences
+  /// switch turns the sounds off with the motion.
+  final bool sound;
+
   /// Motion on, unless this device or this surface said otherwise. Absent
   /// (no [GameMotion] above) means ON — the default look is the alive one.
   static bool of(BuildContext context) {
@@ -41,15 +49,40 @@ class GameMotion extends InheritedWidget {
     return scope?.enabled ?? true;
   }
 
+  /// The same answer as [of], WITHOUT registering a dependency — for
+  /// lifecycle hooks (`initState`, `didUpdateWidget`, a timer callback).
+  /// `of` subscribes the caller to GameMotion AND MediaQuery, which is right
+  /// in `build` and wrong in a hook: sixty-four board cells subscribing from
+  /// `didUpdateWidget` meant sixty-four rebuilds every time the keyboard
+  /// opened or the phone turned, for a value their `build` never reads.
+  static bool read(BuildContext context) {
+    final mq = context.getInheritedWidgetOfExactType<MediaQuery>();
+    if (mq?.data.disableAnimations ?? false) return false;
+    final scope = context.getInheritedWidgetOfExactType<GameMotion>();
+    return scope?.enabled ?? true;
+  }
+
   /// Haptics on — phone-side surfaces only.
   static bool hapticsOf(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<GameMotion>();
+    // Non-registering: read from tap handlers and the done edge, never build.
+    final scope = context.getInheritedWidgetOfExactType<GameMotion>();
     return scope?.haptics ?? true;
+  }
+
+  /// Sound on — where the room hears the stage, and only while the
+  /// Preferences switch is on.
+  static bool soundOf(BuildContext context) {
+    // Non-registering, like [read]: every caller is a lifecycle hook.
+    final scope = context.getInheritedWidgetOfExactType<GameMotion>();
+    if (scope == null) return true;
+    return scope.enabled && scope.sound;
   }
 
   @override
   bool updateShouldNotify(GameMotion oldWidget) =>
-      enabled != oldWidget.enabled || haptics != oldWidget.haptics;
+      enabled != oldWidget.enabled ||
+      haptics != oldWidget.haptics ||
+      sound != oldWidget.sound;
 }
 
 /// The per-device switch — Settings → Preferences → Game motion. Default ON.
@@ -74,10 +107,10 @@ class GameMotionTile extends ConsumerWidget {
     final on = ref.watch(gameMotionProvider).value ?? true;
     return SwitchListTile(
       secondary: const Icon(Icons.animation_outlined),
-      title: const Text('Game motion'),
+      title: const Text('Game motion and sound'),
       subtitle: const Text(
-        'Boards deal in, discs drop, a round ends with a burst. Off keeps '
-        'every board still.',
+        'Boards deal in, discs drop, Simon plays its notes, a round ends '
+        'with a burst. Off keeps every board still and silent.',
       ),
       value: on,
       onChanged: (v) =>

@@ -95,6 +95,7 @@ class LiveGameController implements GameController {
     required GameDefinition<dynamic> def,
     required ContentSource content,
     Map<String, dynamic>? seed,
+    Map<String, dynamic> Function()? reseed,
   }) {
     final session = LiveSession.open(
       client: client,
@@ -103,11 +104,12 @@ class LiveGameController implements GameController {
       initialState: seed ?? def.initialState(content),
       reduce: _adapt(def),
     );
-    // Content-bank games (no seed) get fresh content on "play again"; seed-
-    // driven presentables (a roster picker) replay their seed via the reducer.
+    // Content-bank games (no seed) get fresh content on "play again"; a
+    // seeded game deals again through the wrapper's [reseed] when it has
+    // one, and replays its seed via the reducer when it does not.
     return LiveGameController._(
       session,
-      seed != null ? null : () => def.initialState(content),
+      seed != null ? reseed : () => def.initialState(content),
     );
   }
 

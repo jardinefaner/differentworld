@@ -39,8 +39,11 @@ kids themselves (Ava).
 - ✅ Fresh content on "play again" (never-repeat; the reseed)
 - ⬜ **Continue / "keep going"** — extend the current round with MORE fresh
   questions without resetting the score *(your ask — distinct from replay)*
-- ⬜ **End-of-round screen** — tally/score + a celebration + clear next
-  actions: Play again · Switch game · Done
+- ✅ **End-of-round screen** (2026-09-14) — `RoundWrap` under every stage-owning
+  game: the closing line, a celebration burst in the game's accent, then
+  Play again · Done · How to play (+ add ours, keep this). The reveal games
+  already had the panel's done beat; the burst is on all of them. ⬜ "Switch
+  game" from the wrap is still a Done-then-pick.
 - ⬜ **Skip / swap a dud** — replace an awkward generated item mid-round
 
 ### Present / display (it lives on a big screen)
@@ -57,9 +60,13 @@ kids themselves (Ava).
 - ⬜ Mute / sound toggle
 
 ### Engagement & feel (the Kahoot/Blooket bar)
-- ⬜ Sound + haptics + a light music bed
-- ⬜ Optional per-question timer
-- ⬜ Score / streak / a celebration beat at the end
+- ◐ Sound + haptics + a light music bed — haptics ✅ (a click per tap, a
+  heavy tap on the ending, phone only); sound ⬜ (Simon still plays its
+  pattern silently — a bundled tone per pad is the honest next step)
+- ◐ Optional per-question timer — Boggle's sand and Whack-a-Mole's misses
+  are visible bars; no per-question clock on the reveal games
+- ✅ Score / streak / a celebration beat at the end (2026-09-14) — the
+  scoreboard line on two-sided games, the winning four lit, the burst
 - 💭 Room reactions (emoji from every phone)
 - 💭 Team mode
 
@@ -72,7 +79,9 @@ kids themselves (Ava).
 
 ### Accessibility & inclusion
 - ◐ Voiceover for pre-readers (TTS exists in survey-take; ⬜ not in games)
-- ⬜ Contrast / color-not-alone audit on stages (SCREEN_RUBRIC E5/E6)
+- ◐ Contrast / color-not-alone audit on stages (SCREEN_RUBRIC E5/E6) — the
+  slot palette is identity, and every slot also carries a state/label; the
+  tint colours (right/close/wrong) are paired with a pop/shake beat
 - ⬜ Text-scale-safe stages (200%)
 - ⬜ Spanish / i18n (Lauren)
 

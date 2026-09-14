@@ -32,6 +32,7 @@ class LiveGameScreen<S> extends ConsumerStatefulWidget {
   const LiveGameScreen({
     required this.def,
     this.seed,
+    this.reseed,
     this.autoJoin,
     super.key,
   });
@@ -42,6 +43,9 @@ class LiveGameScreen<S> extends ConsumerStatefulWidget {
   /// the presenter seeds from Drift (roster/schedule); the controller gets it
   /// via the broadcast (self-describing state).
   final Map<String, dynamic>? seed;
+
+  /// A fresh seed for Play again — see `GameRunner.reseed`.
+  final Map<String, dynamic> Function()? reseed;
 
   /// When set (the program-wide "join" path, docs/LIVE_SESSIONS.md), the
   /// screen skips its lobby and opens straight into the given role for the
@@ -108,6 +112,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       def: _def,
       content: ContentEngine(snapshot),
       seed: widget.seed,
+      reseed: widget.reseed,
     );
     _subs
       ..add(
@@ -267,6 +272,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     final stage = GameMotion(
       enabled: true,
       haptics: !isPresenter,
+      sound: isPresenter,
       child: CelebrationLayer(
         done: _wire['d'] == true,
         accent: _def.vibe.accent,

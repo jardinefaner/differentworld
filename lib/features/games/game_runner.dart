@@ -25,6 +25,7 @@ class GameRunner<S> extends ConsumerStatefulWidget {
   const GameRunner({
     required this.def,
     this.seed,
+    this.reseed,
     this.initialValues,
     super.key,
   });
@@ -36,6 +37,15 @@ class GameRunner<S> extends ConsumerStatefulWidget {
   /// via a provider in a wrapper and pass the seed here instead of going
   /// through `def.initialState` (which only sees the content bank).
   final Map<String, dynamic>? seed;
+
+  /// A fresh [seed] for "Play again", when the wrapper can make one.
+  ///
+  /// Without it a seeded game resets through the reducer, and `GridGame`'s
+  /// reset turns every square face-DOWN — right for Minesweeper, wrong for
+  /// a board that is played face-up: a deck-seeded Bingo's second round was
+  /// sixteen dark tiles with the pictures gone. The wrapper that built the
+  /// first board builds the next one.
+  final Map<String, dynamic> Function()? reseed;
 
   /// Optional overrides for the game's setting values, merged over the
   /// defaults. Lets a wrapper thread a preference the game reads at seed time
@@ -88,7 +98,7 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
       // seeding the cursor in it re-briefed every round behind the wire rule
       // that says a room which just played does not need the rules again.
       reseed: widget.seed != null
-          ? null
+          ? widget.reseed
           : () => widget.def.initialStateFor(_engine, _values),
     );
     _startClockIfNeeded();

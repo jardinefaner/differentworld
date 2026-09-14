@@ -520,6 +520,45 @@ void main() {
   });
 }
 
+/// Plates that CANNOT be stable, with the reason — same discipline as
+/// screens_gallery_test's map: they still render (the overflow sweep still
+/// sees them), only the pixel comparison is skipped. Every entry is a game
+/// whose deal calls `Random()` with no seed, and seeding it would change what
+/// a room actually gets. Measured, not guessed: the first version of this
+/// list was the eight plates that failed twice — and the letter games passed
+/// twice only because their labels rendered invisible.
+const Map<String, String> _unstableByDesign = <String, String>{
+  'games/stage_bingo': 'shuffles the card and draws a random first call',
+  'games/organism_bingo': 'shuffles the card and draws a random first call',
+  'games/stage_guess-who': 'a random secret; the faces draw from the deck',
+  'games/organism_guess-who': 'a random secret; the faces draw from the deck',
+  'games/stage_lights-out': 'scrambled by playing random taps backwards',
+  'games/organism_lights-out': 'scrambled by playing random taps backwards',
+  'games/stage_whack-a-mole': 'the mole starts on a random square',
+  'games/organism_whack-a-mole': 'the mole starts on a random square',
+  'games/stage_battleship': 'random ships, uncovered by the plate’s picks',
+  'games/stage_minesweeper': 'random mines; the plate uncovers four squares',
+  'games/organism_minesweeper': 'random mines',
+  'games/stage_scavenger': 'shuffles its list every deal',
+  'games/organism_scavenger': 'shuffles its list every deal',
+  'games/stage_boggle': 'sixteen dice, rolled',
+  'games/organism_boggle': 'sixteen dice, rolled',
+  'games/stage_word-search': 'random word placement and filler letters',
+  'games/organism_word-search': 'random word placement and filler letters',
+  'games/stage_scattergories': 'a random letter, shuffled categories',
+  'games/organism_scattergories': 'a random letter, shuffled categories',
+  'games/stage_crossword': 'one of three puzzles, at random',
+  'games/organism_crossword': 'one of three puzzles, at random',
+  'games/stage_hangman': 'a random word — the masked line changes length',
+  'games/organism_hangman': 'a random word — the masked line changes length',
+  'games/stage_four-corners': 'a random question on the pads',
+  'games/organism_four-corners': 'a random question on the pads',
+  'games/stage_spot-difference': 'a random square is the different one',
+  'games/stage_snakes-ladders': 'the plate’s picks are dice rolls',
+};
+
+bool _comparable(String name) => !_unstableByDesign.containsKey(name);
+
 /// Render one game scene once (games own their surface — no light/dark pair).
 /// A fixed canvas — see `plateSize`. A `stage_` / `atom_` / `molecule_` plate
 /// is a reference card for one piece of a game. The `organism_` plates are
@@ -566,7 +605,9 @@ void _scene(
       await tester.pumpAndSettle(const Duration(seconds: 1));
       // Pixels differ by design in a stress pass (rescaled or resized);
       // the overflow assertion already happened during pump.
-      if (!isStressRun) {
+      // An unstable plate is still WRITTEN on --update-goldens, so its PNG
+      // follows the code; it is only never compared.
+      if (!isStressRun && (_comparable(name) || autoUpdateGoldenFiles)) {
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/$name.png'),
@@ -618,7 +659,9 @@ void _organismScene(
       await tester.pumpAndSettle(const Duration(seconds: 1));
       // Pixels differ by design in a stress pass (rescaled or resized);
       // the overflow assertion already happened during pump.
-      if (!isStressRun) {
+      // An unstable plate is still WRITTEN on --update-goldens, so its PNG
+      // follows the code; it is only never compared.
+      if (!isStressRun && (_comparable(name) || autoUpdateGoldenFiles)) {
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/$name.png'),

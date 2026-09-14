@@ -13,6 +13,7 @@ class GameSurface<S> extends StatelessWidget {
     required this.def,
     required this.live,
     this.seed,
+    this.reseed,
     super.key,
   });
 
@@ -20,10 +21,13 @@ class GameSurface<S> extends StatelessWidget {
   final bool live;
   final Map<String, dynamic>? seed;
 
+  /// A fresh seed for Play again — see `GameRunner.reseed`.
+  final Map<String, dynamic> Function()? reseed;
+
   @override
   Widget build(BuildContext context) => live
-      ? LiveGameScreen<S>(def: def, seed: seed)
-      : GameRunner<S>(def: def, seed: seed);
+      ? LiveGameScreen<S>(def: def, seed: seed, reseed: reseed)
+      : GameRunner<S>(def: def, seed: seed, reseed: reseed);
 }
 
 /// A data-driven presentable (docs/VISION.md #18): read [data] from Drift,
@@ -46,7 +50,14 @@ class DataSeededGame<S, T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => data.when(
-    data: (d) => GameSurface<S>(def: def, live: live, seed: seed(d)),
+    // The same builder deals round two, so Play again on a deck-seeded board
+    // is a real deal — not the reducer's face-down reset.
+    data: (d) => GameSurface<S>(
+      def: def,
+      live: live,
+      seed: seed(d),
+      reseed: () => seed(d),
+    ),
     loading: () => const EdgeScaffold(
       body: Center(child: CircularProgressIndicator()),
     ),
