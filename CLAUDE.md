@@ -2115,6 +2115,51 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### The SEED was the same count — five doors, three knew only the bank
+
+Having fixed the briefing and the ending, I asked the count question of the
+third beat: **where does a cast round's first state come from?** Five doors put
+a stage on the wire (the deck's long-press "Send it to a TV", the cockpit
+opening ON a game, the cockpit's launcher, tuning a knob, Play again) and each
+answered for itself. Three of them knew only the content bank. Measured on a
+seeded bank: `name-it → cards=0`, `memory-match → cards=0`, `guess-who →
+cells=0`, `picker → names=0`, `now-next → blocks=0`, `bingo → 16 placeholder
+stars`. A teacher long-pressing Name It with a TV connected got an **empty
+screen** and a snackbar saying it was on.
+
+`castSeedFor` (`lib/features/live_session/cast_seeding.dart`) is the one
+author now: four kinds of round (the bundled deck, the roster, today's
+schedule, the content bank) and one function that picks. Three things made it
+stick rather than becoming a sixth door:
+
+- **The rival verb was deleted.** `CastSession.cast(def, content)` seeded from
+  the bank inside the session class, which is what made "seed it yourself" an
+  available shortcut. Only `castStage(id, state)` remains, so a caller has to
+  bring a seed. Structure beats a grep guard when you can get it.
+- **`seedsFromContentBank` was answering the wrong question.** It reads as
+  "can I cast this", which is how every deck-, roster- and schedule-seeded
+  game was left out of the launcher — and, worse, how three games that DO
+  claim it (Bingo, Guess Who, Spot the Difference) cast a board of placeholder
+  stars, because the curated bank carries no pictures. A game that needs a
+  human choice now says `needsCallerSeed` and `castSeedFor` returns null;
+  everything else is castable by construction. The launcher's two loops
+  collapsed to one, which also fixed three games appearing in it TWICE — one
+  tile good, one broken.
+- **The test names the promise, not the mechanism.** `cast_seeding_test.dart`
+  seeds a device with a deck, a roster and a day whose labels carry nonsense
+  markers, then asserts every castable game's wire CONTAINS the marker for the
+  data it is made of. A game seeded from the wrong source cannot pass.
+
+**And it found a shipped bug nothing else could.** `read(p.future)` on an
+`autoDispose` provider is reaped at the end of the task that touched it and
+throws *"disposed during loading state"* — so `_castNowNext`, which read the
+autoDispose schedule stream that nothing in the cockpit watches, **lost that
+race every time the schedule actually had to load.** Casting Now & Next threw
+an unhandled async error and left the room looking at the previous screen.
+`CastData` carries a `hold` alongside its `read` for exactly this. If you ever
+`await ref.read(someAutoDisposeProvider.future)` with nothing watching it, that
+is the bug — verified 2/2 in a scratch test before writing the fix.
+
 ### A game's SEEDED path is the app path — it must produce what `deal` produces
 
 Bingo shipped with no caller and Guess Who's secret was always square zero

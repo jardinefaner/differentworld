@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
-import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/live_session/cast_seeding.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
@@ -55,12 +53,13 @@ Future<void> showCastToRoom(
   // so the phone says what happened — a silent tap on the device you are
   // holding reads as a tap that failed.
   if (cast.active && def != null) {
-    ref
-        .read(castSessionProvider.notifier)
-        .castGame(
-          def,
-          ContentEngine(ref.read(bankedContentProvider).value ?? curatedSeeds),
-        );
+    // Through the ONE seeder — this door used to know only the content bank,
+    // so long-pressing Name It, Memory, What's Missing, Guess Who or Spotlight
+    // with a TV already connected put an empty stage in front of the room and
+    // told the teacher it was on the screen.
+    final notifier = ref.read(castSessionProvider.notifier);
+    final seed = await castSeedFor(CastData.ofRef(ref), def);
+    if (seed != null) notifier.castStage(def.id, seed);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(castConfirmation(what, cast.peers))),

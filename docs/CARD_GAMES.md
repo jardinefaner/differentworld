@@ -213,13 +213,18 @@ screen).** Each reuses an existing `GameIntent`:
 - **Three-Card Story** — `draw(3)`; `reveal`/`next` (the *Three* primitive).
 
 > **Registry + cast.** All four deck games are `seedsFromContentBank = false`
-> (hidden from the cast launcher's content-bank browse loop, since they need a
-> deck seed) BUT they ARE registered in `liveGames` — like `WorldCast` /
-> `Conductor` — so `gameById` resolves them. That's what lets the cast
-> receiver, the join-by-code path, and the live-session banner render them
-> from the deck seed that rides the wire-state. (Registering a
-> `seedsFromContentBank=false` game is the documented pattern; Name It
-> originally missed it — fixed alongside the wave-3 trio + Memory.)
+> and registered in `liveGames`, so `gameById` resolves them for the cast
+> receiver, the join-by-code path and the live-session banner.
+>
+> **Their seed comes from `castSeedFor`** (`cast_seeding.dart`) — the one
+> function that answers "what does this game's first round hold", for every
+> door that puts a stage on a room's screen. `seedsFromContentBank` is a
+> LISTING fact and nothing more; it used to double as "can I cast this", which
+> is how these games ended up castable from the cockpit's launcher and from
+> nowhere else. Every other door — the deck's long-press "Send it to a TV",
+> opening the cockpit on a game, tuning a knob, Play again — seeded from the
+> content bank alone and put an EMPTY stage in front of the room. Add a new
+> deck game to `castableCardGames` with its shared seed and every door gets it.
 
 Every wave-3 game is a single file + one registry line. No engine, no cast
 wiring, no new schema.

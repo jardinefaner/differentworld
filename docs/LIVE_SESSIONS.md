@@ -214,19 +214,42 @@ follower applying the reducer; don't fork it).
   the wire — only the chosen game id + its state do.
 
 > Authority is the **phone**, inverting the per-game model (where the screen
-> hosts). Chosen because the cast-switch needs content seeding
-> (`def.initialState(content)`), which only happens off the pure reducer via
-> `reseed` — and the phone has the ContentEngine in hand. Trade-off: if the
-> phone disconnects, the screen freezes on its last frame (acceptable v1 — the
-> phone is the device being held). Robustness upgrade later: move authority to
-> the screen + add an authority-side intent interceptor for the seeded cast.
+> hosts). Chosen because the cast-switch needs a SEED, which happens off the
+> pure reducer via `reseed` — and only the phone can reach the data a seed
+> comes from. Trade-off: if the phone disconnects, the screen freezes on its
+> last frame (acceptable v1 — the phone is the device being held). Robustness
+> upgrade later: move authority to the screen + add an authority-side intent
+> interceptor for the seeded cast.
+
+> **The seed has exactly one author: `castSeedFor` (`cast_seeding.dart`).**
+> Four kinds of round exist — the bundled picture deck, the roster, today's
+> schedule, and the content bank — and for a long time five different doors
+> each answered "which one?" for themselves. Three of them knew only the
+> content bank, so casting Name It, Memory, What's Missing, Guess Who,
+> Spotlight or Now & Next through the deck's long-press, through opening the
+> cockpit on a game, through tuning a knob or through Play again put an
+> **empty stage** in front of the room — while the cockpit's own launcher,
+> two methods away, seeded the same games correctly.
+>
+> A door now builds a seed with `castSeedFor` and hands it to `castStage`;
+> `CastSession.cast(def, content)`, the verb that let a caller seed from the
+> bank on its own, is gone, so there is no shortcut left to take. A game that
+> genuinely cannot be seeded without a human choice (the world, the Conductor,
+> the Live Board) declares `GameDefinition.needsCallerSeed` and gets null back,
+> which is how a door knows to offer its own picker rather than cast a blank.
+>
+> `castSeedFor` takes a `CastData` — a reader AND a way to hold a provider
+> open — because today's schedule is an `autoDispose` stream that nothing in
+> the cockpit watches: a bare `read(p.future)` on one is reaped before its
+> first emission and throws, which is why casting Now & Next never worked when
+> the schedule had to actually load.
 
 ### The one new idea: a meta-state
 The session's wire-state gains a presentable wrapper: `{'game': <id|null>,
 'state': <game wire>}`. A **meta-reducer** (on the Caster) delegates game
 intents to `gameById(game).reduce(state, …)`; **casting** a game is
-`reseed({'game': id, 'state': def.initialState(content)})` (content-seeded,
-off the reducer); **clearing** is `reseed({'game': null})` → idle. Everything
+`reseed({'game': id, 'state': await castSeedFor(data, def)})` (seeded off the
+reducer); **clearing** is `reseed({'game': null})` → idle. Everything
 else — `decode`, `buildStage`, `activeIntents`, `buildControls` — is reused
 from the game's `GameDefinition` verbatim.
 

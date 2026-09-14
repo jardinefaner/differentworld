@@ -78,6 +78,12 @@ class BoardGame extends GameDefinition<BoardState> {
   @override
   bool get seedsFromContentBank => false;
 
+  /// What is on the board. The Live Board screen is the instrument that
+  /// draws it and re-casts on every edit; casting a blank from the launcher
+  /// would put a board on the TV with nothing able to write on it.
+  @override
+  bool get needsCallerSeed => true;
+
   @override
   Map<String, dynamic> initialState(ContentSource content) =>
       const BoardState().toMap();

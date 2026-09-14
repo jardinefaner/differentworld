@@ -262,13 +262,27 @@ abstract class GameDefinition<S> {
   /// — the live present/control variant (docs/LIVE_SESSIONS.md).
 
   /// Whether this game builds its whole round from the content bank in
-  /// [initialState] (true) — vs. needing a Drift-derived seed (roster,
-  /// schedule) the content bank can't supply (false). The cast launcher
-  /// (docs/LIVE_SESSIONS.md "the cast model") only offers `true` games, since
-  /// it seeds purely from the content bank; a `false` game would cast an empty
-  /// stage. Default true; data-seeded presentables (Now & Next, Spotlight)
-  /// override to false until the cast flow can pass them a seed.
+  /// [initialState] (true) — vs. needing a seed the bank can't supply: the
+  /// roster, today's schedule, the bundled picture deck (false).
+  ///
+  /// This is a LISTING fact now, not a seeding one. It used to be both, and
+  /// that was the defect: the cast launcher read it as "can I cast this", so a
+  /// `false` game was simply left out, and — worse — three `true` games (Bingo,
+  /// Guess Who, Spot the Difference) read pictures the curated bank does not
+  /// carry, so they answered `true` and cast a board of placeholder stars.
+  /// `castSeedFor` (cast_seeding.dart) is the one thing that knows how any
+  /// game is seeded; ask it, not this.
   bool get seedsFromContentBank => true;
+
+  /// **True when a round cannot exist without a choice only the caller can
+  /// make** — which world, which text, which marks on the board.
+  ///
+  /// Everything else in the deck can be cast with one tap, because the app can
+  /// find its seed (the deck, the roster, the schedule, the bank). These three
+  /// cannot: an empty Conductor is a blank screen, not a round. They keep
+  /// their own door — a sheet, a picker, an instrument screen — and
+  /// `castSeedFor` returns null for them so no door casts a blank instead.
+  bool get needsCallerSeed => false;
 
   /// If non-null, `capture` / `submit` produce durable evidence and the
   /// runner routes the write here (crowd-grow + a growth-book entry).

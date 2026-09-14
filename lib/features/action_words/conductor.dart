@@ -71,6 +71,10 @@ class ConductorGame extends GameDefinition<ConductorState> {
   @override
   bool get seedsFromContentBank => false;
 
+  /// Which text. Nobody can guess the sentence the room is about to read.
+  @override
+  bool get needsCallerSeed => true;
+
   @override
   Map<String, dynamic> initialState(ContentSource content) => <String, dynamic>{
     'lines': <dynamic>[],

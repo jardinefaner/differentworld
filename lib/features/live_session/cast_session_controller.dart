@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -98,11 +97,10 @@ class CastSessionController extends Notifier<CastSnapshot> {
   }
 
   // ── drive verbs (delegate to the live session) ──────────────────────────
-  void castGame(
-    GameDefinition<dynamic> def,
-    ContentSource content, {
-    Map<String, Object?>? values,
-  }) => state.session?.cast(def, content, values: values);
+  /// The one way a stage reaches the wire. `castGame(def, content)` used to
+  /// sit beside it and seed from the content bank on the caller's behalf —
+  /// see [CastSession.castStage] for why that was the bug rather than the
+  /// convenience. Callers build the seed with `castSeedFor`.
   void castStage(String gameId, Map<String, dynamic> wire) =>
       state.session?.castStage(gameId, wire);
   void clearStage() => state.session?.clearStage();

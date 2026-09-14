@@ -4,28 +4,20 @@ import 'package:differentworld/features/action_words/conductor.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
-import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
-import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
-import 'package:differentworld/features/games/cards/castable_card_games.dart';
-import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_settings_sheet.dart';
 import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
-import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/picker_game.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
+import 'package:differentworld/features/live_session/cast_seeding.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
-import 'package:differentworld/features/schedule/schedule_providers.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,8 +93,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
         // cockpit simply opens on its launcher, which is where the staffer
         // would have gone anyway.
         if (def == null) return;
-        _cast.castGame(def, _contentNow());
-        setState(() => _showLauncher = false);
+        unawaited(_castSeeded(def));
       }),
     );
   }
@@ -130,16 +121,28 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     );
     if (result == null || !mounted) return;
     setState(() => _values[def.id] = result);
-    _cast.castGame(def, _contentNow(), values: result);
+    await _castSeeded(def);
   }
-
-  ContentSource _contentNow() =>
-      ContentEngine(ref.read(bankedContentProvider).value ?? curatedSeeds);
 
   CastSessionController get _cast => ref.read(castSessionProvider.notifier);
 
-  void _castGame(GameDefinition<dynamic> def) {
-    _cast.castGame(def, _contentNow(), values: _values[def.id]);
+  /// **Put a game on the screen.** The only door in the cockpit — opening with
+  /// a game, picking a tile, tuning a knob and Play again all come here, and
+  /// [castSeedFor] is the only thing that decides what the first round holds.
+  ///
+  /// There were four doors and each carried its own answer: three of them knew
+  /// the content bank and nothing else, so tuning, re-opening or replaying a
+  /// deck-, roster- or schedule-seeded game emptied the room's screen — while
+  /// the launcher two methods away seeded the same game correctly.
+  Future<void> _castSeeded(GameDefinition<dynamic> def) async {
+    final cast = _cast; // capture before the await — ref may be gone after
+    final seed = await castSeedFor(
+      CastData.ofRef(ref),
+      def,
+      values: _values[def.id],
+    );
+    if (seed == null || !mounted) return;
+    cast.castStage(def.id, seed);
     setState(() => _showLauncher = false);
   }
 
@@ -163,52 +166,15 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     if (mounted) setState(() => _showLauncher = false);
   }
 
-  /// Cast Now & Next — today's schedule on the screen, advanced from the phone.
-  /// Reads the day's blocks (Drift) and seeds the wire; an empty day shows the
-  /// game's own "no schedule yet" stage. `.future` so the first emission has
-  /// landed before we seed (the cockpit doesn't otherwise watch the schedule).
-  Future<void> _castNowNext() async {
-    final cast = _cast; // capture before the await — ref may be gone after
-    final blocks = await ref.read(scheduleDayProvider(todayKey()).future);
-    if (!mounted) return;
-    cast.castStage(const NowNextGame().id, nowNextSeed(blocks));
-    setState(() => _showLauncher = false);
-  }
-
-  /// Cast Spotlight — the room watches the name land, which is the whole
-  /// point of the instrument and the one thing it could not do: it was left
-  /// out of the launcher as "roster-seeded, would cast an empty stage", the
-  /// same objection Now & Next answered with a seed builder.
-  Future<void> _castSpotlight() async {
-    final cast = _cast; // capture before the await — ref may be gone after
-    final subjects = await ref.read(subjectsInSpaceProvider.future);
-    if (!mounted) return;
-    cast.castStage(
-      const PickerGame().id,
-      PickerGame.seedFor([for (final s in subjects) s.firstName]),
-    );
-    setState(() => _showLauncher = false);
-  }
-
-  /// Cast a deck-seeded card game — read the bundled picture deck once, build
-  /// the round with the game's SHARED seed (identical to its present screen),
-  /// and cast it on the controller's code. An empty deck shows the game's own
-  /// "no cards" stage.
-  Future<void> _castCard(GameDefinition<dynamic> def, CardSeed seed) async {
-    final cast = _cast; // capture before the await — ref may be gone after
-    final cards = await ref.read(pictureDeckProvider.future);
-    if (!mounted) return;
-    cast.castStage(def.id, seed(cards));
-    setState(() => _showLauncher = false);
-  }
-
   void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
     final id = CastSession.gameIdOf(ref.read(castSessionProvider).meta);
     final def = id == null ? null : gameById(id);
-    // "Play again" re-casts with FRESH content (the pure reducer can't pull
-    // new content); everything else reduces on the authority.
+    // "Play again" re-casts with a FRESH seed (the pure reducer can't pull
+    // new content); everything else reduces on the authority. Through the same
+    // door as every other cast — this one used to reach only the content bank,
+    // so replaying a cast Name It or Spotlight emptied the room's screen.
     if (intent == GameIntent.reset && def != null) {
-      _cast.castGame(def, _contentNow(), values: _values[def.id]);
+      unawaited(_castSeeded(def));
     } else {
       _cast.send(intent, args);
     }
@@ -278,13 +244,10 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
           Expanded(
             key: const ValueKey('cockpit-launcher'),
             child: _Launcher(
-              onPick: _castGame,
+              onPick: (def) => unawaited(_castSeeded(def)),
               presentWorld: world,
               onPresentWorld: _castWorld,
               onConduct: _castConductor,
-              onNowNext: _castNowNext,
-              onSpotlight: _castSpotlight,
-              onCastCard: _castCard,
             ),
           )
         else ...[
@@ -388,15 +351,32 @@ class _CastErrorBanner extends StatelessWidget {
 }
 
 /// The launcher — pick what to cast. The whole game deck, by vibe colour.
+/// **What the launcher lists, once each.** A game is here unless it needs a
+/// choice the launcher can't make ([GameDefinition.needsCallerSeed] — the
+/// world, the Conductor, the Live Board) or already has a tile of its own
+/// above, where a real subtitle reads better than "Tap to cast".
+///
+/// It is derived from the registry rather than hand-listed, so a new game is
+/// castable the moment it is registered — the old predicate was
+/// `seedsFromContentBank`, which silently left every deck-, roster- and
+/// schedule-seeded game out of the room's reach.
+final List<GameDefinition<dynamic>> launcherGames = <GameDefinition<dynamic>>[
+  for (final def in liveGames)
+    if (!def.needsCallerSeed && !_ownTileIds.contains(def.id)) def,
+];
+
+final Set<String> _ownTileIds = <String>{
+  const NowNextGame().id,
+  const PickerGame().id,
+  const TimerGame().id,
+};
+
 class _Launcher extends StatelessWidget {
   const _Launcher({
     required this.onPick,
     this.presentWorld,
     this.onPresentWorld,
     this.onConduct,
-    this.onNowNext,
-    this.onSpotlight,
-    this.onCastCard,
   });
 
   final void Function(GameDefinition<dynamic>) onPick;
@@ -409,16 +389,6 @@ class _Launcher extends StatelessWidget {
 
   /// Open the Conduct text-entry (cast any text, then tap words to spotlight).
   final VoidCallback? onConduct;
-
-  /// Cast today's schedule as Now & Next (advanced from the phone).
-  final VoidCallback? onNowNext;
-
-  /// Cast Spotlight, seeded from the roster.
-  final VoidCallback? onSpotlight;
-
-  /// Cast a deck-seeded card game (Name It, Odd One Out, …) with its seed.
-  final Future<void> Function(GameDefinition<dynamic> def, CardSeed seed)?
-  onCastCard;
 
   @override
   Widget build(BuildContext context) {
@@ -448,26 +418,23 @@ class _Launcher extends StatelessWidget {
             onTap: onConduct!,
           ),
         // Now & Next — today's schedule on the screen, advanced from the phone.
-        if (onNowNext != null)
-          _SimpleTile(
-            icon: Icons.view_agenda_outlined,
-            title: 'Now & Next',
-            subtitle: "Today's schedule",
-            color: ActivityPalette.green,
-            onTap: onNowNext!,
-          ),
+        _SimpleTile(
+          icon: Icons.view_agenda_outlined,
+          title: 'Now & Next',
+          subtitle: "Today's schedule",
+          color: ActivityPalette.green,
+          onTap: () => onPick(const NowNextGame()),
+        ),
         // Spotlight — fair turns, on the screen the room is watching. The
         // bag rides the wire, so the TV and the phone agree about who is left.
-        if (onSpotlight != null)
-          _SimpleTile(
-            icon: Icons.casino_outlined,
-            title: 'Spotlight',
-            subtitle: 'Pick a name, fairly',
-            color: ActivityPalette.amber,
-            onTap: onSpotlight!,
-          ),
-        // Visual Timer — a countdown on the screen, driven from the phone. Casts
-        // with its default 5:00 seed; not a game, so it isn't in the loop below.
+        _SimpleTile(
+          icon: Icons.casino_outlined,
+          title: 'Spotlight',
+          subtitle: 'Pick a name, fairly',
+          color: ActivityPalette.amber,
+          onTap: () => onPick(const PickerGame()),
+        ),
+        // Visual Timer — a countdown on the screen, driven from the phone.
         _SimpleTile(
           icon: Icons.timer_outlined,
           title: 'Timer',
@@ -475,19 +442,13 @@ class _Launcher extends StatelessWidget {
           color: ActivityPalette.blue,
           onTap: () => onPick(const TimerGame()),
         ),
-        // Only content-bank games — roster/schedule-seeded ones (Now & Next,
-        // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
-        for (final def in liveGames.where((d) => d.seedsFromContentBank))
+        // Everything else, once each. This used to be two loops — content-bank
+        // games, then the deck-seeded card games — and Bingo, Guess Who and
+        // Spot the Difference are in BOTH lists, so each appeared twice and one
+        // of the two tiles cast a board of placeholder stars. One list, and
+        // `castSeedFor` finds the right seed behind whichever tile you tap.
+        for (final def in launcherGames)
           _LauncherTile(def: def, onTap: () => onPick(def)),
-        // Deck-seeded card games (Name It, Odd One Out, …) — cast from the
-        // bundled picture deck. Listed here, not the loop above, because they
-        // seed from assets, not the content bank (docs/CARD_GAMES.md).
-        if (onCastCard != null)
-          for (final (def, seed) in castableCardGames)
-            _LauncherTile(
-              def: def,
-              onTap: () => unawaited(onCastCard!(def, seed)),
-            ),
       ],
     );
   }

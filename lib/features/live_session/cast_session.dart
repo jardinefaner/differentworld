@@ -1,8 +1,6 @@
-import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
-import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -103,36 +101,16 @@ class CastSession {
 
   // ── Caster-only verbs ────────────────────────────────────────────────────
 
-  /// Put a game on the screen (or swap to a different one). Content-seeded
-  /// here — OFF the pure reducer — because `initialState` is the one place a
-  /// game reads content. Re-casting the same game = "play again" with fresh
-  /// content.
-  /// [values] are the teacher's chosen settings (`GameSetting.id` → value);
-  /// omit them for the game's own defaults.
+  /// **Put a stage on the screen** from a pre-built wire-state — the only
+  /// verb that starts a round, whatever door it came through.
   ///
-  /// It used to call `initialState` flat, so a game with knobs was cast at
-  /// its defaults no matter what anybody had chosen — the third seeding path,
-  /// and the one that ignored the contract the other two honour.
-  void cast(
-    GameDefinition<dynamic> def,
-    ContentSource content, {
-    Map<String, Object?>? values,
-  }) {
-    _session.reseed(
-      freshWire(
-        def.id,
-        def.initialStateFor(
-          content,
-          values ?? defaultSettingValues(def.settings),
-        ),
-      ),
-    );
-  }
-
-  /// Put a stage on the screen from an EXPLICIT, pre-built wire-state —
-  /// for presentables that don't seed from the content bank (the world
-  /// slideshow). The caller builds the self-describing state; the game's
-  /// pure reducer drives it from there, same as any cast game.
+  /// There used to be a second one, `cast(def, content)`, which seeded from
+  /// the content bank right here. That made this class a place where a seed
+  /// could be DECIDED, and four callers took it up: three of them then cast an
+  /// empty stage for every game whose round comes from the deck, the roster or
+  /// today's schedule. Deciding now lives in exactly one function
+  /// (`castSeedFor`, cast_seeding.dart) and this one only carries the result,
+  /// so there is no longer a shortcut past it.
   void castStage(String gameId, Map<String, dynamic> state) {
     _session.reseed(freshWire(gameId, state));
   }
@@ -141,10 +119,10 @@ class CastSession {
   /// whichever door it came through.
   ///
   /// It seeds the run-script cursor, so the room is told what it is about to
-  /// play. That used to live in [cast] alone, and [castStage] — the door the
-  /// seven picture games, the world and the board all use — skipped it: a
-  /// cast Bingo simply never briefed anybody. Two ways in, one of which did
-  /// the job.
+  /// play. That used to live in the retired content-bank `cast` alone, and
+  /// [castStage] — the door the seven picture games, the world and the board
+  /// all use — skipped it: a cast Bingo simply never briefed anybody. Two ways
+  /// in, one of which did the job.
   ///
   /// NOT used by the meta-reducer: seeding on every intent would re-brief the
   /// room after each tap.
@@ -199,10 +177,10 @@ class CastSession {
   ) => state;
 
   /// Caster meta-reducer: delegate a game intent to the *currently cast*
-  /// game's pure reducer, operating on the inner `'state'`. `cast` itself is
-  /// NOT an intent (it needs content) — it goes through [cast]→`reseed`. The
-  /// session's internal `hello` sync ping (and any unknown intent) is a no-op
-  /// that just triggers a canonical rebroadcast.
+  /// game's pure reducer, operating on the inner `'state'`. Starting a round
+  /// is NOT an intent (it needs a seed) — it goes through
+  /// [castStage]→`reseed`. The session's internal `hello` sync ping (and any
+  /// unknown intent) is a no-op that just triggers a canonical rebroadcast.
   static Map<String, dynamic> _metaReduce(
     Map<String, dynamic> state,
     String intent,

@@ -106,6 +106,11 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
   @override
   bool get seedsFromContentBank => false;
 
+  /// Which world. A cast with no slides is a blank screen, so the cockpit's
+  /// own tile picks the week's world and seeds it.
+  @override
+  bool get needsCallerSeed => true;
+
   @override
   Map<String, dynamic> initialState(ContentSource content) => <String, dynamic>{
     'i': 0,
