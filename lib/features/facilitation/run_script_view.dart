@@ -1,5 +1,6 @@
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/facilitation/steps.dart';
+import 'package:differentworld/shared/widgets/fit_or_scroll.dart';
 import 'package:flutter/material.dart';
 
 /// The run-script on screen: one beat at a time, advanced by one tap.
@@ -62,100 +63,84 @@ class RunScriptView extends StatelessWidget {
     return ColoredBox(
       color: surface,
       child: SafeArea(
-        // Not FitOrScroll here: its Align(center) collapses the Expanded, so
-        // the whole script rendered as a small block floating mid-screen with
-        // Next stranded beside it. This is the fill-or-scroll recipe without
-        // the centring — the column FILLS the viewport (line in the middle,
-        // controls on the floor) and only scrolls when a large text setting
-        // makes it taller than the screen.
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - 32,
-              ),
-              // IntrinsicHeight is what lets the Expanded below resolve inside a
-              // scroll view. Without it the flex child gets an unbounded main
-              // axis, the render tree throws, and the plate comes out BLANK —
-              // which is how this was caught.
-              child: IntrinsicHeight(
+        // The controls sit OUTSIDE the scroll view, pinned to the floor.
+        //
+        // They used to ride inside it, and at 200% text the line grew tall
+        // enough to push Next to y=940 on a 900dp screen — off the bottom,
+        // reachable only by scrolling a screen that gives no sign it scrolls.
+        // The one control the whole feature depends on was the one a large
+        // text setting hid. Caught by the control-bar overflow test.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              // Centred while it fits — a room reads this from across the
+              // floor, and a line pinned to the ceiling is harder to find
+              // than one in the middle. It scrolls only when a large text
+              // setting makes it taller than the space, and the controls are
+              // outside this box either way.
+              child: FitOrScroll(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style:
-                          Theme.of(
-                            context,
-                          ).textTheme.labelLarge?.copyWith(
-                            color: quiet,
-                          ), // raw-canvas
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelLarge?.copyWith(color: quiet),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${at.human} of ${at.total}',
-                      style:
-                          Theme.of(
-                            context,
-                          ).textTheme.labelSmall?.copyWith(
-                            color: quiet,
-                          ), // raw-canvas
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(color: quiet),
                     ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // The line the ROOM reads, so it is display-sized and
-                            // scales with the reader's text setting.
-                            Text(
-                              beat.line,
-                              style: Theme.of(context).textTheme.displaySmall
-                                  ?.copyWith(
-                                    color: onLine, // raw-canvas
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                            ),
-                            if (beat.detail case final d?) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                d,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(color: quiet), // raw-canvas
-                              ),
-                            ],
-                          ],
-                        ),
+                    const SizedBox(height: 32),
+                    // The line the ROOM reads, so it is display-sized and
+                    // scales with the reader's text setting.
+                    Text(
+                      beat.line,
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: onLine,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        if (at.index > 0 && onBack != null)
-                          TextButton(
-                            onPressed: onBack,
-                            style: TextButton.styleFrom(foregroundColor: quiet),
-                            child: const Text('Back'),
-                          ),
-                        const Spacer(),
-                        if (onNext != null)
-                          FilledButton.icon(
-                            onPressed: onNext,
-                            icon: Icon(
-                              last ? Icons.play_arrow : Icons.arrow_forward,
-                            ),
-                            label: Text(last ? 'Start' : 'Next'),
-                          ),
-                      ],
-                    ),
+                    if (beat.detail case final d?) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        d,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleMedium?.copyWith(color: quiet),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+              child: Row(
+                children: [
+                  if (at.index > 0 && onBack != null)
+                    TextButton(
+                      onPressed: onBack,
+                      style: TextButton.styleFrom(foregroundColor: quiet),
+                      child: const Text('Back'),
+                    ),
+                  const Spacer(),
+                  if (onNext != null)
+                    FilledButton.icon(
+                      onPressed: onNext,
+                      icon: Icon(last ? Icons.play_arrow : Icons.arrow_forward),
+                      label: Text(last ? 'Start' : 'Next'),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

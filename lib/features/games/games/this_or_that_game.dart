@@ -1,5 +1,6 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,13 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
 
   @override
   String get title => 'This or That';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing This or That'),
+    RoomBeat('Two things come up', detail: 'Pick the one you like'),
+    RoomBeat('Then we say why'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.teal);

@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '_briefing.dart';
+
 void main() {
   Widget harness() => const ProviderScope(
     child: MaterialApp(home: GameRunner(def: FactOrFibGame())),
@@ -20,6 +22,8 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
     await tester.pump();
 
     expect(find.byType(TextField), findsNothing);
@@ -31,6 +35,8 @@ void main() {
 
   testWidgets('Reveal then Next advances', (tester) async {
     await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
     await tester.pump();
 
     await tester.tap(find.widgetWithText(FilledButton, 'Reveal'));

@@ -1,5 +1,6 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,13 @@ class RiddlesGame extends GameDefinition<RiddleState> {
 
   @override
   String get title => 'Riddle Me This';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Riddle Me This'),
+    RoomBeat('A riddle comes up', detail: 'Shout your guess'),
+    RoomBeat('Then we see the answer'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);

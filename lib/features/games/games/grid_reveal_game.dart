@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_settings.dart';
@@ -114,6 +115,14 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
 
   @override
   String get title => 'Reveal the Picture';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('There is a picture hiding'),
+    RoomBeat('Call out a square', detail: 'Like A1, or C3'),
+    RoomBeat('We open it and see a piece'),
+    RoomBeat('Shout when you know what it is'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);

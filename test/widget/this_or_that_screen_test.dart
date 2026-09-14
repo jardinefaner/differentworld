@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '_briefing.dart';
+
 void main() {
   Widget harness() => const ProviderScope(
     child: MaterialApp(home: GameRunner(def: ThisOrThatGame())),
@@ -22,6 +24,7 @@ void main() {
   testWidgets('presents the first pair with host controls', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     expect(find.text('1 / 8'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
@@ -31,6 +34,7 @@ void main() {
   testWidgets('Next advances the slide', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     await tester.pumpAndSettle();
@@ -41,6 +45,7 @@ void main() {
   testWidgets('Discuss reveals the prompt for the room', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     expect(find.textContaining('Why?'), findsNothing);
     await tester.tap(find.widgetWithText(FilledButton, 'Discuss'));
@@ -52,6 +57,7 @@ void main() {
   testWidgets('Back is inactive on slide 1, active after Next', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     // Wide layout's Back is a filledTonal IconButton (no text label).
     final back = find.widgetWithIcon(IconButton, Icons.arrow_back);
@@ -78,6 +84,7 @@ void main() {
 
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
+    await skipTheBriefing(tester);
 
     expect(find.text('Slide 1 of 8'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);

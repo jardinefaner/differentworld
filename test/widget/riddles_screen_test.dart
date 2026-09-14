@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '_briefing.dart';
+
 void main() {
   Widget harness() => const ProviderScope(
     child: MaterialApp(home: GameRunner(def: RiddlesGame())),
@@ -19,6 +21,7 @@ void main() {
   ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
+    await skipTheBriefing(tester);
 
     expect(find.byType(TextField), findsNothing); // no typing
     expect(find.text('1 / 10'), findsOneWidget);
@@ -29,6 +32,7 @@ void main() {
   testWidgets('Reveal shows the answer, then Next advances', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pump();
+    await skipTheBriefing(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Reveal'));
     await tester.pumpAndSettle();

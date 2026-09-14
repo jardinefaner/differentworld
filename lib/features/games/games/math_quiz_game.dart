@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/math_game.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_stage.dart';
@@ -69,6 +70,13 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
 
   @override
   String get title => 'Math Game';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing the Math Game'),
+    RoomBeat('One question at a time'),
+    RoomBeat('Call out your answer', detail: 'Nobody is marked wrong'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.slate);

@@ -1,5 +1,6 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
@@ -45,6 +46,14 @@ class AsIfGame extends GameDefinition<AsIfState> {
 
   @override
   String get title => 'Say It As If';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Say It As If'),
+    RoomBeat('You get a line to say'),
+    RoomBeat('Say it the way the screen says', detail: 'Big and silly'),
+    RoomBeat('Everyone else listens'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
