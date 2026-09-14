@@ -2012,6 +2012,66 @@ today. Acceptance bar for any such surface: a unit test that flattens
 the rendered artifact for Child A and asserts no other child's name
 appears (`test/unit/summer_book_privacy_test.dart` is the template).
 
+### A game's SEEDED path is the app path — it must produce what `deal` produces
+
+Bingo shipped with no caller and Guess Who's secret was always square zero
+(2026-09-14), behind a green suite. Every unit test seeded the classics through
+`initialState` → `deal()` (labels, `initialTally`); every real device seeded
+them through the `DataSeededGame` wrapper (`classic_boards_screen.dart`),
+which built a bare `GridBoard` of images — no labels, no tally. Spot the
+Difference had NO wrapper and read `ContentKind.picture` from the curated bank,
+which carries none, so it dealt an empty board on a fresh install.
+
+Rules:
+- A seed builder goes THROUGH the game (`game.initialTally`, the same labels
+  `deal` writes). `test/unit/deck_seed_test.dart` pins the seed path; add the
+  new game there when you add a wrapper.
+- Any grid game that reads `ContentKind.picture` needs the deck wrapper, or it
+  is empty everywhere but the tests.
+- The reset path with a seed (`reseed == null`) goes through `GridGame.reduce`
+  and rebuilds `initialTally` — so a defect here shows on the FIRST round only,
+  which is why it hid.
+
+### `outcomeFor` must not return the board's title — a title is not an ending
+
+Bingo's `outcomeFor => titleFor(b)` returned the current CALL ("banana") from
+the first mark, so the round ended on tap one. Invisible for months because
+nothing rendered the ending; the wrap beat (`RoundWrap`) does now, and it
+surfaced on the first widget test. `outcomeFor` is the ending and ONLY the
+ending; `titleFor` may say anything the room should read mid-round.
+
+### A stage-owning game got no ending on screen (the `buildLiveStage` early return)
+
+`GameScaffold` returned `SafeArea(child: live)` the moment a game had a
+`buildLiveStage`, so the nineteen classics, Memory and Reveal the Picture never
+rendered Play again / Done / the closing line / Room tools / the keepsake — a
+won Connect Four froze, and round two meant leaving the route. The reducer
+ledger test proved they COULD end; nothing proved a person could see it.
+`test/widget/game_loop_widget_test.dart` now drives a win on screen and taps
+Play again. The same shape applies to any framework short-circuit: a "the
+game owns the whole surface" path must still get the framework's beats.
+
+### The shared renderer decided tap-ability — and killed ten face-up boards
+
+`ShapeStageView` fired `onTap` only for a face-DOWN cell (written for Reveal
+the Picture's lifted tiles). Every classic whose squares start face-up —
+Bingo, Boggle, Word Search, Guess Who, Four Corners, Scavenger, Simon, Snakes &
+Ladders, Lights Out, Spot the Difference — could be looked at and not played.
+The renderer must not know the rules: every cell takes a tap, the game's
+`onPick` returns null to decline. A FittedBox under a centred container also
+sized every label to ~14px on a TV (loose constraints size to the child) —
+tight constraints first (`SizedBox.expand`), then fit.
+
+### The Pixel is shared with any other Claude session on this repo
+
+Two sessions can run on one working tree and one phone. On 2026-09-14 a peer
+session's `git add`/commit swept this session's in-flight edits into ITS
+commit, checked out a different branch, and left `flutter run` holding the
+Pixel. Before staging: `git status` and `git log -3`, and stage by NAME. Before
+a redeploy: `pgrep -fl "flutter_tools.snapshot.*run"` — a run whose parent is
+another session's shell snapshot is theirs; message that session (`ListAgents`
+→ `SendMessage`) rather than killing it.
+
 ### The block run sheet is ONE bento per block KIND — not a list (+ trip maps)
 
 `block_run_sheet_screen.dart` gives every block KIND a single one-tray bento

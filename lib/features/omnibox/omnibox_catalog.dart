@@ -22,6 +22,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
+import 'package:differentworld/features/omnibox/deck_entries.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
@@ -35,6 +36,7 @@ import 'package:differentworld/features/today/widgets/quick_actions.dart'
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2390,6 +2392,11 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ),
     );
   }
+
+  // -- The Do-together library: one entry per card ---------------------
+  // Generated from the deck itself (deck_entries.dart), so a game added to
+  // the library is searchable the same moment. Only Do It was, before.
+  entries.addAll(deckEntries(camera: isMobileCapturePlatform));
 
   return entries;
 });

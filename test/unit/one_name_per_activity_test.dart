@@ -22,8 +22,10 @@ import 'package:flutter_test/flutter_test.dart';
 const _slugOverrides = <String, String>{'starts-with': 'letter-words'};
 
 void main() {
+  // The deck lists live in activity_deck.dart (breakDeck + presentDeck) so
+  // the library AND the omnibox read one list; the screen only lays it out.
   final deckSrc = File(
-    'lib/features/activity_runtime/brain_breaks_screen.dart',
+    'lib/features/activity_runtime/activity_deck.dart',
   ).readAsStringSync();
 
   // title + route out of each DeckCard, in declaration order.
