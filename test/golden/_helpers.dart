@@ -319,9 +319,19 @@ void beginOverflowWatch() {
             (n) => n.startsWith('debugCreator'),
             orElse: () => '',
           );
+      // Keep the part that NAMES something. Twelve elements of the chain is
+      // usually twelve framework wrappers — Listener, RawGestureDetector,
+      // Semantics, MouseRegion — and a plate that reports those has told you
+      // nothing you can act on. The app's own widgets carry a `file:///…`
+      // reference in their creator entry, so those lead; the rest follow as
+      // context, and the source line is what a person actually needs.
+      final parts = (creator ?? '').split(' ← ');
+      final named = parts.where((p) => p.contains('file:///')).take(3);
+      final chain = parts.take(10).join(' ← ');
       final where = (creator == null || creator.isEmpty)
           ? ''
-          : '\n      ${creator.split(' ← ').take(12).join(' ← ')}';
+          : '\n      $chain'
+                '${named.isEmpty ? '' : '\n      ↳ ${named.join('\n      ↳ ')}'}';
       recordedOverflows.add('${text.split('\n').first}$where');
     }
     previous?.call(details);

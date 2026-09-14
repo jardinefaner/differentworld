@@ -46,6 +46,24 @@ done
 # under build/overflow/ — a sweep whose evidence is deleted the moment it
 # fails is a sweep you cannot diagnose from, which cost a whole round of
 # guessing about why a combination reported a failure with no test names.
+# Name the plates that FAILED, from the per-test "[E]" lines.
+#
+# Not the "Failing tests:" summary block, which is what this used to read:
+# `flutter test` TRUNCATES that block at four entries and appends "... and N
+# more", so a sweep that named four plates out of twenty-one looked like a
+# small problem. The [E] suffix only ever appears on a failing test line, so
+# matching it is both complete and specific — the earlier attempt to match
+# plate names anywhere in the log caught the progress lines too.
+#
+# The light/dark strip is TWO -e expressions on purpose: BSD sed (macOS) has
+# no \| alternation, so `\(light\|dark\)` silently matches nothing and every
+# plate lists twice.
+plates() {
+  grep -oE "[a-z_]+/[a-z0-9_·/ -]+ \[E\]" "$1" \
+    | sed -e 's/ \[E\]//' -e 's/ [-·] light$//' -e 's/ [-·] dark$//' \
+    | sort -u
+}
+
 log=$(mktemp -t dw-overflow)
 keep=build/overflow
 rm -rf "$keep"; mkdir -p "$keep"
@@ -78,8 +96,7 @@ for size in "${SIZE_LIST[@]}"; do
       # which matched the progress lines too, and so listed the first twenty
       # plates alphabetically whether they failed or not. Naming an innocent
       # screen is worse than naming none, because it gets the gate muted.
-      sed -n '/^Failing tests:/,$p' "$log" | sed '1d;s/.*\.dart: //' \
-        | sort -u | head -20 | sed 's/^/      /'
+      plates "$log" | head -20 | sed 's/^/      /'
       grep -oE "Layout overflow \([0-9]+\)|overflowed by [0-9.]+ pixels on the [a-z]+" "$log" \
         | sort | uniq -c | sort -rn | head -6 | sed 's/^/      /'
     else
@@ -95,8 +112,7 @@ for size in "${SIZE_LIST[@]}"; do
       others=$((others + 1))
       echo "FAILED (not an overflow)"
       cp "$log" "$keep/$size-$scale.log"
-      sed -n '/^Failing tests:/,$p' "$log" | sed '1d;s/.*\.dart: //' \
-        | sort -u | head -6 | sed 's/^/      /'
+      plates "$log" | head -6 | sed 's/^/      /'
     fi
   done
 done
