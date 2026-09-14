@@ -65,7 +65,9 @@ class _CelebrationLayerState extends State<CelebrationLayer>
       unawaited(HapticFeedback.heavyImpact());
     }
     if (GameMotion.soundOf(context)) GameSounds.play(GameSound.win);
-    if (!GameMotion.of(context)) return;
+    // Non-registering: this runs from didUpdateWidget, and `of` would make
+    // the layer rebuild on every keyboard open for a value build never reads.
+    if (!GameMotion.read(context)) return;
     final r = Random();
     _flecks = [for (var i = 0; i < 42; i++) _Fleck.random(r, widget.accent)];
     _burst
