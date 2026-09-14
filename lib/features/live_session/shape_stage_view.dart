@@ -5,6 +5,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_motion.dart';
+import 'package:differentworld/features/games/game_sounds.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
@@ -358,8 +359,12 @@ class _AnimatedCellState extends State<_AnimatedCell>
     // The deal-in: cells settle left to right, top to bottom, a few
     // milliseconds apart, capped so a 64-square word search is not a slow
     // wipe. Deferred to after the first frame so GameMotion.of can be read.
+    // On a REPLAY the cells survive (stable keys) and this does not run
+    // again: a fresh deal shows itself through didUpdateWidget instead — a
+    // cell going face-down deals in, a new face pops — so the second round
+    // still moves without re-running the opening wipe.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !GameMotion.of(context)) return;
+      if (!mounted || !GameMotion.read(context)) return;
       final delay = Duration(milliseconds: min(widget.index * 18, 420));
       _dealIn = Timer(delay, () {
         if (mounted) _play(_Beat.deal);
@@ -372,10 +377,23 @@ class _AnimatedCellState extends State<_AnimatedCell>
     super.didUpdateWidget(old);
     final was = old.cell;
     final now = widget.cell;
-    if (!GameMotion.of(context)) return;
+    // A pad that lights up sounds its note — Simon's four, and the chosen
+    // corner in Four Corners. Sound is not motion: it plays with reduced
+    // motion on, and stops only with the Preferences switch.
+    if (widget.style == ShapeStyle.pads &&
+        now.tint == CellTint.live &&
+        was.tint != CellTint.live &&
+        GameMotion.soundOf(context)) {
+      final note = GameSoundAsset.forSlot(now.slot);
+      if (note != null) GameSounds.play(note);
+    }
+    if (!GameMotion.read(context)) return;
     _Beat? beat;
     if (was.state == CellState.hidden && now.state != CellState.hidden) {
       beat = widget.style == ShapeStyle.holes ? _Beat.drop : _Beat.flip;
+    } else if (was.state != CellState.hidden && now.state == CellState.hidden) {
+      // Face-down again: a fresh deal (Play again). Settle in, don't snap.
+      beat = _Beat.deal;
     } else if (now.tint == CellTint.wrong && was.tint != CellTint.wrong) {
       beat = _Beat.shake;
     } else if ((now.tint == CellTint.right || now.tint == CellTint.live) &&
@@ -412,6 +430,10 @@ class _AnimatedCellState extends State<_AnimatedCell>
       row: widget.row,
       col: widget.col,
     );
+    // The LayoutBuilder is not decoration: the drop beat falls from the top
+    // of the column, which is `(row + 1) × this cell's height`, and the
+    // height is only known here. A child's per-frame rebuild does not re-run
+    // this builder (a Transform never changes the cell's size).
     return LayoutBuilder(
       builder: (context, constraints) => AnimatedBuilder(
         animation: _clock,
@@ -510,7 +532,7 @@ class _Cell extends StatelessWidget {
   /// The label or the face, whichever the cell has — the face wins, which
   /// covers Battleship's coordinate on a covered square, Minesweeper's count
   /// on an uncovered one, Four Corners' answer on a permanently face-up board.
-  Widget? _content(Color? tinted, {double pad = 4}) {
+  Widget? _content(Color? tinted, Color ground, {double pad = 4}) {
     if (cell.face case final f?) {
       return Padding(padding: const EdgeInsets.all(6), child: _Face(f));
     }
@@ -520,6 +542,13 @@ class _Cell extends StatelessWidget {
       // B3 a room calls out, the letters of a word search — rendered at
       // fourteen pixels on a TV. Expanded first, it scales the label to the
       // tile, and a long label (a category and its answer) scales down.
+      //
+      // The colour is picked against the tile it sits on. It used to be
+      // white at 60% whatever the tile — readable on a dark cover, INVISIBLE
+      // on the white face-up tile every letter game draws: Word Search,
+      // Boggle and Scavenger shipped as blank white grids, and their gallery
+      // plates passed twice in a row because there was nothing to differ.
+      final ink = AppColors.onAccent(tinted ?? ground);
       return SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.all(pad * 2.5),
@@ -528,9 +557,7 @@ class _Cell extends StatelessWidget {
               l,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: tinted == null
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : AppColors.onAccent(tinted),
+                color: tinted == null ? ink.withValues(alpha: 0.72) : ink,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -541,30 +568,36 @@ class _Cell extends StatelessWidget {
     return null;
   }
 
-  Widget _tile(Color? tinted, Color accent) => AnimatedOpacity(
-    opacity: _done ? 0.45 : 1,
-    duration: const Duration(milliseconds: 200),
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      decoration: BoxDecoration(
-        color:
-            tinted ??
-            (_down
-                ? const Color(0xFF1A1B26) // raw-canvas: TV stage
-                : Colors.white), // raw-canvas: TV stage
-        border: framed
-            ? Border.all(color: accent.withValues(alpha: 0.35))
-            : null,
-        borderRadius: framed ? null : BorderRadius.circular(10),
-        // A lit tile glows — the winning line, the pad the pattern is on.
-        boxShadow: cell.tint == CellTint.live
-            ? [BoxShadow(color: accent.withValues(alpha: 0.7), blurRadius: 14)]
-            : null,
+  Widget _tile(Color? tinted, Color accent) {
+    final ground = _down
+        ? const Color(0xFF1A1B26) // raw-canvas: TV stage
+        : Colors.white; // raw-canvas: TV stage
+    return AnimatedOpacity(
+      opacity: _done ? 0.45 : 1,
+      duration: const Duration(milliseconds: 200),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        decoration: BoxDecoration(
+          color: tinted ?? ground,
+          border: framed
+              ? Border.all(color: accent.withValues(alpha: 0.35))
+              : null,
+          borderRadius: framed ? null : BorderRadius.circular(10),
+          // A lit tile glows — the winning line, the pad the pattern is on.
+          boxShadow: cell.tint == CellTint.live
+              ? [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.7),
+                    blurRadius: 14,
+                  ),
+                ]
+              : null,
+        ),
+        alignment: Alignment.center,
+        child: _content(tinted, ground),
       ),
-      alignment: Alignment.center,
-      child: _content(tinted),
-    ),
-  );
+    );
+  }
 
   /// A big rounded pad in its slot colour: dim while waiting, full and
   /// glowing while lit. The label (a corner's answer) sits on it in a colour

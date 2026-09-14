@@ -159,6 +159,32 @@ Lives in `lib/features/games/`.
   kind `game_capture` (the growth-book artifact, VISION #1). Presenter-only
   in a live session (one write, not per-controller).
 
+### The loop on screen, and the boards that look like their game (2026-09-14)
+
+Three things every game now inherits from the framework, with no per-game
+code:
+
+- **An ending a person can see.** `GameDefinition.outcomeLine` feeds the
+  `RoundWrap` beat the scaffold renders under any stage-owning game — the
+  closing line, Play again · Done · How to play, add-ours, keep-this — plus
+  a `CelebrationLayer` burst (and a heavy haptic on the phone) on the done
+  edge of EVERY game. Before this the nineteen classics ended in the reducer
+  and froze on screen.
+- **A briefing that plays once.** The run-script rides the wire
+  (`RunScriptWire`); it opens every game, Play again deals straight away, and
+  `reveal + {rules: true}` re-opens it from the wrap beat or the top pill.
+- **One renderer, alive.** `ShapeStageView` draws every `GridGame` on the
+  phone and the TV: styles (`ShapeStyle` tiles · pads · holes · lattice), a
+  colour `slot` per cell, a `progress` bar, per-cell motion (deal-in, flip,
+  pop, shake, drop, glow), Simon's notes on a lit pad and a chime on the win
+  (`game_sounds.dart`, six tiny bundled tones). `GameMotion` scopes it: the
+  Preferences switch and the OS reduce-motion setting turn it off; haptics
+  are phone-only; sound is where the room hears the stage.
+
+A new classic is still a board and a rule; `style`, `progressFor`, `present`
+and `howToPlay` are the four one-liners that make it look and read like
+itself.
+
 ### Cost (measured 2026-06-02)
 Live runs over Supabase **Realtime**, billed on **message count + concurrent
 peak connections** (NOT bytes): Free = 2M msgs/mo + 200 peak; Pro = 5M + 500;

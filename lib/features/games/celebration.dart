@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/features/games/game_motion.dart';
+import 'package:differentworld/features/games/game_sounds.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -63,6 +64,7 @@ class _CelebrationLayerState extends State<CelebrationLayer>
     if (GameMotion.hapticsOf(context)) {
       unawaited(HapticFeedback.heavyImpact());
     }
+    if (GameMotion.soundOf(context)) GameSounds.play(GameSound.win);
     if (!GameMotion.of(context)) return;
     final r = Random();
     _flecks = [for (var i = 0; i < 42; i++) _Fleck.random(r, widget.accent)];

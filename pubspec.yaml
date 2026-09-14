@@ -205,6 +205,11 @@ flutter:
     # (docs/CARD_GAMES.md). Sliced offline; the word lives in the manifest as
     # DATA so games can hide / show / match it. Directory form bundles all files.
     - assets/card_games/everyday/
+    # Game sounds — six tiny WAVs generated in-repo (sine tones with a soft
+    # envelope, ~12 KB each): the four Simon pad notes, a tap, a rising win
+    # chime. Not a voice, not a model — an object's sound, played wherever a
+    # stage is drawn (lib/features/games/game_sounds.dart).
+    - assets/audio/
     # Monochrome emoji font (subset to the ~25 emoji used on printed cards),
     # loaded via rootBundle for the PDF toolkit so verb cards can show 📦 👂 …
     # offline. Helvetica can't draw emoji; this fills only those glyphs (~18 KB).
