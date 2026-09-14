@@ -596,13 +596,22 @@ class _CustomControlBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A game's own controls can be a whole keyboard of buttons (Signals has
+    // eight, a poll one per option). At 200% text on a small phone that wrap
+    // ran to eight rows and pushed the stage off the top of the screen. The
+    // bar keeps at most the lower half and scrolls the rest — the stage is
+    // what the room is looking at, and it is never the thing that gives.
+    final cap = MediaQuery.sizeOf(context).height * 0.45;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: child,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: cap),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: child,
+          ),
         ),
       ),
     );

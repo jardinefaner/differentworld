@@ -19,7 +19,11 @@ Widget tallyControls({
   // width is not the fix — dropping a word is.
   return LayoutBuilder(
     builder: (context, constraints) {
-      final tight = constraints.maxWidth < 360;
+      // Width in TEXT units, not pixels: a 440dp bar at 200% text has the
+      // room of a 220dp bar at 100%, and the labelled skip button overflowed
+      // it by exactly the amount the pixel check could not see.
+      final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
+      final tight = constraints.maxWidth / scale < 360;
       return Row(
         children: [
           IconButton.filledTonal(
@@ -49,6 +53,8 @@ Widget tallyControls({
             child: FilledButton.icon(
               onPressed: () => send(GameIntent.tally),
               icon: const Icon(Icons.add),
+              // No Flexible here: FilledButton.icon already wraps its label
+              // in one, and a second competes for the same parent data.
               label: Text(
                 tallyLabel,
                 overflow: TextOverflow.ellipsis,

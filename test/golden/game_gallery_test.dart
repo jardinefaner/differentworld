@@ -285,11 +285,15 @@ void main() {
             selected: true,
           ),
           const SizedBox(height: 9),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          // A Wrap, not a Row: this is the plate's own scaffolding, and at
+          // 200% text two pills are wider than a small phone. The app's real
+          // tally bar (tally_controls.dart) sizes itself in text units.
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
             children: [
               GameStage.option(c, 'New word', accent: GameAccents.teal),
-              const SizedBox(width: 10),
               GameStage.option(
                 c,
                 'Reset',
