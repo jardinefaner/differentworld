@@ -144,49 +144,66 @@ class _MessageThreadScreenState extends ConsumerState<MessageThreadScreen> {
             // SizedBox needed.
             // Privacy preamble — collapsible to a single tap-to-expand
             // pill once the user has acknowledged it.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _showPreamble
-                  ? Stack(
-                      children: [
-                        const ContentHeader(
-                          title: 'Messages',
-                          subtitle:
-                              'A direct line between family and staff for '
-                              "this child. Don't share medical specifics "
-                              "or anything you wouldn't put in writing.",
-                          bottomGap: 8,
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 0,
-                          child: IconButton(
-                            tooltip: 'Hide reminder',
-                            icon: const Icon(
-                              Icons.keyboard_arrow_up,
-                              size: 20,
+            // The preamble is a FIXED-height child above an Expanded list,
+            // so at 200% text its three-line subtitle grew 188px past the
+            // screen and the list — the thing the screen is actually for —
+            // had nothing left to give. Capped at 40% of the viewport and
+            // scrollable inside that: the privacy reminder is not dropped or
+            // auto-hidden (it is a notice, not decoration), it simply stops
+            // being allowed to take the whole phone.
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _showPreamble
+                      ? Stack(
+                          children: [
+                            const ContentHeader(
+                              title: 'Messages',
+                              subtitle:
+                                  'A direct line between family and staff for '
+                                  "this child. Don't share medical specifics "
+                                  "or anything you wouldn't put in writing.",
+                              bottomGap: 8,
                             ),
-                            onPressed: () =>
-                                setState(() => _showPreamble = false),
+                            Positioned(
+                              top: 8,
+                              right: 0,
+                              child: IconButton(
+                                tooltip: 'Hide reminder',
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_up,
+                                  size: 20,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _showPreamble = false),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 4),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Messages',
+                                style: theme.textTheme.titleLarge,
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                tooltip: 'Show reminder',
+                                icon: const Icon(Icons.info_outline, size: 20),
+                                onPressed: () =>
+                                    setState(() => _showPreamble = true),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 4),
-                      child: Row(
-                        children: [
-                          Text('Messages', style: theme.textTheme.titleLarge),
-                          const Spacer(),
-                          IconButton(
-                            tooltip: 'Show reminder',
-                            icon: const Icon(Icons.info_outline, size: 20),
-                            onPressed: () =>
-                                setState(() => _showPreamble = true),
-                          ),
-                        ],
-                      ),
-                    ),
+                ),
+              ),
             ),
             Expanded(
               child: messagesAsync.when(
