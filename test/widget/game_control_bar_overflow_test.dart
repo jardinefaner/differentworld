@@ -61,7 +61,15 @@ void main() {
     // Restore BEFORE asserting: an expect() while onError is still overridden
     // trips the binding's own "you never gave it back" assertion, which then
     // masks the real result.
-    final reached = find.text('Round complete!').evaluate().isNotEmpty;
+    // The wrap beat, by key. It used to be the string "Round complete!",
+    // which the panel printed over every game alike; the beat says what
+    // actually happened now ("Red wins!", "Nice riddling!"), so the key is
+    // the stable handle. The guard below is why this surfaced as a failure
+    // rather than a probe quietly checking an empty screen.
+    final reached = find
+        .byKey(const ValueKey('round-wrap'))
+        .evaluate()
+        .isNotEmpty;
     FlutterError.onError = prior;
     expect(
       reached,

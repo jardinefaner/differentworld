@@ -4,6 +4,7 @@ import 'package:differentworld/features/facilitation/run_script_wire.dart';
 import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_motion.dart';
+import 'package:differentworld/features/games/round_wrap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,6 +33,7 @@ class GameView extends ConsumerWidget {
     required this.wire,
     required this.audience,
     this.send,
+    this.onDone,
     super.key,
   });
 
@@ -46,12 +48,23 @@ class GameView extends ConsumerWidget {
   /// display passes null and the view renders no verbs of its own.
   final void Function(GameIntent intent, [Map<String, dynamic> args])? send;
 
+  /// Leave the game — pop the route, exit fullscreen, return to the cast
+  /// launcher. Null where a surface has nowhere to send you (a live session
+  /// ends from its own header), and the wrap beat drops its Done button.
+  final VoidCallback? onDone;
+
   /// Whether this wire-state is showing the rules rather than the game.
   ///
   /// A caller asks so it can drop its own chrome — a control bar under a
   /// briefing offers verbs for a board nobody can see yet.
   static bool isBriefing(Map<String, dynamic> wire) =>
       RunScriptWire.indexOf(wire) != null;
+
+  /// Whether the round is over, so a surface can drop its own chrome: a
+  /// control bar under a finished board offers verbs for a game that is not
+  /// being played any more, beneath the wrap beat that already carries the
+  /// two that matter.
+  static bool isEnded(Map<String, dynamic> wire) => wire['d'] == true;
 
   /// Whether this game draws its own TOUCHABLE board — Memory, Reveal the
   /// Picture, every classic — as opposed to a display the scaffold puts a
@@ -123,10 +136,49 @@ class GameView extends ConsumerWidget {
             : null) ??
         def.buildStage(context, state);
 
-    return CelebrationLayer(
-      done: wire['d'] == true,
+    final done = wire['d'] == true;
+    final celebrated = CelebrationLayer(
+      done: done,
       accent: def.vibe.accent,
       child: stage,
+    );
+    // A round that ENDED, wherever somebody can act on it.
+    //
+    // The ending was in as many shapes as the briefing had been: the
+    // scaffold drew a `RoundWrap` for the board games and a different done
+    // beat inside each of its two control bars for the rest, the cockpit drew
+    // nothing at all — so a cast Connect Four froze on its winning line with
+    // no way to play again short of casting it a second time — and the live
+    // screen and fullscreen offered a bare "Again" with no closing line.
+    // Three shapes, two absences, one question.
+    //
+    // A room's SCREEN gets no verbs: the board already says who won, and the
+    // hand holding the phone is where Play again belongs.
+    // ALWAYS a Column with the stage in an Expanded, even with nothing under
+    // it. Returning the bare stage let it hug its content: a Connect Four
+    // board sat at the top of the phone with the screen's own background
+    // showing through below it, because the fill used to come from an
+    // `Expanded` at the call site. A view that fills the space it is given is
+    // the view's own business — every surface hands it a bounded box.
+    return Column(
+      children: [
+        Expanded(child: celebrated),
+        if (done && audience.drives)
+          RoundWrap(
+            key: const ValueKey('round-wrap'),
+            line: def.outcomeLine(state),
+            accent: def.vibe.accent,
+            gameId: def.id,
+            keepsake: def.keepsake(state),
+            onAgain: () => send?.call(GameIntent.reset),
+            onDone: onDone,
+            onRules: def.howToPlay.isEmpty
+                ? null
+                : () => send?.call(GameIntent.reveal, {
+                    RunScriptWire.rulesArg: true,
+                  }),
+          ),
+      ],
     );
   }
 }

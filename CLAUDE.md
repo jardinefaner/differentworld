@@ -2051,7 +2051,7 @@ Rules:
   bug is not that one of them is wrong — it is that the count is N. Check
   the count first (`grep -c` across the surfaces) before fixing an instance.
 
-**Two follow-ups worth keeping, because each was a second instance of the
+**Three follow-ups worth keeping, because each was a second instance of the
 same reasoning error.**
 
 - **A framework verb only exists where `activeIntents` offers it.** The
@@ -2072,6 +2072,23 @@ same reasoning error.**
   `GameView.ownsStage`, render `GameView`. **When you write a guard, ask what
   a file that simply omits the behaviour looks like — an absence never
   matches a grep for a presence.**
+- **The ENDING was the same count, one beat later.** Having fixed the
+  briefing I asked the same question of the wrap beat and got six surfaces,
+  three shapes and two absences: the scaffold drew a `RoundWrap` for the
+  board games and a different done-beat inside EACH of its two control bars,
+  the cockpit drew nothing (so a cast round froze on its winning line with no
+  Play again), and the live screen and fullscreen offered a bare "Again" with
+  no closing line. `GameView` draws the whole arc now — rules, play, ending —
+  and a surface contributes only its own chrome and a way out (`onDone`).
+  **When one instance of a duplicated decision turns out to be wrong, check
+  the decision NEXT to it before shipping: they were written by the same
+  hand on the same day.**
+
+**And a mechanical one, for these long edit scripts.** A multi-edit Python
+patch that asserts each anchor and writes the file at the END discards every
+successful edit when a later anchor misses — twice in this session the
+cockpit looked patched, printed nothing, and was not. Write the file after
+EACH successful replacement, or run one edit per script.
 
 ### A game's SEEDED path is the app path — it must produce what `deal` produces
 

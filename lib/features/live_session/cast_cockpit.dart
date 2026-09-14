@@ -251,7 +251,15 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
         else ...[
           Expanded(
             key: const ValueKey('cockpit-driving'),
-            child: _Driving(def: def, meta: snap.meta, send: _send),
+            child: _Driving(
+              def: def,
+              meta: snap.meta,
+              send: _send,
+              // "Done" on a cast returns to the launcher rather than ending
+              // the session — the screen stays yours, you just pick the next
+              // thing. A finished cast round had no verb at all before this.
+              onDone: () => setState(() => _showLauncher = true),
+            ),
           ),
           _SwitchBar(
             onSwitch: () => setState(() => _showLauncher = true),
@@ -571,11 +579,19 @@ class _LauncherTile extends StatelessWidget {
 
 /// Driving a cast game: the stage (what the room sees) + its controls.
 class _Driving extends StatelessWidget {
-  const _Driving({required this.def, required this.meta, required this.send});
+  const _Driving({
+    required this.def,
+    required this.meta,
+    required this.send,
+    required this.onDone,
+  });
 
   final GameDefinition<dynamic> def;
   final Map<String, dynamic> meta;
   final void Function(GameIntent, [Map<String, dynamic>]) send;
+
+  /// Back to the launcher when a round is over.
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -593,6 +609,7 @@ class _Driving extends StatelessWidget {
       wire: wire,
       audience: GameAudience.remote,
       send: send,
+      onDone: onDone,
     );
     // While the room is being briefed the phone shows the SAME beats, with
     // the Next that moves them. It used to show the board instead — and for a
@@ -609,7 +626,12 @@ class _Driving extends StatelessWidget {
         Expanded(
           child: ColoredBox(color: def.vibe.surface, child: view),
         ),
-        if (custom != null)
+        // A finished round belongs to the wrap beat; a bar of verbs for a
+        // board that is over is the duplicate ending this layer just stopped
+        // having.
+        if (GameView.isEnded(wire))
+          const SizedBox.shrink()
+        else if (custom != null)
           CastBar(child: custom)
         else
           GameIntentBar(def: def, wire: wire, onIntent: send),

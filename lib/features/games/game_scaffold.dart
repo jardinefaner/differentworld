@@ -1,16 +1,12 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
-import 'package:differentworld/features/class_memory/class_memory.dart';
-import 'package:differentworld/features/facilitation/keep_this.dart';
 import 'package:differentworld/features/facilitation/room_tools.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
-import 'package:differentworld/features/game_content/ours_strip.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/features/games/game_view.dart';
-import 'package:differentworld/features/games/round_wrap.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -124,19 +120,6 @@ class GameScaffold<S> extends StatelessWidget {
           final state = def.decode(wire);
           final active = def.activeIntents(state);
           final done = wire['d'] == true;
-          // What this round leaves behind, if the game says it leaves
-          // anything. Most say nothing, deliberately — a brain break is meant
-          // to be ephemeral, and a class memory full of "Team 1 wins" buries
-          // the few things worth keeping.
-          final keepText = done ? def.keepsake(def.decode(wire)) : null;
-          final keeper = (keepText == null || keepText.trim().isEmpty)
-              ? null
-              : KeepThisButton(
-                  text: keepText,
-                  sort: ClassMemorySort.discovery,
-                  context_: def.title,
-                  label: 'Keep what we made',
-                );
           // Keyboard control for a laptop/projector host
           // (docs/PLATFORM_RUBRIC.md, P3): ← back · Space reveal · → / Enter
           // next · Space/+/= tally. Each binds only when its intent is live.
@@ -169,6 +152,9 @@ class GameScaffold<S> extends StatelessWidget {
                     wire: wire,
                     audience: GameAudience.host,
                     send: controller.send,
+                    onDone: () {
+                      if (context.canPop()) context.pop();
+                    },
                   );
                   final revealLabel = def.revealLabel(
                     revealed: wire['r'] == true,
@@ -178,30 +164,7 @@ class GameScaffold<S> extends StatelessWidget {
                   // there is no second copy of the board to tap and no
                   // control bar to leave room for.
                   if (GameView.ownsStage(context, def, wire)) {
-                    // The end of the round, when there is one. The board
-                    // stays on screen above it — the winning line is what
-                    // the room wants to look at — and the beat carries the
-                    // verbs the board games never had: again, done, rules.
-                    return SafeArea(
-                      child: Column(
-                        children: [
-                          Expanded(child: view),
-                          if (done)
-                            RoundWrap(
-                              key: const ValueKey('round-wrap'),
-                              line: def.outcomeLine(state),
-                              accent: def.vibe.accent,
-                              gameId: def.id,
-                              keepsake: keepText,
-                              onAgain: () => _send(GameIntent.reset),
-                              onDone: () {
-                                if (context.canPop()) context.pop();
-                              },
-                              onRules: def.howToPlay.isEmpty ? null : _rules,
-                            ),
-                        ],
-                      ),
-                    );
+                    return SafeArea(child: view);
                   }
 
                   // Full control override (poll, timer, …): one layout — the
@@ -215,7 +178,9 @@ class GameScaffold<S> extends StatelessWidget {
                     return Column(
                       children: [
                         Expanded(child: view),
-                        _CustomControlBar(child: custom),
+                        // A finished round is GameView's wrap beat, not a bar
+                        // of verbs for a board that is over.
+                        if (!done) _CustomControlBar(child: custom),
                       ],
                     );
                   }
@@ -223,18 +188,13 @@ class GameScaffold<S> extends StatelessWidget {
                       ? Column(
                           children: [
                             Expanded(child: view),
-                            _GameControlBar(
-                              gameId: def.id,
-                              keepsake: keeper,
-                              wire: wire,
-                              done: done,
-                              active: active,
-                              revealLabel: revealLabel,
-                              onIntent: _send,
-                              onDone: () {
-                                if (context.canPop()) context.pop();
-                              },
-                            ),
+                            if (!done)
+                              _GameControlBar(
+                                wire: wire,
+                                active: active,
+                                revealLabel: revealLabel,
+                                onIntent: _send,
+                              ),
                           ],
                         )
                       : SafeArea(
@@ -247,18 +207,13 @@ class GameScaffold<S> extends StatelessWidget {
                               // below the fold and read as "cut off" on
                               // phones.
                               Expanded(child: view),
-                              _GameControlPanel(
-                                gameId: def.id,
-                                keepsake: keeper,
-                                wire: wire,
-                                done: done,
-                                active: active,
-                                revealLabel: revealLabel,
-                                onIntent: _send,
-                                onDone: () {
-                                  if (context.canPop()) context.pop();
-                                },
-                              ),
+                              if (!done)
+                                _GameControlPanel(
+                                  wire: wire,
+                                  active: active,
+                                  revealLabel: revealLabel,
+                                  onIntent: _send,
+                                ),
                             ],
                           ),
                         );
@@ -276,38 +231,27 @@ int _intOf(Map<String, dynamic> m, String k, int fallback) =>
     (m[k] as num?)?.toInt() ?? fallback;
 
 /// Default wide control bar — slim, for the bottom of the presentation.
-/// Standard affordances (Back · Reveal · Next, or Again when done) gated by
-/// the game's [active] intents. A game that needs custom controls overrides
-/// `buildControls` instead. Faithful to the archetype so progress reads
-/// "i / n".
+/// Standard affordances (Back · Reveal · Next) gated by the game's [active]
+/// intents. A game that needs custom controls overrides `buildControls`
+/// instead. Faithful to the archetype so progress reads "i / n".
+///
+/// **A LIVE round only.** It used to carry a second copy of the end-of-round
+/// beat — Play again, Done, the add-ours door, the keepsake — and so did the
+/// phone panel below, and so did the scaffold in a third shape for the board
+/// games. Three endings for one ending. `GameView` draws it now, once,
+/// wherever somebody can act on it.
 class _GameControlBar extends StatelessWidget {
   const _GameControlBar({
-    required this.gameId,
-    required this.keepsake,
     required this.wire,
-    required this.done,
     required this.active,
     required this.revealLabel,
     required this.onIntent,
-    required this.onDone,
   });
 
-  /// The game's id — the key the "add ours" door looks up.
-  final String gameId;
-
-  /// The end-of-round keeper, when this game produced something worth
-  /// remembering. Null for most games, which is the point — see
-  /// `GameDefinition.keepsake`.
-  final Widget? keepsake;
-
   final Map<String, dynamic> wire;
-  final bool done;
   final Set<GameIntent> active;
   final String revealLabel;
   final void Function(GameIntent) onIntent;
-
-  /// Exit the game (pop back to the deck) — shown on the end-of-round state.
-  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -323,12 +267,7 @@ class _GameControlBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           // A Wrap, not a Row: at the 200% text floor the status line plus
           // three intrinsically-sized buttons are wider than the 720dp
-          // breakpoint, and a Row has nowhere to put the excess — it
-          // overflowed by 280dp on the done beat before this changed, which
-          // the gallery never caught because it doesn't render that state at
-          // this width. Wrapping lets the buttons drop to a second run
-          // instead of off the screen; at default scale it lays out
-          // identically to the Row it replaces.
+          // breakpoint, and a Row has nowhere to put the excess.
           child: Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             alignment: WrapAlignment.spaceBetween,
@@ -336,65 +275,41 @@ class _GameControlBar extends StatelessWidget {
             runSpacing: 8,
             children: [
               Text(
-                done ? 'Round complete!' : '${index + 1} / $total',
+                '${index + 1} / $total',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Wrap(
-                key: ValueKey(done ? 'bar-done' : 'bar-playing'),
                 crossAxisAlignment: WrapCrossAlignment.center,
                 alignment: WrapAlignment.end,
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (!done) const RoomToolsButton(compact: true),
-                  if (!done)
-                    IconButton.filledTonal(
-                      onPressed: active.contains(GameIntent.back)
-                          ? () => onIntent(GameIntent.back)
-                          : null,
-                      icon: const Icon(Icons.arrow_back),
-                      tooltip: 'Back',
+                  const RoomToolsButton(compact: true),
+                  IconButton.filledTonal(
+                    onPressed: active.contains(GameIntent.back)
+                        ? () => onIntent(GameIntent.back)
+                        : null,
+                    icon: const Icon(Icons.arrow_back),
+                    tooltip: 'Back',
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: active.contains(GameIntent.reveal)
+                        ? () => onIntent(GameIntent.reveal)
+                        : null,
+                    icon: Icon(
+                      revealed ? Icons.visibility_off : Icons.lightbulb_outline,
                     ),
-                  if (done) ...[
-                    OutlinedButton.icon(
-                      onPressed: onDone,
-                      icon: const Icon(Icons.check),
-                      label: const Text('Done'),
-                    ),
-                    FilledButton.icon(
-                      // reset reseeds with fresh content (LocalGameController).
-                      onPressed: () => onIntent(GameIntent.reset),
-                      icon: const Icon(Icons.replay),
-                      label: const Text('Play again'),
-                    ),
-                    OursStrip(
-                      key: const ValueKey('ours-strip-bar'),
-                      route: gameId,
-                      compact: true,
-                    ),
-                    ?keepsake,
-                  ] else ...[
-                    FilledButton.tonalIcon(
-                      onPressed: active.contains(GameIntent.reveal)
-                          ? () => onIntent(GameIntent.reveal)
-                          : null,
-                      icon: Icon(
-                        revealed
-                            ? Icons.visibility_off
-                            : Icons.lightbulb_outline,
-                      ),
-                      label: Text(revealLabel),
-                    ),
-                    FilledButton.icon(
-                      onPressed: active.contains(GameIntent.next)
-                          ? () => onIntent(GameIntent.next)
-                          : null,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: const Text('Next'),
-                    ),
-                  ],
+                    label: Text(revealLabel),
+                  ),
+                  FilledButton.icon(
+                    onPressed: active.contains(GameIntent.next)
+                        ? () => onIntent(GameIntent.next)
+                        : null,
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('Next'),
+                  ),
                 ],
               ),
             ],
@@ -405,35 +320,20 @@ class _GameControlBar extends StatelessWidget {
   }
 }
 
-/// Default phone control panel — big, the phone is the remote.
+/// Default phone control panel — big, the phone is the remote. A LIVE round
+/// only; the ending is `GameView`'s wrap beat.
 class _GameControlPanel extends StatelessWidget {
   const _GameControlPanel({
-    required this.gameId,
-    required this.keepsake,
     required this.wire,
-    required this.done,
     required this.active,
     required this.revealLabel,
     required this.onIntent,
-    required this.onDone,
   });
 
-  /// The game's id — the key the "add ours" door looks up.
-  final String gameId;
-
-  /// The end-of-round keeper, when this game produced something worth
-  /// remembering. Null for most games, which is the point — see
-  /// `GameDefinition.keepsake`.
-  final Widget? keepsake;
-
   final Map<String, dynamic> wire;
-  final bool done;
   final Set<GameIntent> active;
   final String revealLabel;
   final void Function(GameIntent) onIntent;
-
-  /// Exit the game (pop back to the deck) — shown on the end-of-round state.
-  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -443,9 +343,7 @@ class _GameControlPanel extends StatelessWidget {
     final revealed = wire['r'] == true;
     // Same themed surface as the wide control bar. The panel used to sit
     // directly on the stage's near-black vibe surface while using THEME
-    // text colors — in light mode that's dark-on-dark (unreadable), and
-    // either way the controls looked locked to one brightness while the
-    // rest of the app follows the system theme.
+    // text colors — in light mode that's dark-on-dark (unreadable).
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -454,100 +352,60 @@ class _GameControlPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              done ? 'Round complete!' : 'Slide ${index + 1} of $total',
+              'Slide ${index + 1} of $total',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 16),
-            if (done) ...[
-              // No caption under this: "Play again" already says what it
-              // does, and at the 200% text floor the sentence cost three
-              // lines that the stage above needed (CLAUDE.md, "make it
-              // obvious first" — an instruction always on screen is a sign
-              // on a wall).
-              Icon(
-                Icons.celebration_outlined,
-                size: 44,
-                color: theme.colorScheme.primary,
+            // Pick a name, start a timer, flash "eyes up" — WITHOUT leaving
+            // the activity. This is the whole point of facet 5: the
+            // instruments were built and unreachable from in here.
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: RoomToolsButton(),
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: double.infinity,
+              height: 72,
+              child: FilledButton.icon(
+                onPressed: active.contains(GameIntent.next)
+                    ? () => onIntent(GameIntent.next)
+                    : null,
+                icon: const Icon(Icons.arrow_forward, size: 28),
+                label: const Text(
+                  'Next',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                ),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 64,
-                child: FilledButton.icon(
-                  onPressed: () => onIntent(GameIntent.reset),
-                  icon: const Icon(Icons.replay),
-                  label: const Text(
-                    'Play again',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: active.contains(GameIntent.back)
+                        ? () => onIntent(GameIntent.back)
+                        : null,
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Back'),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: onDone,
-                  icon: const Icon(Icons.check),
-                  label: const Text('Done'),
-                ),
-              ),
-              OursStrip(key: const ValueKey('ours-strip-panel'), route: gameId),
-              ?keepsake,
-            ] else ...[
-              // Pick a name, start a timer, flash "eyes up" — WITHOUT leaving
-              // the activity. This is the whole point of facet 5: the
-              // instruments were built and unreachable from in here.
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: RoomToolsButton(),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                height: 72,
-                child: FilledButton.icon(
-                  onPressed: active.contains(GameIntent.next)
-                      ? () => onIntent(GameIntent.next)
-                      : null,
-                  icon: const Icon(Icons.arrow_forward, size: 28),
-                  label: const Text(
-                    'Next',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: active.contains(GameIntent.back)
-                          ? () => onIntent(GameIntent.back)
-                          : null,
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: active.contains(GameIntent.reveal)
+                        ? () => onIntent(GameIntent.reveal)
+                        : null,
+                    icon: Icon(
+                      revealed ? Icons.visibility_off : Icons.lightbulb_outline,
                     ),
+                    label: Text(revealLabel),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: active.contains(GameIntent.reveal)
-                          ? () => onIntent(GameIntent.reveal)
-                          : null,
-                      icon: Icon(
-                        revealed
-                            ? Icons.visibility_off
-                            : Icons.lightbulb_outline,
-                      ),
-                      label: Text(revealLabel),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ],
         ),
       ),

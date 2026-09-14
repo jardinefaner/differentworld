@@ -9,9 +9,9 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/features/games/game_view.dart';
-import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
+import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/shape_stage_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +28,15 @@ void main() {
     var w = briefingWire();
     for (var i = 0; i < four.howToPlay.length; i++) {
       w = RunScriptWire.reduce(four, w, GameIntent.next, const {});
+    }
+    return w;
+  }
+
+  /// A board played to a win — Red drops four down column 0.
+  Map<String, dynamic> endedWire() {
+    var w = boardWire();
+    for (var move = 0; move < 7; move++) {
+      w = four.reduce(w, GameIntent.pick, {'cell': move.isEven ? 0 : 1});
     }
     return w;
   }
@@ -163,6 +172,71 @@ void main() {
     );
     expect(duringBriefing, isFalse);
     expect(duringPlay, isTrue, reason: 'a dealt board IS the instrument');
+  });
+
+  testWidgets('a finished round offers Play again wherever it is driven', (
+    tester,
+  ) async {
+    // The ending used to be three shapes and two absences: the scaffold drew
+    // one for board games and a different one inside each of its two control
+    // bars, the cockpit drew none — so a cast round froze on its winning line
+    // — and fullscreen offered a bare "Again" with no line to read.
+    var again = 0;
+    var done = 0;
+    for (final audience in GameAudience.values) {
+      await pump(
+        tester,
+        GameView(
+          def: four,
+          wire: endedWire(),
+          audience: audience,
+          send: audience.drives
+              ? (i, [_ = const {}]) {
+                  if (i == GameIntent.reset) again++;
+                }
+              : null,
+          onDone: audience.drives ? () => done++ : null,
+        ),
+      );
+      final wrap = find.byKey(const ValueKey('round-wrap'));
+      if (!audience.drives) {
+        expect(
+          wrap,
+          findsNothing,
+          reason: 'a television has no hands — the phone holds the verbs',
+        );
+        continue;
+      }
+      expect(wrap, findsOneWidget, reason: '$audience ends with no way on');
+      expect(
+        find.textContaining('wins'),
+        findsWidgets,
+        reason: '$audience ends without saying what happened',
+      );
+      await tester.tap(find.byKey(const ValueKey('round-wrap-again')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('round-wrap-done')));
+      await tester.pump();
+    }
+    expect(again, 3, reason: 'host, remote and presenter each played again');
+    expect(done, 3);
+  });
+
+  testWidgets('a surface with nowhere to go drops Done, not the whole beat', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      GameView(
+        def: four,
+        wire: endedWire(),
+        audience: GameAudience.presenter,
+        send: (_, [_ = const {}]) {},
+      ),
+    );
+    expect(find.byKey(const ValueKey('round-wrap')), findsOneWidget);
+    expect(find.byKey(const ValueKey('round-wrap-again')), findsOneWidget);
+    expect(find.byKey(const ValueKey('round-wrap-done')), findsNothing);
   });
 
   testWidgets('a board is touchable in a hand and inert on a wall', (

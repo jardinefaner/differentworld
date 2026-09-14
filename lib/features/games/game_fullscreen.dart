@@ -150,6 +150,9 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
                       wire: wire,
                       audience: GameAudience.host,
                       send: _send,
+                      // Done here means "give me the room back", not "leave
+                      // the game" — the scaffold underneath still holds it.
+                      onDone: () => Navigator.of(context).pop(),
                     ),
                   ),
                   _Fade(
@@ -181,7 +184,7 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
                       ),
                     ),
                   ),
-                  if (!briefing)
+                  if (!briefing && !GameView.isEnded(wire))
                     _Fade(
                       visible: _controlsVisible,
                       child: Align(

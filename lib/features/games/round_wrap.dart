@@ -27,7 +27,7 @@ class RoundWrap extends StatelessWidget {
     required this.line,
     required this.accent,
     required this.onAgain,
-    required this.onDone,
+    this.onDone,
     this.onRules,
     this.gameId,
     this.keepsake,
@@ -44,8 +44,9 @@ class RoundWrap extends StatelessWidget {
   /// Play again — a fresh deal, no re-briefing.
   final VoidCallback onAgain;
 
-  /// Leave the game.
-  final VoidCallback onDone;
+  /// Leave the game. Null where a surface has nowhere to send you — a live
+  /// session ends from its own header — and the button is simply absent.
+  final VoidCallback? onDone;
 
   /// Read the rules again. Null for a game with no run-script.
   final VoidCallback? onRules;
@@ -105,12 +106,13 @@ class RoundWrap extends StatelessWidget {
                     icon: const Icon(Icons.replay),
                     label: const Text('Play again'),
                   ),
-                  OutlinedButton.icon(
-                    key: const ValueKey('round-wrap-done'),
-                    onPressed: onDone,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Done'),
-                  ),
+                  if (onDone case final done?)
+                    OutlinedButton.icon(
+                      key: const ValueKey('round-wrap-done'),
+                      onPressed: done,
+                      icon: const Icon(Icons.check),
+                      label: const Text('Done'),
+                    ),
                   if (onRules case final rules?)
                     IconButton.outlined(
                       key: const ValueKey('round-wrap-rules'),

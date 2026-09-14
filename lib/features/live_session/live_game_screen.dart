@@ -299,7 +299,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
         else
           _ControllerHeader(status: _status, onLeave: _leave),
         Expanded(child: stage),
-        if (briefing)
+        if (briefing || GameView.isEnded(_wire))
           const SizedBox.shrink()
         else if (custom != null)
           _CustomLiveBar(child: custom)
