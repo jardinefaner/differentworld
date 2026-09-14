@@ -66,7 +66,12 @@ class AccentEdgeCard extends StatelessWidget {
                 children: [
                   Icon(icon, size: 18, color: accent),
                   const SizedBox(width: 6),
-                  Text(label, style: eyebrowStyle),
+                  // Flexible so the eyebrow wraps instead of running out of
+                  // the card. A Row cannot shrink a Text below its natural
+                  // width, so at 200% text this overran a 320dp phone — by
+                  // 25px on Today and 10px on the growth arc, which is one
+                  // defect in a SHARED widget rather than two screens.
+                  Flexible(child: Text(label, style: eyebrowStyle)),
                 ],
               )
             else

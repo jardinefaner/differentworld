@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/fit_or_scroll.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -160,34 +161,38 @@ class _NoTemplate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ContentHeader(
-              title: 'No template yet',
-              subtitle:
-                  'Set up your default week — '
-                  'activities at each time slot, per cohort.',
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Create default week'),
-              onPressed: () async {
-                final viewer = ref.read(viewerProvider);
-                final db = await ref.read(appDatabaseProvider.future);
-                if (!context.mounted) return;
-                await db.weeklyTemplateDao.createTemplate(
-                  spaceId: spaceId,
-                  createdBy: viewer.memberId,
-                );
-              },
-            ),
-          ],
-        ),
+    // FitOrScroll, not Center: a Center cannot give ground, so at 200% text
+    // this empty state ran 100px past a 320dp phone. Third instance of the
+    // same shape today (the routines empty state and the cues stage were the
+    // others) — a centred Column sized for a comfortable viewport, with
+    // nowhere to put the excess when the text grows. It still centres
+    // whenever it fits, which is every normal phone.
+    return FitOrScroll(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const ContentHeader(
+            title: 'No template yet',
+            subtitle:
+                'Set up your default week — '
+                'activities at each time slot, per cohort.',
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            icon: const Icon(Icons.add),
+            label: const Text('Create default week'),
+            onPressed: () async {
+              final viewer = ref.read(viewerProvider);
+              final db = await ref.read(appDatabaseProvider.future);
+              if (!context.mounted) return;
+              await db.weeklyTemplateDao.createTemplate(
+                spaceId: spaceId,
+                createdBy: viewer.memberId,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
