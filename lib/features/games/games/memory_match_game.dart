@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
@@ -94,6 +95,15 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
 
   @override
   String get title => 'Memory';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Memory'),
+    RoomBeat('Every card has a twin, face down'),
+    RoomBeat('Turn over two', detail: 'A match stays up'),
+    RoomBeat('Remember where things were'),
+    RoomBeat('Find every pair to finish'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);
@@ -315,9 +325,13 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
             ),
           ),
         ),
-        GameVerbBar(
-          child: _MemoryVerbs(state: s, send: send),
-        ),
+        // Once every pair is found the scaffold's wrap beat takes over — the
+        // same Play again · Done every board game gets — so this bar's own
+        // "Play again" would be a second one under the first.
+        if (!s.done)
+          GameVerbBar(
+            child: _MemoryVerbs(state: s, send: send),
+          ),
       ],
     );
   }

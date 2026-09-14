@@ -2069,6 +2069,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.
+          // ONE device: the phone shows the word to the actor (the scaffold
+          // renders the secret stage on a single device) and the room guesses.
+          // /live/charades stays for the two-device session.
+          GoRoute(
+            path: '/activity/charades',
+            builder: (_, _) => const GameRunner(def: CharadesGame()),
+          ),
           GoRoute(
             path: '/live/charades',
             builder: (_, _) => const LiveGameScreen(def: CharadesGame()),
@@ -2322,13 +2329,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/live/dots-boxes',
             builder: (_, _) => const LiveGameScreen(def: DotsBoxesGame()),
           ),
+          // Deck-seeded like Bingo: the curated bank carries no pictures, so
+          // running this straight off GameRunner dealt an empty board.
           GoRoute(
             path: '/activity/spot-difference',
-            builder: (_, _) => const GameRunner(def: SpotDifferenceGame()),
+            builder: (_, _) => const SpotDifferenceScreen(live: false),
           ),
           GoRoute(
             path: '/live/spot-difference',
-            builder: (_, _) => const LiveGameScreen(def: SpotDifferenceGame()),
+            builder: (_, _) => const SpotDifferenceScreen(live: true),
           ),
           GoRoute(
             path: '/activity/riddles',

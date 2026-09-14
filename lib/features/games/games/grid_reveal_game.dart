@@ -305,9 +305,12 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
           onPick: (i) => send(GameIntent.pick, {'cell': i}),
         ),
       ),
-      GameVerbBar(
-        child: _GridRevealVerbs(state: state, send: send),
-      ),
+      // Guessed → the scaffold's wrap beat (Play again · Done) replaces this
+      // bar rather than stacking under it.
+      if (!state.done)
+        GameVerbBar(
+          child: _GridRevealVerbs(state: state, send: send),
+        ),
     ],
   );
 

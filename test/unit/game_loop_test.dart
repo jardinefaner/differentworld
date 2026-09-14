@@ -279,6 +279,71 @@ void main() {
     });
   });
 
+  group('every OTHER game can end too', () {
+    // The grid ledger above only reached the classics. Eight prompt games
+    // sat outside it with no `'d'` at all — Beat the Letter and Rhyme Time
+    // did `(i + 1) % n` and sent the room silently back to item one. The
+    // same discipline, for the whole registry: a game either reaches done
+    // by being driven, or is an INSTRUMENT here with a written reason.
+    const instruments = <String, String>{
+      'poll': 'a vote has no last question — it ends when the adult reveals',
+      'cues': 'a signal is an interruption; it has no round',
+      'now-next': 'the schedule on the wall — it ends when the day does',
+      'picker': 'one spin at a time; nothing accumulates to finish',
+      'timer': 'a clock ends by reaching zero on the receiver, not in the reducer',
+      'board': 'an instrument the live board drives',
+      'world-cast': 'a slideshow driven from This Week',
+      'conductor': 'a text the conductor screen drives',
+      'four-corners': 'the board is the ROOM — see the grid ledger',
+    };
+
+    // Games whose ending is a BOARD (every pair found, every tile lifted, the
+    // hidden card named) rather than a sequence of Next taps. Next and tally
+    // never finish them; their own tests drive the picks.
+    const endsByPick = <String, String>{
+      'memory-match': 'memory_match_game_test drives every pair to done',
+      'whats-missing': 'whats_missing_game_test walks study → hide → reveal',
+      'grid-reveal': 'grid_reveal tests lift every tile',
+    };
+
+    test('every non-grid game is driven to done, or is an instrument', () {
+      final fresh = bank();
+      for (final g in liveGames) {
+        if (g is GridGame) continue;
+        if (instruments.containsKey(g.id)) continue;
+        if (endsByPick.containsKey(g.id)) continue;
+        var wire = g.initialState(fresh);
+        var reached = false;
+        // Next and tally are the two verbs every prompt game advances on;
+        // sending both each step covers the ones that only count on tally.
+        for (var step = 0; step < 200 && !reached; step++) {
+          wire = g.reduce(wire, GameIntent.next, const {});
+          if (wire['d'] == true) {
+            reached = true;
+            break;
+          }
+          wire = g.reduce(wire, GameIntent.tally, const {});
+          if (wire['d'] == true) reached = true;
+        }
+        expect(reached, isTrue, reason: '${g.id} never reaches done');
+      }
+    });
+
+    test('an instrument really has no round', () {
+      // The reverse: a game listed as an instrument must not quietly grow an
+      // ending, or the reason above becomes a lie nobody re-reads.
+      for (final id in instruments.keys) {
+        final g = gameById(id);
+        expect(g, isNotNull, reason: id);
+      }
+      expect(
+        instruments.keys.every((why) => instruments[why]!.length > 20),
+        isTrue,
+        reason: 'an instrument must justify itself',
+      );
+    });
+  });
+
   group('a board keeps its secrets', () {
     // The renderer draws a cell's FACE whenever there is one, whatever the
     // cell's state — "hidden" hides nothing by itself. A game that stores an

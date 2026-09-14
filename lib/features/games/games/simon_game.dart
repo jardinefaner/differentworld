@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -29,6 +30,14 @@ class SimonGame extends GridGame {
 
   @override
   String get title => 'Simon';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Simon'),
+    RoomBeat('Watch the pads light up', detail: 'Say the colours out loud'),
+    RoomBeat('Then tap them back in the same order'),
+    RoomBeat('It gets one longer every time'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.plum);

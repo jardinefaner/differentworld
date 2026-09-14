@@ -7,6 +7,10 @@ import 'package:differentworld/features/games/games/bingo_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/connect_four_game.dart';
 import 'package:differentworld/features/games/games/lights_out_game.dart';
+import 'package:differentworld/features/games/games/timer_game.dart';
+import 'package:differentworld/features/action_words/conductor.dart';
+import 'package:differentworld/features/action_words/world_cast_game.dart';
+import 'package:differentworld/features/live_board/board_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The run-script exists so a SUBSTITUTE can start any activity by finding
@@ -95,10 +99,31 @@ void main() {
       }
     });
 
-    test('two cockpit surfaces have NO script, on purpose', () {
-      // The same shape as the grid-game ledger's `noEnding`: an exception with
-      // a written reason, so nobody later "fixes" it.
+    test('two ACTIVITIES have no script, on purpose', () {
+      // Same ledger discipline as the games. Both are cases where a briefing
+      // would work against the activity rather than for it.
       const noScript = {
+        // Mindful Minute is a reset. Three beats of instruction before a
+        // calming breath is the opposite of a calming breath — and the circle
+        // teaches itself: the room breathes with it.
+        '/activity/breathe': 'a calm reset explains itself by doing',
+        // Photo Studio runs a pinned per-child session with its own turn
+        // rules on screen; a second set of instructions in front of it would
+        // compete with the ones the session already gives.
+        '/activity/photo': 'the session already narrates its own turns',
+      };
+      for (final route in noScript.keys) {
+        expect(activityRunScripts[route], isNull, reason: noScript[route]);
+      }
+    });
+
+    test('the instruments have NO script, on purpose — and nothing else does', () {
+      // The same shape as the grid-game ledger's `noEnding`: every exception
+      // carries a written reason, so nobody later "fixes" it — and a game in
+      // NEITHER list (no script, no reason) fails the build. That is what
+      // turned "some games have instructions" into "every game a room can
+      // play is one a substitute can start".
+      final noScript = <String, String>{
         // Signals is an interruption — Eyes up, Freeze, Line up. A signal that
         // needs three taps of preamble is not a signal. The whole value is
         // that it lands the instant the adult reaches for it.
@@ -106,11 +131,27 @@ void main() {
         // A countdown explains itself, and the adult reaching for it is
         // usually mid-transition with a room already moving.
         'timer': 'a clock needs no rules',
+        // A sign, not a game: the day's schedule on the wall. Nobody plays it.
+        'now-next': 'it is the schedule on the wall',
+        // One button. "Tap Spin" is already on the stage.
+        'picker': 'one button, and the stage says what it does',
+        // The three cast-only instruments: driven from another screen, never
+        // opened as an activity, so there is no room to brief.
+        const BoardGame().id: 'an instrument the live board drives',
+        const WorldCastGame().id: 'the world slideshow, cast from This Week',
+        const ConductorGame().id: 'a text the conductor screen drives',
       };
-      for (final entry in noScript.entries) {
-        final g = liveGames.firstWhere((g) => g.id == entry.key);
-        expect(g.howToPlay, isEmpty, reason: '${entry.key}: ${entry.value}');
-      }
+      final actual = {
+        for (final g in liveGames)
+          if (g.howToPlay.isEmpty) g.id,
+      };
+      expect(
+        actual,
+        noScript.keys.toSet(),
+        reason:
+            'a game with no script needs a written reason here, and a game '
+            'with a reason should not have grown a script',
+      );
     });
 
     test('the ledger: how much of the deck a substitute could start', () {
@@ -119,9 +160,12 @@ void main() {
       // test FAILS and the number gets updated — which is the point. A ">= 3"
       // would sit green forever while 38 games stayed unrunnable, and the
       // whole reason this feature exists is that nobody could see that gap.
+      //
+      // 34 = every game a room opens as an activity. The seven without are
+      // the instruments in the ledger above.
       expect(
         withScript,
-        13,
+        34,
         reason:
             'Update this count as run-scripts land. $withScript of '
             '${liveGames.length} games can be started by someone who does '
@@ -131,7 +175,7 @@ void main() {
       // same reason: a floor would sit green while the rest stayed unrunnable.
       expect(
         activityRunScripts.length,
-        3,
+        9,
         reason:
             '${activityRunScripts.length} of 11 non-game activities have a '
             'run-script.',
@@ -193,14 +237,62 @@ void _wireTests() {
       expect(RunScriptWire.indexOf(after), 0, reason: 'still on beat one');
     });
 
-    test('play again re-briefs — a second round has new children in it', () {
+    test('play again does NOT re-brief — the room just played', () {
+      // Four taps of instructions between every round is the sign on a wall
+      // the half-second rule warns about: people learn to tap through it,
+      // and then tap through it the one time it matters. The rules stay one
+      // tap away instead (below).
       var wire = seeded();
       for (var i = 0; i < g.howToPlay.length; i++) {
         wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
       }
       expect(RunScriptWire.indexOf(wire), isNull);
       wire = RunScriptWire.reduce(g, wire, GameIntent.reset, const {});
-      expect(RunScriptWire.indexOf(wire), 0);
+      expect(RunScriptWire.indexOf(wire), isNull, reason: 'straight to a deal');
+      expect(g.decode(wire).cells, isNotEmpty, reason: 'and it dealt');
+    });
+
+    test('the rules can be re-opened over a live board, and closed again', () {
+      var wire = seeded();
+      for (var i = 0; i < g.howToPlay.length; i++) {
+        wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
+      }
+      // Play a move, then ask for the rules.
+      wire = RunScriptWire.reduce(g, wire, GameIntent.pick, {'cell': 0});
+      final played = g.decode(wire);
+      expect(played.cells.where((c) => c.face != null), hasLength(1));
+      wire = RunScriptWire.reduce(g, wire, GameIntent.reveal, {
+        RunScriptWire.rulesArg: true,
+      });
+      expect(RunScriptWire.indexOf(wire), 0, reason: 'beat one again');
+      // The board underneath is untouched — Start returns to the same round.
+      for (var i = 0; i < g.howToPlay.length; i++) {
+        wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
+      }
+      expect(RunScriptWire.indexOf(wire), isNull);
+      expect(
+        g.decode(wire).cells.where((c) => c.face != null),
+        hasLength(1),
+        reason: 'the move survived the glance at the rules',
+      );
+    });
+
+    test('a plain reveal is NOT a rules request', () {
+      var wire = seeded();
+      for (var i = 0; i < g.howToPlay.length; i++) {
+        wire = RunScriptWire.reduce(g, wire, GameIntent.next, const {});
+      }
+      wire = RunScriptWire.reduce(g, wire, GameIntent.reveal, const {});
+      expect(RunScriptWire.indexOf(wire), isNull);
+    });
+
+    test('a game with no script ignores a rules request', () {
+      const plain = TimerGame();
+      final wire = plain.initialState(LocalContentBank.seeded());
+      final after = RunScriptWire.reduce(plain, wire, GameIntent.reveal, {
+        RunScriptWire.rulesArg: true,
+      });
+      expect(RunScriptWire.indexOf(after), isNull);
     });
   });
 }

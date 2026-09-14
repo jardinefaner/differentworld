@@ -30,9 +30,25 @@ void main() {
       expect(r['f'], 0);
     });
 
-    test('next wraps at the end', () {
+    test('next past the last word FINISHES the round', () {
+      // It used to wrap to word one with no signal — a round with no ending.
       final r = game.reduce(stateAt(i: 2), GameIntent.next, const {});
-      expect(r['i'], 0);
+      expect(r['d'], isTrue);
+      expect(r['i'], 2, reason: 'no silent wrap back to the first word');
+      expect(game.activeIntents(game.decode(r)), {GameIntent.reset});
+    });
+
+    test('the recap counts every rhyme across the round', () {
+      var w = stateAt();
+      w = game.reduce(w, GameIntent.tally, const {});
+      w = game.reduce(w, GameIntent.tally, const {});
+      w = game.reduce(w, GameIntent.next, const {});
+      w = game.reduce(w, GameIntent.tally, const {});
+      expect(w['f'], 1, reason: 'this word');
+      expect(w['t'], 3, reason: 'the whole round');
+      final again = game.reduce(w, GameIntent.reset, const {});
+      expect(again['t'], 0);
+      expect(again['d'], isFalse);
     });
 
     test('reset zeroes index + count', () {
@@ -80,6 +96,14 @@ void main() {
       final r = game.reduce(stateAt(f: 4), GameIntent.next, const {});
       expect(r['i'], 1);
       expect(r['f'], 0);
+    });
+
+    test('next past the last letter FINISHES the round', () {
+      final r = game.reduce(stateAt(i: 2), GameIntent.next, const {});
+      expect(r['d'], isTrue);
+      expect(game.activeIntents(game.decode(r)), {GameIntent.reset});
+      // A finished round takes no more tallies.
+      expect(game.reduce(r, GameIntent.tally, const {})['f'], r['f']);
     });
 
     test('decode exposes the current letter + category', () {

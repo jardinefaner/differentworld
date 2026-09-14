@@ -14,7 +14,12 @@ import 'package:flutter/material.dart';
 ///
 /// A raw canvas: this is the TV, hardcoded dark per docs/THEME_ADHERENCE.md.
 class ShapeStageView extends StatelessWidget {
-  const ShapeStageView({required this.shape, this.onPick, super.key});
+  const ShapeStageView({
+    required this.shape,
+    this.onPick,
+    this.onLongPick,
+    super.key,
+  });
 
   final StageShape shape;
 
@@ -22,17 +27,26 @@ class ShapeStageView extends StatelessWidget {
   /// set on the phone, where the board IS the instrument.
   final void Function(int index)? onPick;
 
+  /// Hold a cell — the board's second verb, for the games that have one
+  /// (Minesweeper's flag). Null everywhere else, and always on the receiver.
+  final void Function(int index)? onLongPick;
+
   @override
   Widget build(BuildContext context) => switch (shape.kind) {
-    ShapeKind.grid => _Grid(shape: shape, onPick: onPick),
+    ShapeKind.grid => _Grid(
+      shape: shape,
+      onPick: onPick,
+      onLongPick: onLongPick,
+    ),
   };
 }
 
 class _Grid extends StatelessWidget {
-  const _Grid({required this.shape, this.onPick});
+  const _Grid({required this.shape, this.onPick, this.onLongPick});
 
   final StageShape shape;
   final void Function(int index)? onPick;
+  final void Function(int index)? onLongPick;
 
   @override
   Widget build(BuildContext context) {
@@ -107,9 +121,20 @@ class _Grid extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.all(shape.behind == null ? 4 : 0),
       child: GestureDetector(
-        // A resolved or already-open cell is not a target; without this a tap
-        // through a lifted tile re-sends a pick for a cell already open.
-        onTap: cell.state == CellState.hidden ? () => onPick?.call(i) : null,
+        // EVERY cell is a target; the game's own rule decides whether the tap
+        // counts (`GridGame.onPick` returns null to decline, which is what
+        // keeps a double-tap from costing a turn).
+        //
+        // This used to fire only for a face-DOWN cell — written for Reveal
+        // the Picture, where a lifted tile must not re-send its pick — and it
+        // silently killed every classic whose squares start face-UP: Bingo,
+        // Boggle, Word Search, Guess Who, Four Corners, Scavenger, Simon,
+        // Snakes & Ladders, Lights Out, Spot the Difference. Ten boards that
+        // could be looked at and not played. The lifted-tile case is covered
+        // by [seeThrough] below: an open cell over a picture is an empty box
+        // that no tap can land on.
+        onTap: onPick == null ? null : () => onPick?.call(i),
+        onLongPress: onLongPick == null ? null : () => onLongPick?.call(i),
         child: seeThrough
             ? const SizedBox.expand()
             : _Cell(cell: cell, framed: shape.behind != null),

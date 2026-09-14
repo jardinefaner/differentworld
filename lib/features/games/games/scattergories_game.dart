@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -30,6 +31,15 @@ class ScattergoriesGame extends GridGame {
 
   @override
   String get title => 'Scattergories';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Scattergories'),
+    RoomBeat('One letter, six kinds of thing'),
+    RoomBeat('Shout an answer that starts with the letter', detail: 'One person types it in'),
+    RoomBeat('A wrong letter passes the turn'),
+    RoomBeat('Fill all six to finish'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.coral);

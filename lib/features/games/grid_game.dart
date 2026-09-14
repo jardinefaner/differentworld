@@ -187,6 +187,19 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   /// (an already-resolved square, a cell that is not this game's business).
   List<BoardCell>? onPick(GridBoard board, int i);
 
+  /// What a HOLD on [i] does — the second verb a board can have, for the one
+  /// classic that needs it (Minesweeper's flag). Null (the default) means a
+  /// hold is ignored, which is right for every other game.
+  ///
+  /// Rides the same `pick` intent with `{'flag': true}` in the args rather
+  /// than a new intent: the vocabulary is closed on purpose, and a flag is a
+  /// kind of pick. The reducer routes it here and never hands over the turn.
+  List<BoardCell>? onFlag(GridBoard board, int i) => null;
+
+  /// The closing line the wrap beat shows — the board's own outcome.
+  @override
+  String? outcomeLine(GridBoard state) => state.done ? state.outcome : null;
+
   /// Whether a tap hands play to the other side. False for the ones where the
   /// room acts as one.
   ///
@@ -372,6 +385,12 @@ abstract class GridGame extends GameDefinition<GridBoard> {
         if (b.done) return state;
         final i = (args['cell'] as num?)?.toInt();
         if (i == null || i < 0 || i >= b.cells.length) return state;
+        if (args['flag'] == true) {
+          // A hold marks rather than plays: no turn change, no tally, but the
+          // round can still end from it (flagging the last mine).
+          final flagged = onFlag(b, i);
+          return flagged == null ? state : _settle(b.copyWith(cells: flagged));
+        }
         final next = onPick(b, i);
         // A null means the rule declined the tap — an already-sunk ship, a
         // column with no room left. Returning the state unchanged is what
@@ -487,6 +506,7 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     final board = ShapeStageView(
       shape: shape,
       onPick: (i) => send(GameIntent.pick, {'cell': i}),
+      onLongPick: (i) => send(GameIntent.pick, {'cell': i, 'flag': true}),
     );
     final hint = entryHint;
     if (hint == null) return board;

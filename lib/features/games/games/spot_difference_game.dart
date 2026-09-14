@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -23,6 +24,15 @@ class SpotDifferenceGame extends GridGame {
   String get title => 'Spot the Difference';
 
   @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Spot the Difference'),
+    RoomBeat('Two boards — one picture is different'),
+    RoomBeat('Shout when you see it', detail: 'Tap it on the right board'),
+    RoomBeat('A wrong tap passes the turn'),
+    RoomBeat('Team 1 looks first'),
+  ];
+
+  @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.rose);
 
   /// Two 3×3 boards, side by side, with a gap column between them so the room
@@ -33,16 +43,27 @@ class SpotDifferenceGame extends GridGame {
   @override
   int get rows => _half;
 
+  /// Nine for the board plus the one that changes.
+  static const int facesNeeded = _half * _half + 1;
+
   @override
   List<BoardCell> deal(ContentSource content) {
-    final r = Random();
-    final picks = content.take(ContentKind.picture, _half * _half + 1);
+    final picks = content.take(ContentKind.picture, facesNeeded);
     final faces = [for (final p in picks) p.payload['image']! as String];
-    if (faces.length < _half * _half + 1) {
-      return const [];
-    }
+    if (faces.length < facesNeeded) return const [];
+    return dealFrom(faces, Random());
+  }
+
+  /// The board for a set of faces — the first nine on both sides, the tenth
+  /// swapped into one square on the right. Public so the deck-seeded screen
+  /// (classic_boards_screen.dart) deals exactly what the bank path deals; the
+  /// bank has no pictures on a fresh install, and this game was empty until
+  /// the deck reached it.
+  static List<BoardCell> dealFrom(List<String> faces, Random r) {
+    if (faces.length < facesNeeded) return const [];
+    const cols = _half * 2 + 1;
     final changed = r.nextInt(_half * _half);
-    final swap = faces.last;
+    final swap = faces[facesNeeded - 1];
     return [
       for (var row = 0; row < _half; row++)
         for (var c = 0; c < cols; c++)

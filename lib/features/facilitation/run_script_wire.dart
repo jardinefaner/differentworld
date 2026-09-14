@@ -40,6 +40,18 @@ abstract class RunScriptWire {
     return {...wire, key: 0};
   }
 
+  /// The one way back INTO the briefing once it is over: `reveal` carrying
+  /// `{'rules': true}`. On a plain `reveal` a riddle shows its answer and a
+  /// board ignores it; the flag makes the request unambiguous, and riding an
+  /// existing intent keeps the vocabulary closed. The wrap beat's "How to
+  /// play" and the top pill's rules button both send this — and because it
+  /// goes through the wire, a paired room screen re-briefs with the phone.
+  static const String rulesArg = 'rules';
+
+  /// Whether [intent] + [args] is a request to show the rules again.
+  static bool isRulesRequest(GameIntent intent, Map<String, dynamic> args) =>
+      intent == GameIntent.reveal && args[rulesArg] == true;
+
   /// Apply an intent, briefing first.
   ///
   /// While the room is being briefed the GAME does not advance at all — every
@@ -52,14 +64,20 @@ abstract class RunScriptWire {
     GameIntent intent,
     Map<String, dynamic> args,
   ) {
+    if (isRulesRequest(intent, args)) {
+      // Back to beat one, whatever the board is doing. The board's state is
+      // untouched underneath — the rules are a glance over it, and "Start"
+      // returns to exactly the round that was in progress.
+      return def.howToPlay.isEmpty ? state : {...state, key: 0};
+    }
     final at = indexOf(state);
     if (at == null) {
-      final next = def.reduce(state, intent, args);
-      // Play again re-briefs, and this has to live on the PLAIN path: by the
-      // time anyone taps reset the briefing is long over, so a reset branch
-      // inside the briefing switch below was unreachable code that read like
-      // a working feature. Caught by the test, not by review.
-      return intent == GameIntent.reset ? seed(def, next) : next;
+      // Play again does NOT re-brief. A room that has just finished a round
+      // knows the rules; four taps of instructions between every round is the
+      // sign-on-a-wall the half-second rule warns about, and it is what makes
+      // people tap through a briefing without reading it the ONE time it
+      // matters — the first. The rules stay one tap away ([rulesArg]).
+      return def.reduce(state, intent, args);
     }
 
     switch (intent) {

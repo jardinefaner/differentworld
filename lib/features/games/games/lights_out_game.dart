@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -18,6 +19,14 @@ class LightsOutGame extends GridGame {
 
   @override
   String get title => 'Lights Out';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Lights Out'),
+    RoomBeat('Tap a light and its neighbours flip', detail: 'Up, down, left, right'),
+    RoomBeat('Turn every light off to win'),
+    RoomBeat('Argue about the next tap first'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.amber);

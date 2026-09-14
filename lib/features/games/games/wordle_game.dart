@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -35,6 +36,15 @@ class WordleGame extends GridGame {
 
   @override
   String get title => 'Wordle';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Wordle'),
+    RoomBeat('A five-letter word is hiding'),
+    RoomBeat('Guess a word — one person types it in'),
+    RoomBeat('Green is right, yellow is close', detail: 'Grey is not in the word'),
+    RoomBeat('Six goes to get it', detail: 'Teams take turns guessing'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);

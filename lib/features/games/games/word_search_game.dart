@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
@@ -18,6 +19,15 @@ class WordSearchGame extends GridGame {
 
   @override
   String get title => 'Word Search';
+
+  @override
+  RunScript get howToPlay => const [
+    RoomBeat('We are playing Word Search'),
+    RoomBeat('The words to find are at the top'),
+    RoomBeat('Spot one across or down', detail: 'Tap each of its letters'),
+    RoomBeat('Find every word to finish'),
+    RoomBeat('Team 1 looks first'),
+  ];
 
   @override
   GameVibe get vibe => const GameVibe(accent: GameAccents.sage);

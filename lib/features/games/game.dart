@@ -287,6 +287,17 @@ abstract class GameDefinition<S> {
   /// to look load-bearing.
   String? keepsake(S state) => null;
 
+  /// **The closing line** — what the wrap beat says once the round is over
+  /// ("Bingo! Top row", "Team 2 wins, 3–2"). Null while a round is live, and
+  /// null for a game whose ending has nothing to announce.
+  ///
+  /// The scaffold reads this to build the end-of-round beat for games that own
+  /// their whole stage (`buildLiveStage`). Those games used to have NO ending on
+  /// screen at all: the reducer stamped `done`, the board froze, and the only
+  /// way to a second round was leaving the route. The line is the half of the
+  /// ending a room can read; the buttons under it are the half it can act on.
+  String? outcomeLine(S state) => null;
+
   /// **What the ROOM is told before the board appears** — the run-script
   /// (`lib/features/facilitation/room_beat.dart`).
   ///

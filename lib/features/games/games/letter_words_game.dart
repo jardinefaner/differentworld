@@ -15,12 +15,18 @@ class LetterWordsState {
   const LetterWordsState({
     this.index = 0,
     this.found = 0,
+    this.total = 0,
+    this.done = false,
+    this.roundLength = 0,
     this.rounds = const [],
   });
 
   factory LetterWordsState.fromMap(Map<String, dynamic> m) => LetterWordsState(
     index: (m['i'] as num?)?.toInt() ?? 0,
     found: (m['f'] as num?)?.toInt() ?? 0,
+    total: (m['t'] as num?)?.toInt() ?? 0,
+    done: m['d'] == true,
+    roundLength: (m['n'] as num?)?.toInt() ?? 0,
     rounds: [
       for (final r in (m['rounds'] as List? ?? const []))
         [for (final x in (r as List)) x.toString()],
@@ -28,7 +34,16 @@ class LetterWordsState {
   );
 
   final int index;
+
+  /// Words found for the CURRENT letter.
   final int found;
+
+  /// Words found over the whole round — what the recap reports.
+  final int total;
+  final bool done;
+
+  /// How many letters make a round.
+  final int roundLength;
 
   /// `[letter, categoryLabel]` per round.
   final List<List<String>> rounds;
@@ -76,7 +91,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
     // letter each round.
     final rounds = <List<String>>[];
     var prev = '';
-    for (var k = 0; k < 30; k++) {
+    for (var k = 0; k < roundLength; k++) {
       var pick = _letters[rng.nextInt(_letters.length)];
       while (pick == prev) {
         pick = _letters[rng.nextInt(_letters.length)];
@@ -84,8 +99,19 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
       prev = pick;
       rounds.add([pick, labels[k % labels.length]]);
     }
-    return {'i': 0, 'f': 0, 'n': rounds.length, 'rounds': rounds};
+    return {
+      'i': 0,
+      'f': 0,
+      't': 0,
+      'd': false,
+      'n': rounds.length,
+      'rounds': rounds,
+    };
   }
+
+  /// A round is this many letters. It used to be thirty, wrapping back to
+  /// the first with no signal — a round with no ending is not a game.
+  static const int roundLength = 8;
 
   @override
   LetterWordsState decode(Map<String, dynamic> state) =>
@@ -100,16 +126,27 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
     final s = Map<String, dynamic>.from(state);
     final i = (s['i'] as num?)?.toInt() ?? 0;
     final f = (s['f'] as num?)?.toInt() ?? 0;
+    final t = (s['t'] as num?)?.toInt() ?? 0;
     final n = (s['n'] as num?)?.toInt() ?? 0;
+    final done = s['d'] == true;
     switch (intent) {
       case GameIntent.tally: // Someone said it.
+        if (done) break;
         s['f'] = f + 1;
-      case GameIntent.next: // New letter (resets the count).
-        if (n > 0) s['i'] = (i + 1) % n;
+        s['t'] = t + 1;
+      case GameIntent.next: // New letter — or, past the last, the end.
+        if (done) break;
+        if (n > 0 && i >= n - 1) {
+          s['d'] = true;
+        } else {
+          s['i'] = i + 1;
+        }
         s['f'] = 0;
       case GameIntent.reset:
         s['i'] = 0;
         s['f'] = 0;
+        s['t'] = 0;
+        s['d'] = false;
       case GameIntent.tick:
       case GameIntent.back:
       case GameIntent.reveal:
@@ -122,15 +159,21 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   }
 
   @override
-  Set<GameIntent> activeIntents(LetterWordsState s) => {
-    GameIntent.tally,
-    GameIntent.next,
-    GameIntent.reset,
-  };
+  Set<GameIntent> activeIntents(LetterWordsState s) => s.done
+      ? {GameIntent.reset}
+      : {GameIntent.tally, GameIntent.next, GameIntent.reset};
 
   @override
   Widget buildStage(BuildContext context, LetterWordsState s) {
     final theme = Theme.of(context);
+    if (s.done) {
+      return GameStage.recap(
+        context,
+        emoji: '🔤',
+        title: s.total == 0 ? 'That was Beat the Letter' : '${s.total} words!',
+        caption: '${s.roundLength} letters, together.',
+      );
+    }
     return GameStage.frame(
       context,
       eyebrow: 'Starts with',
@@ -174,9 +217,11 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
     BuildContext context,
     LetterWordsState state,
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
-  ) => tallyControls(
-    send: send,
-    tallyLabel: 'Someone said it',
-    nextLabel: 'New letter',
-  );
+  ) => state.done
+      ? playAgainControls(send)
+      : tallyControls(
+          send: send,
+          tallyLabel: 'Someone said it',
+          nextLabel: 'New letter',
+        );
 }
