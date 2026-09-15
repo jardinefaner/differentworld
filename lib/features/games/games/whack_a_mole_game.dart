@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -25,7 +26,25 @@ class WhackAMoleGame extends GridGame {
 
   /// Misses allowed before the round ends. Three is enough to feel fair and
   /// few enough that the round stays short — a brain break, not a shift.
-  static const _lives = 3;
+  /// Three misses is the playground number. A younger room wants five before
+  /// the round is over; a room that has played it wants two.
+  static const _lives = (5, 3, 2);
+
+  @override
+  List<GameSetting> get settings => [difficulty()];
+
+  /// Rides the BOARD — every line that reads it (the ending, the bar, the
+  /// note) is a pure function of the board with no settings in hand.
+  @override
+  Map<String, int> tallyFrom(Map<String, Object?> values) => {
+    'lives': difficultyFrom(values).pick(_lives),
+  };
+
+  /// A board dealt before the knob existed carries no 'lives'.
+  static int _allowed(GridBoard b) =>
+      b.tally['lives'] is int && b.tally['lives']! > 0
+      ? b.tally['lives']!
+      : GameDifficulty.usual.pick(_lives);
 
   @override
   String get id => 'whack-a-mole';
@@ -118,7 +137,7 @@ class WhackAMoleGame extends GridGame {
 
   @override
   String? outcomeFor(GridBoard b) {
-    if (b.score('miss') < _lives) return null;
+    if (b.score('miss') < _allowed(b)) return null;
     final hits = b.score('hit');
     if (hits == 0) return 'It got away every time. Again?';
     return '$hits ${hits == 1 ? 'hit' : 'hits'}';
@@ -127,15 +146,15 @@ class WhackAMoleGame extends GridGame {
   /// Misses left, as a bar that shrinks — the round is over when it empties.
   @override
   double? progressFor(GridBoard b) =>
-      ((_lives - b.score('miss')) / _lives).clamp(0.0, 1.0);
+      ((_allowed(b) - b.score('miss')) / _allowed(b)).clamp(0.0, 1.0);
 
   @override
   String? noteFor(GridBoard b) {
     final hits = b.score('hit');
-    final left = _lives - b.score('miss');
+    final left = _allowed(b) - b.score('miss');
     // Both numbers, always, once play has started: a score with no lives
     // beside it doesn't tell you how much game is left.
-    if (hits == 0 && left == _lives) return null;
-    return '$hits · ${'●' * left.clamp(0, _lives)}';
+    if (hits == 0 && left == _allowed(b)) return null;
+    return '$hits · ${'●' * left.clamp(0, _allowed(b))}';
   }
 }

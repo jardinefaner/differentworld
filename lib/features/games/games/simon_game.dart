@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -23,7 +24,25 @@ class SimonGame extends GridGame {
   /// Mistakes allowed. A wrong pad restarts the pattern rather than ending
   /// the game — a room of six-year-olds should keep playing — but three of
   /// them finish the round, so it CAN end and the score means something.
-  static const _mistakes = 3;
+  /// Three wrong notes ends it. A four-year-old room needs more room to be
+  /// wrong than a room that has done this every week.
+  static const _mistakes = (5, 3, 2);
+
+  @override
+  List<GameSetting> get settings => [difficulty()];
+
+  /// Rides the BOARD — every line that reads it (the ending, the bar, the
+  /// note) is a pure function of the board with no settings in hand.
+  @override
+  Map<String, int> tallyFrom(Map<String, Object?> values) => {
+    'wrongAllowed': difficultyFrom(values).pick(_mistakes),
+  };
+
+  /// A board dealt before the knob existed carries no 'wrongAllowed'.
+  static int _allowed(GridBoard b) =>
+      b.tally['wrongAllowed'] is int && b.tally['wrongAllowed']! > 0
+      ? b.tally['wrongAllowed']!
+      : GameDifficulty.usual.pick(_mistakes);
 
   @override
   String get id => 'simon';
@@ -187,7 +206,7 @@ class SimonGame extends GridGame {
 
   @override
   String? outcomeFor(GridBoard b) {
-    if (b.score('wrong') < _mistakes) return null;
+    if (b.score('wrong') < _allowed(b)) return null;
     final best = b.score('best');
     return best == 0 ? 'Tricky one. Again?' : 'Longest: $best';
   }
