@@ -192,6 +192,8 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
     }
     return GameStage.frame(
       context,
+      // A big letter has no words to key on, so it names its own turn.
+      turn: '${s.letter}/${s.index}',
       eyebrow: 'Starts with',
       hero: Container(
         width: 132,

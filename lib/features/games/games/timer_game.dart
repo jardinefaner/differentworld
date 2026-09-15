@@ -222,6 +222,8 @@ class _TimerStageState extends State<_TimerStage> {
     final theme = Theme.of(context);
     return GameStage.frame(
       context,
+      // No `turn:` ON PURPOSE. This hero changes four times a second; a frame
+      // that re-animated on every tick would be a strobe, not a clock.
       eyebrow: done
           ? "Time's up"
           : (widget.state.running ? 'Counting down' : 'Paused'),

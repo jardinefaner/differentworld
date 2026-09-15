@@ -558,6 +558,9 @@ const Map<String, String> _unstableByDesign = <String, String>{
   'games/stage_four-corners': 'a random question on the pads',
   'games/organism_four-corners': 'a random question on the pads',
   'games/stage_spot-difference': 'a random square is the different one',
+  // Its stage twin was listed and this one was not — the same deal, so
+  // the same answer. Measured over two regens, not guessed.
+  'games/organism_spot-difference': 'a random square is the different one',
   'games/stage_snakes-ladders': 'the plate’s picks are dice rolls',
 };
 

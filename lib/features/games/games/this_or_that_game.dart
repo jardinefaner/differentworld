@@ -158,6 +158,7 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
     // wall (CLAUDE.md, the half-second rule).
     return GameStage.frame(
       context,
+      turn: a,
       hero: _Choice(text: a, accent: vibe.accent),
       body: Column(
         mainAxisSize: MainAxisSize.min,

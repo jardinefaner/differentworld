@@ -153,6 +153,10 @@ class CharadesGame extends GameDefinition<CharadesState> {
     if (s.done) return _wrap(context, s);
     return GameStage.frame(
       context,
+      // The ROUND, not the category — two words in a row can share one
+      // ("Animal", "Animal") and the room would see nothing happen between
+      // them, which is precisely when it needs to know a new word is up.
+      turn: s.index,
       hero: GameStage.hero(context, s.category, color: vibe.accent),
       body: Padding(
         padding: const EdgeInsets.only(top: 24),

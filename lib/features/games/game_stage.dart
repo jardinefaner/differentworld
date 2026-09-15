@@ -1,4 +1,6 @@
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/games/game_motion.dart';
+import 'package:differentworld/shared/widgets/app_gap.dart';
 import 'package:flutter/material.dart';
 
 /// On-brand type + structure for game stages (docs/GAMES.md — the "fully calm"
@@ -17,6 +19,10 @@ abstract final class GameStage {
     Color? color,
   }) => Text(
     text,
+    // Keyed by its own words, so [frame] can tell one prompt from the next
+    // with nothing passed in. A game with a CUSTOM hero (a big letter, a
+    // clock) has no words to key on and passes `turn:` instead.
+    key: ValueKey(text),
     textAlign: TextAlign.center,
     maxLines: maxLines,
     overflow: TextOverflow.ellipsis,
@@ -41,32 +47,81 @@ abstract final class GameStage {
   /// A centered, width-clamped column — eyebrow · hero · body — with air. The
   /// shared stage skeleton; pass the per-game body (vote buttons, options, the
   /// reveal note) below the hero.
+  /// [turn] identifies WHICH prompt this is — pass it when the hero is custom
+  /// (a big letter, a clock) and so has no words of its own to key on.
+  /// Defaults to the hero's own key, which [GameStage.hero] supplies.
   static Widget frame(
     BuildContext context, {
     required Widget hero,
     String? eyebrow,
     Widget? body,
+    Object? turn,
   }) => Center(
     child: SingleChildScrollView(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: Padding(
           padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (eyebrow case final e?) ...[
-                GameStage.eyebrow(context, e),
-                const SizedBox(height: 20),
+          child: _arrives(
+            context,
+            turn: turn == null ? hero.key : ValueKey(turn),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (eyebrow case final e?) ...[
+                  GameStage.eyebrow(context, e),
+                  // The eyebrow block and the hero block — two parts of one
+                  // prompt on a big stage, not a form label hugging its field.
+                  const AppGap.xxl(),
+                ],
+                hero,
+                ?body,
               ],
-              hero,
-              ?body,
-            ],
+            ),
           ),
         ),
       ),
     ),
   );
+
+  /// **How a new prompt arrives** — decided once, for every game that shares
+  /// this stage.
+  ///
+  /// Twelve games drew their prompts here and all twelve CUT: a new riddle, a
+  /// new letter, a new question replaced the old one in a single frame, which
+  /// leaves the room unable to answer the only question a change raises —
+  /// *what moved?* (docs — the half-second rule, "motion instead of cuts").
+  /// The boards had this from the day `ShapeStageView` shipped, because one
+  /// renderer draws every board; the prompts had nobody to decide it for them.
+  ///
+  /// Keyed on the PROMPT, never the body, so a tally tick or a vote landing
+  /// updates in place — a stage that re-animated on every tap would be worse
+  /// than one that never moved.
+  static Widget _arrives(
+    BuildContext context, {
+    required Key? turn,
+    required Widget child,
+  }) {
+    // No identity to compare, or motion is off (the setting, or the OS
+    // reduce-animations flag) — draw it plainly.
+    if (turn == null || !GameMotion.of(context)) return child;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 260),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.06),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: KeyedSubtree(key: turn, child: child),
+    );
+  }
 
   /// THE choice pill — the ONE atom every game uses for a choice (True/Fib, a
   /// poll option, a math answer, a reveal slot). Flat with a hairline by
@@ -165,11 +220,24 @@ abstract final class GameStage {
   }) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text(
-        value,
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-          color: accent,
-          fontWeight: FontWeight.w400,
+      // A number that jumps from 3 to 4 between frames is the same "what
+      // moved?" problem one size down — the count IS the feedback for a tally
+      // tap, and it was silent.
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        transitionBuilder: (child, animation) => ScaleTransition(
+          scale: Tween<double>(begin: 0.72, end: 1).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+          ),
+          child: FadeTransition(opacity: animation, child: child),
+        ),
+        child: Text(
+          value,
+          key: ValueKey(value),
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: accent,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
       Text(

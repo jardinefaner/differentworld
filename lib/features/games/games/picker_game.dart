@@ -166,6 +166,9 @@ class PickerGame extends GameDefinition<PickerState> {
     }
     return GameStage.frame(
       context,
+      // No `turn:` ON PURPOSE — the reveal below is this game's whole point and
+      // is deliberately slower than the shared arrival. Two switchers on one
+      // hero would fight, and the fair-feeling one would lose.
       eyebrow: s.spun ? _eyebrow(s) : "Who's next?",
       hero: AnimatedSwitcher(
         // Deliberately slow. Instant results feel rigged and a room says so;

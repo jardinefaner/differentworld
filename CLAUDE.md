@@ -2115,6 +2115,62 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### MOTION was the same count — nineteen boards had it, twelve prompts cut
+
+The boards have animated since `ShapeStageView` shipped, for one reason: ONE
+renderer draws every board, so one place decides how a cell changes and every
+classic inherits it. The twelve PROMPT games had nobody to decide for them, so
+all twelve CUT — a new riddle, a new letter, a new question replaced the old
+one in a single frame, which leaves a room unable to answer the only question a
+change raises: *what moved?* (the half-second rule, "motion instead of cuts").
+
+`GameStage.frame` decides it now. Two details are load-bearing:
+
+- **`GameStage.hero` keys itself** (`ValueKey(text)`), so the frame can tell one
+  prompt from the next with nothing passed in — seven of the twelve got motion
+  with zero call-site change. A game whose hero is a PICTURE rather than words
+  (a big letter, a clock, a pair of choices) has nothing to key on and passes
+  `turn:`. That is the shape to reach for: an automatic default plus an opt-in
+  for the cases the default structurally cannot see.
+- **Keyed on the PROMPT, never the body.** A stage that re-animated whenever a
+  tally ticked or a vote landed would be worse than one that never moved.
+
+**Two deliberate absences, each with its reason at the call site** — Timer (its
+hero ticks four times a second; a frame that re-animated would be a strobe) and
+Spotlight (its own reveal is slower ON PURPOSE and would lose the fight). Poll
+is a third: one question per round, so there is no next prompt to arrive. The
+test carries all three as a named `_exempt` map, because a silent stage and a
+deliberately-still one look identical from the outside.
+
+The test found two the sweep would have missed: **Charades keyed on its
+CATEGORY**, so two "Animal" words in a row showed the room nothing happening —
+precisely when it most needs to know a new word is up; it keys on the round
+now. And Poll turned out to be a real exemption rather than a bug, which only
+reading its reducer settled (`next` is a no-op there).
+
+### Regenerating the GAME plates: most of the churn is not yours
+
+`RUN_GOLDENS=1 flutter test test/golden/game_gallery_test.dart --update-goldens`
+rewrites ~27 PNGs every single time, because most games deal with an unseeded
+`Random()` and a seeded deal would not be what a room actually gets. That is
+already handled and is NOT a defect: `_unstableByDesign` in that file lists
+every such plate with a written reason and skips its pixel comparison, while
+the overflow sweep still renders it.
+
+So after a regen, **commit only the plates that are NOT on that list** —
+otherwise you commit random re-deals as if they were your change:
+
+```sh
+for f in $(git status --short gallery/games/ | awk '{print $2}'); do
+  n="games/$(basename $f .png)"
+  grep -q "'$n'" test/golden/game_gallery_test.dart && git checkout -- "$f"
+done
+```
+
+That run also found `organism_spot-difference` unstable while only its
+`stage_` twin was listed — same deal, same answer, so it joined the ledger.
+Confirm instability by regenerating TWICE and comparing hashes; do not guess.
+
 ### `pumpAndSettle` can NEVER settle on a screen with a loading skeleton
 
 `Skeleton` (and `LoadingSlot`, which draws it) animates with `_ctl.repeat()`,

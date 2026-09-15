@@ -163,6 +163,7 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
     }
     return GameStage.frame(
       context,
+      turn: s.word,
       eyebrow: 'Rhyme with',
       hero: Text(
         s.word,
