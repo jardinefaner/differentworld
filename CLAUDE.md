@@ -2115,6 +2115,38 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### `pumpAndSettle` can NEVER settle on a screen with a loading skeleton
+
+`Skeleton` (and `LoadingSlot`, which draws it) animates with `_ctl.repeat()`,
+so while anything on screen is pending, a frame is always scheduled and
+`pumpAndSettle` spins until it times out. The error it throws —
+*"pumpAndSettle timed out"* — points at the pump, not at the provider that
+never resolved, so it reads as a hung animation rather than a stuck load.
+
+It bit on the second `testWidgets` in one file (2026-09-14): the first mount
+of a deck-seeded screen won its asset-bundle race and every later one sat on
+the skeleton forever. That is also why every other deck-seeded test in this
+suite happens to hold **exactly one** `testWidgets` — the pattern was luck, not
+design, and a second test in any of those files would hang the same way.
+
+Rules for a screen whose data is async:
+- **Override the provider.** `pictureDeckProvider.overrideWith((ref) async =>
+  fixtureCards)` makes the test deterministic AND makes the subject the seed
+  and the screen rather than the asset bundle. This is the fix, not a
+  workaround. `test/widget/picture_classics_test.dart` is the template.
+- **Bounded `pump`s, never `pumpAndSettle`**, while anything may still be
+  loading — `for (var i = 0; i < 40 && finder.evaluate().isEmpty; i++) await
+  tester.pump(...)`.
+- `tester.runAsync` does NOT rescue a bundle read here; it was tried and the
+  second mount still never resolved.
+
+**And the rule that made the wave worth anything: after a test goes green,
+break the thing it claims to catch and watch it go red.** These three passed
+with Guess Who's missing-tally bug reintroduced — they assert a round can be
+PLAYED, which is a different class from what `deck_seed_test.dart` pins (the
+secret is real and not always square zero). Both layers were needed and only
+the deliberate break showed which was which.
+
 ### The CLOCK was the same count — three games, and one surface wound it
 
 Three games declare `ticks`: Whack-a-Mole (the mole moves on its own), Simon
