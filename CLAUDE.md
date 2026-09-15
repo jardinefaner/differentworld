@@ -2623,6 +2623,45 @@ just kick it. Filter the log monitor to `Built build|Syncing
 files|Hot reload|Exception CAUGHT|Lost connection|Build failed`
 — routine PowerSync stream blips are noise, don't surface them.
 
+## Driving the Pixel from here — "not exercised on device" is a choice
+
+Every commit in a long session can carry "not exercised on device" and it is
+rarely necessary: the phone can be driven directly over ADB. **`adb` is not on
+PATH** — it lives at `~/Library/Android/sdk/platform-tools/adb`.
+
+```sh
+ADB="$HOME/Library/Android/sdk/platform-tools/adb"
+D=adb-1A291FDF6002RQ-JYcM2v._adb-tls-connect._tcp
+
+"$ADB" -s $D shell am force-stop com.jardine.differentworld
+"$ADB" -s $D shell monkey -p com.jardine.differentworld \
+  -c android.intent.category.LAUNCHER 1     # cold launch
+"$ADB" -s $D exec-out screencap -p > /tmp/dev.png   # then Read that file
+"$ADB" -s $D shell input tap <x> <y>
+"$ADB" -s $D shell input swipe <x1> <y1> <x2> <y2> 300
+```
+
+Three things that matter:
+
+- **Coordinates are in the DEVICE's pixels, not the screenshot's.** The Pixel
+  is 1080x2400 and a screenshot is displayed scaled — the harness prints the
+  factor with each image ("multiply by 1.20"). Tapping the displayed
+  coordinates lands about 20% short, near the top of the wrong row.
+- **Deep links will not get you there.** `flutter_deeplinking_enabled=false`
+  and `app_links` only handles the vehicle + invite schemes, so `/breaks` and
+  friends are not reachable by intent. Navigate the way a person does: drawer
+  → section → row. The drawer's groups are collapsed, so expect an expand and
+  a scroll before the row you want is on screen.
+- **The device holds real children's data.** Stay on the activity deck and the
+  games; a roster, a photo folder or a family screen puts PII into the
+  transcript for no benefit. Screenshot what you are verifying, nothing else.
+
+What it is worth: the deck's chips, the run-script briefing, a game's board,
+the prompt arrival and the counter pop were all confirmed on the real phone in
+about ten taps — including catching the arrival MID-FLIGHT, with the outgoing
+prompt faded and sunk beneath the incoming one, which no test asserts and no
+golden can show.
+
 ## Dev flags — the in-app "flag this screen" button
 
 The user can **flag a screen for review** by tapping the floating flag
