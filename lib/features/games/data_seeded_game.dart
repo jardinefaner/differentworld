@@ -1,5 +1,6 @@
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,12 @@ class GameSurface<S> extends StatelessWidget {
   final Map<String, dynamic>? seed;
 
   /// A fresh seed for Play again — see `GameRunner.reseed`.
-  final Map<String, dynamic> Function()? reseed;
+  ///
+  /// Takes the teacher's chosen values, because for a deck-seeded game the
+  /// seed is the ONLY place a setting can land: these games never go through
+  /// `initialStateFor`. Without this a card game could declare a knob, show it
+  /// in the sheet, and deal the same twelve cards forever.
+  final Map<String, dynamic> Function(Map<String, Object?> values)? reseed;
 
   @override
   Widget build(BuildContext context) => live
@@ -46,7 +52,7 @@ class DataSeededGame<S, T> extends StatelessWidget {
   final GameDefinition<S> def;
   final bool live;
   final AsyncValue<T> data;
-  final Map<String, dynamic> Function(T data) seed;
+  final Map<String, dynamic> Function(T data, Map<String, Object?> values) seed;
 
   @override
   Widget build(BuildContext context) => data.when(
@@ -55,8 +61,11 @@ class DataSeededGame<S, T> extends StatelessWidget {
     data: (d) => GameSurface<S>(
       def: def,
       live: live,
-      seed: seed(d),
-      reseed: () => seed(d),
+      // Round one uses the game's defaults; a knob turned mid-session applies
+      // from the NEXT deal, which is the same "between rounds, never mid-play"
+      // rule every other setting follows.
+      seed: seed(d, defaultSettingValues(def.settings)),
+      reseed: (values) => seed(d, values),
     ),
     loading: () => const EdgeScaffold(
       body: Center(child: CircularProgressIndicator()),

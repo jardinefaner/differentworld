@@ -2,6 +2,7 @@ import 'package:differentworld/features/games/cards/card_rounds.dart';
 import 'package:differentworld/features/games/cards/picture_card.dart';
 import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/data_seeded_game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,11 +11,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // enough to study at a glance.
 const int _perBoard = 6;
 
-/// Seed What's Missing from the bundled picture [cards] — up to 6 boards, each
-/// a set with one marked to hide, built ONCE so present + control + a cast
-/// receiver see the same board. Shared by [WhatsMissingScreen] and the
-/// cockpit's cast tile.
-Map<String, dynamic> whatsMissingSeed(List<PictureCard> cards) {
+/// Six boards was typed once.
+const int whatsMissingDefaultRounds = 6;
+
+/// Seed What's Missing from the bundled picture [cards] — boards of a set with
+/// one marked to hide, built ONCE so present + control + a cast receiver see
+/// the same board. Shared by [WhatsMissingScreen] and the cockpit's cast tile.
+Map<String, dynamic> whatsMissingSeed(
+  List<PictureCard> cards, [
+  Map<String, Object?> values = const {},
+]) {
   if (cards.isEmpty) {
     return {
       'rounds': const <Map<String, dynamic>>[],
@@ -25,7 +31,8 @@ Map<String, dynamic> whatsMissingSeed(List<PictureCard> cards) {
   }
   final rounds = <Map<String, dynamic>>[];
   final per = cards.length < _perBoard ? cards.length : _perBoard;
-  for (var k = 0; k < 6; k++) {
+  final want = roundsFrom(values, fallback: whatsMissingDefaultRounds);
+  for (var k = 0; k < want; k++) {
     final seed = cards.length + k * 53;
     final board = CardRounds.draw(cards, per, seed);
     if (board.length < 2) continue;
@@ -37,7 +44,7 @@ Map<String, dynamic> whatsMissingSeed(List<PictureCard> cards) {
       'missing': missing,
     });
   }
-  return {'rounds': rounds, 'i': 0, 'phase': 0, 'd': false};
+  return {'rounds': rounds, 'i': 0, 'n': rounds.length, 'phase': 0, 'd': false};
 }
 
 /// Seeds What's Missing from the bundled picture deck (assets, not the content

@@ -8,10 +8,25 @@
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/cards/castable_card_games.dart';
+import 'package:differentworld/features/games/cards/picture_card.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// A deck with several categories — Odd One Out builds a round out of the
+/// difference, so a one-category deck makes it look broken.
+final pictureDeck = [
+  for (var i = 0; i < 40; i++)
+    PictureCard(
+      id: 'c$i',
+      label: 'Card $i',
+      image: 'a/$i.png',
+      category: ['animal', 'food', 'tool', 'vehicle'][i % 4],
+      deck: 'd',
+    ),
+];
 
 void main() {
   LocalContentBank bank() => LocalContentBank.seededWith([
@@ -52,14 +67,31 @@ void main() {
     }
   });
 
+  /// The wire a game really starts from. A deck-seeded game never passes
+  /// through `initialStateFor` — both its doors call its `CardSeed` — so
+  /// probing it there measures a path the app does not take, and would report
+  /// a working knob as broken (CLAUDE.md — "a game's SEEDED path is the app
+  /// path").
+  Map<String, dynamic> appWire(
+    GameDefinition<dynamic> g,
+    Map<String, Object?> values,
+  ) {
+    for (final (card, seed) in castableCardGames) {
+      if (card.id == g.id) return seed(pictureDeck, values);
+    }
+    return g.initialStateFor(bank(), values);
+  }
+
   test('turning the round-length knob CHANGES the round', () {
     // The decorative-declaration check. A game that lists the setting and
     // then ignores `values` passes every other test in the suite.
+    var checked = 0;
     for (final g in tunable()) {
       if (!g.settings.any((s) => s.id == roundLengthId)) continue;
+      checked++;
       final defaults = defaultSettingValues(g.settings);
-      final short = g.initialStateFor(bank(), {...defaults, roundLengthId: 3});
-      final long = g.initialStateFor(bank(), {...defaults, roundLengthId: 12});
+      final short = appWire(g, {...defaults, roundLengthId: 3});
+      final long = appWire(g, {...defaults, roundLengthId: 12});
       expect(
         short['n'],
         isNot(long['n']),
@@ -67,6 +99,7 @@ void main() {
       );
       expect(short['n'], 3, reason: '${g.id} does not honour a short round');
     }
+    expect(checked, greaterThanOrEqualTo(10), reason: 'lost the round games');
   });
 
   test('turning the how-long knob CHANGES the sand', () {
@@ -174,9 +207,12 @@ void main() {
     for (final g in tunable()) {
       if (!g.settings.any((s) => s.id == roundLengthId)) continue;
       final defaults = defaultSettingValues(g.settings);
+      // Through the app's real seed for this game — `castSeedFor` calls the
+      // CardSeed for a deck game and `initialStateFor` for the rest, and
+      // probing the wrong one here reports a working knob as broken.
       final wire = CastSession.freshWire(
         g.id,
-        g.initialStateFor(bank(), {...defaults, roundLengthId: 5}),
+        appWire(g, {...defaults, roundLengthId: 5}),
       );
       expect(
         CastSession.gameStateOf(wire)['n'],

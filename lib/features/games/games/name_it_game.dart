@@ -2,6 +2,8 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/games/games/name_it_screen.dart';
 import 'package:flutter/material.dart';
 
 /// Name It (docs/CARD_GAMES.md) — the picture goes up, the room says the word,
@@ -51,6 +53,20 @@ class NameItGame extends GameDefinition<NameItState> {
   // cast launcher until cast can pass it a seed (same as Now & Next).
   @override
   bool get seedsFromContentBank => false;
+
+  /// **How long the round is.** It was a number typed once in the seed
+  /// builder, which for a deck-seeded game is the only place a length can
+  /// live — these games never pass through `initialStateFor`, so the knob had
+  /// to reach the SEED to mean anything.
+  @override
+  List<GameSetting> get settings => [
+    roundLength(
+      label: 'How many cards',
+      initial: nameItDefaultCards,
+      min: 4,
+      max: 24,
+    ),
+  ];
 
   @override
   String get id => 'name-it';

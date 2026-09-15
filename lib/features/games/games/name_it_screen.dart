@@ -2,14 +2,22 @@ import 'package:differentworld/features/games/cards/card_rounds.dart';
 import 'package:differentworld/features/games/cards/picture_card.dart';
 import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/data_seeded_game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/games/name_it_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Seed Name It from the bundled picture [cards] — a round of up to 12, drawn
-/// ONCE so the present screen, the control, and a cast receiver all show the
-/// same round. Shared by [NameItScreen] and the cockpit's cast tile.
-Map<String, dynamic> nameItSeed(List<PictureCard> cards) {
+/// Twelve cards was typed once. A room with four minutes wants six, and a
+/// room that is enjoying itself wants twenty — the teacher chooses now.
+const int nameItDefaultCards = 12;
+
+/// Seed Name It from the bundled picture [cards] — a round drawn ONCE so the
+/// present screen, the control, and a cast receiver all show the same round.
+/// Shared by [NameItScreen] and the cockpit's cast tile.
+Map<String, dynamic> nameItSeed(
+  List<PictureCard> cards, [
+  Map<String, Object?> values = const {},
+]) {
   if (cards.isEmpty) {
     return {
       'cards': const <Map<String, String>>[],
@@ -18,12 +26,20 @@ Map<String, dynamic> nameItSeed(List<PictureCard> cards) {
       'd': false,
     };
   }
-  final picked = CardRounds.draw(cards, 12, cards.length);
+  final picked = CardRounds.draw(
+    cards,
+    roundsFrom(values, fallback: nameItDefaultCards),
+    cards.length,
+  );
   return {
     'cards': [
       for (final c in picked) {'image': c.image, 'label': c.label},
     ],
     'i': 0,
+    // The length, so the room can see how far through the deck it is. The
+    // bar in `GameView` derives from `'i'` and `'n'`; without the second key
+    // a twelve-card round showed no progress at all.
+    'n': picked.length,
     'r': false,
     'd': false,
   };

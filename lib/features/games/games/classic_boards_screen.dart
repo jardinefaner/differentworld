@@ -58,18 +58,31 @@ Map<String, dynamic> _boardSeed(
   ).toWire();
 }
 
-Map<String, dynamic> bingoSeed(List<PictureCard> cards) =>
-    _boardSeed(const BingoGame(), cards, state: CellState.shown);
+/// A bingo CARD is a grid, not a list of rounds — fewer squares is a
+/// different board, not a shorter game.
+Map<String, dynamic> bingoSeed(
+  List<PictureCard> cards, [
+  Map<String, Object?> values = const {},
+]) => _boardSeed(const BingoGame(), cards, state: CellState.shown);
 
-Map<String, dynamic> guessWhoSeed(List<PictureCard> cards) =>
-    _boardSeed(const GuessWhoGame(), cards, state: CellState.shown);
+/// Same: the faces ARE the board. Deal fewer and you have changed the
+/// puzzle rather than shortened it.
+Map<String, dynamic> guessWhoSeed(
+  List<PictureCard> cards, [
+  Map<String, Object?> values = const {},
+]) => _boardSeed(const GuessWhoGame(), cards, state: CellState.shown);
 
 /// Spot the Difference from the deck. The game's own `deal` reads
 /// `ContentKind.picture` from the curated bank, which carries NO pictures —
 /// so on a fresh install it dealt an empty board and the room got "No cards
 /// yet". Bingo and Guess Who dodged that only because they had this wrapper;
 /// this one did not, and was dead on arrival.
-Map<String, dynamic> spotDifferenceSeed(List<PictureCard> cards) {
+/// The odd-one-out grid is the puzzle; its size is a difficulty question,
+/// not a round-length one.
+Map<String, dynamic> spotDifferenceSeed(
+  List<PictureCard> cards, [
+  Map<String, Object?> values = const {},
+]) {
   const game = SpotDifferenceGame();
   if (cards.isEmpty) {
     return GridBoard(

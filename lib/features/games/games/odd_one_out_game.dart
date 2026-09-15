@@ -2,6 +2,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 import 'package:flutter/material.dart';
 
@@ -68,6 +69,15 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
   // cast launcher until cast can pass it a seed (same as Name It).
   @override
   bool get seedsFromContentBank => false;
+
+  /// **How long the round is.** It was a number typed once in the seed
+  /// builder, which for a deck-seeded game is the only place a length can
+  /// live — these games never pass through `initialStateFor`, so the knob had
+  /// to reach the SEED to mean anything.
+  @override
+  List<GameSetting> get settings => [
+    roundLength(label: 'How many rounds', max: 16),
+  ];
 
   @override
   String get id => 'odd-one-out';

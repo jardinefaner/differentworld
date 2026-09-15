@@ -44,7 +44,7 @@ void main() {
   test('the DECK door briefs too — it used to skip it entirely', () {
     for (final (def, seed) in castableCardGames) {
       if (def.howToPlay.isEmpty) continue;
-      final wire = CastSession.freshWire(def.id, seed(deck(40)));
+      final wire = CastSession.freshWire(def.id, seed(deck(40), const {}));
       expect(
         RunScriptWire.indexOf(CastSession.gameStateOf(wire)),
         0,
@@ -55,7 +55,7 @@ void main() {
       // `cells`, the card games keep `cards`, so the check is that nothing
       // the seed produced went missing.)
       final seeded = CastSession.gameStateOf(wire);
-      for (final key in seed(deck(40)).keys) {
+      for (final key in seed(deck(40), const {}).keys) {
         expect(
           seeded.containsKey(key),
           isTrue,

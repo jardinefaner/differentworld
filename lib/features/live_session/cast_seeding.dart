@@ -110,6 +110,7 @@ Future<Map<String, dynamic>?> castSeedFor(
     if (card.id == def.id) {
       return seed(
         await data.resolve(pictureDeckProvider, pictureDeckProvider.future),
+        values ?? defaultSettingValues(def.settings),
       );
     }
   }

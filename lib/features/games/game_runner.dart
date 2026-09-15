@@ -44,7 +44,9 @@ class GameRunner<S> extends ConsumerStatefulWidget {
   /// a board that is played face-up: a deck-seeded Bingo's second round was
   /// sixteen dark tiles with the pictures gone. The wrapper that built the
   /// first board builds the next one.
-  final Map<String, dynamic> Function()? reseed;
+  /// A fresh seed for Play again, given the teacher's chosen values — see
+  /// `DataSeededGame.reseed` for why the values have to reach the seed.
+  final Map<String, dynamic> Function(Map<String, Object?> values)? reseed;
 
   /// Optional overrides for the game's setting values, merged over the
   /// defaults. Lets a wrapper thread a preference the game reads at seed time
@@ -96,8 +98,12 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
       // RunScriptWire.seed here. The runner's reseed bypasses the reducer, so
       // seeding the cursor in it re-briefed every round behind the wire rule
       // that says a room which just played does not need the rules again.
+      // `_values` is read at CALL time, not captured now, so a knob turned
+      // mid-session reaches the next deal — for a deck-seeded game as well as
+      // a bank-seeded one. That symmetry is the fix: the seeded path used to
+      // hand the controller a closure with no values in it at all.
       reseed: widget.seed != null
-          ? widget.reseed
+          ? () => widget.reseed!(_values)
           : () => widget.def.initialStateFor(_engine, _values),
     );
     // This State is the authority here (it owns the local reducer), so it

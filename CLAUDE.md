@@ -2623,6 +2623,39 @@ just kick it. Filter the log monitor to `Built build|Syncing
 files|Hot reload|Exception CAUGHT|Lost connection|Build failed`
 — routine PowerSync stream blips are noise, don't surface them.
 
+### A deck-seeded game's knob has to reach the SEED — `initialStateFor` is not its path
+
+Name It, Odd One Out and What's Missing hardcoded their round length (12 cards,
+8 rounds, 6 boards) inside their `CardSeed` builders. Declaring a
+`roundLength()` on the game is NOT enough for these three, because neither of
+their doors goes through `initialStateFor`: `castSeedFor` calls the CardSeed
+for a cast, and `DataSeededGame` calls it on one device. A knob that cannot
+reach the seed is a knob that does nothing.
+
+So `CardSeed` takes the values, and both doors pass them —
+`DataSeededGame.reseed` too, which had been a no-arg closure and therefore
+could not carry a choice into Play again. The runner reads `_values` at CALL
+time rather than capturing them, so a knob turned mid-session reaches the next
+deal on the seeded path exactly as it already did on the bank path.
+
+**The three tests that broke were right, and fixing them meant fixing the
+PROBE, not the assertion.** `game_settings_test` and `round_position_test` both
+built their wire with `initialState`/`initialStateFor`, which for a deck game
+reads the content bank — a path the app never takes, carrying no pictures. They
+resolve each game's real seed now. This is the same lesson the file already
+records as "a game's SEEDED path is the app path", reached from the test side:
+a probe on the wrong path reports a working knob as broken just as readily as
+it reports a broken one as working.
+
+Four of the seven card seeds take the values and ignore them, each saying why
+at the signature — a bingo card is a grid rather than a list of rounds, Memory
+is pairs and trimming would leave a card with no twin. Ignoring an argument
+with a written reason is worth more than an overload that hides the question.
+
+The three that ARE round-shaped now publish `'n'` as well, so the round-position
+hairline works for them: a twelve-card Name It shows how far through the deck
+the room is.
+
 ### A shared `LocalContentBank` DRAINS — one per test, never a file-level final
 
 `LocalContentBank` serves UNSEEN items and tracks "seen" for its own lifetime.

@@ -11,6 +11,7 @@ import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_clock.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/game_view.dart';
 import 'package:differentworld/features/live_session/cast_stage_chrome.dart';
 import 'package:differentworld/features/live_session/live_lobby.dart';
@@ -46,7 +47,8 @@ class LiveGameScreen<S> extends ConsumerStatefulWidget {
   final Map<String, dynamic>? seed;
 
   /// A fresh seed for Play again — see `GameRunner.reseed`.
-  final Map<String, dynamic> Function()? reseed;
+  /// A fresh seed for Play again, given the teacher's chosen values.
+  final Map<String, dynamic> Function(Map<String, Object?> values)? reseed;
 
   /// When set (the program-wide "join" path, docs/LIVE_SESSIONS.md), the
   /// screen skips its lobby and opens straight into the given role for the
@@ -113,7 +115,12 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       def: _def,
       content: ContentEngine(snapshot),
       seed: widget.seed,
-      reseed: widget.reseed,
+      // The live screen has no settings sheet of its own, so a deck-seeded
+      // game replays at its defaults here. Tuning happens on the runner or in
+      // the cockpit; this keeps the types honest rather than pretending.
+      reseed: widget.reseed == null
+          ? null
+          : () => widget.reseed!(defaultSettingValues(_def.settings)),
     );
     _subs
       ..add(

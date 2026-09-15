@@ -25,7 +25,9 @@ class PickerScreen extends ConsumerWidget {
       // rule (CLAUDE.md).
       // DataSeededGame re-runs this on "Spin again"/replay, so a fresh round
       // deals a fresh bag — which is what starting over should mean.
-      seed: (subjects) =>
+      // A room has the children it has — no knob sizes this, so the values
+      // are ignored rather than threaded somewhere with nothing to do.
+      seed: (subjects, _) =>
           PickerGame.seedFor([for (final s in subjects) s.firstName]),
     );
   }

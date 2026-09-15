@@ -13,8 +13,19 @@ import 'package:differentworld/features/games/games/spot_difference_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 
-/// Builds a card game's wire-state from the bundled picture deck.
-typedef CardSeed = Map<String, dynamic> Function(List<PictureCard> cards);
+/// Builds a card game's wire-state from the bundled picture deck, sized by
+/// whatever the teacher chose.
+///
+/// The values arrive here rather than through `initialStateFor` because these
+/// games do not go through it: both doors — `castSeedFor` for a cast and
+/// `DataSeededGame` on one device — call the seed directly. A knob that could
+/// not reach the seed would be a knob that did nothing, which is the shape
+/// this codebase keeps finding.
+typedef CardSeed =
+    Map<String, dynamic> Function(
+      List<PictureCard> cards,
+      Map<String, Object?> values,
+    );
 
 /// The deck-seeded card games that can be cast from the cockpit, each paired
 /// with the seed builder it SHARES with its own present screen — so a cast

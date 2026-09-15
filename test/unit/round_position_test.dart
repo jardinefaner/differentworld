@@ -11,6 +11,8 @@
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/cards/castable_card_games.dart';
+import 'package:differentworld/features/games/cards/picture_card.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +39,28 @@ bool _showsABar(Map<String, dynamic> wire) {
   return (index is num && index >= 0) || (performed is num && performed >= 0);
 }
 
+/// The wire a game really starts from — which for a deck-seeded game is NOT
+/// `initialState`. Those read the content bank, which carries no pictures, so
+/// probing them there measures an empty round rather than the app's
+/// (CLAUDE.md — "a game's SEEDED path is the app path").
+Map<String, dynamic> _appWire(GameDefinition<dynamic> g) {
+  for (final (card, seed) in castableCardGames) {
+    if (card.id == g.id) {
+      return seed([
+        for (var i = 0; i < 40; i++)
+          PictureCard(
+            id: 'c$i',
+            label: 'Card $i',
+            image: 'a/$i.png',
+            category: ['animal', 'food', 'tool', 'vehicle'][i % 4],
+            deck: 'd',
+          ),
+      ], defaultSettingValues(g.settings));
+    }
+  }
+  return g.initialState(_bank());
+}
+
 void main() {
   test('every game with a chosen round length shows where the room is', () {
     final silent = <String>[];
@@ -44,7 +68,7 @@ void main() {
     for (final g in liveGames) {
       if (!g.settings.any((s) => s.id == roundLengthId)) continue;
       checked++;
-      if (!_showsABar(g.initialState(_bank()))) silent.add(g.id);
+      if (!_showsABar(_appWire(g))) silent.add(g.id);
     }
     expect(checked, greaterThanOrEqualTo(7), reason: 'lost the round games');
     expect(
@@ -62,7 +86,8 @@ void main() {
     final g = liveGames.firstWhere(
       (g) =>
           g.settings.any((s) => s.id == roundLengthId) &&
-          g.initialState(_bank())['i'] is num,
+          _appWire(g)['i'] is num &&
+          g.seedsFromContentBank,
     );
     var wire = g.initialStateFor(_bank(), {roundLengthId: 6});
     // NOT six, necessarily: a round is capped by the content the bank has, so
@@ -88,11 +113,13 @@ void main() {
   test('a game with no fixed length draws nothing', () {
     // The derivation has to fall out for the instruments on its own, or a
     // Spotlight and a Conductor would wear a meaningless bar.
-    for (final id in ['picker', 'cues', 'conductor', 'timer', 'name-it']) {
+    // `name-it` used to be here and has earned its way out: it publishes a
+    // round length now, so a room CAN see how far through the deck it is.
+    for (final id in ['picker', 'cues', 'conductor', 'timer']) {
       final g = gameById(id);
       if (g == null) continue;
       expect(
-        _showsABar(g.initialState(_bank())),
+        _showsABar(_appWire(g)),
         isFalse,
         reason: '$id has no round to be partway through',
       );

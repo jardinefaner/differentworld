@@ -15,7 +15,12 @@ const int _pairs = 6;
 /// cards, double each into a pair, seeded-shuffle the board, built ONCE so
 /// present + control + a cast receiver tap the same layout. Shared by
 /// [MemoryMatchScreen] and the cockpit's cast tile.
-Map<String, dynamic> memoryMatchSeed(List<PictureCard> cards) {
+/// Pairs, not rounds — trimming the list would leave a card with no twin.
+/// Sizing this one means choosing how many PAIRS, which is its own change.
+Map<String, dynamic> memoryMatchSeed(
+  List<PictureCard> cards, [
+  Map<String, Object?> values = const {},
+]) {
   if (cards.length < 2) {
     return {
       'cards': const <Map<String, dynamic>>[],

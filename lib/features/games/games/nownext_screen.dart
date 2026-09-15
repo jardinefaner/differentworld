@@ -62,7 +62,10 @@ class NowNextScreen extends ConsumerWidget {
       def: const NowNextGame(),
       live: live,
       data: ref.watch(scheduleDayProvider(todayKey())),
-      seed: nowNextSeed,
+      // Neither is sized by a knob — a day has the blocks it has and a
+      // room has the children it has — so the values are ignored here
+      // rather than threaded into a builder with nothing to do with them.
+      seed: (data, _) => nowNextSeed(data),
     );
   }
 }
