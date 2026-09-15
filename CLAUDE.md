@@ -2115,6 +2115,48 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### The family plates need a GUARDIAN viewer — and two traps on the way
+
+The four family screens open with `if (viewer is! GuardianViewer) return const
+EdgeScaffold(body: SizedBox.shrink())` — defensive, since the router gates
+them — so plated with the harness's staff viewer they render a blank page.
+They do now render the real lens; two things had to be learned first.
+
+- **Riverpod THROWS on a duplicate override** ("Tried to override a provider
+  twice within the same container") rather than letting the later one win. So
+  a plate cannot swap `viewerProvider` by appending to `extraOverrides` — the
+  viewer is a PARAMETER on `_pumpAndShoot` / `_screenPlate` / `_richPlate`, and
+  `extraOverrides` carries only providers the base does not already set.
+- **The guardian's child is a LITERAL, not a row.** The subjects the other
+  plates use are seeded into `_richPlate`'s per-plate database; the shared
+  `_db` behind `_screenPlate` has no subjects at all. And its `groupId` is not
+  decoration — `family_today` reads `child.groupId!`, so a null one throws and
+  the plate becomes the red error box the suite now refuses.
+
+`family_today` is classified in `_unstableByDesign`: it greets by hour and
+prints today's date. Its three siblings carry neither and stay compared.
+
+### `tool/score_screens.py` binds plates by REGEX — wrapping a call drops it
+
+The audit builds its registry by matching `_screenPlate('screens/x', const
+XScreen(` in the gallery source. That regex required the call to be on ONE
+line, and `dart format` wraps any call the moment it gains a named argument —
+so adding `extraOverrides:` to two family plates took them out of the audit
+entirely. The only visible trace was the total falling from 160 to 158.
+
+The regex spans the wrapped form now, but the durable fix is the second half:
+**`build_registry` prints what it could not bind** —
+
+```
+!! 2 plate(s) declared but NOT scored: family_messages, family_today
+```
+
+Every miss there is silent by construction — a regex that does not match
+yields nothing — and the file's own comment already warned that "a plate the
+audit silently skips is a plate that can rot". It warned about the bespoke
+helpers and was reached from a different direction. Verified the warning
+fires by narrowing the regex again and watching it name both.
+
 ### Four gallery plates were Flutter's RED ERROR BOX, committed as screens
 
 Found by running `tool/score_screens.py` — the audit CLAUDE.md already says to

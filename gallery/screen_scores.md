@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-156 screens scored · worst-first · `tool/score_screens.py`
+160 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **100.0** · ship-confident: 156
+Average: **100.0** · ship-confident: 160
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -33,6 +33,7 @@ Average: **100.0** · ship-confident: 156
 | 100 | ship-confident | `child_photos_folder` | — |
 | 100 | ship-confident | `child_trail` | — |
 | 100 | ship-confident | `child_world` | — |
+| 100 | ship-confident | `class_memory` | — |
 | 100 | ship-confident | `closed_rooms` | — |
 | 100 | ship-confident | `collection` | — |
 | 100 | ship-confident | `conductor` | — |
@@ -93,12 +94,12 @@ Average: **100.0** · ship-confident: 156
 | 100 | ship-confident | `photo_curriculum` | — |
 | 100 | ship-confident | `photography_runner` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `photos_gallery` | — |
+| 100 | ship-confident | `picker` | — |
 | 100 | ship-confident | `pickup_board` | — |
 | 100 | ship-confident | `pickup_person_edit` | — |
 | 100 | ship-confident | `picture_library` | — |
 | 100 | ship-confident | `poster` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `potions` | — |
-| 100 | ship-confident | `present_hub` | — |
 | 100 | ship-confident | `print_toolkit` | — |
 | 100 | ship-confident | `program_hub` | — |
 | 100 | ship-confident | `program_settings` | — |
@@ -110,6 +111,8 @@ Average: **100.0** · ship-confident: 156
 | 100 | ship-confident | `role_game` | — |
 | 100 | ship-confident | `roles` | — |
 | 100 | ship-confident | `rollover` | — |
+| 100 | ship-confident | `room_create` | — |
+| 100 | ship-confident | `room_setup` | — |
 | 100 | ship-confident | `room_story` | — |
 | 100 | ship-confident | `routine_script_editor` | — |
 | 100 | ship-confident | `routines` | — |
@@ -162,3 +165,4 @@ Average: **100.0** · ship-confident: 156
 | 100 | ship-confident | `whats_missing` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `world_book` | — |
 | 100 | ship-confident | `yearly_review` | — |
+| 100 | ship-confident | `your_work` | — |

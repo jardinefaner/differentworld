@@ -55,7 +55,12 @@ def build_registry():
     txt = open("test/golden/screens_gallery_test.dart").read()
     plate = dict(
         re.findall(
-            r"_(?:bareScreen|screen)Plate\('screens/([a-z0-9_]+)',\s*"
+            # `\s*` after the paren: the formatter wraps a call the moment
+            # it gains a named argument, and a regex that only matched the
+            # one-line form SILENTLY dropped two family plates from the audit
+            # the day they got `extraOverrides:` — which is the exact rot the
+            # comment below warns about, reached from a different direction.
+            r"_(?:bareScreen|screen)Plate\(\s*'screens/([a-z0-9_]+)',\s*"
             r"const ([A-Za-z0-9]+)\(",
             txt,
         )
@@ -140,6 +145,19 @@ def build_registry():
     for name, (f, cls) in extra.items():
         if name not in reg and os.path.exists(f):
             reg[name] = (f, cls)
+    # NAME what was skipped. Every miss above is silent by construction — a
+    # regex that does not match simply yields nothing — so a plate can drop out
+    # of the audit and the only visible trace is the total quietly falling by
+    # two. It happened: wrapping two `_screenPlate` calls onto three lines took
+    # `family_messages` and `family_today` out of the score with no complaint
+    # at all. A checker that cannot say what it missed is believed.
+    declared = set(re.findall(r"Plate\(\s*'screens/([a-z0-9_]+)'", txt))
+    missed = sorted(declared - set(reg))
+    if missed:
+        print(f"!! {len(missed)} plate(s) declared but NOT scored: "
+              f"{', '.join(missed)}")
+        print("   (the registry regexes in build_registry() did not bind "
+              "them — widen one, or add the screen to `extra`)")
     return reg
 
 

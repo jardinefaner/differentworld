@@ -196,6 +196,36 @@ import '_helpers.dart';
 late final AppDatabase _db;
 late final Viewer _viewer;
 
+/// The family lens's viewer — see where it is built, in `setUpAll`.
+late final GuardianViewer _familyViewer;
+
+// The four family plates render with a GUARDIAN viewer and one child on the
+// roster. Every other family read is PostgREST (guardian-side) and the
+// harness cannot reach it, so those sections fall back to their designed
+// empties — the same bargain `family_subject_detail` already struck below.
+List<dynamic> _familyOverrides() => [
+  familyChildrenProvider.overrideWith((ref) async => const [_familyChild]),
+];
+
+/// The guardian's child, as a literal rather than a row: the children the
+/// other plates use are seeded into `_richPlate`'s PER-PLATE database, and the
+/// shared `_db` behind `_screenPlate` has no subjects at all.
+///
+/// `groupId` is not decoration — `family_today` reads `child.groupId!` to draw
+/// the Now & Next strip, so a null one throws and the plate becomes the red
+/// error box this suite now refuses.
+const _familyChild = Subject(
+  id: 'st1',
+  spaceId: 'sp1',
+  groupId: 'g-sparrows',
+  status: 'enrolled',
+  firstName: 'Mateo',
+  lastName: 'Alvarez',
+  capabilities: '{}',
+  createdAt: '2026-06-17T08:00:00Z',
+  updatedAt: '2026-06-17T08:00:00Z',
+);
+
 /// Screens that render a perfect plate but keep an ongoing Timer (a clock,
 /// realtime poll, autosave, or repeating animation) the unmount-drain can't
 /// clear — they trip flutter_test's `!timersPending` invariant at teardown.
@@ -240,6 +270,10 @@ const Map<String, String> _unstableByDesign = {
   // rather than tolerated, on the same reasoning as the shuffled decks above.
   'screens/group_detail': 'its demo day ends at 17:00 — "finished" after that',
   'screens/nownext': 'its demo day ends at 17:00 — nothing is next after that',
+  // Greets by time of day and prints today's date — "Good evening, Lauren
+  // Alvarez · Monday, September 14, 2026". Its three siblings are stable and
+  // stay compared; only this one reads the clock.
+  'screens/family_today': "greets by hour and prints today's date",
 };
 
 /// True when this plate's CONTENT is stable enough to compare pixels.
@@ -368,6 +402,24 @@ void main() {
       _db.spaces,
     )..where((t) => t.id.equals('sp1'))).getSingle();
     _viewer = Viewer(member: m, space: s);
+    // **The family lens needs a GUARDIAN.** Those four screens open with
+    // `if (viewer is! GuardianViewer) return const EdgeScaffold(body:
+    // SizedBox.shrink())` — a defensive path, since the router gates them —
+    // so plated with the staff viewer above they render a blank page. Honest,
+    // and useless as a visual record.
+    _familyViewer = GuardianViewer(
+      guardian: const Guardian(
+        id: 'g1',
+        spaceId: 'sp1',
+        userId: 'u1',
+        name: 'Lauren Alvarez',
+        relationship: 'Parent',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      childSubjectIds: const ['st1'],
+      space: s,
+    );
   });
 
   tearDownAll(() async {
@@ -394,8 +446,18 @@ void main() {
   _screenPlate('screens/conductor', const ConductorScreen());
   _screenPlate('screens/day_run', const DayRunScreen());
   _screenPlate('screens/day_templates', const DayTemplatesScreen());
-  _screenPlate('screens/family_messages', const FamilyMessagesScreen());
-  _screenPlate('screens/family_today', const FamilyTodayScreen());
+  _screenPlate(
+    'screens/family_messages',
+    const FamilyMessagesScreen(),
+    extraOverrides: _familyOverrides,
+    viewer: () => _familyViewer,
+  );
+  _screenPlate(
+    'screens/family_today',
+    const FamilyTodayScreen(),
+    extraOverrides: _familyOverrides,
+    viewer: () => _familyViewer,
+  );
   _screenPlate('screens/group_discussion', const GroupDiscussionScreen());
   _screenPlate('screens/group_edit', const GroupEditScreen());
   _screenPlate('screens/incident_form', const IncidentFormScreen());
@@ -693,7 +755,14 @@ void main() {
   );
   _richPlate('screens/location_edit', (db) async => const LocationEditScreen());
   _richPlate('screens/supply_edit', (db) async => const SupplyEditScreen());
-  _richPlate('screens/family_share', (db) async => const FamilyShareScreen());
+  _richPlate(
+    'screens/family_share',
+    (db) async => const FamilyShareScreen(),
+    familyViewer: true,
+    extraOverrides: (db) async => [
+      familyChildrenProvider.overrideWith((ref) async => const [_familyChild]),
+    ],
+  );
   _richPlate(
     'screens/grid_reveal_solo',
     (db) async => const GridRevealScreen(),
@@ -792,8 +861,10 @@ Future<void> _pumpAndShoot(
   WidgetTester tester,
   String goldenToken,
   Widget appChild,
-  Size size,
-) async {
+  Size size, {
+  List<dynamic> extraOverrides = const [],
+  Viewer? viewer,
+}) async {
   beginOverflowWatch();
   final applied = plateSize(size);
   await tester.binding.setSurfaceSize(applied);
@@ -808,7 +879,12 @@ Future<void> _pumpAndShoot(
       // creates watch streams.
       overrides: [
         appDatabaseProvider.overrideWith((ref) => _db),
-        viewerProvider.overrideWithValue(_viewer),
+        // The VIEWER is a parameter, not something `extraOverrides` can add:
+        // Riverpod throws "Tried to override a provider twice within the same
+        // container" rather than letting a later entry win, so a plate that
+        // needs a different viewer (the family lens needs a guardian) has to
+        // replace this line rather than append to the list.
+        viewerProvider.overrideWithValue(viewer ?? _viewer),
         liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
         omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
         momentsForBlockProvider(
@@ -820,6 +896,11 @@ Future<void> _pumpAndShoot(
         tasksProvider(
           TaskFilter.open,
         ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+        // Providers the base does NOT set. `.cast()` for the same reason
+        // `_richPlate` needs it: `Override` is not exported by
+        // flutter_riverpod, so the element type is erased in the signature
+        // and restored here.
+        ...extraOverrides.cast(),
       ],
       child: appChild,
     ),
@@ -889,6 +970,8 @@ void _screenPlate(
   Widget screen, {
   double width = 440,
   double height = 900,
+  List<dynamic> Function()? extraOverrides,
+  Viewer Function()? viewer,
 }) {
   final skip = !runGoldens || _leakyTimer.contains(name);
   for (final mode in const ['light', 'dark']) {
@@ -898,6 +981,8 @@ void _screenPlate(
         '${name}__$mode',
         _app(mode, _shellRouter(screen)),
         Size(width, height),
+        extraOverrides: extraOverrides?.call() ?? const <Object>[],
+        viewer: viewer?.call(),
       );
     }, skip: skip);
   }
@@ -1191,6 +1276,9 @@ void _richPlate(
   // are inference-only), so this is typed as List<Object> and spread with a
   // cast below.
   Future<List<Object>> Function(AppDatabase db)? extraOverrides,
+
+  /// Render with the family lens's guardian instead of the staff viewer.
+  bool familyViewer = false,
   // On device these screens live on immersive routes (/activity/*, kid
   // mode) where AppShell hides ALL chrome — mounting them in the shell
   // painted pills + the omnibox over stages that never see them. `bare`
@@ -1391,7 +1479,12 @@ void _richPlate(
       final sp = await (db.select(
         db.spaces,
       )..where((t) => t.id.equals('sp1'))).getSingle();
-      final viewer = Viewer(member: m, space: sp);
+      // Same rule as `_pumpAndShoot`: the viewer is a PARAMETER, because
+      // Riverpod throws on a second override of the same provider rather than
+      // letting a later one win.
+      final viewer = familyViewer
+          ? _familyViewer
+          : Viewer(member: m, space: sp);
       final screen = await build(db);
       final List<dynamic> extra = extraOverrides == null
           ? const <Object>[]
