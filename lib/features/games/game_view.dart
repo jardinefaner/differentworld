@@ -1,6 +1,7 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/facilitation/run_script_view.dart';
 import 'package:differentworld/features/facilitation/run_script_wire.dart';
+import 'package:differentworld/features/games/arrives.dart';
 import 'package:differentworld/features/games/celebration.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_motion.dart';
@@ -162,6 +163,7 @@ class GameView extends ConsumerWidget {
     // the view's own business — every surface hands it a bounded box.
     return Column(
       children: [
+        _RoundPosition(wire: wire, accent: def.vibe.accent),
         Expanded(child: celebrated),
         if (done && audience.drives)
           RoundWrap(
@@ -222,4 +224,67 @@ enum GameAudience {
 
   /// Whether a tap buzzes here — a hand, never a wall.
   bool get haptics => this == GameAudience.host || this == GameAudience.remote;
+}
+
+/// **How far through the round the room is**, as a hairline that fills.
+///
+/// Eight games let a teacher choose the round length and then showed them
+/// nothing: you pick eight letters, play, and cannot tell whether you are on
+/// the second or the seventh. Deciding "do we have time for another" was
+/// guesswork, and it got worse the moment the length became tunable.
+///
+/// DERIVED, not declared. The games already carry what it needs on the wire —
+/// `'n'` for how many, and a position — so nothing is passed in and nothing
+/// has to be remembered when a ninth game arrives. A game that carries no
+/// position, or an `n` below two, draws nothing: `cues`, `picker`, the card
+/// games and the Conductor all fall out on their own.
+///
+/// **Two real shapes, and conflating them draws the bar wrong by one step.**
+/// Most of these step an INDEX (`'i'`, zero-based) through a fixed list, so
+/// the room on prompt three of eight is three-eighths through. As If crosses
+/// two lists instead and counts PERFORMANCES (`'p'`), which starts at zero
+/// with nothing done — so `p` is already the completed fraction and must not
+/// be incremented. `'p'` appears on no other game's wire, checked, so reading
+/// it here cannot collide.
+///
+/// A hairline rather than "3 of 8": the question a teacher asks mid-round is
+/// *nearly done?*, which a filled bar answers without being read, and the
+/// stage below it is already carrying the words that matter.
+class _RoundPosition extends StatelessWidget {
+  const _RoundPosition({required this.wire, required this.accent});
+
+  final Map<String, dynamic> wire;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final of = wire['n'];
+    if (of is! num || of < 2) return const SizedBox.shrink();
+    final index = wire['i'];
+    final performed = wire['p'];
+    final double done;
+    if (index is num && index >= 0) {
+      // An index: a room on the last prompt should see a full bar.
+      done = ((index + 1) / of).clamp(0.0, 1.0);
+    } else if (performed is num && performed >= 0) {
+      // A count of what is finished: zero done is an empty bar.
+      done = (performed / of).clamp(0.0, 1.0);
+    } else {
+      return const SizedBox.shrink();
+    }
+    return SizedBox(
+      height: 3,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: FractionallySizedBox(
+          widthFactor: done,
+          child: AnimatedContainer(
+            duration: Arrives.duration,
+            curve: Curves.easeOutCubic,
+            color: accent,
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -18,14 +18,21 @@ import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-final _bank = LocalContentBank.seededWith(curatedSeeds);
+/// A FRESH bank per call, never a shared one.
+///
+/// `LocalContentBank` serves UNSEEN items and tracks "seen" for its lifetime,
+/// so one instance shared across tests drains: the first test deals every
+/// prompt and the rest get empty rounds. It does not fail — it quietly deals
+/// nothing, and a test that asserts on an empty round can pass while
+/// exercising nothing at all.
+LocalContentBank _bank() => LocalContentBank.seededWith(curatedSeeds);
 
 /// Tap the first cell the game will actually accept, and hand back both
 /// states. Null when the game declines every square (nothing to undo).
 ({Map<String, dynamic> before, Map<String, dynamic> after})? _aMove(
   GridGame g,
 ) {
-  final start = g.initialState(_bank);
+  final start = g.initialState(_bank());
   for (var i = 0; i < GridBoard.fromWire(start).cells.length; i++) {
     final after = g.reduce(start, GameIntent.pick, {'cell': i});
     if (after.toString() != start.toString()) {
@@ -110,7 +117,7 @@ void main() {
     // Otherwise Whack-a-Mole's Back would undo the mole moving rather than
     // the square the teacher tapped by mistake, every second.
     for (final g in boards.where((g) => g.ticks)) {
-      final start = g.initialState(_bank);
+      final start = g.initialState(_bank());
       final ticked = g.reduce(start, GameIntent.tick, const {});
       expect(
         g.decode(ticked).canUndo,

@@ -2623,6 +2623,29 @@ just kick it. Filter the log monitor to `Built build|Syncing
 files|Hot reload|Exception CAUGHT|Lost connection|Build failed`
 — routine PowerSync stream blips are noise, don't surface them.
 
+### A shared `LocalContentBank` DRAINS — one per test, never a file-level final
+
+`LocalContentBank` serves UNSEEN items and tracks "seen" for its own lifetime.
+So a `final _bank = LocalContentBank.seededWith(curatedSeeds)` at the top of a
+test file is drained by the first test that loops over the deck, and every
+later test in that file deals an EMPTY round.
+
+It does not fail. It quietly deals nothing, and a test that then asserts on an
+empty round passes while exercising nothing at all — the same silent shape as
+the wrong arg key and the plate that captured the error box. Four test files
+written this session had it; the one that surfaced it did so only because a
+later test needed `n > 1` and got zero.
+
+Write it as a FUNCTION: `LocalContentBank _bank() => …`, called per use.
+`game_settings_test.dart` already did this and is the pattern to copy.
+
+### A round is capped by the CONTENT, not by the knob
+
+`initialStateFor(bank, {rounds: 6})` does not guarantee six. Every prompt game
+deals as many as the bank can serve, so the wire's `'n'` is the truth and the
+number you asked for is a ceiling. A test that asserts the requested length is
+testing the bank; read `'n'` back instead.
+
 ### A mis-tap was permanent on fourteen boards — `back` fell through
 
 `GameIntent.back` was in `GridGame.reduce`'s `default: return state` bucket, so

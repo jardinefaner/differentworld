@@ -27,7 +27,14 @@ const _authorities = <String, String>{
   'lib/features/live_session/live_game_screen.dart': 'the live presenter',
 };
 
-final _bank = LocalContentBank.seededWith(curatedSeeds);
+/// A FRESH bank per call, never a shared one.
+///
+/// `LocalContentBank` serves UNSEEN items and tracks "seen" for its lifetime,
+/// so one instance shared across tests drains: the first test deals every
+/// prompt and the rest get empty rounds. It does not fail — it quietly deals
+/// nothing, and a test that asserts on an empty round can pass while
+/// exercising nothing at all.
+LocalContentBank _bank() => LocalContentBank.seededWith(curatedSeeds);
 
 void main() {
   final ticking = liveGames.where((g) => g.ticks).toList();
@@ -103,7 +110,7 @@ void main() {
     for (final g in liveGames) {
       if (!g.settings.any((s) => s.id == secondsId)) continue;
       final defaults = defaultSettingValues(g.settings);
-      var wire = g.initialStateFor(_bank, {...defaults, secondsId: 30});
+      var wire = g.initialStateFor(_bank(), {...defaults, secondsId: 30});
       // A room that answers nothing still gets an ending.
       for (var i = 0; i < 40; i++) {
         wire = g.reduce(wire, GameIntent.tick, const {});
@@ -119,7 +126,7 @@ void main() {
         reason: '${g.title} ends on a buzzer and says nothing about it',
       );
       // And it must NOT end early: the sand has to actually last.
-      var early = g.initialStateFor(_bank, {...defaults, secondsId: 30});
+      var early = g.initialStateFor(_bank(), {...defaults, secondsId: 30});
       for (var i = 0; i < 10; i++) {
         early = g.reduce(early, GameIntent.tick, const {});
       }

@@ -34,7 +34,14 @@ const _exempt = <String, String>{
   'poll': 'one question per round — there is no next prompt to arrive',
 };
 
-final _bank = LocalContentBank.seededWith(curatedSeeds);
+/// A FRESH bank per call, never a shared one.
+///
+/// `LocalContentBank` serves UNSEEN items and tracks "seen" for its lifetime,
+/// so one instance shared across tests drains: the first test deals every
+/// prompt and the rest get empty rounds. It does not fail — it quietly deals
+/// nothing, and a test that asserts on an empty round can pass while
+/// exercising nothing at all.
+LocalContentBank _bank() => LocalContentBank.seededWith(curatedSeeds);
 
 /// The key the frame's switcher is showing — the identity of THIS prompt.
 Key? _promptKey(WidgetTester tester) {
@@ -107,7 +114,7 @@ void main() {
     final silent = <String>[];
     for (final def in promptGames) {
       if (_exempt.containsKey(def.id)) continue;
-      final first = def.initialState(_bank);
+      final first = def.initialState(_bank());
       final before = await _render(tester, def, first);
       final after = await _render(tester, def, _advance(def, first));
       if (before == null || before == after) silent.add(def.id);
@@ -132,8 +139,10 @@ void main() {
           child: Scaffold(
             backgroundColor: Colors.black,
             body: Builder(
-              builder: (context) =>
-                  def.buildStage(context, def.decode(def.initialState(_bank))),
+              builder: (context) => def.buildStage(
+                context,
+                def.decode(def.initialState(_bank())),
+              ),
             ),
           ),
         ),
