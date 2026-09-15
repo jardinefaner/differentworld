@@ -171,6 +171,7 @@ import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:differentworld/features/world/character_sheet_screen.dart';
 import 'package:differentworld/features/world/draw_self_screen.dart';
 import 'package:differentworld/features/world/skill_detail_screen.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:drift/drift.dart' show Value;
@@ -225,15 +226,33 @@ const Map<String, String> _unstableByDesign = {
   'screens/fill_blank': 'shuffles its deck every run',
   'screens/penny': 'shuffles its deck every run',
   'screens/letters': 'shuffles its deck every run',
+  // **Time of day, not randomness.** The demo day is seeded at 15:00–17:00
+  // local, so these two render "2 of 2 left today" with a block list before
+  // 17:00 and "Day finished" with none after — a 22% pixel diff that depends
+  // on when you ran the suite. It cost a wrong diagnosis once already: after
+  // a long session the failure looked like a regression from that session's
+  // work, and it is simply the clock.
+  //
+  // The PROPER fix is a clock seam — the app reads `DateTime.now()` directly
+  // everywhere, so there is nothing to pin. Anchoring the demo blocks around
+  // "now" instead does not help: the rendered TIMES would then move with the
+  // run, which is the same instability wearing different clothes. Classified
+  // rather than tolerated, on the same reasoning as the shuffled decks above.
+  'screens/group_detail': 'its demo day ends at 17:00 — "finished" after that',
+  'screens/nownext': 'its demo day ends at 17:00 — nothing is next after that',
 };
 
 /// True when this plate's CONTENT is stable enough to compare pixels.
 ///
-/// Keyed off the golden token inside [_pumpAndShoot] rather than wired into
-/// each plate helper, because there are four helpers (_screenPlate,
-/// _bareScreenPlate, _rosterPlate, _richPlate) and only one of them had the
-/// check — which is how `penny` and `letters` stayed comparable while being
-/// exactly as shuffled as `do_it`. One funnel, no helper can forget.
+/// Consulted at EVERY `matchesGoldenFile` call site, not just one.
+///
+/// This comment used to say the check lived inside [_pumpAndShoot] — "one
+/// funnel, no helper can forget" — and that was the intent, not the code:
+/// `_richPlate` and `_rosterPlate` call `matchesGoldenFile` directly and
+/// never reached the funnel, so an entry added for one of THEIR screens did
+/// nothing at all. Found by adding `screens/nownext` to the map and watching
+/// it keep failing. If you add a helper, gate its `expectLater` on
+/// `_comparable(name)` — and do not write that a funnel exists until it does.
 bool _comparable(String goldenToken) {
   // The token already carries the `screens/` prefix; prepending it again
   // looked up `screens/screens/do_it` and quietly matched nothing, so the
@@ -824,9 +843,13 @@ Future<void> _pumpAndShoot(
   await tester.pump(const Duration(seconds: 1));
   // Consume late async errors that fired AFTER the golden was captured — a
   // screen's direct Postgrest read (onboarding/family) or a missing plugin
-  // (the camera scanner). The plate is already written; these don't affect
-  // it. A genuine build-time crash would surface as a red error box IN the
-  // captured PNG, which the visual review catches — so this can't hide one.
+  // (the camera scanner). The plate is already written; these don't affect it.
+  //
+  // This used to add "a genuine build-time crash would surface as a red error
+  // box IN the captured PNG, which the visual review catches — so this can't
+  // hide one." It hid four: nobody reviews 310 PNGs, which is the same reason
+  // the overflow gate exists twenty lines up. Build crashes are recorded as
+  // they happen (`recordedBuildCrashes`) and this now throws on them.
   drainExpectedExceptions(tester);
 }
 
@@ -835,6 +858,13 @@ Widget _app(String mode, GoRouter router) => MaterialApp.router(
     mode == 'dark' ? buildDarkTheme() : buildLightTheme(),
   ),
   debugShowCheckedModeBanner: false,
+  // **The same delegates the real app installs.** `AppLocalizations.of` ends
+  // in a `!`, so without these every screen that reads l10n threw "Null check
+  // operator used on a null value", Flutter swapped it for the red
+  // ErrorWidget, and the plate captured THAT — four family plates were the
+  // error box, committed and reviewed as if they were the screens.
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   routerConfig: router,
 );
 
@@ -998,7 +1028,7 @@ void _bentoPlate(String name, Size size) {
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      if (!isStressRun) {
+      if (!isStressRun && _comparable(name)) {
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/${name}__$mode.png'),
@@ -1131,7 +1161,7 @@ void _rosterPlate(String name, Widget screen, Size size) {
           await tester.pump(const Duration(milliseconds: 100));
         }
       }
-      if (!isStressRun) {
+      if (!isStressRun && _comparable(name)) {
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/${name}__$mode.png'),
@@ -1410,7 +1440,7 @@ void _richPlate(
           await tester.pump(const Duration(milliseconds: 100));
         }
       }
-      if (!isStressRun) {
+      if (!isStressRun && _comparable(name)) {
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/${name}__$mode.png'),
@@ -1562,7 +1592,7 @@ void _scheduleGridPlate(String name, Size size) {
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      if (!isStressRun) {
+      if (!isStressRun && _comparable(name)) {
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/${name}__$mode.png'),

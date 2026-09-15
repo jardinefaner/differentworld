@@ -2115,6 +2115,56 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### Four gallery plates were Flutter's RED ERROR BOX, committed as screens
+
+Found by running `tool/score_screens.py` — the audit CLAUDE.md already says to
+run after every golden regen, which I had skipped. It flagged the four family
+screens at 88 with "near-zero light/dark delta"; the actual cause was not a
+hardcoded colour. **The plates were the red ErrorWidget.** An error box is the
+same in both themes, which is why the delta was zero.
+
+The chain, and each link is worth keeping:
+
+- **`AppLocalizations.of(context)` ends in a `!`**
+  (`Localizations.of<AppLocalizations>(context, AppLocalizations)!`). No golden
+  harness installed `localizationsDelegates`, so every screen that reads l10n
+  threw *"Null check operator used on a null value"* during build, Flutter
+  swapped the whole screen for its error box, and the plate captured that. Any
+  test harness that pumps a `MaterialApp` over an l10n screen needs
+  `AppLocalizations.localizationsDelegates` + `supportedLocales`. There are two
+  such apps in the golden suites (`_helpers.dart` and `screens_gallery`'s own
+  `_app`) — patching one is not enough.
+- **The drain reasoned its way past it.** `_pumpAndShoot` ended with "a genuine
+  build-time crash would surface as a red error box IN the captured PNG, which
+  the visual review catches — so this can't hide one." Nobody reviews 310 PNGs,
+  which is the *same* argument the overflow gate twenty lines above already
+  makes about itself. Build crashes are recorded now as they happen
+  (`recordedBuildCrashes`, filled from the `FlutterError.onError` handler that
+  already catches overflows) and the drain throws on them. Checking the tree
+  for an `ErrorWidget` does NOT work: the drain runs after `pumpWidget(SizedBox)`,
+  so there is nothing left to find.
+- **"One funnel, no helper can forget" was a comment, not the code.**
+  `_unstableByDesign` is consulted in `_pumpAndShoot`, but `_richPlate` and
+  `_rosterPlate` call `matchesGoldenFile` directly and never reach it — so an
+  entry added for one of THEIR screens did nothing. Found by adding
+  `screens/nownext` to the map and watching it keep failing. All four call
+  sites gate on `_comparable(name)` now. **Do not write that a funnel exists
+  until every caller goes through it.**
+- **Two plates depend on the wall clock.** `group_detail` and `nownext` seed a
+  demo day at 15:00–17:00 local, so they render "2 of 2 left today" with a
+  block list before 17:00 and "Day finished" after — a 22% diff that depends on
+  when you ran the suite. After a long session that reads exactly like a
+  regression from that session's work. They are classified in
+  `_unstableByDesign`; the proper fix is a clock seam, which the app does not
+  have (it reads `DateTime.now()` directly everywhere). Anchoring the demo
+  blocks around "now" does not help — the rendered TIMES would move instead.
+
+Deferred, and worth doing: the four family plates now render the screens'
+`viewer is! GuardianViewer` empty path, because the harness viewer is staff.
+They are honest but nearly blank. Showing the real family lens needs a
+`GuardianViewer` override, which `_richPlate` supports via `extraOverrides`
+and `_screenPlate` does not.
+
 ### The motion decision has ONE home: `Arrives`
 
 `lib/features/games/arrives.dart` is the single answer to *how does a new

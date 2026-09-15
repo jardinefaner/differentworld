@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:differentworld/app/theme.dart';
+import 'package:differentworld/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -286,6 +287,29 @@ void drainExpectedExceptions(WidgetTester tester) {
     // Genuinely expected: a screen's direct Postgrest read, a missing plugin
     // channel. Overflows are NOT handled here — see [recordedOverflows].
   }
+  // **A plate that captured Flutter's red ErrorWidget is not a plate.**
+  // The drain above deliberately lets a screen's Postgrest read and a missing
+  // plugin channel through. A throw during BUILD is different: it replaces the
+  // whole screen with the error box, and the plate commits that as if it were
+  // the screen. Four family plates were the error box for as long as they had
+  // existed — `AppLocalizations.of` ends in a `!` and no harness installed the
+  // delegates, so every l10n screen threw on build.
+  //
+  // The reasoning that let it through is written at the bottom of
+  // `_pumpAndShoot`: "a genuine build-time crash would surface as a red error
+  // box IN the captured PNG, which the visual review catches". Nobody reviews
+  // 310 PNGs — the same argument the overflow paragraph above already makes
+  // about itself, which is why that one has a gate and this one did not.
+  if (recordedBuildCrashes.isNotEmpty) {
+    final found = List<String>.of(recordedBuildCrashes);
+    recordedBuildCrashes.clear();
+    throw StateError(
+      'Something threw while BUILDING this plate, so it captured the red '
+      "ErrorWidget instead of the screen:\n  ${found.join('\n  ')}\n"
+      'Fix the harness, or do not plate the screen (see progress_report, '
+      'which is deliberately unplated for exactly this).',
+    );
+  }
   if (recordedOverflows.isEmpty) return;
   final found = List<String>.of(recordedOverflows);
   recordedOverflows.clear();
@@ -304,9 +328,19 @@ void drainExpectedExceptions(WidgetTester tester) {
 /// while 96 overflows printed to the console.
 void beginOverflowWatch() {
   recordedOverflows.clear();
+  recordedBuildCrashes.clear();
   final previous = FlutterError.onError;
   FlutterError.onError = (details) {
     final text = details.exceptionAsString();
+    // A throw during BUILD swaps the whole screen for Flutter's red
+    // ErrorWidget, which the plate then captures and commits as if it were
+    // the screen. Recorded HERE, at the moment it happens, because by the
+    // time the drain runs the tree has been replaced with a SizedBox and
+    // there is no ErrorWidget left to find.
+    if (details.library == 'widgets library' &&
+        details.context?.toString().contains('building') == true) {
+      recordedBuildCrashes.add(text.split('\n').first);
+    }
     if (text.contains('overflowed by')) {
       // Carry the widget chain, not just the pixel count. "overflowed by 28
       // pixels" names nothing you can go and fix; the debugCreator line names
@@ -353,6 +387,11 @@ void beginOverflowWatch() {
 /// [drainExpectedExceptions].
 final List<String> recordedOverflows = <String>[];
 
+/// Exceptions raised while BUILDING — each one means the screen was replaced
+/// by Flutter's red ErrorWidget. Recorded at the moment it happens; by drain
+/// time the tree is a `SizedBox` and there is nothing left to find.
+final List<String> recordedBuildCrashes = <String>[];
+
 /// True while the suite is running as an overflow stress pass rather than a
 /// pixel-comparison pass. A resized plate changes every pixel just as a
 /// rescaled one does, so the viewport sweep skips golden comparison too.
@@ -367,6 +406,13 @@ Widget wrapForGolden(Widget screen) {
     child: MaterialApp(
       theme: buildLightTheme(),
       debugShowCheckedModeBanner: false,
+      // **The same delegates the real app installs.** `AppLocalizations.of`
+      // ends in a `!`, so without these it throws "Null check operator used
+      // on a null value" and Flutter swaps the whole screen for its red
+      // ErrorWidget — which the plate then captures and commits as if it
+      // were the screen. Four family plates shipped that way.
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: screen,
     ),
   );
