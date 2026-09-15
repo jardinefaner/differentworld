@@ -2623,6 +2623,40 @@ just kick it. Filter the log monitor to `Built build|Syncing
 files|Hot reload|Exception CAUGHT|Lost connection|Build failed`
 — routine PowerSync stream blips are noise, don't surface them.
 
+### A mis-tap was permanent on fourteen boards — `back` fell through
+
+`GameIntent.back` was in `GridGame.reduce`'s `default: return state` bucket, so
+the nineteen classics had no undo. Measured: on **fourteen** of them a wrong
+square was permanent, and on several it cost something — a turn (Battleship), a
+row that could not be unmarked (Bingo), the round itself (Minesweeper). A
+teacher runs these one-handed, in a loud room, often as a substitute. A wrong
+tap is not an edge case.
+
+The control bar had drawn a back arrow for any game offering the intent since
+it was written. The boards simply never offered it, so the button was **absent
+from nineteen games rather than disabled on them** — which is why nobody
+noticed a missing feature: there was nothing greyed out to ask about.
+
+How it works, and why each choice:
+
+- **One step, on the wire, under `'u'`.** "I tapped the wrong square" is a
+  one-step correction; a stack would grow the payload without answering a
+  question anybody asks. It rides the wire rather than sitting in a controller
+  so a cast receiver and the phone agree about what undoing did. Worst case
+  (Word Search, 8×8) the board goes 1231 → 2461 bytes.
+- **Only HUMAN moves are remembered** — pick, flag and capture, never tick.
+  Otherwise Whack-a-Mole's Back would undo the mole moving rather than the
+  square a teacher hit by mistake, every second.
+- **Reset drops the snapshot.** Carrying it across a deal would let Back walk a
+  fresh board into the previous round's cells — a whole different game
+  appearing.
+- **A finished round keeps the arrow.** Undoing the move that ENDED the round
+  is the one a teacher most wants back.
+
+`GridBoard.canUndo` is read from the wire's `'u'` and never written by a board;
+`reduce` owns the key. `test/unit/board_undo_test.dart` pins all five
+properties and names every board that regresses.
+
 ## Driving the Pixel from here — "not exercised on device" is a choice
 
 Every commit in a long session can carry "not exercised on device" and it is

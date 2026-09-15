@@ -74,6 +74,7 @@ class GridBoard {
     this.done = false,
     this.outcome,
     this.tally = const <String, int>{},
+    this.canUndo = false,
   });
 
   factory GridBoard.fromWire(Map<String, dynamic> m) => GridBoard(
@@ -86,6 +87,7 @@ class GridBoard {
       for (final e in (m['k'] as Map? ?? const <String, dynamic>{}).entries)
         '${e.key}': (e.value as num?)?.toInt() ?? 0,
     },
+    canUndo: m['u'] != null,
     cells: [
       for (final c in (m['cells'] as List? ?? const <dynamic>[]))
         if (c is Map) BoardCell.fromWire(c.cast<String, dynamic>()),
@@ -104,6 +106,10 @@ class GridBoard {
   /// while it is still being played. Set by the reducer from
   /// [GridGame.outcomeFor]; a game never writes it directly.
   final String? outcome;
+
+  /// Whether a move can be taken back. Read from the wire's `'u'` snapshot,
+  /// which [GridGame.reduce] owns — a board never writes it.
+  final bool canUndo;
 
   /// Counters a rule needs that the cells can't hold — misses, wrong letters,
   /// guesses used, whose score is what. Small ints only; it rides the wire, so
@@ -403,6 +409,11 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     if (!state.done) GameIntent.pick,
     GameIntent.reset,
     if (entryHint != null && !state.done) GameIntent.capture,
+    // Offered only when there IS something to take back, so the arrow appears
+    // after the first move rather than sitting there greyed from the start.
+    // A finished round keeps it: undoing the move that ended the round is the
+    // one a teacher most wants back.
+    if (state.canUndo) GameIntent.back,
   };
 
   /// Ask the game whether that move ended the round, and stamp the answer.
@@ -412,6 +423,30 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     final line = outcomeFor(b);
     if (line == null) return b.toWire();
     return b.copyWith(done: true, outcome: line).toWire();
+  }
+
+  /// **One step of take-it-back**, stashed on the wire under `'u'`.
+  ///
+  /// A mis-tap on a board used to be permanent: `GameIntent.back` fell through
+  /// to `default: return state`, so on twelve of the nineteen classics a wrong
+  /// square cost a turn (Battleship), marked a row that could not be unmarked
+  /// (Bingo), or ended the round outright (Minesweeper). A teacher runs these
+  /// one-handed, in a loud room, often as a substitute — a wrong tap is not an
+  /// edge case, it is Tuesday.
+  ///
+  /// One step, not a stack: "I tapped the wrong square" is a one-step
+  /// correction, and a stack would grow the wire without answering a question
+  /// anybody asks. It rides the wire rather than living in a controller so the
+  /// cast receiver and the phone agree about what undoing did.
+  ///
+  /// Only HUMAN moves are remembered. A tick is not a mis-tap, and stashing
+  /// one every second would rewrite the wire for a mole that moved on its own.
+  Map<String, dynamic> _remember(
+    Map<String, dynamic> before,
+    Map<String, dynamic> after,
+  ) {
+    final prior = Map<String, dynamic>.from(before)..remove('u');
+    return Map<String, dynamic>.from(after)..['u'] = prior;
   }
 
   @override
@@ -432,20 +467,24 @@ abstract class GridGame extends GameDefinition<GridBoard> {
           // A hold marks rather than plays: no turn change, no tally, but the
           // round can still end from it (flagging the last mine).
           final flagged = onFlag(b, i);
-          return flagged == null ? state : _settle(b.copyWith(cells: flagged));
+          if (flagged == null) return state;
+          return _remember(state, _settle(b.copyWith(cells: flagged)));
         }
         final next = onPick(b, i);
         // A null means the rule declined the tap — an already-sunk ship, a
         // column with no room left. Returning the state unchanged is what
         // keeps a double-tap from costing a turn.
         if (next == null) return state;
-        return _settle(
-          b.copyWith(
-            cells: next,
-            turn: alternates && handsOverAfterPick(b, i)
-                ? (b.turn + 1) % 2
-                : b.turn,
-            tally: tallyAfterPick(b, i),
+        return _remember(
+          state,
+          _settle(
+            b.copyWith(
+              cells: next,
+              turn: alternates && handsOverAfterPick(b, i)
+                  ? (b.turn + 1) % 2
+                  : b.turn,
+              tally: tallyAfterPick(b, i),
+            ),
           ),
         );
       case GameIntent.tick:
@@ -461,13 +500,16 @@ abstract class GridGame extends GameDefinition<GridBoard> {
         if (next == null) return state;
         // A typed answer hands over exactly as a tap does — otherwise the
         // typing games could declare sides and then never change hands.
-        return _settle(
-          b.copyWith(
-            cells: next,
-            turn: alternates && handsOverAfterEntry(b, text)
-                ? (b.turn + 1) % 2
-                : b.turn,
-            tally: tallyAfterEntry(b, text),
+        return _remember(
+          state,
+          _settle(
+            b.copyWith(
+              cells: next,
+              turn: alternates && handsOverAfterEntry(b, text)
+                  ? (b.turn + 1) % 2
+                  : b.turn,
+              tally: tallyAfterEntry(b, text),
+            ),
           ),
         );
       case GameIntent.reset:
@@ -495,7 +537,17 @@ abstract class GridGame extends GameDefinition<GridBoard> {
             for (final k in tallyFrom(const <String, Object?>{}).keys)
               k: ?b.tally[k],
           },
+          // No `'u'`: a fresh deal has nothing behind it, and carrying the old
+          // round's snapshot would let Back walk a new board into the last
+          // one's cells.
         ).toWire();
+      case GameIntent.back:
+        // Take it back. The bar already draws this arrow whenever a game
+        // offers the intent — the boards simply never did, so the button was
+        // absent from nineteen games rather than disabled on them.
+        final prior = state['u'];
+        if (prior is! Map) return state;
+        return Map<String, dynamic>.from(prior.cast<String, dynamic>());
       // Every other intent is a no-op for a board: there is no "next slide"
       // and no answer to reveal. Returning state unchanged means the standard
       // control bar can still send them harmlessly.
