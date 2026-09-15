@@ -48,7 +48,7 @@ class HangmanGame extends GridGame {
     RoomBeat('We are playing Hangman'),
     RoomBeat('A word is hiding — the dashes are its letters'),
     RoomBeat('Call out a letter', detail: 'Green is in the word, red is not'),
-    RoomBeat('Six wrong and the word wins'),
+    RoomBeat('Too many wrong and the word wins'),
     RoomBeat('Team 1 calls first'),
   ];
 
@@ -135,7 +135,6 @@ class HangmanGame extends GridGame {
     return w.isNotEmpty && w.split('').every(got.contains);
   }
 
-  /// Solved, or out of guesses. Both endings were already written for the title and neither ever stopped the round.
   /// A letter that is in the word scores for the team that called it.
   @override
   Map<String, int> tallyAfterPick(GridBoard before, int i) {
@@ -176,6 +175,16 @@ class HangmanGame extends GridGame {
         if (over || got.contains(ch)) ch else '_',
     ].join(' ');
     if (over) return shown;
-    return '$shown   ·   ${_allowed(b) - _wrong(b)} left';
+    // Two lines, because this game says two things and the second one is the
+    // one a ROOM needs: the word so far, then whose go it is. Overriding
+    // `noteFor` had quietly dropped the whose-go line that every other
+    // two-sided game shows, so a Hangman played in teams never named the team
+    // that was up.
+    // The WORD leads — it is what the room stares at — and the whose-go line
+    // follows it. Overriding `noteFor` had dropped that second line entirely,
+    // so a Hangman played in teams never named the team that was up.
+    final turn = turnLine(b);
+    final word = '$shown   ·   ${_allowed(b) - _wrong(b)} left';
+    return turn == null ? word : '$word\n$turn';
   }
 }

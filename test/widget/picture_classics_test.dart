@@ -97,13 +97,17 @@ void main() {
       findsNWidgets(game.cols * game.rows),
       reason: 'the board came up empty — the deck never reached the seed',
     );
-    expect(find.textContaining('left'), findsNothing, reason: 'nobody out yet');
+    // The COUNT, from the first frame. It used to appear only after somebody
+    // had knocked a face out, so a room met twelve faces with no line beside
+    // them and nothing saying what the game was measuring.
+    final n = game.cols * game.rows;
+    expect(find.text('$n left'), findsOneWidget, reason: 'nobody out yet');
 
     // Knock one out; the board counts what is left.
     await tester.tap(find.byWidget(_cells(grid).first.widget));
     await _rest(tester);
     expect(
-      find.textContaining('left'),
+      find.text('${n - 1} left'),
       findsOneWidget,
       reason: 'a knocked-out face is not counted, so the room cannot follow',
     );
@@ -112,8 +116,8 @@ void main() {
     await tester.tap(find.byWidget(_cells(grid).first.widget));
     await _rest(tester);
     expect(
-      find.textContaining('left'),
-      findsNothing,
+      find.text('$n left'),
+      findsOneWidget,
       reason: 'knocking out is one-way — a room that misheard is stuck',
     );
   });

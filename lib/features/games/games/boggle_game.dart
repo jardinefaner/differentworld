@@ -138,7 +138,11 @@ class BoggleGame extends GridGame {
     // starts at 1:30 and sits there is furniture; one that says 0:20 is the
     // game (the half-second rule — live state, read at a glance).
     final clock = left <= 20 ? '${left}s' : null;
-    if (word.isEmpty) return clock;
+    // Never BLANK. A room meeting sixteen letters with no line beside them
+    // has not been told what to do with them, and "the clock only appears
+    // when it is worth watching" is a rule about the countdown — it was
+    // leaving the whole line empty for the first seventy seconds.
+    if (word.isEmpty) return clock ?? 'Trace a word';
     return clock == null ? word : '$word · $clock';
   }
 }

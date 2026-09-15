@@ -322,7 +322,17 @@ abstract class GridGame extends GameDefinition<GridBoard> {
   String? titleFor(GridBoard b) => null;
 
   /// The quieter second line — a score, a count, a whose-go.
-  String? noteFor(GridBoard b) => null;
+  ///
+  /// **Defaults to the whose-go line, not to silence.** It used to default to
+  /// null, so a board said nothing unless its game remembered to write a note
+  /// — and half of them did not. Connect Four, a two-player game that
+  /// alternates every tap, never told the room whose turn it was; nor did any
+  /// other `alternates` game that had not thought to call [turnLine].
+  ///
+  /// A default of null is a default of SILENCE, and silence is the one thing a
+  /// room cannot act on. A game with more to say still overrides this; a game
+  /// with nothing extra now says the thing that always matters.
+  String? noteFor(GridBoard b) => turnLine(b);
 
   /// A word or phrase the host types in — Wordle's guess, a Scattergories
   /// answer, a crossword entry.
@@ -387,8 +397,8 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     ContentSource content,
     Map<String, Object?> values,
   ) => GridBoard(
-    cols: cols,
-    rows: rows,
+    cols: sizeFor(values).$1,
+    rows: sizeFor(values).$2,
     cells: dealWith(content, values),
     tally: {...initialTally, ...tallyFrom(values)},
   ).toWire();
@@ -398,6 +408,19 @@ abstract class GridGame extends GameDefinition<GridBoard> {
     ContentSource content,
     Map<String, Object?> values,
   ) => deal(content);
+
+  /// **How big the board is for THIS round.** Default: the game's own
+  /// [cols] x [rows].
+  ///
+  /// Those are fixed getters, which is right for a game whose shape IS its
+  /// rule — Connect Four is seven by six or it is not Connect Four. But a
+  /// Word Search is eight by eight because somebody typed eight, and
+  /// sixty-four letters is a lot to ask of a five-year-old.
+  ///
+  /// Override this and [dealWith] TOGETHER: the board carries the size it was
+  /// dealt at, so every later read — the renderer, the reset, any rule that
+  /// walks the grid — takes it from the BOARD and never from here.
+  (int cols, int rows) sizeFor(Map<String, Object?> values) => (cols, rows);
 
   /// Counters a SETTING seeds, merged over [initialTally]. These survive Play
   /// again — a knob the teacher set is not a counter the round earned.

@@ -152,9 +152,10 @@ class WhackAMoleGame extends GridGame {
   String? noteFor(GridBoard b) {
     final hits = b.score('hit');
     final left = _allowed(b) - b.score('miss');
-    // Both numbers, always, once play has started: a score with no lives
-    // beside it doesn't tell you how much game is left.
-    if (hits == 0 && left == _allowed(b)) return null;
+    // Both numbers, ALWAYS — including before the first swing. Withholding
+    // them until play started meant a room met this game as a grid with a
+    // mole on it and no sign that anything was being counted; the meter is
+    // what makes a miss feel like something.
     return '$hits · ${'●' * left.clamp(0, _allowed(b))}';
   }
 }

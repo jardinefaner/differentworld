@@ -387,9 +387,24 @@ void main() {
       final b = g.decode(g.initialState(bank()));
       final secret = GuessWhoGame.secretOf(b);
       expect(secret, inInclusiveRange(0, g.cols * g.rows - 1));
-      // And it never reaches the screen.
+      // And it never reaches the screen. Checked against what a room could
+      // actually READ the secret off — the face in that square, and the
+      // square's own label — rather than by substring-matching the index,
+      // which collided with the "12 left" count the moment the board started
+      // saying how many were standing. A digit appearing in a note is not a
+      // leak; the NAME of the hidden face would be.
       final shape = g.asShape(b)!;
-      expect(shape.note, isNot(contains('$secret')));
+      final hidden = b.cells[secret];
+      for (final tell in [hidden.face, hidden.label]) {
+        if (tell == null || tell.isEmpty) continue;
+        expect(
+          shape.note ?? '',
+          isNot(contains(tell)),
+          reason: 'the board names the face it is thinking of',
+        );
+      }
+      // Nor may the note single one out by position.
+      expect(shape.note ?? '', isNot(contains('square')));
     });
 
     test('guess who says whether the room found the right face', () {

@@ -100,8 +100,10 @@ class GuessWhoGame extends GridGame {
 
   @override
   String? noteFor(GridBoard b) {
-    final n = _left(b);
-    return n == b.cells.length ? null : '$n left';
+    // From the FIRST frame, not once somebody has knocked one out. A board of
+    // twelve faces and no line beside it tells a room nothing about what it
+    // is playing; "12 left" says the whole rule in two words.
+    return '${_left(b)} left';
   }
 
   int _left(GridBoard b) => b.count(CellState.shown);

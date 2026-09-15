@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -11,7 +12,13 @@ import 'package:differentworld/features/live_session/stage_shape.dart';
 class WordSearchGame extends GridGame {
   const WordSearchGame();
 
-  static const _size = 8;
+  /// Eight by eight is sixty-four letters. A five-year-old scanning that for
+  /// CAT is doing a different, harder job than the one the game means; a room
+  /// that has played it wants the bigger haystack back.
+  ///
+  /// The longest word decides the floor — a six-wide grid cannot hold a word
+  /// of seven, so the gentle size still has to fit `_fallback`.
+  static const _size = (6, 8, 10);
   static const _fallback = ['CAT', 'SUN', 'TREE', 'BOOK', 'STAR'];
 
   @override
@@ -38,15 +45,33 @@ class WordSearchGame extends GridGame {
   bool get alternates => true;
 
   @override
-  int get cols => _size;
+  int get cols => GameDifficulty.usual.pick(_size);
 
   @override
-  int get rows => _size;
+  int get rows => cols;
 
   @override
-  List<BoardCell> deal(ContentSource content) {
+  List<GameSetting> get settings => [difficulty()];
+
+  @override
+  (int, int) sizeFor(Map<String, Object?> values) {
+    final n = difficultyFrom(values).pick(_size);
+    return (n, n);
+  }
+
+  @override
+  List<BoardCell> dealWith(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => _lay(difficultyFrom(values).pick(_size));
+
+  @override
+  List<BoardCell> deal(ContentSource content) =>
+      _lay(GameDifficulty.usual.pick(_size));
+
+  List<BoardCell> _lay(int size) {
     final r = Random();
-    final grid = List<String?>.filled(_size * _size, null);
+    final grid = List<String?>.filled(size * size, null);
     // Placed across and down only — a diagonal is a lot to ask of a six year
     // old, and this deck runs from four up.
     final placed = <int, int>{}; // cell → word index
@@ -54,12 +79,12 @@ class WordSearchGame extends GridGame {
       final w = _fallback[wi];
       for (var attempt = 0; attempt < 40; attempt++) {
         final down = r.nextBool();
-        final maxStart = _size - w.length;
+        final maxStart = size - w.length;
         if (maxStart < 0) break;
-        final line = r.nextInt(_size);
+        final line = r.nextInt(size);
         final start = r.nextInt(maxStart + 1);
         int posOf(int k) =>
-            down ? (start + k) * _size + line : line * _size + start + k;
+            down ? (start + k) * size + line : line * size + start + k;
         final at = [for (var k = 0; k < w.length; k++) posOf(k)];
         // Only place where it agrees with whatever is already there, so
         // crossings work and nothing is overwritten into nonsense.

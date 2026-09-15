@@ -95,7 +95,9 @@ class ScavengerBingoGame extends GridGame {
 
   @override
   String? noteFor(GridBoard b) {
+    // "0 of 16" from the start. A hunt whose board says nothing until the
+    // first find has hidden the only number that says how long it is.
     final n = b.cells.where((c) => c.tint == CellTint.right).length;
-    return n == 0 ? null : '$n of ${b.cells.length}';
+    return '$n of ${b.cells.length}';
   }
 }
