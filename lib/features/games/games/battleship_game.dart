@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/facilitation/room_beat.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:differentworld/features/games/grid_game.dart';
 import 'package:differentworld/features/live_session/stage_shape.dart';
 
@@ -19,8 +20,37 @@ class BattleshipGame extends GridGame {
   static const _miss = '🌊';
 
   /// How many squares are ships. Five on a 5×5 keeps a round to a couple of
-  /// minutes, which is the length of a brain break.
-  static const _ships = 5;
+  /// minutes, which is the length of a brain break — and a younger room wants
+  /// three while a room that has played it before wants eight.
+  ///
+  /// Eight also makes the DRAW real. With five ships and strict alternation
+  /// the totals are 3-2 or 2-3 and never level, so `outcomeFor` declared a
+  /// closing line ("a draw at N each") it could never say — measured at 0
+  /// draws in 200 full boards. An even fleet is the only way a room ties.
+  static const _ships = (3, 5, 8);
+
+  @override
+  List<GameSetting> get settings => [difficulty()];
+
+  @override
+  List<BoardCell> dealWith(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => _lay(difficultyFrom(values).pick(_ships));
+
+  /// The count rides the BOARD, because every line that reads it — the
+  /// ending, the bar, the shot tally — is a pure function of the board and
+  /// has no settings in hand.
+  @override
+  Map<String, int> tallyFrom(Map<String, Object?> values) => {
+    'ships': difficultyFrom(values).pick(_ships),
+  };
+
+  /// A board dealt before the knob existed carries no 'ships'.
+  static int _fleet(GridBoard b) =>
+      b.tally['ships'] is int && b.tally['ships']! > 0
+      ? b.tally['ships']!
+      : GameDifficulty.usual.pick(_ships);
 
   @override
   String get id => 'battleship';
@@ -36,7 +66,7 @@ class BattleshipGame extends GridGame {
       'Call out a square, like B3',
       detail: 'Splash is a miss, boom is a hit',
     ),
-    RoomBeat('Find all five to finish'),
+    RoomBeat('Find them all to finish'),
     RoomBeat('Team 1 calls first'),
   ];
 
@@ -60,10 +90,13 @@ class BattleshipGame extends GridGame {
       '${String.fromCharCode(65 + i % cols)}${i ~/ cols + 1}';
 
   @override
-  List<BoardCell> deal(ContentSource content) {
+  List<BoardCell> deal(ContentSource content) =>
+      _lay(GameDifficulty.usual.pick(_ships));
+
+  List<BoardCell> _lay(int count) {
     final r = Random();
     final ships = <int>{};
-    while (ships.length < _ships) {
+    while (ships.length < count) {
       ships.add(r.nextInt(cols * rows));
     }
     return [
@@ -106,7 +139,7 @@ class BattleshipGame extends GridGame {
   /// Every ship found — and now it matters WHO found them.
   @override
   String? outcomeFor(GridBoard b) {
-    if (_sunk(b) != _ships) return null;
+    if (_sunk(b) != _fleet(b)) return null;
     final a = scoreOf(b, 0);
     final c = scoreOf(b, 1);
     if (a == c) return 'All hit — a draw at $a each';
@@ -116,10 +149,10 @@ class BattleshipGame extends GridGame {
   /// Ships found so far, as a bar that fills.
   @override
   double? progressFor(GridBoard b) =>
-      _sunk(b) == 0 ? null : (_sunk(b) / _ships).clamp(0.0, 1.0);
+      _sunk(b) == 0 ? null : (_sunk(b) / _fleet(b)).clamp(0.0, 1.0);
 
   @override
-  String? titleFor(GridBoard b) => _sunk(b) == _ships ? 'All hit!' : null;
+  String? titleFor(GridBoard b) => _sunk(b) == _fleet(b) ? 'All hit!' : null;
 
   @override
   String? noteFor(GridBoard b) {
@@ -133,7 +166,7 @@ class BattleshipGame extends GridGame {
     final hit = _sunk(b);
     final shots = b.cells.where((c) => c.state != CellState.hidden).length;
     if (shots == 0) return null;
-    return '$hit of $_ships · $shots ${shots == 1 ? 'shot' : 'shots'}';
+    return '$hit of ${_fleet(b)} · $shots ${shots == 1 ? 'shot' : 'shots'}';
   }
 
   int _sunk(GridBoard b) => b.cells

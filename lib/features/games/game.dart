@@ -32,8 +32,16 @@ enum GameIntent {
   /// Show / toggle the hidden beat — the answer, or a discussion prompt.
   reveal,
 
-  /// A discrete host choice — `args: {'choice': int|String}`. The only
-  /// intent that carries a selection (a vote side, a bracket pick).
+  /// **A tap on a numbered thing** — `args: {'cell': int}` for a board, plus
+  /// `{'flag': true}` when the tap was a long-press mark. Two games name their
+  /// own: the Conductor's `{'cue': int}` and the world's `{'i': int}`.
+  ///
+  /// This said `{'choice': int|String}` for a long time and NOTHING has ever
+  /// sent or read that on a pick. The cost is not cosmetic: a probe written
+  /// from the doc sends a key the reducer ignores, every tap is silently a
+  /// no-op, and the test passes while exercising nothing — which is exactly
+  /// how it read as "Battleship never scores and never ends" for a while.
+  /// `'choice'` belongs to [tally], one entry down.
   pick,
 
   /// One beat of the clock, for the games that have one (the mole moves on
@@ -42,9 +50,14 @@ enum GameIntent {
   /// carries no args and a game without a clock ignores it.
   tick,
 
-  /// Count one more of the room's responses — `args: {'by': int}` (default
-  /// 1), optional `{'bucket': String}`. The heart of the host-present,
-  /// teacher-tallies model.
+  /// Count one more of the room's responses — no args for a plain +1, or
+  /// `args: {'choice': int}` to count it against one option (the poll's
+  /// bars). The heart of the host-present, teacher-tallies model.
+  ///
+  /// A `by` count and a `bucket` name were documented here for a long time
+  /// and are read by nothing at all — written without the brace form on
+  /// purpose, so the guard that checks these docs does not read a retirement
+  /// note as a live declaration.
   tally,
 
   /// Record durable evidence — `args: {'text': String, ...}`. Pure here

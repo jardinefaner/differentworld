@@ -2115,6 +2115,32 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### `GameIntent.pick` carries `{'cell': int}` — the doc said `choice` and lied
+
+`pick` was documented as `args: {'choice': int|String}`. Every sender and every
+reader in the app uses `{'cell': int}` (plus `{'flag': true}` for a long-press
+mark); nothing has ever sent or read `choice` on a pick. `tally` was documented
+with a `by` count and a `bucket` name that are read by nothing at all — what it
+actually carries is `{'choice': int}`, from the poll's bars.
+
+**A wrong arg key does not fail — it no-ops.** `GridGame.reduce` reads
+`args['cell']`, finds nothing, and returns the state unchanged. So a probe
+written from the doc taps twenty-five squares, changes nothing, and passes
+while exercising NOTHING. It read convincingly as "Battleship never scores and
+never ends" for two measurements running. The whole vocabulary is six keys —
+`cell · flag · cue · i · text · choice` — and senders and readers agree on all
+six; only the prose was wrong.
+
+`test/unit/intent_args_test.dart` pins it three ways: every key named in a
+`GameIntent` doc comment is one a reducer really reads, every key a surface
+really sends is documented, and the sent set equals the read set (a key sent
+but never read is a tap that does nothing; read but never sent is a rule
+nobody can reach). Verified by restoring the wrong doc and watching it fail.
+
+One wrinkle worth keeping: the guard parses `{'key':` out of the doc comments,
+so a sentence RETIRING a key ("`{'by': int}` is read by nothing") reads as a
+live declaration and fails. Write retirement notes without the brace form.
+
 ### The family plates need a GUARDIAN viewer — and two traps on the way
 
 The four family screens open with `if (viewer is! GuardianViewer) return const
