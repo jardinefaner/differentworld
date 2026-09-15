@@ -2115,6 +2115,51 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### The motion decision has ONE home: `Arrives`
+
+`lib/features/games/arrives.dart` is the single answer to *how does a new
+thing appear on screen* — a 260ms fade-and-rise, used by `GameStage.frame`
+(the twelve prompt games) and directly by the six bespoke activity screens
+that advance a prompt (Do It, Group Talk, Fill in the Blank, Many Paths, Make
+a Pattern, Role Cards). Those six share no stage and no layout; they share a
+DECISION, so the decision is all that was extracted — no refactor of their
+screens, one wrapper each around the part that changes.
+
+Four things to keep:
+
+- **It is a plain `StatelessWidget`, deliberately NOT a `ConsumerWidget`.**
+  Making it read Riverpod turned `GameStage` into something that crashes
+  outside a `ProviderScope` ("Bad state: No ProviderScope found") — and
+  `GameStage` is drawn by golden harnesses and plain widget tests. It reads
+  `GameMotion.of(context)` instead, which also carries the OS
+  reduce-animations flag.
+- **`ActivityBrief` publishes the motion scope** for the activity screens, in
+  `lib/features/facilitation/activity_brief.dart`. It is the one wrapper all
+  of them have; without a scope, `Arrives` falls back to motion-on and the
+  Preferences switch would quietly do nothing on six screens. A new activity
+  screen gets the right gate for free by wrapping itself in `ActivityBrief` —
+  which it should anyway.
+- **Wrap the part that CHANGES — never a `TextField`, never the whole page.**
+  Fill in the Blank and Many Paths both have an input directly under their
+  prompt; animating it would tear down the `TextInputConnection` and close the
+  keyboard mid-word (the interaction invariants). Both wrap only the prompt.
+- **The outgoing child is visible but NOT tappable.** `AnimatedSwitcher`
+  keeps it mounted and hit-testable for the whole transition, so for 260ms a
+  room's second tap could land on the prompt that is leaving — Next fired
+  against the OLD one, skipping a prompt nobody saw. `Arrives` supplies a
+  `layoutBuilder` that wraps every `previousChildren` entry in `IgnorePointer`.
+  This surfaced as an existing test finding TWO "Next prompt" buttons; the
+  ambiguous finder was the symptom, the double-fire was the bug.
+
+**A widget test that taps through an animated screen must settle between
+taps**, or it sees both children. `discussions_screen_test` now does, which is
+also what a person does.
+
+The Preferences switch is "Motion and sound" now, not "Game motion and sound",
+and its copy no longer says "boards" — it gates the prompt stages and the
+activity screens too, and a switch whose words undersell what it turns off is
+its own small lie.
+
 ### MOTION was the same count — nineteen boards had it, twelve prompts cut
 
 The boards have animated since `ShapeStageView` shipped, for one reason: ONE

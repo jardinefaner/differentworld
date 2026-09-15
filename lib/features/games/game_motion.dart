@@ -28,7 +28,8 @@ class GameMotion extends InheritedWidget {
     super.key,
   });
 
-  /// Whether the boards animate at all.
+  /// Whether anything animates — boards, prompt stages, and the bespoke
+  /// activity screens, which read this through `ActivityBrief`.
   final bool enabled;
 
   /// Whether taps and endings buzz — the phone yes, the receiver no.
@@ -107,10 +108,11 @@ class GameMotionTile extends ConsumerWidget {
     final on = ref.watch(gameMotionProvider).value ?? true;
     return SwitchListTile(
       secondary: const Icon(Icons.animation_outlined),
-      title: const Text('Game motion and sound'),
+      title: const Text('Motion and sound'),
       subtitle: const Text(
-        'Boards deal in, discs drop, Simon plays its notes, a round ends '
-        'with a burst. Off keeps every board still and silent.',
+        'Boards deal in, discs drop, a new prompt rises into place, Simon '
+        'plays its notes, a round ends with a burst. Off keeps every '
+        'activity still and silent.',
       ),
       value: on,
       onChanged: (v) =>

@@ -5,6 +5,7 @@ import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/math_inverse.dart';
 import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
+import 'package:differentworld/features/games/arrives.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -193,10 +194,15 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            phase.prompt,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge,
+          // The PROMPT only. The field below keeps its input connection —
+          // animating it would close the keyboard mid-answer.
+          Arrives(
+            turn: phase.prompt,
+            child: Text(
+              phase.prompt,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge,
+            ),
           ),
           const SizedBox(height: 24),
           TextField(

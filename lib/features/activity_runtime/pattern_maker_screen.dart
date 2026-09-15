@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:differentworld/features/activity_runtime/pattern_maker.dart';
 import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
+import 'package:differentworld/features/games/arrives.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -113,11 +114,14 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
                   title: 'Make a Pattern',
                 ),
                 if (tile == null)
-                  _Intro(
-                    prompt: _prompt,
-                    capturing: _capturing,
-                    onSnap: _snap,
-                    onNewPrompt: _newPrompt,
+                  Arrives(
+                    turn: _promptIndex % patternPrompts.length,
+                    child: _Intro(
+                      prompt: _prompt,
+                      capturing: _capturing,
+                      onSnap: _snap,
+                      onNewPrompt: _newPrompt,
+                    ),
                   )
                 else ...[
                   ClipRRect(

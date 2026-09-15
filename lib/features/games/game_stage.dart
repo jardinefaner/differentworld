@@ -1,5 +1,5 @@
 import 'package:differentworld/app/design_tokens.dart';
-import 'package:differentworld/features/games/game_motion.dart';
+import 'package:differentworld/features/games/arrives.dart';
 import 'package:differentworld/shared/widgets/app_gap.dart';
 import 'package:flutter/material.dart';
 
@@ -84,15 +84,9 @@ abstract final class GameStage {
     ),
   );
 
-  /// **How a new prompt arrives** — decided once, for every game that shares
-  /// this stage.
-  ///
-  /// Twelve games drew their prompts here and all twelve CUT: a new riddle, a
-  /// new letter, a new question replaced the old one in a single frame, which
-  /// leaves the room unable to answer the only question a change raises —
-  /// *what moved?* (docs — the half-second rule, "motion instead of cuts").
-  /// The boards had this from the day `ShapeStageView` shipped, because one
-  /// renderer draws every board; the prompts had nobody to decide it for them.
+  /// **How a new prompt arrives** — delegated to [Arrives], which is the one
+  /// place that decides, for the stages AND for the bespoke activity screens
+  /// that share no stage with them.
   ///
   /// Keyed on the PROMPT, never the body, so a tally tick or a vote landing
   /// updates in place — a stage that re-animated on every tap would be worse
@@ -101,27 +95,7 @@ abstract final class GameStage {
     BuildContext context, {
     required Key? turn,
     required Widget child,
-  }) {
-    // No identity to compare, or motion is off (the setting, or the OS
-    // reduce-animations flag) — draw it plainly.
-    if (turn == null || !GameMotion.of(context)) return child;
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 260),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeIn,
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, 0.06),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        ),
-      ),
-      child: KeyedSubtree(key: turn, child: child),
-    );
-  }
+  }) => Arrives(turn: turn, child: child);
 
   /// THE choice pill — the ONE atom every game uses for a choice (True/Fib, a
   /// poll option, a math answer, a reveal slot). Flat with a hairline by

@@ -1,7 +1,9 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/facilitation/activity_run_scripts.dart';
 import 'package:differentworld/features/facilitation/run_script_view.dart';
+import 'package:differentworld/features/games/game_motion.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Brief the room, then show the activity.
 ///
@@ -47,6 +49,20 @@ class _ActivityBriefState extends State<ActivityBrief> {
 
   @override
   Widget build(BuildContext context) {
+    // **The activity screens' motion scope lives here.** They share no stage
+    // and no layout, so this — the one wrapper every one of them has — is the
+    // only place the room's motion setting can be published to all of them.
+    // Without a scope, `Arrives` falls back to motion-on and the switch in
+    // Preferences would quietly do nothing on seven screens.
+    return Consumer(
+      builder: (context, ref, _) => GameMotion(
+        enabled: ref.watch(gameMotionProvider).value ?? true,
+        child: _body(context),
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context) {
     final script = activityRunScripts[widget.route] ?? const [];
     if (_done || script.isEmpty) return widget.child;
     final surface =

@@ -4,6 +4,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
+import 'package:differentworld/features/games/arrives.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -129,18 +130,29 @@ class _FillBlankScreenState extends ConsumerState<FillBlankScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Blank ${_blankIndex + 1} of ${blanks.length}',
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: scheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Give me… $prompt',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            height: 1.15,
+        // The PROMPT only — never the field below it. A `TextField` that
+        // rebuilds loses its input connection and the keyboard closes
+        // mid-word (the interaction invariants), so the arrival stops here.
+        Arrives(
+          turn: _blankIndex,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Blank ${_blankIndex + 1} of ${blanks.length}',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Give me… $prompt',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 24),

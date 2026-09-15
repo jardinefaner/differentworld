@@ -62,12 +62,16 @@ void main() {
     await tester.tap(find.textContaining('Start —'));
     await tester.pumpAndSettle();
 
-    // Tap through however many prompts the session has.
+    // Tap through however many prompts the session has, letting each one
+    // LAND first. A prompt arrives over 260ms now (`Arrives`), and for that
+    // window the outgoing one is still in the tree — visible but deliberately
+    // not tappable — so a single `pump` leaves two "Next prompt" buttons and
+    // an ambiguous finder. Settling is also what a person actually does.
     for (var i = 0; i < 12; i++) {
       final next = find.widgetWithText(FilledButton, 'Next prompt');
       if (next.evaluate().isEmpty) break;
-      await tester.tap(next);
-      await tester.pump();
+      await tester.tap(next.first);
+      await tester.pumpAndSettle();
     }
     await tester.tap(find.widgetWithText(FilledButton, 'Wrap up'));
     await tester.pumpAndSettle();

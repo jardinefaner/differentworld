@@ -6,6 +6,7 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/facilitation/activity_brief.dart';
 import 'package:differentworld/features/game_content/ours_strip.dart';
+import 'package:differentworld/features/games/arrives.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/platform.dart';
@@ -202,7 +203,10 @@ class _DoItScreenState extends ConsumerState<DoItScreen> {
                       'Real-world actions will appear here to try with the '
                       'room.',
                 )
-              : _present(theme, scheme, deck[_index % deck.length]),
+              : Arrives(
+                  turn: _index % deck.length,
+                  child: _present(theme, scheme, deck[_index % deck.length]),
+                ),
         ),
       ),
     );
