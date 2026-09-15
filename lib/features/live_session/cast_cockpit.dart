@@ -83,6 +83,17 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     // if we're already casting it). Deferred off the build phase: the chrome
     // pill watches this provider, and writing a watched provider mid-build is
     // the "modified provider while the widget tree was building" trap.
+    // Follow whatever is cast, from a LISTENER rather than from `build`.
+    // `GameClock.follow` is idempotent, so calling it per-build was correct —
+    // and still wrong: `build` is meant to be free of side effects, and it
+    // allocated a fresh closure on every frame of a live ticking game for a
+    // call that does nothing. This fires only when the cast actually changes.
+    ref.listenManual(castSessionProvider, (prev, next) {
+      final id = CastSession.gameIdOf(next.meta);
+      _clock.follow(id == null ? null : gameById(id), () {
+        _send(GameIntent.tick);
+      });
+    }, fireImmediately: true);
     unawaited(
       Future.microtask(() {
         if (!mounted) return;
@@ -143,16 +154,30 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
   /// deck-, roster- or schedule-seeded game emptied the room's screen — while
   /// the launcher two methods away seeded the same game correctly.
   Future<void> _castSeeded(GameDefinition<dynamic> def) async {
+    // A room taps twice. Both seeds would land and the TV would flash one
+    // round before settling on another — harmless to the data, and exactly
+    // the kind of thing that makes a substitute think they broke it.
+    if (_seeding) return;
+    _seeding = true;
     final cast = _cast; // capture before the await — ref may be gone after
-    final seed = await castSeedFor(
-      CastData.ofRef(ref),
-      def,
-      values: _values[def.id],
-    );
-    if (seed == null || !mounted) return;
-    cast.castStage(def.id, seed);
-    setState(() => _showLauncher = false);
+    try {
+      final seed = await castSeedFor(
+        CastData.ofRef(ref),
+        def,
+        values: _values[def.id],
+      );
+      if (seed == null || !mounted) return;
+      cast.castStage(def.id, seed);
+      setState(() => _showLauncher = false);
+    } finally {
+      _seeding = false;
+    }
   }
+
+  /// A seed is in flight. Not `setState`-tracked: nothing on screen changes
+  /// while it resolves, and a spinner for a read that usually takes one frame
+  /// would flicker on every tap.
+  bool _seeding = false;
 
   /// Cast the live curriculum world — an explicit-seed presentable, not a
   /// content-bank game, so it goes through castStage (docs/WORLD.md).
@@ -200,10 +225,6 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     });
     final gameId = CastSession.gameIdOf(snap.meta);
     final def = gameId == null ? null : gameById(gameId);
-    // Follow whatever is cast. Cheap for the ~40 games with no clock (no timer
-    // is created), and re-pointing at the game already running is a no-op, so
-    // this is safe to call on every build.
-    _clock.follow(def, () => _send(GameIntent.tick));
     // The live world is the one thing a stranded caster can still present
     // locally (the present screen runs without a Receiver). Null when the
     // journey isn't set up → the banner falls back to a "check the code" hint.

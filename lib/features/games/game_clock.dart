@@ -19,8 +19,11 @@ import 'package:differentworld/features/games/game.dart';
 /// board, because the board underneath stays mounted. "One per session" is a
 /// property of the controller, so that is where the clock lives.
 ///
-/// Every method is safe to call more than once and in any order; a clock that
-/// has stopped stays stopped until it is pointed at a game again.
+/// Every method is safe to call more than once and in any order. One caveat
+/// the word "idempotent" hides: re-pointing at the SAME game keeps the timer
+/// it already has, so a second `follow` with a DIFFERENT callback is ignored.
+/// That is what the three owners want — each closes over its own `State`, and
+/// the closure is stable — but it is not what the word implies.
 class GameClock {
   /// Wind the clock for [def], if it has one, calling [onTick] on every beat.
   /// A game without a clock costs nothing — no timer is created at all.

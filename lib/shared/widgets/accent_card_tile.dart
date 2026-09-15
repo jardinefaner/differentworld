@@ -189,11 +189,20 @@ class TileChip {
   final IconData icon;
 }
 
-/// The chips, on one line, in the accent's own quiet register.
+/// The chips, on one line.
 ///
-/// They are drawn from the tile's accent rather than a semantic colour: these
-/// are properties of the activity, not statuses, and a red "camera" chip would
-/// read as a warning about a thing that is merely true.
+/// **Not in the accent, and that was measured.** The first version blended the
+/// accent into the ink — `alphaBlend(accent@0.75, onSurfaceVariant)` — for a
+/// quiet register that matched the tile. Against the tile's own ground it
+/// comes out at **1.79–3.65:1 across every deck accent in both themes**, where
+/// AA for 11sp text is 4.5. Not one accent passed. A chip that says "camera"
+/// and cannot be read at a glance is worse than no chip, because it takes the
+/// space a readable one would have.
+///
+/// The accent is not used for the ICON either: raw, it measures 1.44–3.74:1,
+/// under the 3:1 bar non-text UI has to clear. The tile still carries its
+/// accent — in the leading icon and the ground — so the category signal is not
+/// lost; only the part that has to be READ stops competing with it.
 class _ChipRow extends StatelessWidget {
   const _ChipRow({required this.chips, required this.accent});
 
@@ -203,10 +212,11 @@ class _ChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ink = Color.alphaBlend(
-      accent.withValues(alpha: 0.75),
-      theme.colorScheme.onSurfaceVariant,
-    );
+    final scheme = theme.colorScheme;
+    // Measured against the tile's tinted ground, worst accent, both themes:
+    // label 6.2–11.1:1 (AA text is 4.5), icon 3.4–4.0:1 (non-text is 3.0).
+    final label = scheme.onSurface;
+    final ink = scheme.onSurfaceVariant;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -225,7 +235,7 @@ class _ChipRow extends StatelessWidget {
                     chip.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(color: ink),
+                    style: theme.textTheme.labelSmall?.copyWith(color: label),
                   ),
                 ),
               ],

@@ -1,3 +1,4 @@
+import 'package:differentworld/features/activity_runtime/activity_deck.dart';
 import 'package:differentworld/features/games/cards/castable_card_games.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
@@ -54,14 +55,18 @@ List<CardSignal> signalsFor(String route) {
       out.add(const CardSignal('someone types', Icons.keyboard_outlined));
     }
   }
-  // A duration when the game knows one, and the fact of a clock when it only
-  // knows that. "On a clock" is the difference between a round that ends by
-  // itself and one a teacher has to call.
+  // A duration when the game knows one; otherwise the fact that the board
+  // does something without being tapped.
+  //
+  // These are two different promises and the chip used to make one of them
+  // for both. "On a clock" on Whack-a-Mole tells a teacher to expect a
+  // countdown, and what the game has is a mole that moves on its own — the
+  // chip was accurate about `ticks` and wrong about the room's experience.
   final secs = _secondsOf(def);
   if (secs != null) {
     out.add(CardSignal('${secs}s', Icons.timer_outlined));
   } else if (def.ticks) {
-    out.add(const CardSignal('on a clock', Icons.timer_outlined));
+    out.add(const CardSignal('moves on its own', Icons.autorenew_rounded));
   }
   if (_rounds(def) case final n?) {
     out.add(CardSignal('$n rounds', Icons.repeat_rounded));
@@ -74,9 +79,16 @@ List<CardSignal> signalsFor(String route) {
   return out;
 }
 
-/// The routes that only appear on a device with a camera — so the chip says
-/// what the card needs rather than the deck silently hiding it.
-const Set<String> _cameraRoutes = {'/activity/photo'};
+/// The routes that only appear on a device with a camera — DERIVED, by asking
+/// the deck for both of its shapes, so the chip says what the card needs
+/// rather than the deck silently hiding it.
+///
+/// It was a hand-written one-element set, which is the one thing this file
+/// says it does not do: a second camera activity would have joined the deck
+/// and never acquired its chip.
+final Set<String> _cameraRoutes = {
+  for (final c in breakDeck(camera: true)) c.route,
+}..removeAll({for (final c in breakDeck(camera: false)) c.route});
 
 int? _secondsOf(GameDefinition<dynamic> def) {
   for (final s in def.settings) {

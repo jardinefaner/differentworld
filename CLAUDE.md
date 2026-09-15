@@ -2115,6 +2115,43 @@ duplicate, so by then there is nothing left to see. Nested bare segments
 referenced exactly once (its own route) and never pushed anywhere is either
 dead or shadowed.
 
+### "A quiet register that matches the tile" is a contrast failure
+
+The deck chips shipped drawn from the card's own accent —
+`alphaBlend(accent@0.75, onSurfaceVariant)` — so they would sit in the tile's
+register instead of shouting. Against the tile's own ground that measures
+**1.79–3.65:1 across every deck accent in both themes**, where AA for 11sp text
+is 4.5. Not one accent passed. The raw accent fails as an ICON too (1.44–3.74,
+under the 3:1 bar for non-text UI), so tinting the glyph was not a way out
+either.
+
+`AccentCardTile` composites its ground per card
+(`alphaBlend(accent@0.14, surfaceContainerHighest)`), which is exactly the case
+an eyeball cannot judge: every card is a slightly different background and the
+text looked "fine, just soft" on all of them. Measured answer — label on
+`onSurface` (6.2–11.1:1), icon on `onSurfaceVariant` (3.4–4.0:1). The card
+keeps its accent in the leading icon and the ground; only the part that must be
+READ stops competing with it.
+
+`test/unit/tile_contrast_test.dart` computes real WCAG ratios over all fourteen
+`ActivityPalette` accents × both themes. Three things about it worth keeping:
+
+- It also asserts the accent **would not** clear AA, so restoring the prettier
+  version fails rather than silently regressing.
+- It pins the TAGLINE at its measured 3.44–3.99 rather than pretending. That
+  one predates the chips and is not a colour slip — `onSurfaceVariant` is the
+  theme's muted-text role and clears AA on a plain surface; the tile's 14%
+  accent wash is what pushes it under. Fixing it is a design decision (lighten
+  the wash, or promote the tagline and lose the hierarchy) that changes every
+  card, so the number is on the record and gated against getting worse.
+- The ground formula is duplicated from the widget. If the wash changes, change
+  both — there is no seam to share, and a stale copy here would pass while the
+  real tile failed.
+
+**The general rule: a colour chosen to "match" or "sit quietly" against a
+tinted surface needs a number before it ships.** `AppColors.onAccent(fill)` and
+`AppColors.readableOnDark(accent)` exist for this and neither was used.
+
 ### `GameIntent.pick` carries `{'cell': int}` — the doc said `choice` and lied
 
 `pick` was documented as `args: {'choice': int|String}`. Every sender and every

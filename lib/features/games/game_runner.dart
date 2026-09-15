@@ -104,6 +104,9 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
     // winds the clock. It used to do so with a bespoke timer that read
     // `ticks` off GridGame directly — the only clock in the app, which is
     // why three games froze on every other surface.
+    // No `mounted` guard in the callback, deliberately: `dispose` stops the
+    // clock on its FIRST line, and a cancelled periodic timer cannot fire
+    // again, so there is no post-dispose window for one to land in.
     _clock.follow(widget.def, () => _controller.send(GameIntent.tick));
   }
 

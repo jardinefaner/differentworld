@@ -27,7 +27,7 @@ void main() {
     // that invents "5-10 min" for forty games fails here rather than shipping
     // as believable signal.
     final allowed = RegExp(
-      r'^(camera|pictures|someone types|on a clock|\d+ (teams|rounds)|\d+s)$',
+      r'^(camera|pictures|someone types|moves on its own|\d+ (teams|rounds)|\d+s)$',
     );
     for (final card in deck) {
       for (final s in signalsFor(card.route)) {
@@ -61,7 +61,7 @@ void main() {
       if (def.ticks) {
         clocks++;
         expect(
-          labels.any((l) => l == 'on a clock' || l.endsWith('s')),
+          labels.any((l) => l == 'moves on its own' || l.endsWith('s')),
           isTrue,
           reason: '${card.title} runs on a clock and does not say so',
         );
